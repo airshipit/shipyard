@@ -13,17 +13,18 @@
 # limitations under the License.
 import falcon
 
-from .tasks import TasksResource
-from .base import ShipyardRequest
-from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
+from .base import BaseResource
 
-def start_api(state_manager):
-    control_api = falcon.API(request_type=ShipyardRequest,
-                             middleware=[AuthMiddleware(), ContextMiddleware(), LoggingMiddleware()])
+class RegionsResource(BaseResource):
 
-    # API for managing region data
-    control_api.add_route('/region/{region_id}', TasksResource)
-    control_api.add_route('/region/{region_id}/server/{name}', TasksResource)
-    control_api.add_route('/region/{region_id}/service/{kind}', TasksResource)
+    authorized_roles = ['user']
 
-    return control_api
+    def on_get(self, req, resp):
+        resp.status = falcon.HTTP_200
+
+class RegionResource(BaseResource):
+
+    authorized_roles = ['user']
+
+    def on_get(self, req, resp, region_id):
+        resp.status = falcon.HTTP_200

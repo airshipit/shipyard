@@ -16,6 +16,8 @@ import uuid
 
 class BaseResource(object):
 
+    authorized_roles = []
+
     def on_options(self, req, resp):
         self_attrs = dir(self)
         methods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH']
@@ -30,7 +32,13 @@ class BaseResource(object):
 
     # By default, no one is authorized to use a resource
     def authorize_roles(self, role_list):
-        return False
+        authorized = set(self.authorized_roles)
+        applied = set(role_list)
+
+        if authorized.isdisjoint(applied):
+            return False
+        else:
+            return True
 
 
 class ShipyardRequestContext(object):
@@ -62,5 +70,5 @@ class ShipyardRequestContext(object):
     def set_external_marker(self, marker):
         self.external_marker = str(marker)[:32]
 
-class ShipyardRequest(request.Request)
+class ShipyardRequest(request.Request):
     context_type = ShipyardRequestContext

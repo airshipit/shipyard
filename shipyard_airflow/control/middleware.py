@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import falcon
+import logging
 
 class AuthMiddleware(object):
 
@@ -31,7 +31,7 @@ class AuthMiddleware(object):
             ctx.add_role('anyone')
 
     # Authorization
-    def process_resource(self, req, resp, resource):
+    def process_resource(self, req, resp, resource, params):
         ctx = req.context
 
         if not resource.authorize_roles(ctx.roles):
@@ -67,7 +67,22 @@ class ContextMiddleware(object):
         elif requested_logging == 'INFO':
             ctx.set_log_level('info')
 
+        ext_marker = req.get_header('X-Context-Marker')
+        ctx.set_external_marker(ext_marker if ext_marker is not None else '')
+
 class LoggingMiddleware(object):
+
+    def __init__(self):
+        self.logger = logging.getLogger('shipyard.control')
 
     def process_response(self, req, resp, resource, req_succeeded):
         ctx = req.context
+
+        extra = {
+            'user': ctx.user,
+            'req_id': ctx.request_id,
+            'external_ctx': ctx.external_marker,
+        }
+
+        resp.append_header('X-Shipyard-Req', ctx.request_id)
+        self.logger.info("%s - %s" % (req.uri, resp.status), extra=extra)
