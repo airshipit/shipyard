@@ -14,35 +14,17 @@
 
 from setuptools import setup
 
-setup(name='drydock_provisioner',
+setup(name='shipyard_airflow',
       version='0.1a1',
-      description='Bootstrapper for Kubernetes infrastructure',
-      url='http://github.com/att-comdev/drydock',
-      author='Scott Hussey - AT&T',
-      author_email='sh8121@att.com',
+      description='API for managing Airflow-based orchestration',
+      url='http://github.com/att-comdev/shipyard',
+      author='Anthony Lin - AT&T',
+      author_email='al498u@att.com',
       license='Apache 2.0',
-      packages=['drydock_provisioner',
-                'drydock_provisioner.objects',
-                'drydock_provisioner.ingester',
-                'drydock_provisioner.ingester.plugins',
-                'drydock_provisioner.statemgmt',
-                'drydock_provisioner.orchestrator',
-                'drydock_provisioner.control',
-                'drydock_provisioner.drivers',
-                'drydock_provisioner.drivers.oob',
-                'drydock_provisioner.drivers.oob.pyghmi_driver',
-                'drydock_provisioner.drivers.node',
-                'drydock_provisioner.drivers.node.maasdriver',
-                'drydock_provisioner.drivers.node.maasdriver.models',
-                'drydock_provisioner.control'],
+      packages=['shipyard_airflow',
+                'shipyard_airflow.control'],
       install_requires=[
-        'PyYAML',
-        'pyghmi>=1.0.18',
-        'netaddr',
         'falcon',
-        'oslo.versionedobjects>=1.23.0',
-        'requests',
-        'oauthlib',
-        'uwsgi>1.4',
+        'uwsgi>1.4'
       ]
      )

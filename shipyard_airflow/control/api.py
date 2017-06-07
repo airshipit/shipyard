@@ -25,7 +25,7 @@ def start_api():
 
     control_api.add_route('/versions', VersionsResource())
 
-    # v1.0 of Drydock API
+    # v1.0 of Shipyard API
     v1_0_routes = [
         # API for managing region data
         ('/regions', RegionsResource()),
