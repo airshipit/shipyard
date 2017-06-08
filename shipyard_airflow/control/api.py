@@ -16,6 +16,7 @@ import json
 
 from .regions import RegionsResource, RegionResource
 from .base import ShipyardRequest, BaseResource
+from .tasks import TaskResource
 
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
 
@@ -30,10 +31,11 @@ def start_api():
         # API for managing region data
         ('/regions', RegionsResource()),
         ('/regions/{region_id}', RegionResource()),
+        ('/dags/{dag_id}/tasks/{task_id}', TaskResource()),
     ]
 
     for path, res in v1_0_routes:
-        control_api.add_route('/api/v1.0' + path, res)
+        control_api.add_route('/api/experimental' + path, res)
 
     return control_api
 
