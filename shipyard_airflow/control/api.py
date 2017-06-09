@@ -17,6 +17,7 @@ import json
 from .regions import RegionsResource, RegionResource
 from .base import ShipyardRequest, BaseResource
 from .tasks import TaskResource
+from .dag_runs import DagRunResource
 
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
 
@@ -32,6 +33,7 @@ def start_api():
         ('/regions', RegionsResource()),
         ('/regions/{region_id}', RegionResource()),
         ('/dags/{dag_id}/tasks/{task_id}', TaskResource()),
+        ('/dags/{dag_id}/dag_runs', DagRunResource()),
     ]
 
     for path, res in v1_0_routes:

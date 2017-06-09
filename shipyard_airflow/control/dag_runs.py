@@ -12,17 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import falcon
-import json
 import requests
 
 from .base import BaseResource
 
-class TaskResource(BaseResource):
+class DagRunResource(BaseResource):
 
     authorized_roles = ['user']
 
-    def on_get(self, req, resp, dag_id, task_id):
-        resp.status = falcon.HTTP_200
-        req_url = 'http://localhost:32080/api/experimental/dags/{}/tasks/{}'.format(dag_id, task_id)
-        task_details = requests.get(req_url).json()
-        resp.body = json.dumps(task_details)
+    def on_post(self, req, resp, dag_id, run_id=None, conf=None, execution_date=None):
+        req_url = 'http://localhost:32080/api/experimental/dags/{}/dag_runs'.format(dag_id)
+
+        response = requests.post(req_url,
+                                 json={
+                                 "run_id": run_id,
+                                 "conf": conf,
+                                 "execution_date": execution_date,
+                             })
+        if not response.ok:
+            raise IOError()
+        else:
+            resp.status = falcon.HTTP_200
+
+        data = response.json()
+
+        return data['message']
