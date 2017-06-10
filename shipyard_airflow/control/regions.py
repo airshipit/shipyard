@@ -28,3 +28,4 @@ class RegionResource(BaseResource):
 
     def on_get(self, req, resp, region_id):
         resp.status = falcon.HTTP_200
+

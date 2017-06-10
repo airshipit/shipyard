@@ -13,6 +13,7 @@
 # limitations under the License.
 import falcon
 import requests
+import json
 
 from .base import BaseResource
 
@@ -21,19 +22,21 @@ class DagRunResource(BaseResource):
     authorized_roles = ['user']
 
     def on_post(self, req, resp, dag_id, run_id=None, conf=None, execution_date=None):
-        req_url = 'http://localhost:32080/api/experimental/dags/{}/dag_runs'.format(dag_id)
+        # Retrieve URL
+        web_server_url = self.retrieve_config(resp, 'BASE', 'WEB_SERVER')
 
+        req_url = '{}/api/experimental/dags/{}/dag_runs'.format(web_server_url, dag_id)
+ 
         response = requests.post(req_url,
                                  json={
                                  "run_id": run_id,
                                  "conf": conf,
                                  "execution_date": execution_date,
                              })
-        if not response.ok:
-            raise IOError()
-        else:
+
+        if response.ok:
             resp.status = falcon.HTTP_200
+        else:
+            self.return_error(resp, falcon.HTTP_400, 'Fail to Execute Dag')
+            return
 
-        data = response.json()
-
-        return data['message']

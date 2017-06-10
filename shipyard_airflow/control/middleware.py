@@ -86,3 +86,4 @@ class LoggingMiddleware(object):
 
         resp.append_header('X-Shipyard-Req', ctx.request_id)
         self.logger.info("%s - %s" % (req.uri, resp.status), extra=extra)
+

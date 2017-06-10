@@ -22,7 +22,17 @@ class TaskResource(BaseResource):
     authorized_roles = ['user']
 
     def on_get(self, req, resp, dag_id, task_id):
-        resp.status = falcon.HTTP_200
-        req_url = 'http://localhost:32080/api/experimental/dags/{}/tasks/{}'.format(dag_id, task_id)
+        # Retrieve URL
+        web_server_url = self.retrieve_config(resp, 'BASE', 'WEB_SERVER')
+
+        req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(web_server_url, dag_id, task_id)
         task_details = requests.get(req_url).json()
-        resp.body = json.dumps(task_details)
+
+        if 'error' in task_details:
+            resp.status = falcon.HTTP_400
+            resp.body = json.dumps(task_details)
+            return
+        else:
+            resp.status = falcon.HTTP_200
+            resp.body = json.dumps(task_details)
+

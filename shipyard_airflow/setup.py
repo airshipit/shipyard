@@ -26,6 +26,8 @@ setup(name='shipyard_airflow',
       install_requires=[
         'falcon',
         'requests',
+        'configparser',
         'uwsgi>1.4'
       ]
      )
+

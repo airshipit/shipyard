@@ -13,6 +13,8 @@
 # limitations under the License.
 import falcon.request as request
 import uuid
+import json
+import ConfigParser
 
 class BaseResource(object):
 
@@ -39,6 +41,33 @@ class BaseResource(object):
             return False
         else:
             return True
+
+    # Error Handling
+    def return_error(self, resp, status_code, message="", retry=False):
+        """
+        Write a error message body and throw a Falcon exception to trigger an HTTP status
+
+        :param resp: Falcon response object to update
+        :param status_code: Falcon status_code constant
+        :param message: Optional error message to include in the body
+        :param retry: Optional flag whether client should retry the operation. Can ignore if we rely solely on 4XX vs 5xx status codes
+        """
+        resp.body = json.dumps({'type': 'error', 'message': message, 'retry': retry})
+        resp.content_type = 'application/json'
+        resp.status = status_code
+
+    # Get Config Data
+    def retrieve_config(self, resp, section="", variable=""):
+        config = ConfigParser.ConfigParser()
+
+        # The current assumption is that shipyard.conf will be placed in a fixed path
+        # within the shipyard container - Path TBD
+        config.read('/home/ubuntu/att-comdev/shipyard/shipyard_airflow/control/shipyard.conf')
+
+        # Retrieve data from shipyard.conf
+        query_data = config.get(section, variable)
+
+        return query_data
 
 
 class ShipyardRequestContext(object):
@@ -72,3 +101,4 @@ class ShipyardRequestContext(object):
 
 class ShipyardRequest(request.Request):
     context_type = ShipyardRequestContext
+

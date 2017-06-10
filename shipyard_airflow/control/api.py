@@ -18,10 +18,10 @@ from .regions import RegionsResource, RegionResource
 from .base import ShipyardRequest, BaseResource
 from .tasks import TaskResource
 from .dag_runs import DagRunResource
-
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
 
 def start_api():
+
     control_api = falcon.API(request_type=ShipyardRequest,
                              middleware=[AuthMiddleware(), ContextMiddleware(), LoggingMiddleware()])
 
@@ -51,3 +51,4 @@ class VersionsResource(BaseResource):
                                     'status': 'stable'
                                 }})
         resp.status = falcon.HTTP_200
+
