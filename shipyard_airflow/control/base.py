@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon.request as request
+import falcon, falcon.request as request
 import uuid
 import json
-import ConfigParser
+import configparser
+import os
 
 class BaseResource(object):
 
@@ -57,17 +58,23 @@ class BaseResource(object):
         resp.status = status_code
 
     # Get Config Data
-    def retrieve_config(self, resp, section="", variable=""):
-        config = ConfigParser.ConfigParser()
+    def retrieve_config(self, section="", data=""):
 
         # The current assumption is that shipyard.conf will be placed in a fixed path
         # within the shipyard container - Path TBD
-        config.read('/home/ubuntu/att-comdev/shipyard/shipyard_airflow/control/shipyard.conf')
+        path = '/home/ubuntu/att-comdev/shipyard/shipyard_airflow/control/shipyard.conf'
+        
+        # Check that shipyard.conf exists
+        if os.path.isfile(path):
+            config = configparser.ConfigParser()
+            config.read(path)
 
-        # Retrieve data from shipyard.conf
-        query_data = config.get(section, variable)
+            # Retrieve data from shipyard.conf
+            query_data = config.get(section, data)
 
-        return query_data
+            return query_data
+        else:
+            return 'Error - Missing Configuration File'
 
 
 class ShipyardRequestContext(object):

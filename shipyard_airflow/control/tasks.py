@@ -23,16 +23,21 @@ class TaskResource(BaseResource):
 
     def on_get(self, req, resp, dag_id, task_id):
         # Retrieve URL
-        web_server_url = self.retrieve_config(resp, 'BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
 
-        req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(web_server_url, dag_id, task_id)
-        task_details = requests.get(req_url).json()
-
-        if 'error' in task_details:
+        if 'Error' in web_server_url:
             resp.status = falcon.HTTP_400
-            resp.body = json.dumps(task_details)
+            resp.body = json.dumps({'Error': 'Missing Configuration File'})
             return
         else:
-            resp.status = falcon.HTTP_200
-            resp.body = json.dumps(task_details)
+            req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(web_server_url, dag_id, task_id)
+            task_details = requests.get(req_url).json()
+
+            if 'error' in task_details:
+                resp.status = falcon.HTTP_400
+                resp.body = json.dumps(task_details)
+                return
+            else:
+                resp.status = falcon.HTTP_200
+                resp.body = json.dumps(task_details)
 
