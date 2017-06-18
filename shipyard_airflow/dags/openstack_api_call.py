@@ -1,25 +1,38 @@
+# -*- coding: utf-8 -*-
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """
-OpenStack CLI
-
-Perform basic OpenStack CLI calls
+### Openstack CLI Dag
 """
+import airflow
 from airflow import DAG
+from airflow.operators import OpenStackOperator
 from airflow.operators.bash_operator import BashOperator
 from datetime import datetime, timedelta
-import os
+
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2017, 6, 14),
-    'email': ['airflow@airflow.com'],
+    'start_date': airflow.utils.dates.days_ago(2),
+    'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
 }
 
-dag = DAG('openstack_api_call', default_args=default_args, schedule_interval=None)
+dag = DAG('openstack_cli', default_args=default_args, schedule_interval=None)
 
 # print_date
 t1 = BashOperator(
@@ -27,21 +40,36 @@ t1 = BashOperator(
     bash_command='date',
     dag=dag)
 
-# Current assumption is that we will be able to retrieve information from
-# data manager (DeckHand) to create the admin-openrc.sh that is needed for
-# airflow to perform OpenStack API calls
-t2 = BashOperator(
-    task_id='nova_list',
-    bash_command='source ' + os.getcwd() + '/dags/admin-openrc.sh' + ';' + 'nova' + ' list',
-    retries=3,
+# openstack endpoint list
+t2 = OpenStackOperator(
+    task_id='endpoint_list_task',
+    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openstack_command='openstack endpoint list',
     dag=dag)
 
-t3 = BashOperator(
-    task_id='neutron_net_list',
-    bash_command='source ' + os.getcwd() + '/dags/admin-openrc.sh' + ';' + 'neutron' + ' net-list',
-    retries=3,
+# openstack service list
+t3 = OpenStackOperator(
+    task_id='service_list_task',
+    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openstack_command='openstack service list',
+    dag=dag)
+
+# openstack server list
+t4 = OpenStackOperator(
+    task_id='server_list_task',
+    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openstack_command='openstack server list',
+    dag=dag)
+
+# openstack network list
+t5 = OpenStackOperator(
+    task_id='network_list_task',
+    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openstack_command='openstack network list',
     dag=dag)
 
 t2.set_upstream(t1)
 t3.set_upstream(t1)
+t4.set_upstream(t1)
+t5.set_upstream(t1)
 
