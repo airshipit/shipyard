@@ -40,31 +40,34 @@ t1 = BashOperator(
     bash_command='date',
     dag=dag)
 
+## Note that the openrc.sh file needs to be placed on a volume that can be
+## accessed by the containers
+
 # openstack endpoint list
 t2 = OpenStackOperator(
     task_id='endpoint_list_task',
-    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openrc_file='/usr/local/airflow/dags/openrc.sh',
     openstack_command='openstack endpoint list',
     dag=dag)
 
 # openstack service list
 t3 = OpenStackOperator(
     task_id='service_list_task',
-    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openrc_file='/usr/local/airflow/dags/openrc.sh',
     openstack_command='openstack service list',
     dag=dag)
 
 # openstack server list
 t4 = OpenStackOperator(
     task_id='server_list_task',
-    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openrc_file='/usr/local/airflow/dags/openrc.sh',
     openstack_command='openstack server list',
     dag=dag)
 
 # openstack network list
 t5 = OpenStackOperator(
     task_id='network_list_task',
-    openrc_file='/home/ubuntu/airflow/openrc.sh',
+    openrc_file='/usr/local/airflow/dags/openrc.sh',
     openstack_command='openstack network list',
     dag=dag)
 
