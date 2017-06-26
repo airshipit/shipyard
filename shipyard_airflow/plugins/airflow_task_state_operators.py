@@ -61,18 +61,21 @@ class TaskStateOperator(BaseOperator):
                 pass
             else:
                 logging.info(line)
-                task_state = line
 
         # Wait for child process to terminate. Set and return returncode attribute.
         airflow_cli.wait()
 
         # Raise Execptions if Task State Command Fails
-        if airflow_cli.returncode:
-            raise AirflowException("Failed to Retrieve Task State")
-
         # Return XCOM State
         task_instance = context['task_instance']
-        task_instance.xcom_push('task_state', task_state)
+
+        if airflow_cli.returncode:
+            task_state = 'failed'
+            task_instance.xcom_push('task_state', task_state)
+            raise AirflowException("Failed to Retrieve Task State")
+        else:
+            task_state = line
+            task_instance.xcom_push('task_state', task_state)
 
 
 class TaskStatePlugin(AirflowPlugin):
