@@ -7,12 +7,12 @@ infrastructure and helm charts to deploy the containerized applications.
 
 
 1) Follow the steps in the OpenStack-Helm All-In-One [guide](http://openstack-helm.readthedocs.io/en/latest/install/all-in-one.html) 
-   to set up the environment on an Ubuntu 16.04 Virtual Machine.  Follow all the steps from the start of the 
+   to set up the environment on an Ubuntu 16.04 Virtual Machine.  Follow the steps from the start of the
    wiki till the 'Deploy' section to get the base system up.
 
    *Note that we do not need to install the OpenStack Helm Charts for Shipyard to function*
 
-   The environment should resemble the following after the executing the steps in the guide:
+   The environment should resemble the following after the executing the required steps in the guide:
 
    ```
    # kubectl get pods --all-namespaces
@@ -32,7 +32,7 @@ infrastructure and helm charts to deploy the containerized applications.
 
 2) Deploy Airflow Helm Chart
 
-   *Note that the airflow chart requires a postgresql instance and rabbitmq to be running*
+   Note: The airflow chart requires a postgresql instance and rabbitmq to be running
 
 
    Create airflow namespace:
@@ -65,7 +65,7 @@ infrastructure and helm charts to deploy the containerized applications.
    Go to the openstack-helm directory that was created in Step 1
    
    Update the values.yaml of the rabbitmq charts to reflect the appropriate username and password for the
-   environment, e.g. airflow / airflow
+   environment, e.g. *airflow / airflow*
    
    Execute the following commands:
    
@@ -164,7 +164,7 @@ infrastructure and helm charts to deploy the containerized applications.
 
 3) Deploy Shipyard Helm Chart
 
-   The Shipyard helm chart is still under review at the moment and can be retrieved by cloning the shipyard_chart
+   The Shipyard helm chart is still under review at the moment and can be retrieved by cloning the *shipyard_chart*
    branch with the following command:
 
    ```
@@ -173,8 +173,9 @@ infrastructure and helm charts to deploy the containerized applications.
 
    Shipyard Helm Chart Installation:
 
+   ```
    $ helm install --name=airflow-shipyard shipyard/ --namespace=airflow
-
+   ```
 
    Check that all the helm charts have been properly deployed and that all services are up and running:
 
