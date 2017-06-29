@@ -23,6 +23,7 @@ from .airflow_list_tasks import ListTasksResource
 from .airflow_list_dags import ListDagsResource
 from .airflow_dag_state import GetDagStateResource
 from .airflow_trigger_dag import TriggerDagRunResource
+from .airflow_trigger_dag_poll import TriggerDagRunPollResource
 from .airflow_connections import AirflowAddConnectionResource
 from .airflow_connections import AirflowDeleteConnectionResource
 from .airflow_connections import AirflowListConnectionsResource
@@ -48,6 +49,7 @@ def start_api():
         ('/dag_state/dags/{dag_id}/execution_date/{execution_date}', GetDagStateResource()),
         ('/list_tasks/dags/{dag_id}', ListTasksResource()),
         ('/trigger_dag/dags/{dag_id}/run_id/{run_id}', TriggerDagRunResource()),
+        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}/poll', TriggerDagRunPollResource()),
         ('/connections/{action}/conn_id/{conn_id}/protocol/{protocol}/host/{host}/port/{port}', AirflowAddConnectionResource()),
         ('/connections/{action}/conn_id/{conn_id}', AirflowDeleteConnectionResource()),
         ('/connections/{action}', AirflowListConnectionsResource()),
