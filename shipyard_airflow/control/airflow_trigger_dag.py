@@ -31,14 +31,13 @@ class TriggerDagRunResource(BaseResource):
             resp.body = json.dumps({'Error': 'Missing Configuration File'})
             return
         else:
-            # Trigger the execution of a Dag
-            # Associate Dag execution with a Run ID
             req_url = '{}/admin/rest_api/api?api=trigger_dag&dag_id={}&run_id={}'.format(web_server_url, dag_id, run_id)
             response = requests.get(req_url).json()
 
-            if response["output"]["stderr"]:
+            # Returns error response if API call returns response code other than 200
+            if response["http_response_code"] != 200:
                 resp.status = falcon.HTTP_400
-                resp.body = response["output"]["stderr"]
+                resp.body = response["output"]
                 return
             else:
                 resp.status = falcon.HTTP_200
