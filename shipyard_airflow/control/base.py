@@ -60,9 +60,8 @@ class BaseResource(object):
     # Get Config Data
     def retrieve_config(self, section="", data=""):
 
-        # The current assumption is that shipyard.conf will be placed in a fixed path
-        # within the shipyard container - Path TBD
-        path = '/home/ubuntu/att-comdev/shipyard/shipyard_airflow/control/shipyard.conf'
+        # Shipyard config will be located at /etc/shipyard/shipyard.conf
+        path = '/etc/shipyard/shipyard.conf'
         
         # Check that shipyard.conf exists
         if os.path.isfile(path):
