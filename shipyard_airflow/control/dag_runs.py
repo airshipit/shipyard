@@ -23,12 +23,11 @@ class DagRunResource(BaseResource):
 
     def on_post(self, req, resp, dag_id, run_id=None, conf=None, execution_date=None):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             req_url = '{}/api/experimental/dags/{}/dag_runs'.format(web_server_url, dag_id)
  

@@ -14,6 +14,7 @@
 import falcon
 import json
 import requests
+import urlparse
 
 from .base import BaseResource
 
@@ -25,17 +26,17 @@ class AirflowAddConnectionResource(BaseResource):
 
     def on_get(self, req, resp, action, conn_id, protocol, host, port):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             if action == 'add':
-                # Concatenate to form the connection URL, Remove whitespaces
-                conn_uri = "%s %s %s %s %s" % (protocol, '://', host, ':', port)
-                conn_uri = conn_uri.replace(' ', '')
+                # Concatenate to form the connection URL
+                netloc = ''.join([host, ':', port])
+                url = (protocol, netloc, '','','')
+                conn_uri = urlparse.urlunsplit(url)
 
                 # Form the request URL towards Airflow
                 req_url = '{}/admin/rest_api/api?api=connections&add=true&conn_id={}&conn_uri={}'.format(web_server_url, conn_id, conn_uri)
@@ -62,12 +63,11 @@ class AirflowDeleteConnectionResource(BaseResource):
 
     def on_get(self, req, resp, action, conn_id):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             if action == 'delete':
                 # Form the request URL towards Airflow
@@ -95,12 +95,11 @@ class AirflowListConnectionsResource(BaseResource):
 
     def on_get(self, req, resp, action):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             if action == 'list':
                 # Form the request URL towards Airflow

@@ -24,12 +24,11 @@ class TriggerDagRunResource(BaseResource):
 
     def on_get(self, req, resp, dag_id, run_id):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             req_url = '{}/admin/rest_api/api?api=trigger_dag&dag_id={}&run_id={}'.format(web_server_url, dag_id, run_id)
             response = requests.get(req_url).json()

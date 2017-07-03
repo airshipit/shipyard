@@ -23,12 +23,11 @@ class ListDagsResource(BaseResource):
 
     def on_get(self, req, resp):
         # Retrieve URL
-        web_server_url = self.retrieve_config('BASE', 'WEB_SERVER')
+        web_server_url = self.retrieve_config('base', 'web_server')
 
         if 'Error' in web_server_url:
-            resp.status = falcon.HTTP_400
-            resp.body = json.dumps({'Error': 'Missing Configuration File'})
-            return
+            resp.status = falcon.HTTP_500
+            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
             # List available dags
             req_url = '{}/admin/rest_api/api?api=list_dags'.format(web_server_url)
