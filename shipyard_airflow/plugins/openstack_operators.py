@@ -41,15 +41,16 @@ class OpenStackOperator(BaseOperator):
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
-        logging.info("Running OpenStack Command: " + ' '.join(self.openstack_command))
+        logging.info("Running OpenStack Command: %s", self.openstack_command)
 
-        # Build environment variables.
+        # Emulate "source" in bash. Sets up environment variables.
         pipe = subprocess.Popen(". %s; env" % self.openrc_file, stdout=subprocess.PIPE, shell=True)
         data = pipe.communicate()[0]
         os_env = dict((line.split("=", 1) for line in data.splitlines()))
-
+ 
         # Execute the OpenStack CLI Command
         openstack_cli = subprocess.Popen(self.openstack_command, env=os_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
 
         # Logs Output
         logging.info("Output:")
@@ -59,10 +60,12 @@ class OpenStackOperator(BaseOperator):
             line = line.strip()
             logging.info(line)
 
+
         # Wait for child process to terminate. Set and return returncode attribute.
         openstack_cli.wait()
         logging.info("Command exited with "
                      "return code {0}".format(openstack_cli.returncode))
+
 
         # Raise Execptions if OpenStack Command Fails
         if openstack_cli.returncode:

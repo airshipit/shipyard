@@ -44,8 +44,7 @@ class TaskStateOperator(BaseOperator):
         self.airflow_command = ['airflow', 'task_state', airflow_dag_id, airflow_task_id, airflow_execution_date]
 
     def execute(self, context):
-
-        logging.info("Running Airflow Command: " + ' '.join(self.airflow_command))
+        logging.info("Running Airflow Command: %s", self.airflow_command)
 
         # Execute Airflow CLI Command
         airflow_cli = subprocess.Popen(self.airflow_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
