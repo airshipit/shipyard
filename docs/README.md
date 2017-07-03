@@ -9,7 +9,8 @@ The current workflow is as follows:
 2. The data (in YAML format) will be sent to [DeckHand](https://github.com/att-comdev/deckhand) for processing
 3. Shipyard will make use of the post-processed data from DeckHand to interact with [DryDock](https://github.com/att-comdev/drydock)
 4. DryDock will interact with [Promenade](https://github.com/att-comdev/promenade) to provision and deploy
-   bare metal nodes using Ubuntu MAAS and Promenade will create a resilient Kubernetes cluster.
+   bare metal nodes using Ubuntu MAAS and a resilient Kubernetes cluster will be created at the end of the
+   process
 5. Once the Kubernetes clusters are up and validated to be working properly, Shipyard will interact with
    [Armada](https://github.com/att-comdev/armada) to deploy OpenStack using [OpenStack Helm](https://github.com/openstack/openstack-helm) 
 6. Once the OpenStack cluster is deployed, Shipyard will trigger a workflow to perform basic sanity health
@@ -38,7 +39,7 @@ The detailed Roadmap can be viewed on the [LCOO JIRA](https://openstack-lcoo.atl
 ### Getting Started ###
 
 This project is under development at the moment.  We encourage anyone who is interested in Shipyard to review
-our [Installation](https://github.com/att-comdev/shipyard/tree/master/docs) documentation
+our [Installation](https://github.com/att-comdev/shipyard/blob/master/docs/deployment_guide.md) documentation
 
 
 ### Bugs ###
