@@ -16,7 +16,6 @@ import logging
 import subprocess
 import sys
 import os
-import shlex
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -42,18 +41,15 @@ class OpenStackOperator(BaseOperator):
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
-        logging.info("Running OpenStack Command: " + self.openstack_command)
+        logging.info("Running OpenStack Command: " + ' '.join(self.openstack_command))
 
-        # Emulate "source" in bash. Sets up environment variables.
+        # Build environment variables.
         pipe = subprocess.Popen(". %s; env" % self.openrc_file, stdout=subprocess.PIPE, shell=True)
         data = pipe.communicate()[0]
-        env = dict((line.split("=", 1) for line in data.splitlines()))
-        os.environ.update(env)
-
+        os_env = dict((line.split("=", 1) for line in data.splitlines()))
 
         # Execute the OpenStack CLI Command
-        openstack_cli = subprocess.Popen(shlex.split(self.openstack_command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
+        openstack_cli = subprocess.Popen(self.openstack_command, env=os_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Logs Output
         logging.info("Output:")
@@ -63,12 +59,10 @@ class OpenStackOperator(BaseOperator):
             line = line.strip()
             logging.info(line)
 
-
         # Wait for child process to terminate. Set and return returncode attribute.
         openstack_cli.wait()
         logging.info("Command exited with "
                      "return code {0}".format(openstack_cli.returncode))
-
 
         # Raise Execptions if OpenStack Command Fails
         if openstack_cli.returncode:

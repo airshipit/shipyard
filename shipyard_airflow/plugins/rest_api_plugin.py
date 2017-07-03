@@ -435,7 +435,6 @@ class REST_API(BaseView):
     # '/api' REST Endpoint where API requests should all come in
     @csrf.exempt  # Exempt the CSRF token
     @expose('/api', methods=["GET", "POST"])
-    @http_token_secure  # On each request,
     def api(self):
         base_response = REST_API_Response_Util.get_base_response()
 

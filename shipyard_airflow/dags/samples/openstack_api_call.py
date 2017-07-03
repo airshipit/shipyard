@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-### Openstack CLI Dag
+### Openstack CLI Sample Dag
 """
 import airflow
 from airflow import DAG
@@ -47,28 +47,28 @@ t1 = BashOperator(
 t2 = OpenStackOperator(
     task_id='endpoint_list_task',
     openrc_file='/usr/local/airflow/dags/openrc.sh',
-    openstack_command='openstack endpoint list',
+    openstack_command=['openstack', 'endpoint', 'list'],
     dag=dag)
 
 # openstack service list
 t3 = OpenStackOperator(
     task_id='service_list_task',
     openrc_file='/usr/local/airflow/dags/openrc.sh',
-    openstack_command='openstack service list',
+    openstack_command=['openstack', 'service', 'list'],
     dag=dag)
 
 # openstack server list
 t4 = OpenStackOperator(
     task_id='server_list_task',
     openrc_file='/usr/local/airflow/dags/openrc.sh',
-    openstack_command='openstack server list',
+    openstack_command=['openstack', 'server', 'list'],
     dag=dag)
 
 # openstack network list
 t5 = OpenStackOperator(
     task_id='network_list_task',
     openrc_file='/usr/local/airflow/dags/openrc.sh',
-    openstack_command='openstack network list',
+    openstack_command=['openstack', 'network', 'list'],
     dag=dag)
 
 t2.set_upstream(t1)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-### Airflow Task State
+### Airflow Task State Sample Dag
 """
 import airflow
 from airflow import DAG
@@ -36,9 +36,9 @@ dag = DAG('airflow_task_state', default_args=default_args, schedule_interval=Non
 # Get Task State
 t1 = TaskStateOperator(
     task_id='airflow_task_state',
-    airflow_dag_id='airflow_cli',
-    airflow_task_id='airflow_task_state',
-    airflow_execution_date='2017-06-25T21:27:52.809436',
+    airflow_dag_id='openstack_cli',
+    airflow_task_id='endpoint_list_task',
+    airflow_execution_date='2017-07-02T21:30:33.519582',
     dag=dag)
 
 # Use XCOM to Retrieve Task State

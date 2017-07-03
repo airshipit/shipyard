@@ -16,7 +16,6 @@ import logging
 import subprocess
 import sys
 import os
-import shlex
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -42,14 +41,14 @@ class TaskStateOperator(BaseOperator):
         self.airflow_dag_id = airflow_dag_id
         self.airflow_task_id = airflow_task_id
         self.airflow_execution_date = airflow_execution_date
-        self.airflow_command = "%s %s %s %s" % ("airflow task_state", airflow_dag_id, airflow_task_id, airflow_execution_date)
+        self.airflow_command = ['airflow', 'task_state', airflow_dag_id, airflow_task_id, airflow_execution_date]
 
     def execute(self, context):
 
-        logging.info("Running Airflow Command: " + self.airflow_command)
+        logging.info("Running Airflow Command: " + ' '.join(self.airflow_command))
 
         # Execute Airflow CLI Command
-        airflow_cli = subprocess.Popen(shlex.split(self.airflow_command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        airflow_cli = subprocess.Popen(self.airflow_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Logs Output
         # Filter out logging messages from standard output and keep only the relevant information
