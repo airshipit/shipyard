@@ -17,11 +17,11 @@ import requests
 
 from .base import BaseResource
 
-class TaskResource(BaseResource):
+class GetDagStateResource(BaseResource):
 
     authorized_roles = ['user']
 
-    def on_get(self, req, resp, dag_id, task_id):
+    def on_get(self, req, resp, dag_id, execution_date):
         # Retrieve URL
         web_server_url = self.retrieve_config('base', 'web_server')
 
@@ -29,14 +29,14 @@ class TaskResource(BaseResource):
             resp.status = falcon.HTTP_500
             raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
         else:
-            req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(web_server_url, dag_id, task_id)
-            task_details = requests.get(req_url).json()
-
-            if 'error' in task_details:
+            req_url = '{}/admin/rest_api/api?api=dag_state&dag_id={}&execution_date={}'.format(web_server_url, dag_id, execution_date)
+            response = requests.get(req_url).json()
+       
+            if response["output"]["stderr"]:
                 resp.status = falcon.HTTP_400
-                resp.body = json.dumps(task_details)
+                resp.body = response["output"]["stderr"]
                 return
             else:
                 resp.status = falcon.HTTP_200
-                resp.body = json.dumps(task_details)
+                resp.body = response["output"]["stdout"]
 
