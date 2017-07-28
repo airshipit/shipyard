@@ -35,7 +35,7 @@ Query Parameter "lastDeployed=true" will insetead return the documents for the c
 ##### Responses
 200 OK if documents can be retrieved.
 
-##### DELETE  
+#### DELETE  
 Updates the configDocs to be the lastDeployed versions in deckhand, effectively discarding any staged documents.
 ###### Responses
 204 No Content
