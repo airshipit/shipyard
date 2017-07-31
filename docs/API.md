@@ -69,8 +69,8 @@ Supported actions:
 * deploy region
 * update region
 * redeploy server
-* test region (invoke site validation testing - perhaps baseline is a invocation of all components regular "component" tests.
-* test component (invoke a particular component to test it?)
+* (future) test region (invoke site validation testing - perhaps baseline is a invocation of all components regular "component" tests.
+* (future) test component (invoke a particular component to test it)
 
 
 ### /v1.0/actions
@@ -138,27 +138,26 @@ Returns the details for a step by id for the given action by Id.
 Allows for issuing DAG controls against an action.
 
 #### POST 
-Trigger a control action against an activity.- this includes: stop, pause, resume  (need to determine the totality of this list)
+Trigger a control action against an activity.- this includes: pause, unpause, abandon
 ##### Responses
 202 Accepted
 
 ## Airflow Monitoring API
-Airflow has a primary function of scheduling DAGs, as opposed to the shipyard primary case of triggering DAGs.  Shipyard will need to provide functionality to allow for an operator to monitor the scheduled tasks, both pending and previously run.
+Airflow has a primary function of scheduling DAGs, as opposed to the shipyard primary case of triggering DAGs.  Shipyard will need to provide functionality to allow for an operator to monitor and review the scheduled tasks.
 
-
-### /v1.0/scheduledTasks
+### /v1.0/scheduledDAGs
 The resource that represents scheduled tasks in airflow (Fields TBD)
 
 #### GET 
-Queries airflow for ?recent? completed tasks (a summary) and the schedule for the next pending executions of DAGs.
+Queries airflow for recent completed DAGs (a summary).
 Query parameter: elapsedDays, the number of days of history to retrieve. Default is 10 days.
 ##### Responses
 200 OK
 
 
-#### /v1.0/scheduledTasks/{id}
+#### /v1.0/scheduledDAGs/{id}
 
 ##### GET
-Further details of a particular scheduled task's output
+Further details of a particular scheduled DAG's output
 ###### Responses
 200 OK
