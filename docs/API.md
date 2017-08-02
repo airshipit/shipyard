@@ -6,7 +6,21 @@ Logically, the API has three parts to handle the three areas of functionality in
 2. Action Handling 
 3. Airflow Monitoring 
 
-There are several standard error responses that should be handled appropriately by a client of this API:
+## Naming used in the API
+* Resource paths nodes follow an all lower case naming scheme, and pluralize the resource names. Nodes that refer to keys, ids or names that are externally controlled, the external naming will be honored.
+* The version of the API resource path will be prefixed before the first node of the path for that resource using v#.# format.
+* By default, the API will be namespaced by /api before the version.  For the purposes of documentation, this will not be specified in each of the resource paths below.  In more complex APIs, it makes sense to allow the /api node to be more specific to point to a particular service.
+```
+/api/v1.0/sampleresources/ExTeRnAlNAME-1234
+      ^         ^       ^       ^
+      |         |       |      defer to external naming
+      |         |      plural
+      |        lower case
+     version here
+```
+
+## Standard Error Responses
+There are several standard error responses that should be handled appropriately by a client of this API. Those errors listed here are not exhaustive, but shouldconsidered possible for all API invocations.
 * 401 Authentication Error  
 If not authenticated
 * 403 Forbidden  
@@ -16,28 +30,30 @@ If a variable in the path doesn't reference a valid resource
 * 503 Service Unavailable  
 Error if an upstream system cannot be reached (e.g. Deckhand for documents, Airflow for actions)
 
----
 ## Headers
 ### Required
 
-* X-Auth-Token - The auth token to identify the invoking user.
+* X-Auth-Token  
+The auth token to identify the invoking user.
 
 ### Optional
 
-* X-Context-Marker - A context id that will be carried on all logs for this cleint-provided marker. This marker may only be a 36-character canonical representation of an UUID  (8-4-4-4-12)
+* X-Context-Marker  
+A context id that will be carried on all logs for this cleint-provided marker. This marker may only be a 36-character canonical representation of an UUID  (8-4-4-4-12)
 
 ---
 ## <a name="DocumentStagingAPI"></a> Document Staging API
-Shipyard will serve as the entrypoint for documents and secrets into a site. At any point in time, there will be two represented versions of documents in a site that are accessible via this API. 
+>Shipyard will serve as the entrypoint for documents and secrets into a site. At any point in time, there will be two represented versions of documents in a site that are accessible via this API. 
+>
+>* The lastDeployed version, which represents the last version of documents that successfully completed deployment.
+>* The staged version, which represents the document set that has been ingested by this API since the lastDeployed version.
 
-* The lastDeployed version, which represents the last version of documents that successfully completed deployment.
-* The staged version, which represents the document set that has been ingested by this API since the lastDeployed version.
-
-### /v1.0/configDocs  
-Represents the site configuration documents.  
+---
+### /v1.0/configdocs  
+Represents the site configuration documents 
 
 #### Payload Structure
-The yaml documents separated by --- and concluded by ...
+The documents (commonly yaml), in a format understood by Deckhand
 
 
 #### POST 
@@ -67,12 +83,12 @@ Updates the configDocs to be the lastDeployed versions in deckhand, effectively 
 ##### Responses
 * 204 No Content
 
-
+---
 ### /v1.0/secrets
 Represents the secrets documents that will be used in combination with the config docs.  
 
 #### Payload Structure
-The yaml documents separated by --- and concluded by ...
+The secrets documents in a format understood by Deckhand
 
 #### POST 
 Ingest new secrets documents.
@@ -101,7 +117,7 @@ Updates the secrets to be the lastDeployed versions in deckhand, effectively dis
 ##### Responses
 * 204 No Content
 
-
+---
 ### /v1.0/validations
 Represents the validation messages for the documents in deckhand  
 
@@ -126,10 +142,10 @@ If the validations can be retrieved.
 
 ---
 ## <a name="ActionAPI"></a> Action API
-Signal to Shipyard to take an action (e.g. Invoke a named DAG)
+>The Shipyard Action API is a resource that allows for creation, control and investigation of triggered workflows. These actions encapsulate a command interface for the Unercloud Platform.
 See [Action Commands](API_action_commands.md) for supported actions
 
-
+---
 ### /v1.0/actions
 
 #### Payload Structure
@@ -172,7 +188,7 @@ If the action name doesn't exist, or the payload is otherwise malformed.
 * 409 Conflict  
 For any failed validations. The response body is the action entity created, with the failed validations. The DAG will not begin execution in this case.  
 
-
+---
 ### /v1.0/actions/{action_id} 
 Each action will be assigned an unique id that can be used to get details for the action, including the execution status.
 
@@ -201,8 +217,8 @@ Returns the action entity for the specified id.
 ##### Responses
 * 200 OK 
 
-
-### /v1.0/actions/{action_id}/validationDetails/{validation_id} 
+---
+### /v1.0/actions/{action_id}/validationdetails/{validation_id} 
 Allows for drilldown to validation detailed info.
 
 #### Payload Structure
@@ -216,7 +232,7 @@ Returns the validation detail by Id for the supplied action Id.
 ##### Responses
 * 200 OK 
 
-
+---
 ### /v1.0/actions/{action_id}/steps/{step_id}
 Allow for drilldown to step information. The step information includes details of the steps excution, successful or not, and enough to facilitate troubleshooting in as easy a fashion as possible. 
 
@@ -231,7 +247,7 @@ Returns the details for a step by id for the given action by Id.
 ##### Responses
 * 200 OK 
 
-
+---
 ### /v1.0/actions/{action_id}/{control_verb}
 Allows for issuing DAG controls against an action.
 
@@ -245,10 +261,12 @@ Trigger a control action against an activity.- this includes: pause, unpause
 
 ---
 ## <a name="AirflowMonitoringAPI"></a> Airflow Monitoring API
-Airflow has a primary function of scheduling DAGs, as opposed to Shipyard's primary case of triggering DAGs.  Shipyard will need to provide functionality to allow for an operator to monitor and review the scheduled tasks.  This API will allow for accessing Airflow DAGs of either type.
+>Airflow has a primary function of scheduling DAGs, as opposed to Shipyard's primary case of triggering DAGs.  
+Shipyard provides functionality to allow for an operator to monitor and review these scheduled workflows (DAGs) in addition to the ones triggered by Shipyard. This API will allow for accessing Airflow DAGs of any type -- providing a peek into the totality of what is happening in Airflow.
 
-### /v1.0/completedDAGs
-The resource that represents DAGs in airflow
+---
+### /v1.0/workflows
+The resource that represents DAGs (workflows) in airflow
 
 #### Payload Structure
 A list of objects representing the DAGs that have run in airflow.
@@ -260,16 +278,15 @@ A list of objects representing the DAGs that have run in airflow.
 ```
 
 #### GET 
-Queries airflow for recent completed DAGs (a summary).
+Queries airflow for DAGs that are running or have run (successfully or unsuccessfully) and provides a summary of those things.  
 ##### Query parameters
 * elapsedDays={n}  
 optional, the number of days of history to retrieve. Default is 30 days.
 ##### Responses
 * 200 OK
 
-
-#### /v1.0/completedDAGs/{id}
-
+---
+### /v1.0/workflows/{id}
 
 #### Payload Structure
 An object representing the information available from airflow regarding a DAG's execution
@@ -277,7 +294,6 @@ An object representing the information available from airflow regarding a DAG's 
 ```
 { TBD }
 ```
-
 
 #### GET
 Further details of a particular scheduled DAG's output
