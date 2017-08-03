@@ -1,3 +1,5 @@
+Please note that this API information is being superseded by a new client facing API (under development) This file will stay in place for now, but needs to be removed when the newer API is in place.  Please see API.md for the newer information.
+
 ## REST API ##
 
 The default deployment will build an environment where the Falcon API server listens on port 31901
