@@ -45,8 +45,10 @@ A context id that will be carried on all logs for this cleint-provided marker. T
 ## <a name="DocumentStagingAPI"></a> Document Staging API
 >Shipyard will serve as the entrypoint for documents and secrets into a site. At any point in time, there will be two represented versions of documents in a site that are accessible via this API. 
 >
->* The lastDeployed version, which represents the last version of documents that successfully completed deployment.
->* The staged version, which represents the document set that has been ingested by this API since the lastDeployed version.
+>* The lastDeployed version, which represents the last version of documents that successfully completed deployment. The lastDeployed tag will be applied by Shipyard at the successful completion of certain workflows, to indicate a baseline design for the site.
+>* The staged version, which represents the document set that has been ingested by this API since the lastDeployed version.  
+>
+> All versions of documents rely upon Deckhand for storage. Shipyard will rely upon the tagging features of Deckhand of to find the appropriate lastDeployed and staged version.
 
 ---
 ### /v1.0/configdocs  
@@ -78,7 +80,7 @@ Return the documents in their compiled state instead of source documents
 If documents can be retrieved.
 
 #### DELETE  
-Updates the configDocs to be the lastDeployed versions in deckhand, effectively discarding any staged documents. If there is no prior deployed version this effectively removes all secrets.
+Updates the configDocs to be the lastDeployed versions in deckhand, effectively discarding any staged documents. If there is no prior deployed version this effectively removes all configDocs.
 
 ##### Responses
 * 204 No Content
