@@ -14,7 +14,7 @@
 import falcon
 import json
 import requests
-import urlparse
+import urllib.parse
 
 from .base import BaseResource
 
@@ -45,7 +45,7 @@ class AirflowAddConnectionResource(BaseResource):
                 return
 
             response = requests.get(req_url).json()
-       
+
             # Return output
             if response["output"]["stderr"]:
                 resp.status = falcon.HTTP_400

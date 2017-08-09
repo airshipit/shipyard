@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import control.api as api
+import shipyard_airflow.control.api as api
 
 def start_shipyard():
-    
+
     # Setup root logger
     logger = logging.getLogger('shipyard')
 
