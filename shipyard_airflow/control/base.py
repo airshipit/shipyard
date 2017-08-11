@@ -11,11 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon, falcon.request as request
+import falcon
+import falcon.request as request
 import uuid
 import json
 import configparser
 import os
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = dict
+
+from shipyard_airflow.errors import (
+    AppError,
+    ERR_UNKNOWN,
+)
+
 
 class BaseResource(object):
 
@@ -43,17 +54,30 @@ class BaseResource(object):
         else:
             return True
 
+    def to_json(self, body_dict):
+        return json.dumps(body_dict)
+
+    def on_success(self, res, message=None):
+        res.status = falcon.HTTP_200
+        response_dict = OrderedDict()
+        response_dict['type'] = 'success'
+        response_dict['message'] = message
+        res.body = self.to_json(response_dict)
+
     # Error Handling
     def return_error(self, resp, status_code, message="", retry=False):
         """
-        Write a error message body and throw a Falcon exception to trigger an HTTP status
+        Write a error message body and throw a Falcon exception to trigger
+        an HTTP status
 
         :param resp: Falcon response object to update
         :param status_code: Falcon status_code constant
         :param message: Optional error message to include in the body
-        :param retry: Optional flag whether client should retry the operation. Can ignore if we rely solely on 4XX vs 5xx status codes
+        :param retry: Optional flag whether client should retry the operation.
+        Can ignore if we rely solely on 4XX vs 5xx status codes
         """
-        resp.body = json.dumps({'type': 'error', 'message': message, 'retry': retry})
+        resp.body = self.to_json(
+            {'type': 'error', 'message': message, 'retry': retry})
         resp.content_type = 'application/json'
         resp.status = status_code
 
@@ -62,7 +86,7 @@ class BaseResource(object):
 
         # Shipyard config will be located at /etc/shipyard/shipyard.conf
         path = '/etc/shipyard/shipyard.conf'
-        
+
         # Check that shipyard.conf exists
         if os.path.isfile(path):
             config = configparser.ConfigParser()
@@ -73,7 +97,7 @@ class BaseResource(object):
 
             return query_data
         else:
-            return 'Error - Missing Configuration File'
+            raise AppError(ERR_UNKNOWN, "Missing Configuration File")
 
 
 class ShipyardRequestContext(object):
@@ -107,4 +131,3 @@ class ShipyardRequestContext(object):
 
 class ShipyardRequest(request.Request):
     context_type = ShipyardRequestContext
-

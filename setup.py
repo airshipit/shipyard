@@ -24,10 +24,9 @@ setup(name='shipyard_airflow',
       packages=['shipyard_airflow',
                 'shipyard_airflow.control'],
       install_requires=[
-        'falcon',
-        'requests',
-        'configparser',
-        'uwsgi>1.4'
-      ]
-     )
-
+          'falcon',
+          'requests',
+          'configparser',
+          'uwsgi>1.4',
+          'python-dateutil'
+      ])

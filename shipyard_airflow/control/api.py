@@ -29,11 +29,17 @@ from .airflow_connections import AirflowDeleteConnectionResource
 from .airflow_connections import AirflowListConnectionsResource
 from .airflow_get_version import GetAirflowVersionResource
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
+from shipyard_airflow.errors import AppError
+
 
 def start_api():
-
-    control_api = falcon.API(request_type=ShipyardRequest,
-                             middleware=[AuthMiddleware(), ContextMiddleware(), LoggingMiddleware()])
+    middlewares = [
+        AuthMiddleware(),
+        ContextMiddleware(),
+        LoggingMiddleware(),
+    ]
+    control_api = falcon.API(
+        request_type=ShipyardRequest, middleware=middlewares)
 
     control_api.add_route('/versions', VersionsResource())
 
@@ -45,13 +51,19 @@ def start_api():
         ('/dags/{dag_id}/tasks/{task_id}', TaskResource()),
         ('/dags/{dag_id}/dag_runs', DagRunResource()),
         ('/list_dags', ListDagsResource()),
-        ('/task_state/dags/{dag_id}/tasks/{task_id}/execution_date/{execution_date}', GetTaskStatusResource()),
-        ('/dag_state/dags/{dag_id}/execution_date/{execution_date}', GetDagStateResource()),
+        ('/task_state/dags/{dag_id}/tasks/{task_id}/execution_date/'
+         '{execution_date}', GetTaskStatusResource()),
+        ('/dag_state/dags/{dag_id}/execution_date/{execution_date}',
+            GetDagStateResource()),
         ('/list_tasks/dags/{dag_id}', ListTasksResource()),
-        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}', TriggerDagRunResource()),
-        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}/poll', TriggerDagRunPollResource()),
-        ('/connections/{action}/conn_id/{conn_id}/protocol/{protocol}/host/{host}/port/{port}', AirflowAddConnectionResource()),
-        ('/connections/{action}/conn_id/{conn_id}', AirflowDeleteConnectionResource()),
+        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}',
+            TriggerDagRunResource()),
+        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}/poll',
+            TriggerDagRunPollResource()),
+        ('/connections/{action}/conn_id/{conn_id}/protocol/{protocol}'
+         '/host/{host}/port/{port}', AirflowAddConnectionResource()),
+        ('/connections/{action}/conn_id/{conn_id}',
+            AirflowDeleteConnectionResource()),
         ('/connections/{action}', AirflowListConnectionsResource()),
         ('/airflow/version', GetAirflowVersionResource()),
     ]
@@ -59,6 +71,7 @@ def start_api():
     for path, res in v1_0_routes:
         control_api.add_route('/api/v1.0' + path, res)
 
+    control_api.add_error_handler(AppError, AppError.handle)
     return control_api
 
 class VersionsResource(BaseResource):
@@ -66,9 +79,9 @@ class VersionsResource(BaseResource):
     authorized_roles = ['anyone']
 
     def on_get(self, req, resp):
-        resp.body = json.dumps({'v1.0': {
-                                    'path': '/api/v1.0',
-                                    'status': 'stable'
-                                }})
+        resp.body = json.dumps({
+            'v1.0': {
+                'path': '/api/v1.0',
+                'status': 'stable'
+            }})
         resp.status = falcon.HTTP_200
-
