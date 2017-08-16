@@ -177,12 +177,10 @@ infrastructure and helm charts to deploy the containerized applications.
 
 3) Deploy Shipyard Helm Chart
 
-   The Shipyard helm chart is still under review at the moment and can be retrieved by performing the
-   the following steps:
+   The Shipyard helm chart can be retrieved by performing the the following step:
 
    ```
    $ git clone http://review.gerrithub.io/att-comdev/aic-helm
-   $ git fetch https://review.gerrithub.io/att-comdev/aic-helm refs/changes/91/373591/1 && git checkout FETCH_HEAD
    ```
 
    Shipyard Helm Chart Installation:
