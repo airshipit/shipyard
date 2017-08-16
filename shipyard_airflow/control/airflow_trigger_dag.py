@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import falcon
-import json
 import requests
 
 from dateutil.parser import parse
 from .base import BaseResource
+
 
 class TriggerDagRunResource(BaseResource):
 
@@ -28,12 +28,15 @@ class TriggerDagRunResource(BaseResource):
 
         if 'Error' in web_server_url:
             resp.status = falcon.HTTP_500
-            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
+            raise falcon.HTTPInternalServerError("Internal Server Error",
+                                                 "Missing Configuration File")
         else:
-            req_url = '{}/admin/rest_api/api?api=trigger_dag&dag_id={}&run_id={}'.format(web_server_url, dag_id, run_id)
+            req_url = ('{}/admin/rest_api/api?api=trigger_dag&dag_id={}'
+                       '&run_id={}'.format(web_server_url, dag_id, run_id))
             response = requests.get(req_url).json()
 
-            # Returns error response if API call returns response code other than 200
+            # Returns error response if API call returns
+            # response code other than 200
             if response["http_response_code"] != 200:
                 resp.status = falcon.HTTP_400
                 resp.body = response["output"]
@@ -41,7 +44,7 @@ class TriggerDagRunResource(BaseResource):
             else:
                 resp.status = falcon.HTTP_200
 
-                # Return time of execution so that we can use it to query dag/task status
+                # Return time of execution so that we can use
+                # it to query dag/task status
                 dt = parse(response["response_time"])
                 resp.body = dt.strftime('%Y-%m-%dT%H:%M:%S')
-

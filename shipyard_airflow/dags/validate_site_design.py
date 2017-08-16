@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import airflow
 from airflow.models import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.subdag_operator import SubDagOperator
-from airflow.utils.trigger_rule import TriggerRule
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
 
@@ -47,11 +44,11 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
     deckhand_validate_docs = DeckhandOperator(
         task_id='deckhand_validate_site_design', dag=dag)
 
-    #TODO () use the real operator here
+    # TODO () use the real operator here
     drydock_validate_docs = PlaceholderOperator(
         task_id='drydock_validate_site_design', dag=dag)
 
-    #TODO () use the real operator here
+    # TODO () use the real operator here
     armada_validate_docs = PlaceholderOperator(
         task_id='armada_validate_site_design', dag=dag)
 

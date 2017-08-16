@@ -14,6 +14,7 @@
 import logging
 import shipyard_airflow.control.api as api
 
+
 def start_shipyard():
 
     # Setup root logger
@@ -28,7 +29,9 @@ def start_shipyard():
     # Specalized format for API logging
     logger = logging.getLogger('shipyard.control')
     logger.propagate = False
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(user)s - %(req_id)s - %(external_ctx)s - %(message)s')
+    formatter = logging.Formatter(
+        ('%(asctime)s - %(levelname)s - %(user)s - %(req_id)s - '
+         '%(external_ctx)s - %(message)s'))
 
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
@@ -36,5 +39,5 @@ def start_shipyard():
 
     return api.start_api()
 
-shipyard = start_shipyard()
 
+shipyard = start_shipyard()

@@ -17,6 +17,7 @@ import requests
 
 from .base import BaseResource
 
+
 class TaskResource(BaseResource):
 
     authorized_roles = ['user']
@@ -27,9 +28,11 @@ class TaskResource(BaseResource):
 
         if 'Error' in web_server_url:
             resp.status = falcon.HTTP_500
-            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
+            raise falcon.HTTPInternalServerError("Internal Server Error",
+                                                 "Missing Configuration File")
         else:
-            req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(web_server_url, dag_id, task_id)
+            req_url = '{}/api/experimental/dags/{}/tasks/{}'.format(
+                web_server_url, dag_id, task_id)
             task_details = requests.get(req_url).json()
 
             if 'error' in task_details:
@@ -39,4 +42,3 @@ class TaskResource(BaseResource):
             else:
                 resp.status = falcon.HTTP_200
                 resp.body = json.dumps(task_details)
-

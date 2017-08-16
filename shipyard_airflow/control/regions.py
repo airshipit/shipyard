@@ -15,6 +15,7 @@ import falcon
 
 from .base import BaseResource
 
+
 class RegionsResource(BaseResource):
 
     authorized_roles = ['user']
@@ -22,10 +23,10 @@ class RegionsResource(BaseResource):
     def on_get(self, req, resp):
         resp.status = falcon.HTTP_200
 
+
 class RegionResource(BaseResource):
 
     authorized_roles = ['user']
 
     def on_get(self, req, resp, region_id):
         resp.status = falcon.HTTP_200
-

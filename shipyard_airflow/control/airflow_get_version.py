@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import falcon
-import json
 import requests
 
 from .base import BaseResource
+
 
 class GetAirflowVersionResource(BaseResource):
 
@@ -27,16 +27,18 @@ class GetAirflowVersionResource(BaseResource):
 
         if 'Error' in web_server_url:
             resp.status = falcon.HTTP_500
-            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
+            raise falcon.HTTPInternalServerError("Internal Server Error",
+                                                 "Missing Configuration File")
         else:
             # Get Airflow Version
-            req_url = '{}/admin/rest_api/api?api=version'.format(web_server_url)
+            req_url = '{}/admin/rest_api/api?api=version'.format(
+                web_server_url)
             response = requests.get(req_url).json()
-       
+
             if response["output"]:
                 resp.status = falcon.HTTP_200
                 resp.body = response["output"]
             else:
-                self.return_error(resp, falcon.HTTP_400, 'Fail to Retrieve Airflow Version')
+                self.return_error(resp, falcon.HTTP_400,
+                                  'Fail to Retrieve Airflow Version')
                 return
-

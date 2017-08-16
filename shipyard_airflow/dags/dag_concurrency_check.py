@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import airflow
 from airflow.models import DAG
 from airflow.operators import PlaceholderOperator
 from airflow.operators.dummy_operator import DummyOperator
@@ -48,6 +47,7 @@ def dag_concurrency_check_failure_handler(parent_dag_name, child_dag_name,
         default_args=args, )
 
     operator = DummyOperator(
-        task_id='dag_concurrency_check_failure_handler', dag=dag, )
+        task_id='dag_concurrency_check_failure_handler',
+        dag=dag, )
 
     return dag

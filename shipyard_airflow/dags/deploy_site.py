@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import airflow
 from airflow import DAG
@@ -26,8 +26,6 @@ from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
 from airflow.utils.trigger_rule import TriggerRule
-from datetime import datetime, timedelta
-
 '''
 deploy_site is the top-level orchestration DAG for deploying a site using the
 Undercloud platform.
@@ -57,30 +55,27 @@ default_args = {
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
 
 concurrency_check = SubDagOperator(
-    subdag=dag_concurrency_check(PARENT_DAG_NAME,
-                                 DAG_CONCURRENCY_CHECK_DAG_NAME,
-                                 args=default_args),
+    subdag=dag_concurrency_check(
+        PARENT_DAG_NAME, DAG_CONCURRENCY_CHECK_DAG_NAME, args=default_args),
     task_id=DAG_CONCURRENCY_CHECK_DAG_NAME,
     dag=dag, )
 
 concurrency_check_failure_handler = SubDagOperator(
     subdag=dag_concurrency_check_failure_handler(
-        PARENT_DAG_NAME, CONCURRENCY_FAILURE_DAG_NAME,
-        args=default_args),
+        PARENT_DAG_NAME, CONCURRENCY_FAILURE_DAG_NAME, args=default_args),
     task_id=CONCURRENCY_FAILURE_DAG_NAME,
     trigger_rule=TriggerRule.ONE_FAILED,
     dag=dag, )
 
 preflight = SubDagOperator(
-    subdag=all_preflight_checks(PARENT_DAG_NAME, ALL_PREFLIGHT_CHECKS_DAG_NAME,
-                                args=default_args),
+    subdag=all_preflight_checks(
+        PARENT_DAG_NAME, ALL_PREFLIGHT_CHECKS_DAG_NAME, args=default_args),
     task_id=ALL_PREFLIGHT_CHECKS_DAG_NAME,
     dag=dag, )
 
 preflight_failure = SubDagOperator(
-    subdag=preflight_failure_handler(PARENT_DAG_NAME,
-                                     PREFLIGHT_FAILURE_DAG_NAME,
-                                     args=default_args),
+    subdag=preflight_failure_handler(
+        PARENT_DAG_NAME, PREFLIGHT_FAILURE_DAG_NAME, args=default_args),
     task_id=PREFLIGHT_FAILURE_DAG_NAME,
     trigger_rule=TriggerRule.ONE_FAILED,
     dag=dag, )
@@ -89,15 +84,14 @@ get_design_version = DeckhandOperator(
     task_id=DECKHAND_GET_DESIGN_VERSION, dag=dag)
 
 validate_site_design = SubDagOperator(
-    subdag=validate_site_design(PARENT_DAG_NAME, VALIDATE_SITE_DESIGN_DAG_NAME,
-                                args=default_args),
+    subdag=validate_site_design(
+        PARENT_DAG_NAME, VALIDATE_SITE_DESIGN_DAG_NAME, args=default_args),
     task_id=VALIDATE_SITE_DESIGN_DAG_NAME,
     dag=dag)
 
 validate_site_design_failure = SubDagOperator(
     subdag=validate_site_design_failure_handler(
-        dag.dag_id, VALIDATION_FAILED_DAG_NAME,
-        args=default_args),
+        dag.dag_id, VALIDATION_FAILED_DAG_NAME, args=default_args),
     task_id=VALIDATION_FAILED_DAG_NAME,
     trigger_rule=TriggerRule.ONE_FAILED,
     dag=dag)

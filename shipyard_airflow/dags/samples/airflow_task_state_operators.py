@@ -18,7 +18,7 @@ import airflow
 from airflow import DAG
 from airflow.operators import TaskStateOperator
 from airflow.operators.bash_operator import BashOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 default_args = {
     'owner': 'airflow',
@@ -31,7 +31,9 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-dag = DAG('airflow_task_state', default_args=default_args, schedule_interval=None)
+dag = DAG('airflow_task_state',
+          default_args=default_args,
+          schedule_interval=None)
 
 # Get Task State
 t1 = TaskStateOperator(
@@ -44,9 +46,9 @@ t1 = TaskStateOperator(
 # Use XCOM to Retrieve Task State
 t2 = BashOperator(
     task_id='pull',
-    bash_command="echo {{ ti.xcom_pull(task_ids='airflow_task_state', key='task_state') }}",
+    bash_command=("echo {{ ti.xcom_pull(task_ids='airflow_task_state',"
+                  " key='task_state') }}"),
     xcom_push=True,
     dag=dag)
 
 t2.set_upstream(t1)
-
