@@ -23,7 +23,7 @@ class DeckhandOperator(BaseOperator):
     Supports interaction with Deckhand.
     """
 
-    #TODO () remove this special coloring when the operator is done.
+    # TODO () remove this special coloring when the operator is done.
     ui_color = '#e8f7e4'
 
     @apply_defaults

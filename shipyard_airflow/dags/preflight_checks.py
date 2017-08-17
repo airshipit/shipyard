@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import airflow
 from airflow.models import DAG
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators.dummy_operator import DummyOperator
@@ -52,7 +51,10 @@ def shipyard_preflight_check(parent_dag_name, child_dag_name, args):
     return dag
 
 
-def deckhand_preflight_check(parent_dag_name, child_dag_name, args, ):
+def deckhand_preflight_check(
+        parent_dag_name,
+        child_dag_name,
+        args, ):
     '''
     Checks that deckhand is in a good state for
     the purposes of the Undercloud Platform to proceed with processing
@@ -124,29 +126,26 @@ def all_preflight_checks(parent_dag_name, child_dag_name, args):
         dag=dag, )
 
     shipyard = SubDagOperator(
-        subdag=shipyard_preflight_check(dag.dag_id,
-                                        SHIPYARD_PREFLIGHT_CHECK_DAG_NAME,
-                                        args),
+        subdag=shipyard_preflight_check(
+            dag.dag_id, SHIPYARD_PREFLIGHT_CHECK_DAG_NAME, args),
         task_id=SHIPYARD_PREFLIGHT_CHECK_DAG_NAME,
         dag=dag, )
 
     deckhand = SubDagOperator(
-        subdag=deckhand_preflight_check(dag.dag_id,
-                                        DECKHAND_PREFLIGHT_CHECK_DAG_NAME,
-                                        args),
+        subdag=deckhand_preflight_check(
+            dag.dag_id, DECKHAND_PREFLIGHT_CHECK_DAG_NAME, args),
         task_id=DECKHAND_PREFLIGHT_CHECK_DAG_NAME,
         dag=dag, )
 
     drydock = SubDagOperator(
         subdag=drydock_preflight_check(dag.dag_id,
-                                       DRYDOCK_PREFLIGHT_CHECK_DAG_NAME,
-                                       args),
+                                       DRYDOCK_PREFLIGHT_CHECK_DAG_NAME, args),
         task_id=DRYDOCK_PREFLIGHT_CHECK_DAG_NAME,
         dag=dag, )
 
     armada = SubDagOperator(
-        subdag=armada_preflight_check(
-            dag.dag_id, ARMADA_PREFLIGHT_CHECK_DAG_NAME, args),
+        subdag=armada_preflight_check(dag.dag_id,
+                                      ARMADA_PREFLIGHT_CHECK_DAG_NAME, args),
         task_id=ARMADA_PREFLIGHT_CHECK_DAG_NAME,
         dag=dag, )
 

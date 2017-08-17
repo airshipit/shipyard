@@ -14,13 +14,12 @@
 
 import logging
 import subprocess
-import sys
-import os
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
+
 
 class TaskStateOperator(BaseOperator):
     """
@@ -29,38 +28,48 @@ class TaskStateOperator(BaseOperator):
     :airflow_task_id: Task ID
     :airflow_execution_date: Task Execution Date
     """
+
     @apply_defaults
     def __init__(self,
                  airflow_command=None,
                  airflow_dag_id=None,
                  airflow_task_id=None,
                  airflow_execution_date=None,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
 
         super(TaskStateOperator, self).__init__(*args, **kwargs)
         self.airflow_dag_id = airflow_dag_id
         self.airflow_task_id = airflow_task_id
         self.airflow_execution_date = airflow_execution_date
-        self.airflow_command = ['airflow', 'task_state', airflow_dag_id, airflow_task_id, airflow_execution_date]
+        self.airflow_command = [
+            'airflow', 'task_state', airflow_dag_id, airflow_task_id,
+            airflow_execution_date
+        ]
 
     def execute(self, context):
         logging.info("Running Airflow Command: %s", self.airflow_command)
 
         # Execute Airflow CLI Command
-        airflow_cli = subprocess.Popen(self.airflow_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        airflow_cli = subprocess.Popen(
+            self.airflow_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
 
         # Logs Output
-        # Filter out logging messages from standard output and keep only the relevant information
+        # Filter out logging messages from standard output
+        # and keep only the relevant information
         line = ''
         for line in iter(airflow_cli.stdout.readline, b''):
             line = line.strip()
 
-            if line.startswith( '[' ):
+            if line.startswith('['):
                 pass
             else:
                 logging.info(line)
 
-        # Wait for child process to terminate. Set and return returncode attribute.
+        # Wait for child process to terminate.
+        # Set and return returncode attribute.
         airflow_cli.wait()
 
         # Raise Execptions if Task State Command Fails
@@ -79,4 +88,3 @@ class TaskStateOperator(BaseOperator):
 class TaskStatePlugin(AirflowPlugin):
     name = "task_state_plugin"
     operators = [TaskStateOperator]
-

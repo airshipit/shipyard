@@ -18,8 +18,7 @@ import airflow
 from airflow import DAG
 from airflow.operators import OpenStackOperator
 from airflow.operators.bash_operator import BashOperator
-from datetime import datetime, timedelta
-
+from datetime import timedelta
 
 default_args = {
     'owner': 'airflow',
@@ -35,13 +34,10 @@ default_args = {
 dag = DAG('openstack_cli', default_args=default_args, schedule_interval=None)
 
 # print_date
-t1 = BashOperator(
-    task_id='print_date',
-    bash_command='date',
-    dag=dag)
+t1 = BashOperator(task_id='print_date', bash_command='date', dag=dag)
 
-## Note that the openrc.sh file needs to be placed on a volume that can be
-## accessed by the containers
+# Note that the openrc.sh file needs to be placed on a volume that can be
+# accessed by the containers
 
 # openstack endpoint list
 t2 = OpenStackOperator(
@@ -75,4 +71,3 @@ t2.set_upstream(t1)
 t3.set_upstream(t1)
 t4.set_upstream(t1)
 t5.set_upstream(t1)
-

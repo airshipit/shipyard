@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import falcon
-import json
 import requests
 
 from .base import BaseResource
+
 
 class ListDagsResource(BaseResource):
 
@@ -27,12 +27,14 @@ class ListDagsResource(BaseResource):
 
         if 'Error' in web_server_url:
             resp.status = falcon.HTTP_500
-            raise falcon.HTTPInternalServerError("Internal Server Error", "Missing Configuration File")
+            raise falcon.HTTPInternalServerError("Internal Server Error",
+                                                 "Missing Configuration File")
         else:
             # List available dags
-            req_url = '{}/admin/rest_api/api?api=list_dags'.format(web_server_url)
+            req_url = '{}/admin/rest_api/api?api=list_dags'.format(
+                web_server_url)
             response = requests.get(req_url).json()
-       
+
             if response["output"]["stderr"]:
                 resp.status = falcon.HTTP_400
                 resp.body = response["output"]["stderr"]
@@ -40,4 +42,3 @@ class ListDagsResource(BaseResource):
             else:
                 resp.status = falcon.HTTP_200
                 resp.body = response["output"]["stdout"]
-
