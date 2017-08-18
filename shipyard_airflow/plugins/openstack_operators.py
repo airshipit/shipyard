@@ -14,6 +14,8 @@
 
 import logging
 import subprocess
+import os
+import configparser
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -24,36 +26,37 @@ from airflow.utils.decorators import apply_defaults
 class OpenStackOperator(BaseOperator):
     """
     Performs OpenStack CLI calls
-    :openrc_file: Path of the openrc file
+    :shipyard_conf: Location of shipyard.conf
     :openstack_command: The OpenStack command to be executed
     """
-
     @apply_defaults
     def __init__(self,
-                 openrc_file,
+                 shipyard_conf,
                  openstack_command=None,
                  xcom_push=False,
-                 *args,
-                 **kwargs):
+                 *args, **kwargs):
 
         super(OpenStackOperator, self).__init__(*args, **kwargs)
-        self.openrc_file = openrc_file
+        self.shipyard_conf = shipyard_conf
         self.openstack_command = openstack_command
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
         logging.info("Running OpenStack Command: %s", self.openstack_command)
 
-        # Emulate "source" in bash. Sets up environment variables.
-        pipe = subprocess.Popen(
-            ". %s; env" % self.openrc_file, stdout=subprocess.PIPE, shell=True)
-        data = pipe.communicate()[0]
-        os_env = dict((line.split("=", 1) for line in data.splitlines()))
+        # Read and parse shiyard.conf
+        config = configparser.ConfigParser()
+        config.read(self.shipyard_conf)
+
+        # Construct Envrionment variables
+        for attr in ('OS_AUTH_URL', 'OS_PROJECT_ID', 'OS_PROJECT_NAME',
+                     'OS_USER_DOMAIN_NAME', 'OS_USERNAME', 'OS_PASSWORD',
+                     'OS_REGION_NAME', 'OS_IDENTITY_API_VERSION'):
+            os.environ[attr] = config.get('keystone', attr)
 
         # Execute the OpenStack CLI Command
         openstack_cli = subprocess.Popen(
             self.openstack_command,
-            env=os_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
 
@@ -65,7 +68,7 @@ class OpenStackOperator(BaseOperator):
             line = line.strip()
             logging.info(line)
 
-        # Wait for child process to terminate.
+        # Wait for child process to terminate
         # Set and return returncode attribute.
         openstack_cli.wait()
         logging.info("Command exited with "
@@ -74,11 +77,6 @@ class OpenStackOperator(BaseOperator):
         # Raise Execptions if OpenStack Command Fails
         if openstack_cli.returncode:
             raise AirflowException("OpenStack Command Failed")
-        """
-        Push response to an XCom if xcom_push is True
-        """
-        if self.xcom_push_flag:
-            return line
 
 
 class OpenStackCliPlugin(AirflowPlugin):

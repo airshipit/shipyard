@@ -17,13 +17,13 @@
 import airflow
 from airflow import DAG
 from airflow.operators import OpenStackOperator
-from airflow.operators.bash_operator import BashOperator
 from datetime import timedelta
+
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': airflow.utils.dates.days_ago(2),
+    'start_date': airflow.utils.dates.days_ago(1),
     'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -33,41 +33,33 @@ default_args = {
 
 dag = DAG('openstack_cli', default_args=default_args, schedule_interval=None)
 
-# print_date
-t1 = BashOperator(task_id='print_date', bash_command='date', dag=dag)
+# Location of shiyard.conf
+config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
-# Note that the openrc.sh file needs to be placed on a volume that can be
-# accessed by the containers
+# Note that the shipyard.conf file needs to be placed on a volume
+# that can be accessed by the containers
 
 # openstack endpoint list
-t2 = OpenStackOperator(
+t1 = OpenStackOperator(
     task_id='endpoint_list_task',
-    openrc_file='/usr/local/airflow/dags/openrc.sh',
+    shipyard_conf=config_path,
     openstack_command=['openstack', 'endpoint', 'list'],
     dag=dag)
 
 # openstack service list
-t3 = OpenStackOperator(
+t2 = OpenStackOperator(
     task_id='service_list_task',
-    openrc_file='/usr/local/airflow/dags/openrc.sh',
+    shipyard_conf=config_path,
     openstack_command=['openstack', 'service', 'list'],
     dag=dag)
 
 # openstack server list
-t4 = OpenStackOperator(
+t3 = OpenStackOperator(
     task_id='server_list_task',
-    openrc_file='/usr/local/airflow/dags/openrc.sh',
+    shipyard_conf=config_path,
     openstack_command=['openstack', 'server', 'list'],
     dag=dag)
 
-# openstack network list
-t5 = OpenStackOperator(
-    task_id='network_list_task',
-    openrc_file='/usr/local/airflow/dags/openrc.sh',
-    openstack_command=['openstack', 'network', 'list'],
-    dag=dag)
 
 t2.set_upstream(t1)
-t3.set_upstream(t1)
-t4.set_upstream(t1)
-t5.set_upstream(t1)
+t3.set_upstream(t2)
