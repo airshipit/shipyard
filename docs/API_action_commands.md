@@ -9,23 +9,54 @@ None at this time.
 ## Actions under development
 These actions are under active development
 
-* deploy site  
-Triggers the initial deployment of a site, using the staged design and secrets
+* deploy_site  
+Triggers the initial deployment of a site, using the latest committed
+configuration documents. Steps:
+  1) Concurrency check - to prevent concurrent site modifications by
+  conflicting actions/workflows.
+  2) Preflight checks - ensures all UCP components are in a responsive state.
+  3) Get design version - uses Deckhand to discover the latest committed
+  version of design for the site.
+  4) Validate design - asks each involved UCP component to validate the design.
+  This ensures that the design, which was previously committed is valid at the
+  present time.
+  5) Drydock build - orchestrates the Drydock component to configure hardware
+  and the Kubernetes environment (Drydock -> Promenade)
+  6) Check deployed node status - checks that the deployment of nodes is
+  successful.
+  7) Armada build - orchestrates Armada to configure software on the nodes as
+  designed.
 
-* update site  
-Triggers the an update to an existing site, using the staged design and secrets for the site  
+* update_site  
+Triggers the initial deployment of a site, using the latest committed
+configuration documents. Steps: (same as deploy_site)
 
-* redeploy server  
-Using parameters to indicate which server(s), triggers a redeployment of server to the last known good design and secrets
+* redeploy_server  
+Using parameters to indicate which server(s), triggers a redeployment of server
+to the last known good design and secrets
+
+* commit_configdocs
+This signals to shipyard that the documents in the shipyard buffer should be
+committed to the site as design. Steps:
+  1) Blocks Shipyard from accepting any documents for the duration of the
+  commit_configdocs action to prevent unexpected behavior of the buffer in the
+  case of validation failures.
+  2) Triggers validations by the various UCP components against the documents
+  in the Shipyard Buffer.
+     * If all validations pass, tags the revision in Deckhand as a committed
+     version. This will effecively "empty" the Shipyard Buffer.
+     * If validations fail, the Shipyard Buffer will remain in the state it
+     was before the commit_configdocs started.
 
 ---
 ## Future actions
 These actions are anticipated for development
 * test region  
-Invoke site validation testing - perhaps baseline is a invocation of all components regular "component" tests. This test would be used as a preflight-style test to ensure all components are in a working state.
+Invoke site validation testing - perhaps baseline is a invocation of all
+components regular "component" tests. This test would be used as a
+preflight-style test to ensure all components are in a working state.
 
 * test component  
-Invoke a particular platform component to test it. This test would be used to interrogate a particular platform component to ensure it is in a working state, and that its own downstream dependencies are also operational
-
-* validate design  
-Use parameters to test a design. Parameters may support both quick tests to ensure basic format and a complete design, or a more in-depth test that interfaces with particular platform components to ensure a good design
+Invoke a particular platform component to test it. This test would be used to
+interrogate a particular platform component to ensure it is in a working state,
+and that its own downstream dependencies are also operational
