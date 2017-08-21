@@ -13,24 +13,8 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
-
-
-def validate_site_design_failure_handler(parent_dag_name, child_dag_name,
-                                         args):
-    '''
-    Peforms the actions necessary when any of the site design checks fail
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args, )
-
-    operator = DummyOperator(
-        task_id='site_design_validation_failure_handler', dag=dag)
-
-    return dag
 
 
 def validate_site_design(parent_dag_name, child_dag_name, args):

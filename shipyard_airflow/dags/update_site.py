@@ -23,11 +23,11 @@ from airflow.operators import ConcurrencyCheckOperator
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
 """
-deploy_site is the top-level orchestration DAG for deploying a site using the
+update_site is the top-level orchestration DAG for updating a site using the
 Undercloud platform.
 """
 
-PARENT_DAG_NAME = 'deploy_site'
+PARENT_DAG_NAME = 'update_site'
 DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'

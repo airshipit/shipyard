@@ -11,21 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from airflow.models import DAG
-from airflow.operators import ConcurrencyCheckOperator
+import logging
 
 
-def dag_concurrency_check(parent_dag_name, child_dag_name, args):
-    '''
-    dag_concurrency_check is a sub-DAG that will will allow for a DAG to
-    determine if it is already running, and result in an error if so.
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args, )
-
-    dag_concurrency_check_operator = ConcurrencyCheckOperator(
-        task_id='dag_concurrency_check', dag=dag)
-
-    return dag
+def step_failure_handler(context):
+    """
+    Callable used to handle failure of this step.
+    """
+    logging.info('%s step failed', context['task_instance'].task_id)
