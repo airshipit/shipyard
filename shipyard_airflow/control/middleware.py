@@ -11,66 +11,90 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon
 import logging
+from uuid import UUID
+from oslo_utils import uuidutils
+from shipyard_airflow import policy
 
 
 class AuthMiddleware(object):
+    def __init__(self):
+        self.logger = logging.getLogger('shipyard')
 
     # Authentication
     def process_request(self, req, resp):
         ctx = req.context
-        token = req.get_header('X-Auth-Token')
+        ctx.set_policy_engine(policy.policy_engine)
 
-        user = self.validate_token(token)
+        for k, v in req.headers.items():
+            self.logger.debug("Request with header %s: %s" % (k, v))
 
-        if user is not None:
-            ctx.set_user(user)
-            user_roles = self.role_list(user)
-            ctx.add_roles(user_roles)
+        auth_status = req.get_header(
+            'X-SERVICE-IDENTITY-STATUS')  # will be set to Confirmed or Invalid
+        service = True
+
+        if auth_status is None:
+            auth_status = req.get_header('X-IDENTITY-STATUS')
+            service = False
+
+        if auth_status == 'Confirmed':
+            # Process account and roles
+            ctx.authenticated = True
+            # User Identity, unique within owning domain
+            ctx.user = req.get_header(
+                'X-SERVICE-USER-NAME') if service else req.get_header(
+                    'X-USER-NAME')
+            # Identity-service managed unique identifier
+            ctx.user_id = req.get_header(
+                'X-SERVICE-USER-ID') if service else req.get_header(
+                    'X-USER-ID')
+            # Identity service managed unique identifier of owning domain of
+            #  user name
+            ctx.user_domain_id = req.get_header(
+                'X-SERVICE-USER-DOMAIN-ID') if service else req.get_header(
+                    'X-USER-DOMAIN-ID')
+            # Identity service managed unique identifier
+            ctx.project_id = req.get_header(
+                'X-SERVICE-PROJECT-ID') if service else req.get_header(
+                    'X-PROJECT-ID')
+            # Name of owning domain of project
+            ctx.project_domain_id = req.get_header(
+                'X-SERVICE-PROJECT-DOMAIN-ID') if service else req.get_header(
+                    'X-PROJECT-DOMAIN-NAME')
+            if service:
+                # comma delimieted list of case-sensitive role names
+                ctx.add_roles(req.get_header('X-SERVICE-ROLES').split(','))
+            else:
+                ctx.add_roles(req.get_header('X-ROLES').split(','))
+
+            if req.get_header('X-IS-ADMIN-PROJECT') == 'True':
+                ctx.is_admin_project = True
+            else:
+                ctx.is_admin_project = False
+
+            self.logger.debug(
+                'Request from authenticated user %s with roles %s' %
+                (ctx.user, ','.join(ctx.roles)))
         else:
-            ctx.add_role('anyone')
-
-    # Authorization
-    def process_resource(self, req, resp, resource, params):
-        ctx = req.context
-
-        if not resource.authorize_roles(ctx.roles):
-            raise falcon.HTTPUnauthorized(
-                'Authentication required',
-                ('This resource requires an authorized role.'))
-
-    # Return the username associated with an authenticated token or None
-    def validate_token(self, token):
-        if token == '10':
-            return 'shipyard'
-        elif token == 'admin':
-            return 'admin'
-        else:
-            return None
-
-    # Return the list of roles assigned to the username
-    # Roles need to be an enum
-    def role_list(self, username):
-        if username == 'shipyard':
-            return ['user']
-        elif username == 'admin':
-            return ['user', 'admin']
+            ctx.authenticated = False
 
 
 class ContextMiddleware(object):
+    def __init__(self):
+        # Setup validation pattern for external marker
+        try:
+            uuid_value = uuidutils.generate_uuid(dashed=True)
+            UUID(uuid_value)
+        except:
+            self.logger.error('UUID generation fail')
+
     def process_request(self, req, resp):
         ctx = req.context
 
-        requested_logging = req.get_header('X-Log-Level')
-
-        if requested_logging == 'DEBUG' and 'admin' in ctx.roles:
-            ctx.set_log_level('debug')
-        elif requested_logging == 'INFO':
-            ctx.set_log_level('info')
-
         ext_marker = req.get_header('X-Context-Marker')
-        ctx.set_external_marker(ext_marker if ext_marker is not None else '')
+
+        if ext_marker is not None and self.marker_re.fullmatch(ext_marker):
+            ctx.set_external_marker(ext_marker)
 
 
 class LoggingMiddleware(object):

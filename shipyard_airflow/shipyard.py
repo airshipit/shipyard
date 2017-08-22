@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+
+from oslo_config import cfg
+
+from shipyard_airflow import policy
 import shipyard_airflow.control.api as api
+# We need to import config so the initializing code can run for oslo config
+import shipyard_airflow.config as config  # noqa: F401
 
 
 def start_shipyard():
+
+    # Setup configuration parsing
+    cli_options = [
+        cfg.BoolOpt(
+            'debug', short='d', default=False, help='Enable debug logging'),
+    ]
 
     # Setup root logger
     logger = logging.getLogger('shipyard')
@@ -37,7 +49,16 @@ def start_shipyard():
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
+    # Setup the RBAC policy enforcer
+    policy.policy_engine = policy.ShipyardPolicy()
+    policy.policy_engine.register_policy()
+
     return api.start_api()
+
+
+# Initialization compatible with PasteDeploy
+def paste_start_shipyard(global_conf, **kwargs):
+    return shipyard
 
 
 shipyard = start_shipyard()

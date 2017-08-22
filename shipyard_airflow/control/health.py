@@ -15,10 +15,7 @@ import falcon
 
 from shipyard_airflow.control.base import BaseResource
 
-
 class HealthResource(BaseResource):
-
-    authorized_roles = ['anyone']
 
     # Return empty response/body to show
     # that shipyard is healthy
