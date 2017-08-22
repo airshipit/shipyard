@@ -48,10 +48,10 @@ class OpenStackOperator(BaseOperator):
         config = configparser.ConfigParser()
         config.read(self.shipyard_conf)
 
-        # Construct Envrionment variables
-        for attr in ('OS_AUTH_URL', 'OS_PROJECT_ID', 'OS_PROJECT_NAME',
-                     'OS_USER_DOMAIN_NAME', 'OS_USERNAME', 'OS_PASSWORD',
-                     'OS_REGION_NAME', 'OS_IDENTITY_API_VERSION'):
+        # Construct Envrionment Variables
+        for attr in ('OS_AUTH_URL', 'OS_PROJECT_NAME', 'OS_USER_DOMAIN_NAME',
+                     'OS_USERNAME', 'OS_PASSWORD', 'OS_REGION_NAME',
+                     'OS_IDENTITY_API_VERSION'):
             os.environ[attr] = config.get('keystone', attr)
 
         # Execute the OpenStack CLI Command
