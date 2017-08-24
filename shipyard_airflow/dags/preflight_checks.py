@@ -14,7 +14,6 @@
 
 from airflow.models import DAG
 from airflow.operators.subdag_operator import SubDagOperator
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import PlaceholderOperator
 
 
@@ -148,18 +147,5 @@ def all_preflight_checks(parent_dag_name, child_dag_name, args):
                                       ARMADA_PREFLIGHT_CHECK_DAG_NAME, args),
         task_id=ARMADA_PREFLIGHT_CHECK_DAG_NAME,
         dag=dag, )
-
-    return dag
-
-
-def preflight_failure_handler(parent_dag_name, child_dag_name, args):
-    '''
-    Peforms the actions necessary when preflight checks fail
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args, )
-
-    operator = DummyOperator(task_id='preflight_failure_handler', dag=dag)
 
     return dag

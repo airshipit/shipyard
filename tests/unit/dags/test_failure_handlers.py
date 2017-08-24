@@ -11,21 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from testfixtures import LogCapture
+from types import SimpleNamespace
+from shipyard_airflow.dags import failure_handlers
 
-from airflow.models import DAG
-from airflow.operators import ConcurrencyCheckOperator
+CONTEXT = {'task_instance': SimpleNamespace(task_id='cheese')}
 
 
-def dag_concurrency_check(parent_dag_name, child_dag_name, args):
-    '''
-    dag_concurrency_check is a sub-DAG that will will allow for a DAG to
-    determine if it is already running, and result in an error if so.
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args, )
-
-    dag_concurrency_check_operator = ConcurrencyCheckOperator(
-        task_id='dag_concurrency_check', dag=dag)
-
-    return dag
+def test_step_failure_handler():
+    """
+    Ensure that the failure handler is logging as intended.
+    """
+    with LogCapture() as log_capturer:
+        failure_handlers.step_failure_handler(CONTEXT)
+        log_capturer.check(('root', 'INFO', 'cheese step failed'))
