@@ -60,9 +60,6 @@ COPY ./ /home/shipyard/shipyard
 # Copy entrypoint.sh to /home/shipyard
 COPY entrypoint.sh /home/shipyard/entrypoint.sh
 
-# Copy shipyard.conf to /home/shipyard
-COPY ./shipyard_airflow/control/shipyard.conf /home/shipyard/shipyard.conf
-
 # Change permissions
 RUN chown -R shipyard: /home/shipyard \
     && chmod +x /home/shipyard/entrypoint.sh

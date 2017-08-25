@@ -11,19 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon
+"""
+The Application scope instances of db access classes
+"""
+from shipyard_airflow.db import airflow_db, shipyard_db
 
-from .base import BaseResource
-from shipyard_airflow import policy
-
-class RegionsResource(BaseResource):
-
-    @policy.ApiEnforcer('workflow_orchestrator:get_regions')
-    def on_get(self, req, resp):
-        resp.status = falcon.HTTP_200
-
-class RegionResource(BaseResource):
-
-    @policy.ApiEnforcer('workflow_orchestrator:get_regions')
-    def on_get(self, req, resp, region_id):
-        resp.status = falcon.HTTP_200
+SHIPYARD_DB = shipyard_db.ShipyardDbAccess()
+AIRFLOW_DB = airflow_db.AirflowDbAccess()

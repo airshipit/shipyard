@@ -1,0 +1,27 @@
+# Actions requiring admin authority
+#"admin_required": "role:admin"
+
+# List workflow actions invoked by users
+# GET  /api/v1.0/actions
+#"workflow_orchestrator:list_actions": "rule:admin_required"
+
+# Create a workflow action
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:create_actions": "rule:admin_required"
+
+# Retreive an action by its id
+# GET  /api/v1.0/actions/{action_id}
+#"workflow_orchestrator:get_action": "rule:admin_required"
+
+# Retreive an action step by its id
+# GET  /api/v1.0/actions/{action_id}/steps/{step_id}
+#"workflow_orchestrator:get_action_step": "rule:admin_required"
+
+# Retreive an action validation by its id
+# GET  /api/v1.0/actions/{action_id}/validations/{validation_id}
+#"workflow_orchestrator:get_action_validation": "rule:admin_required"
+
+# Send a control to an action
+# POST  /api/v1.0/actions/{action_id}/control/{control_verb}
+#"workflow_orchestrator:invoke_action_control": "rule:admin_required"
+

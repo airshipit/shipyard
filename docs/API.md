@@ -276,7 +276,7 @@ Returns the details for a step by id for the given action by Id.
 * 200 OK
 
 ---
-### /v1.0/actions/{action_id}/{control_verb}
+### /v1.0/actions/{action_id}/control/{control_verb}
 Allows for issuing DAG controls against an action.
 
 #### Payload Structure
