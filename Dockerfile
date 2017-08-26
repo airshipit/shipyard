@@ -35,13 +35,9 @@ RUN set -x && \
     make \
     libffi-dev \
     libssl-dev \
+    libpq-dev \
     --no-install-recommends \
     && python3 -m pip install -U pip \
-    && pip3 install falcon \
-    && pip3 install requests \
-    && pip3 install uwsgi \
-    && pip3 install configparser \
-    && pip3 install python-openstackclient==3.11.0 \
     && apt-get clean \
     && rm -rf \
         /var/lib/apt/lists/* \
@@ -50,6 +46,10 @@ RUN set -x && \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+# Copy dependency requirements
+COPY ./requirements.txt /tmp/
+RUN pip3 install -r /tmp/requirements.txt
 
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard
