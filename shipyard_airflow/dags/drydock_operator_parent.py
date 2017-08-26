@@ -16,7 +16,7 @@
 """
 import airflow
 from airflow import DAG
-from datetime import datetime, timedelta
+from datetime import timedelta
 from airflow.operators.subdag_operator import SubDagOperator
 from drydock_operator_child import sub_dag
 
@@ -41,7 +41,8 @@ main_dag = DAG(
 )
 
 subdag = SubDagOperator(
-    subdag=sub_dag(parent_dag_name, child_dag_name, args, main_dag.schedule_interval),
+    subdag=sub_dag(parent_dag_name, child_dag_name, args,
+                   main_dag.schedule_interval),
     task_id=child_dag_name,
     default_args=args,
     dag=main_dag)
