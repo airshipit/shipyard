@@ -670,6 +670,43 @@ class REST_API(BaseView):
     @staticmethod
     def execute_cli_command(airflow_cmd_split):
         logging.info("Executing CLI Command")
+
+        # There is a need to handle this case separately as the current implementation
+        # breaks the JSON string into multiple parts in a List and this cause the Airflow
+        # command to stop working properly
+        #
+        # The idea here is to handle the JSON string separately and to make use of the
+        # fact that the command will take on the following pattern:
+        #
+        # `airflow trigger_dag --config '{"message": "Hello World"}' test_1`
+        #
+        # , where test_1 is the name of the Dag
+        #
+        if airflow_cmd_split[2] == '--conf':
+            # Initialize list x and extract the JSON string
+            # from the airflow_cmd_split List
+            x = []
+            for i in range(3, len(airflow_cmd_split) - 1):
+                x.append(airflow_cmd_split[i])
+
+            # Initialize list y
+            y = [None] * 5
+
+            # Assign values to list y
+            for j in range(0, 3):
+                y[j] = airflow_cmd_split[j]
+
+            # Create string using list x and assigns to y[3]
+            y[3] = " ".join(x)
+
+            # Dag name will always be airflow_cmd_split[-1]
+            y[4] = airflow_cmd_split[-1]
+
+            # Assigns updated values to airflow_cmd_split
+            airflow_cmd_split = y
+
+            logging.info(airflow_cmd_split)
+
         process = subprocess.Popen(airflow_cmd_split, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process.wait()
         return REST_API.collect_process_output(process)

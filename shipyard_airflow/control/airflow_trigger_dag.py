@@ -22,7 +22,7 @@ class TriggerDagRunResource(BaseResource):
 
     authorized_roles = ['user']
 
-    def on_get(self, req, resp, dag_id, run_id):
+    def on_get(self, req, resp, dag_id, conf):
         # Retrieve URL
         web_server_url = self.retrieve_config('base', 'web_server')
 
@@ -31,8 +31,11 @@ class TriggerDagRunResource(BaseResource):
             raise falcon.HTTPInternalServerError("Internal Server Error",
                                                  "Missing Configuration File")
         else:
+            # "conf" - JSON string that gets pickled into the DagRun's
+            # conf attribute
             req_url = ('{}/admin/rest_api/api?api=trigger_dag&dag_id={}'
-                       '&run_id={}'.format(web_server_url, dag_id, run_id))
+                       '&conf={}'.format(web_server_url, dag_id, conf))
+
             response = requests.get(req_url).json()
 
             # Returns error response if API call returns
@@ -42,7 +45,8 @@ class TriggerDagRunResource(BaseResource):
                 resp.body = response["output"]
                 return
             else:
-                resp.status = falcon.HTTP_200
+                # Returns 201 if action is created successfully
+                resp.status = falcon.HTTP_201
 
                 # Return time of execution so that we can use
                 # it to query dag/task status
