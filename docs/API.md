@@ -41,14 +41,15 @@ Deckhand
 
 #### POST
 Ingests a collection of documents. Synchronous. POSTing an empty body
-indicates that the specified collection should be deleted if the Shipyard
-Buffer is committed.
+indicates that the specified collection should be deleted when the Shipyard
+Buffer is committed. If a POST to the commitconfigdocs is in progress, this
+POST should be rejected with a 409 error.
 
 ##### Query Parameters
 * bufferMode=append|replace|**rejectOnContents**  
 Indicates how the existing Shipyard Buffer should be handled. By default,
 Shipyard will reject the POST if contents already exist in the Shipyard
-Buffer. 
+Buffer.
   * append: Add the collection to the Shipyard Buffer, only if that
   collection doesn't already exist in the Shipyard Buffer. If the collection
   is already present, the request will be rejected and a 409 Conflict will be
@@ -63,7 +64,7 @@ Response message includes:
   to retrieve the configDocs
 
 * 409 Conflict  
-  * If a commit_configdocs action is in progress.
+  * If a commitconfigdocs POST is in progress.
   * If any collections exist in the Shipyard Buffer unless bufferMode=replace
   or bufferMode=append.
   * If bufferMode=append, and the collection being posted is already in the
@@ -103,27 +104,50 @@ Return the documents for the version specified - buffer by default.
 If documents can be retrieved.
 
 ---
-### /v1.0/validations
-Represents the validation messages for the documents in deckhand  
+### /v1.0/commitconfigdocs
+A RPC style command to trigger a commit of the configuration documents from the
+Shipyard Buffer to the Committed Documents. This resource will support POST
+only.
 #### Payload Structure
-The list of validations
-```
-[
-  { TBD }
-]
-```
+The response will be the list of validations from all downstream systems that
+perform validation during the commit process.  The structure will match the
+error response object described in the [UCP API conventions](https://github.com/att-comdev/ucp-integration/blob/master/docs/api-conventions.md)
+and will be an aggregation of each UCP component's responses.
 
-#### GET
-Returns the validations
+#### POST
+Performs the commit of the Shipyard Buffer to the Committed Documents.
+Synchronous. This invokes each of the UCP components to examine the Shipyard
+Buffer version of the configuration documents and aggregate the responses.
+While performing this commit, further POSTing of configdocs, or other commits
+may not be invoked (Shipyard will block those requests with a 409 response).
+If there are any failures to validate, the Shipyard Buffer and Commited
+Documents will remain unchanged. If successful, the Shipyard Buffer will be
+cleared, and the Committed documents will be updated.
+
+**Note**: if there are unhandled runtime errors during the commitconfigdocs POST,
+a deadlock situation may be possible. Future enhancements may improve this
+handling.
 
 ##### Query Parameters
-* version=committed|**buffer**  
-returns the validations if any associated with the version specified.
+* force=true|**false**  
+By default, false, if there are validation failures the POST will fail with
+a 400 response. With force=true, allows for the commit to succeed (with a 200
+response) even if there are validation failures from downstream components. The
+aggregate response of validation failures will be returned in this case, but
+the invalid documents will still be moved from the Shipyard Buffer to the
+Committed Documents. 
 
 ##### Responses
 * 200 OK  
-If the validations can be retrieved.
-
+If the validations are successful. Returns an "empty" structure as as response
+indicating no errors. A 200 may also be returned if there are validation
+failures, but the force=true query parameter was specified. In this case, the
+response will contain the list of validations.
+* 400 Bad Request
+If the validations fail.  Returns a populated response structure containing
+the aggregation of the failed validations.
+* 409 Conflict  
+If the there is a POST to commitconfigdocs in progress.
 ---
 ## <a name="ActionAPI"></a> Action API
 >The Shipyard Action API is a resource that allows for creation, control and
