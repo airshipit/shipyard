@@ -56,7 +56,7 @@ def start_api():
         ('/dag_state/dags/{dag_id}/execution_date/{execution_date}',
             GetDagStateResource()),
         ('/list_tasks/dags/{dag_id}', ListTasksResource()),
-        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}',
+        ('/trigger_dag/dags/{dag_id}/conf/{conf}',
             TriggerDagRunResource()),
         ('/trigger_dag/dags/{dag_id}/run_id/{run_id}/poll',
             TriggerDagRunPollResource()),
