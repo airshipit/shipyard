@@ -44,6 +44,6 @@ our [Installation](https://github.com/att-comdev/shipyard/blob/master/docs/deplo
 
 ### Bugs ###
 
-Bugs are traced in [LCOO JIRA](https://openstack-lcoo.atlassian.net/projects/SHIPYARD/issues/).  If you find 
-a bug, please feel free to create a GitHub issue and it will be synced to JIRA.
+Bugs are traced in [LCOO JIRA](https://openstack-lcoo.atlassian.net/projects/SHIPYARD/issues/).  If you find
+a bug, please feel free to create a [GitHub issue](https://github.com/att-comdev/shipyard_issues) and it will be synced to JIRA.
 
