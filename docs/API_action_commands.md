@@ -35,19 +35,6 @@ configuration documents. Steps: (same as deploy_site)
 Using parameters to indicate which server(s), triggers a redeployment of server
 to the last known good design and secrets
 
-* commit_configdocs
-This signals to shipyard that the documents in the shipyard buffer should be
-committed to the site as design. Steps:
-  1) Blocks Shipyard from accepting any documents for the duration of the
-  commit_configdocs action to prevent unexpected behavior of the buffer in the
-  case of validation failures.
-  2) Triggers validations by the various UCP components against the documents
-  in the Shipyard Buffer.
-     * If all validations pass, tags the revision in Deckhand as a committed
-     version. This will effecively "empty" the Shipyard Buffer.
-     * If validations fail, the Shipyard Buffer will remain in the state it
-     was before the commit_configdocs started.
-
 ---
 ## Future actions
 These actions are anticipated for development
