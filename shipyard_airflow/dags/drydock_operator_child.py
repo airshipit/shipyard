@@ -18,7 +18,6 @@ import configparser
 from airflow import DAG
 from airflow.operators import DryDockOperator
 
-
 def sub_dag(parent_dag_name, child_dag_name, args, schedule_interval):
     dag = DAG(
         '%s.%s' % (parent_dag_name, child_dag_name),
@@ -40,11 +39,6 @@ def sub_dag(parent_dag_name, child_dag_name, args, schedule_interval):
     drydock_token = config.get('drydock', 'token')
     drydock_conf = config.get('drydock', 'site_yaml')
     promenade_conf = config.get('drydock', 'prom_yaml')
-
-    # Convert to Dictionary
-    k8_masters_sting = config.get('drydock', 'k8_masters')
-    k8_masters_list = k8_masters_sting.split(',')
-    k8_masters = {'node_names': k8_masters_list}
 
     # Create Drydock Client
     t1 = DryDockOperator(
@@ -92,14 +86,12 @@ def sub_dag(parent_dag_name, child_dag_name, args, schedule_interval):
     t7 = DryDockOperator(
         task_id='drydock_prepare_node',
         action='prepare_node',
-        node_filter=k8_masters,
         dag=dag)
 
     # Deploy Node
     t8 = DryDockOperator(
         task_id='drydock_deploy_node',
         action='deploy_node',
-        node_filter=k8_masters,
         dag=dag)
 
     # Define dependencies

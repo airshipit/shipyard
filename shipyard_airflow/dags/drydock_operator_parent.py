@@ -17,6 +17,7 @@
 import airflow
 from airflow import DAG
 from datetime import timedelta
+from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 from drydock_operator_child import sub_dag
 
@@ -40,9 +41,24 @@ main_dag = DAG(
     max_active_runs=1
 )
 
+# Define push function to store the content of 'action' that is
+# defined via 'dag_run' in XCOM so that it can be used by the
+# DryDock Operators
+def push(**kwargs):
+    # Pushes action XCom
+    kwargs['ti'].xcom_push(key='action',
+                           value=kwargs['dag_run'].conf['action'])
+
+
+action_xcom = PythonOperator(
+    task_id='action_xcom', dag=main_dag, python_callable=push)
+
 subdag = SubDagOperator(
     subdag=sub_dag(parent_dag_name, child_dag_name, args,
                    main_dag.schedule_interval),
     task_id=child_dag_name,
     default_args=args,
     dag=main_dag)
+
+# Set dependencies
+subdag.set_upstream(action_xcom)

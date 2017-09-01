@@ -37,9 +37,9 @@ class DryDockOperator(BaseOperator):
     :shipyard_conf: Location of shipyard.conf
     :drydock_conf: Location of drydock YAML
     :promenade_conf: Location of promenade YAML
-    :node_filter: Valid fields are 'node_names','rack_names','node_tags'
     :action: Task to perform
     :design_id: DryDock Design ID
+    :workflow_info: Information related to the workflow
     """
     @apply_defaults
     def __init__(self,
@@ -48,10 +48,10 @@ class DryDockOperator(BaseOperator):
                  token=None,
                  action=None,
                  design_id=None,
-                 node_filter=None,
                  shipyard_conf=None,
                  drydock_conf=None,
                  promenade_conf=None,
+                 workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
 
@@ -64,10 +64,21 @@ class DryDockOperator(BaseOperator):
         self.promenade_conf = promenade_conf
         self.action = action
         self.design_id = design_id
-        self.node_filter = node_filter
+        self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
+        # Define task_instance
+        task_instance = context['task_instance']
+
+        # Extract information related to current workflow
+        # The workflow_info variable will be a dictionary
+        # that contains information about the workflow such
+        # as action_id, name and other related parameters
+        workflow_info = task_instance.xcom_pull(
+            task_ids='action_xcom', key='action',
+            dag_id='drydock_operator_parent')
+
         # DrydockClient
         if self.action == 'create_drydock_client':
             drydock_client = self.drydock_session_client(context)
@@ -75,8 +86,6 @@ class DryDockOperator(BaseOperator):
             return drydock_client
 
         # Retrieve drydock_client via XCOM so as to perform other tasks
-        task_instance = context['task_instance']
-
         drydock_client = task_instance.xcom_pull(
             task_ids='create_drydock_client',
             dag_id='drydock_operator_parent.drydock_operator_child')
@@ -160,7 +169,7 @@ class DryDockOperator(BaseOperator):
             self.perform_task = 'prepare_node'
             prepare_node = self.drydock_perform_task(
                 drydock_client, context,
-                self.perform_task, self.node_filter)
+                self.perform_task, workflow_info)
 
             # Define variables
             # Query every 30 seconds for 30 minutes
@@ -191,7 +200,7 @@ class DryDockOperator(BaseOperator):
             deploy_node = self.drydock_perform_task(drydock_client,
                                                     context,
                                                     self.perform_task,
-                                                    self.node_filter)
+                                                    workflow_info)
 
             # Define variables
             # Query every 30 seconds for 60 minutes
@@ -351,7 +360,7 @@ class DryDockOperator(BaseOperator):
             logging.info(load_design)
 
     def drydock_perform_task(self, drydock_client, context,
-                             perform_task, node_filter):
+                             perform_task, workflow_info):
 
         # Get Design ID and pass it to DryDock
         self.design_id = self.get_design_id(context)
@@ -360,7 +369,12 @@ class DryDockOperator(BaseOperator):
         task_to_perform = self.perform_task
 
         # Node Filter
-        nodes_filter = self.node_filter
+        if workflow_info:
+            nodes_filter = workflow_info['parameters']['servername']
+        else:
+            nodes_filter = None
+
+        logging.info("Nodes Filter List: %s", nodes_filter)
 
         # Get uuid of the create_task's id
         self.task_id = drydock_client.create_task(self.design_id,
