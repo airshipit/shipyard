@@ -30,6 +30,7 @@ from .airflow_connections import AirflowListConnectionsResource
 from .airflow_get_version import GetAirflowVersionResource
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
 from shipyard_airflow.errors import AppError
+from .health import HealthResource
 
 
 def start_api():
@@ -66,6 +67,7 @@ def start_api():
             AirflowDeleteConnectionResource()),
         ('/connections/{action}', AirflowListConnectionsResource()),
         ('/airflow/version', GetAirflowVersionResource()),
+        ('/health', HealthResource()),
     ]
 
     for path, res in v1_0_routes:
