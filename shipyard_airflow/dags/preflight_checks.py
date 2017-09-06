@@ -14,8 +14,15 @@
 
 from airflow.models import DAG
 from airflow.operators.subdag_operator import SubDagOperator
-from airflow.operators import PlaceholderOperator
+from airflow.operators import K8sHealthCheckOperator
+from airflow.operators import UcpHealthCheckOperator
 
+
+# Location of shiyard.conf
+config_path = '/usr/local/airflow/plugins/shipyard.conf'
+
+# Note that the shipyard.conf file needs to be placed on a volume
+# that can be accessed by the containers
 
 def k8s_preflight_check(parent_dag_name, child_dag_name, args):
     '''
@@ -26,10 +33,11 @@ def k8s_preflight_check(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args, )
 
-    # TODO () Replace this operator with a real operator that will:
-    # 1) Ensure k8s is up and running.
-    # 2) Ensure that pods are not crashed
-    operator = PlaceholderOperator(task_id='k8s_preflight_check', dag=dag)
+    # Ensure k8s is up and running.
+    # Ensure that pods are not crashed
+    operator = K8sHealthCheckOperator(
+        task_id='k8s_preflight_check',
+        dag=dag)
 
     return dag
 
@@ -43,9 +51,12 @@ def shipyard_preflight_check(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args, )
 
-    # TODO () Replace this operator with a real operator that will:
-    # 1) Ensure shipyard is up and running.
-    operator = PlaceholderOperator(task_id='shipyard_preflight_check', dag=dag)
+    # Ensure shipyard is up and running.
+    operator = UcpHealthCheckOperator(
+        task_id='shipyard_preflight_check',
+        shipyard_conf=config_path,
+        ucp_node='shipyard',
+        dag=dag)
 
     return dag
 
@@ -62,9 +73,12 @@ def deckhand_preflight_check(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args, )
 
-    # TODO () Replace this operator with a real operator that will:
-    # 1) Ensure deckhand is up and running.
-    operator = PlaceholderOperator(task_id='deckhand_preflight_check', dag=dag)
+    # Ensure deckhand is up and running.
+    operator = UcpHealthCheckOperator(
+        task_id='deckhand_preflight_check',
+        shipyard_conf=config_path,
+        ucp_node='deckhand',
+        dag=dag)
 
     return dag
 
@@ -78,9 +92,12 @@ def drydock_preflight_check(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args, )
 
-    # TODO () Replace this operator with a real operator that will:
-    # 1) Ensure drydock is up and running.
-    operator = PlaceholderOperator(task_id='drydock_preflight_check', dag=dag)
+    # Ensure drydock is up and running.
+    operator = UcpHealthCheckOperator(
+        task_id='drydock_preflight_check',
+        shipyard_conf=config_path,
+        ucp_node='drydock',
+        dag=dag)
 
     return dag
 
@@ -94,9 +111,12 @@ def armada_preflight_check(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args, )
 
-    # TODO () Replace this operator with a real operator that will:
-    # 1) Ensure armada is up and running.
-    operator = PlaceholderOperator(task_id='armada_preflight_check', dag=dag)
+    # Ensure armada is up and running.
+    operator = UcpHealthCheckOperator(
+        task_id='armada_preflight_check',
+        shipyard_conf=config_path,
+        ucp_node='armada',
+        dag=dag)
 
     return dag
 
@@ -106,7 +126,6 @@ K8S_PREFLIGHT_CHECK_DAG_NAME = 'k8s_preflight_check'
 SHIPYARD_PREFLIGHT_CHECK_DAG_NAME = 'shipyard_preflight_check'
 DECKHAND_PREFLIGHT_CHECK_DAG_NAME = 'deckhand_preflight_check'
 DRYDOCK_PREFLIGHT_CHECK_DAG_NAME = 'drydock_preflight_check'
-PROMENADE_PREFLIGHT_CHECK_DAG_NAME = 'promenade_preflight_check'
 ARMADA_PREFLIGHT_CHECK_DAG_NAME = 'armada_preflight_check'
 
 
