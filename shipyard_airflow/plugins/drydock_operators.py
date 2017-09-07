@@ -40,6 +40,8 @@ class DryDockOperator(BaseOperator):
     :action: Task to perform
     :design_id: DryDock Design ID
     :workflow_info: Information related to the workflow
+    :main_dag_name: Parent Dag
+    :sub_dag_name: Child Dag
     """
     @apply_defaults
     def __init__(self,
@@ -52,6 +54,8 @@ class DryDockOperator(BaseOperator):
                  drydock_conf=None,
                  promenade_conf=None,
                  workflow_info={},
+                 main_dag_name=None,
+                 sub_dag_name=None,
                  xcom_push=True,
                  *args, **kwargs):
 
@@ -65,6 +69,8 @@ class DryDockOperator(BaseOperator):
         self.action = action
         self.design_id = design_id
         self.workflow_info = workflow_info
+        self.main_dag_name = main_dag_name
+        self.sub_dag_name = sub_dag_name
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
@@ -77,7 +83,10 @@ class DryDockOperator(BaseOperator):
         # as action_id, name and other related parameters
         workflow_info = task_instance.xcom_pull(
             task_ids='action_xcom', key='action',
-            dag_id='drydock_operator_parent')
+            dag_id=self.main_dag_name)
+
+        # Logs uuid of action performed by the Operator
+        logging.info("DryDock Operator for action %s", workflow_info['id'])
 
         # DrydockClient
         if self.action == 'create_drydock_client':
@@ -88,7 +97,7 @@ class DryDockOperator(BaseOperator):
         # Retrieve drydock_client via XCOM so as to perform other tasks
         drydock_client = task_instance.xcom_pull(
             task_ids='create_drydock_client',
-            dag_id='drydock_operator_parent.drydock_operator_child')
+            dag_id=self.sub_dag_name + '.create_drydock_client')
 
         # Get Design ID
         if self.action == 'get_design_id':
@@ -326,7 +335,7 @@ class DryDockOperator(BaseOperator):
         task_instance = context['task_instance']
         design_id = task_instance.xcom_pull(
             task_ids='drydock_get_design_id',
-            dag_id='drydock_operator_parent.drydock_operator_child')
+            dag_id=self.sub_dag_name + '.drydock_get_design_id')
 
         return design_id
 
