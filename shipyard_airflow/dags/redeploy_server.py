@@ -22,6 +22,7 @@ from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators import ConcurrencyCheckOperator
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
+from airflow.operators.python_operator import PythonOperator
 """
 redeploy_server is the top-level orchestration DAG for redeploying a
 server using the Undercloud platform.
@@ -40,11 +41,25 @@ default_args = {
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
+    'provide_context': True,
     'retries': 0,
     'retry_delay': timedelta(minutes=1),
 }
 
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+"""
+Define push function to store the content of 'action' that is
+defined via 'dag_run' in XCOM so that it can be used by the
+Operators
+"""
+def xcom_push(**kwargs):
+    # Pushes action XCom
+    kwargs['ti'].xcom_push(key='action',
+                           value=kwargs['dag_run'].conf['action'])
+
+
+action_xcom = PythonOperator(
+    task_id='action_xcom', dag=dag, python_callable=xcom_push)
 
 concurrency_check = ConcurrencyCheckOperator(
     task_id=DAG_CONCURRENCY_CHECK_DAG_NAME,
@@ -91,6 +106,7 @@ armada_rebuild = PlaceholderOperator(
     dag=dag)
 
 # DAG Wiring
+concurrency_check.set_upstream(action_xcom)
 preflight.set_upstream(concurrency_check)
 get_design_version.set_upstream(preflight)
 validate_site_design.set_upstream(get_design_version)
