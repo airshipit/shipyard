@@ -17,6 +17,7 @@ import airflow
 from airflow import DAG
 import failure_handlers
 from preflight_checks import all_preflight_checks
+from drydock_deploy_site import deploy_site_drydock
 from validate_site_design import validate_site_design
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators import ConcurrencyCheckOperator
@@ -33,6 +34,7 @@ DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
+DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
 
 default_args = {
     'owner': 'airflow',
@@ -71,7 +73,7 @@ preflight = SubDagOperator(
         PARENT_DAG_NAME, ALL_PREFLIGHT_CHECKS_DAG_NAME, args=default_args),
     task_id=ALL_PREFLIGHT_CHECKS_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag, )
+    dag=dag)
 
 get_design_version = DeckhandOperator(
     task_id=DECKHAND_GET_DESIGN_VERSION,
@@ -85,8 +87,10 @@ validate_site_design = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-drydock_build = PlaceholderOperator(
-    task_id='drydock_build',
+drydock_build = SubDagOperator(
+    subdag=deploy_site_drydock(
+        PARENT_DAG_NAME, DRYDOCK_BUILD_DAG_NAME, args=default_args),
+    task_id=DRYDOCK_BUILD_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
