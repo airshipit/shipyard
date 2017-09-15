@@ -8,10 +8,7 @@ try:
 except ImportError:
     OrderedDict = dict
 
-ERR_UNKNOWN = {
-    'status': falcon.HTTP_500,
-    'title': 'Internal Server Error'
-}
+ERR_UNKNOWN = {'status': falcon.HTTP_500, 'title': 'Internal Server Error'}
 
 ERR_AIRFLOW_RESPONSE = {
     'status': falcon.HTTP_400,

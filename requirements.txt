@@ -1,10 +1,27 @@
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+PasteDeploy==1.5.2
+keystonemiddleware==4.17.0
 falcon==1.2.0
 python-dateutil==2.6.1
 requests==2.18.4
-uwsgi===2.0.15
+uwsgi==2.0.15
 configparser==3.5.0
 python-openstackclient==3.11.0
 SQLAlchemy==1.1.13
 psycopg2==2.7.3.1
-PasteDeploy==1.5.2
-keystonemiddleware===4.9.1
+oslo.config==4.11.0
+oslo.policy==1.25.1
+keystoneauth1==2.13.0

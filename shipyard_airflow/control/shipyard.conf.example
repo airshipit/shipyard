@@ -1,0 +1,320 @@
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+[base]
+web_server=http://localhost:32080
+postgresql_db = postgresql+psycopg2://postgresql.ucp:5432/shipyard
+postgresql_airflow_db = postgresql+psycopg2://postgresql.ucp:5432/airflow
+
+[shipyard]
+host=shipyard-int.ucp
+port=9000
+
+[deckhand]
+host=deckhand-api.ucp
+port=80
+
+[armada]
+host=armada-api.ucp
+port=8000
+
+[drydock]
+host=drydock-api.ucp
+port=9000
+token=bigboss
+site_yaml=/usr/local/airflow/plugins/drydock.yaml
+prom_yaml=/usr/local/airflow/plugins/promenade.yaml
+
+[keystone]
+OS_AUTH_URL=http://keystone-api.ucp:80/v3
+OS_PROJECT_NAME=service
+OS_USER_DOMAIN_NAME=Default
+OS_USERNAME=shipyard
+OS_PASSWORD=password
+OS_REGION_NAME=RegionOne
+OS_IDENTITY_API_VERSION=3
+
+[healthcheck]
+schema=http
+endpoint=/api/v1.0/health
+
+[keystone_authtoken]
+
+#
+# From keystonemiddleware.auth_token
+#
+
+# Complete "public" Identity API endpoint. This endpoint should not be an
+# "admin" endpoint, as it should be accessible by all end users. Unauthenticated
+# clients are redirected to this endpoint to authenticate. Although this
+# endpoint should  ideally be unversioned, client support in the wild varies.
+# If you're using a versioned v2 endpoint here, then this  should *not* be the
+# same endpoint the service user utilizes  for validating tokens, because normal
+# end users may not be  able to reach that endpoint. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.auth_uri
+auth_uri = http://keystone-api.openstack:80/v3
+
+# API version of the admin Identity API endpoint. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.auth_version
+#auth_version = <None>
+
+# Do not handle authorization requests within the middleware, but delegate the
+# authorization decision to downstream WSGI components. (boolean value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.delay_auth_decision
+delay_auth_decision = true
+
+# Request timeout value for communicating with Identity API server. (integer
+# value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.http_connect_timeout
+#http_connect_timeout = <None>
+
+# How many times are we trying to reconnect when communicating with Identity API
+# Server. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.http_request_max_retries
+#http_request_max_retries = 3
+
+# Request environment key where the Swift cache object is stored. When
+# auth_token middleware is deployed with a Swift cache, use this option to have
+# the middleware share a caching backend with swift. Otherwise, use the
+# ``memcached_servers`` option instead. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.cache
+#cache = <None>
+
+# Required if identity server requires client certificate (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.certfile
+#certfile = <None>
+
+# Required if identity server requires client certificate (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.keyfile
+#keyfile = <None>
+
+# A PEM encoded Certificate Authority to use when verifying HTTPs connections.
+# Defaults to system CAs. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.cafile
+#cafile = <None>
+
+# Verify HTTPS connections. (boolean value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.insecure
+#insecure = false
+
+# The region in which the identity server can be found. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.region_name
+#region_name = <None>
+
+# Directory used to cache files related to PKI tokens. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.signing_dir
+#signing_dir = <None>
+
+# Optionally specify a list of memcached server(s) to use for caching. If left
+# undefined, tokens will instead be cached in-process. (list value)
+# Deprecated group/name - [keystone_authtoken]/memcache_servers
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcached_servers
+#memcached_servers = <None>
+
+# In order to prevent excessive effort spent validating tokens, the middleware
+# caches previously-seen tokens for a configurable duration (in seconds). Set to
+# -1 to disable caching completely. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.token_cache_time
+#token_cache_time = 300
+
+# Determines the frequency at which the list of revoked tokens is retrieved from
+# the Identity service (in seconds). A high number of revocation events combined
+# with a low cache duration may significantly reduce performance. Only valid for
+# PKI tokens. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.revocation_cache_time
+#revocation_cache_time = 10
+
+# (Optional) If defined, indicate whether token data should be authenticated or
+# authenticated and encrypted. If MAC, token data is authenticated (with HMAC)
+# in the cache. If ENCRYPT, token data is encrypted and authenticated in the
+# cache. If the value is not one of these options or empty, auth_token will
+# raise an exception on initialization. (string value)
+# Allowed values: None, MAC, ENCRYPT
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_security_strategy
+#memcache_security_strategy = None
+
+# (Optional, mandatory if memcache_security_strategy is defined) This string is
+# used for key derivation. (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_secret_key
+#memcache_secret_key = <None>
+
+# (Optional) Number of seconds memcached server is considered dead before it is
+# tried again. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_pool_dead_retry
+#memcache_pool_dead_retry = 300
+
+# (Optional) Maximum total number of open connections to every memcached server.
+# (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_pool_maxsize
+#memcache_pool_maxsize = 10
+
+# (Optional) Socket timeout in seconds for communicating with a memcached
+# server. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_pool_socket_timeout
+#memcache_pool_socket_timeout = 3
+
+# (Optional) Number of seconds a connection to memcached is held unused in the
+# pool before it is closed. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_pool_unused_timeout
+#memcache_pool_unused_timeout = 60
+
+# (Optional) Number of seconds that an operation will wait to get a memcached
+# client connection from the pool. (integer value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_pool_conn_get_timeout
+#memcache_pool_conn_get_timeout = 10
+
+# (Optional) Use the advanced (eventlet safe) memcached client pool. The
+# advanced pool will only work under python 2.x. (boolean value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.memcache_use_advanced_pool
+#memcache_use_advanced_pool = false
+
+# (Optional) Indicate whether to set the X-Service-Catalog header. If False,
+# middleware will not ask for service catalog on token validation and will not
+# set the X-Service-Catalog header. (boolean value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.include_service_catalog
+#include_service_catalog = true
+
+# Used to control the use and type of token binding. Can be set to: "disabled"
+# to not check token binding. "permissive" (default) to validate binding
+# information if the bind type is of a form known to the server and ignore it if
+# not. "strict" like "permissive" but if the bind type is unknown the token will
+# be rejected. "required" any form of token binding is needed to be allowed.
+# Finally the name of a binding method that must be present in tokens. (string
+# value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.enforce_token_bind
+#enforce_token_bind = permissive
+
+# If true, the revocation list will be checked for cached tokens. This requires
+# that PKI tokens are configured on the identity server. (boolean value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.check_revocations_for_cached
+#check_revocations_for_cached = false
+
+# Hash algorithms to use for hashing PKI tokens. This may be a single algorithm
+# or multiple. The algorithms are those supported by Python standard
+# hashlib.new(). The hashes will be tried in the order given, so put the
+# preferred one first for performance. The result of the first hash will be
+# stored in the cache. This will typically be set to multiple values only while
+# migrating from a less secure algorithm to a more secure one. Once all the old
+# tokens are expired this option should be set to a single value for better
+# performance. (list value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.hash_algorithms
+#hash_algorithms = md5
+
+# Authentication type to load (string value)
+# Deprecated group/name - [keystone_authtoken]/auth_plugin
+# from .keystone_authtoken.keystonemiddleware.auth_token.auth_type
+auth_type = password
+
+# Config Section from which to load plugin specific options (string value)
+# from .keystone_authtoken.keystonemiddleware.auth_token.auth_section
+auth_section = keystone_authtoken
+
+
+
+#
+# From shipyard_orchestrator
+#
+
+# Authentication URL (string value)
+# from .keystone_authtoken.shipyard_orchestrator.auth_url
+auth_url = http://keystone-api.openstack:80/v3
+
+# Domain ID to scope to (string value)
+# from .keystone_authtoken.shipyard_orchestrator.domain_id
+#domain_id = <None>
+
+# Domain name to scope to (string value)
+# from .keystone_authtoken.shipyard_orchestrator.domain_name
+#domain_name = <None>
+
+# Project ID to scope to (string value)
+# Deprecated group/name - [keystone_authtoken]/tenant-id
+# from .keystone_authtoken.shipyard_orchestrator.project_id
+#project_id = <None>
+
+# Project name to scope to (string value)
+# Deprecated group/name - [keystone_authtoken]/tenant-name
+# from .keystone_authtoken.shipyard_orchestrator.project_name
+project_name = service
+
+# Domain ID containing project (string value)
+# from .keystone_authtoken.shipyard_orchestrator.project_domain_id
+#project_domain_id = <None>
+
+# Domain name containing project (string value)
+# from .keystone_authtoken.shipyard_orchestrator.project_domain_name
+project_domain_name = default
+
+# Trust ID (string value)
+# from .keystone_authtoken.shipyard_orchestrator.trust_id
+#trust_id = <None>
+
+# Optional domain ID to use with v3 and v2 parameters. It will be used for both
+# the user and project domain in v3 and ignored in v2 authentication. (string
+# value)
+# from .keystone_authtoken.shipyard_orchestrator.default_domain_id
+#default_domain_id = <None>
+
+# Optional domain name to use with v3 API and v2 parameters. It will be used for
+# both the user and project domain in v3 and ignored in v2 authentication.
+# (string value)
+# from .keystone_authtoken.shipyard_orchestrator.default_domain_name
+#default_domain_name = <None>
+
+# User id (string value)
+# from .keystone_authtoken.shipyard_orchestrator.user_id
+#user_id = <None>
+
+# Username (string value)
+# Deprecated group/name - [keystone_authtoken]/user-name
+# from .keystone_authtoken.shipyard_orchestrator.username
+username = shipyard
+
+# User's domain id (string value)
+# from .keystone_authtoken.shipyard_orchestrator.user_domain_id
+#user_domain_id = <None>
+
+# User's domain name (string value)
+# from .keystone_authtoken.shipyard_orchestrator.user_domain_name
+user_domain_name = default
+
+# User's password (string value)
+# from .keystone_authtoken.shipyard_orchestrator.password
+password = password
+
+
+[oslo_policy]
+
+#
+# From oslo.policy
+#
+
+# The file that defines policies. (string value)
+# Deprecated group/name - [DEFAULT]/policy_file
+# from .oslo_policy.oslo.policy.policy_file
+#policy_file = policy.json
+
+# Default rule. Enforced when a requested rule is not found. (string value)
+# Deprecated group/name - [DEFAULT]/policy_default_rule
+# from .oslo_policy.oslo.policy.policy_default_rule
+#policy_default_rule = default
+
+# Directories where policy configuration files are stored. They can be relative
+# to any directory in the search path defined by the config_dir option, or
+# absolute paths. The file defined by policy_file must exist for these
+# directories to be searched.  Missing or empty directories are ignored. (multi
+# valued)
+# Deprecated group/name - [DEFAULT]/policy_dirs
+# from .oslo_policy.oslo.policy.policy_dirs (multiopt)
+#policy_dirs = policy.d

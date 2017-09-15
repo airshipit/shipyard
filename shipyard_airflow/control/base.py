@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import falcon
-import falcon.request as request
 import uuid
 import json
 import configparser
 import os
+import logging
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -30,8 +31,6 @@ from shipyard_airflow.errors import (
 
 class BaseResource(object):
 
-    authorized_roles = []
-
     def on_options(self, req, resp):
         self_attrs = dir(self)
         methods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH']
@@ -43,16 +42,6 @@ class BaseResource(object):
 
         resp.headers['Allow'] = ','.join(allowed_methods)
         resp.status = falcon.HTTP_200
-
-    # By default, no one is authorized to use a resource
-    def authorize_roles(self, role_list):
-        authorized = set(self.authorized_roles)
-        applied = set(role_list)
-
-        if authorized.isdisjoint(applied):
-            return False
-        else:
-            return True
 
     def to_json(self, body_dict):
         return json.dumps(body_dict)
@@ -99,6 +88,25 @@ class BaseResource(object):
         else:
             raise AppError(ERR_UNKNOWN, "Missing Configuration File")
 
+    def error(self, ctx, msg):
+        self.log_error(ctx, logging.ERROR, msg)
+
+    def info(self, ctx, msg):
+        self.log_error(ctx, logging.INFO, msg)
+
+    def log_error(self, ctx, level, msg):
+        extra = {
+            'user': 'N/A',
+            'req_id': 'N/A',
+            'external_ctx': 'N/A'
+        }
+
+        if ctx is not None:
+            extra = {
+                'user': ctx.user,
+                'req_id': ctx.request_id,
+                'external_ctx': ctx.external_marker,
+            }
 
 class ShipyardRequestContext(object):
 
@@ -108,6 +116,14 @@ class ShipyardRequestContext(object):
         self.roles = ['anyone']
         self.request_id = str(uuid.uuid4())
         self.external_marker = None
+        self.project_id = None
+        self.user_id = None  # User ID (UUID)
+        self.policy_engine = None
+        self.user_domain_id = None  # Domain owning user
+        self.project_domain_id = None  # Domain owning project
+        self.is_admin_project = False
+        self.authenticated = False
+        self.request_id = str(uuid.uuid4())
 
     def set_log_level(self, level):
         if level in ['error', 'info', 'debug']:
@@ -115,6 +131,9 @@ class ShipyardRequestContext(object):
 
     def set_user(self, user):
         self.user = user
+
+    def set_project(self, project):
+        self.project = project
 
     def add_role(self, role):
         self.roles.append(role)
@@ -127,7 +146,22 @@ class ShipyardRequestContext(object):
                       if x != role]
 
     def set_external_marker(self, marker):
-        self.external_marker = str(marker)[:32]
+        self.external_marker = marker
 
-class ShipyardRequest(request.Request):
+    def set_policy_engine(self, engine):
+        self.policy_engine = engine
+
+    def to_policy_view(self):
+        policy_dict = {}
+
+        policy_dict['user_id'] = self.user_id
+        policy_dict['user_domain_id'] = self.user_domain_id
+        policy_dict['project_id'] = self.project_id
+        policy_dict['project_domain_id'] = self.project_domain_id
+        policy_dict['roles'] = self.roles
+        policy_dict['is_admin_project'] = self.is_admin_project
+
+        return policy_dict
+
+class ShipyardRequest(falcon.request.Request):
     context_type = ShipyardRequestContext

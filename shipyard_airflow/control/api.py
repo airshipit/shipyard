@@ -11,27 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon
 import json
+import falcon
 
+from shipyard_airflow.errors import AppError
 from .regions import RegionsResource, RegionResource
 from .base import ShipyardRequest, BaseResource
-from .tasks import TaskResource
-from .dag_runs import DagRunResource
-from .airflow_get_task_status import GetTaskStatusResource
-from .airflow_list_tasks import ListTasksResource
-from .airflow_list_dags import ListDagsResource
-from .airflow_dag_state import GetDagStateResource
-from .airflow_trigger_dag import TriggerDagRunResource
-from .airflow_trigger_dag_poll import TriggerDagRunPollResource
-from .airflow_connections import AirflowAddConnectionResource
-from .airflow_connections import AirflowDeleteConnectionResource
-from .airflow_connections import AirflowListConnectionsResource
-from .airflow_get_version import GetAirflowVersionResource
 from .middleware import AuthMiddleware, ContextMiddleware, LoggingMiddleware
-from shipyard_airflow.errors import AppError
 from .health import HealthResource
-
 
 def start_api():
     middlewares = [
@@ -49,24 +36,6 @@ def start_api():
         # API for managing region data
         ('/regions', RegionsResource()),
         ('/regions/{region_id}', RegionResource()),
-        ('/dags/{dag_id}/tasks/{task_id}', TaskResource()),
-        ('/dags/{dag_id}/dag_runs', DagRunResource()),
-        ('/list_dags', ListDagsResource()),
-        ('/task_state/dags/{dag_id}/tasks/{task_id}/execution_date/'
-         '{execution_date}', GetTaskStatusResource()),
-        ('/dag_state/dags/{dag_id}/execution_date/{execution_date}',
-            GetDagStateResource()),
-        ('/list_tasks/dags/{dag_id}', ListTasksResource()),
-        ('/trigger_dag/dags/{dag_id}/conf/{conf}',
-            TriggerDagRunResource()),
-        ('/trigger_dag/dags/{dag_id}/run_id/{run_id}/poll',
-            TriggerDagRunPollResource()),
-        ('/connections/{action}/conn_id/{conn_id}/protocol/{protocol}'
-         '/host/{host}/port/{port}', AirflowAddConnectionResource()),
-        ('/connections/{action}/conn_id/{conn_id}',
-            AirflowDeleteConnectionResource()),
-        ('/connections/{action}', AirflowListConnectionsResource()),
-        ('/airflow/version', GetAirflowVersionResource()),
         ('/health', HealthResource()),
     ]
 
