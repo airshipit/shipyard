@@ -11,17 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#############################################################################
-#
-# services.yaml - Definitions of server hardware layout
-#
-#############################################################################
-# version the schema in this file so consumers can rationally parse it
----
-#
-# Is this where I include a list of files per service ?
-#
-# 
-# Assuming something like this works for the insertion 
 
-imports:
+class AirflowStateError(Exception):
+    def __init__(self, message=""):
+        """
+        An error to convey that an attempt to modify airflow data cannot
+        be accomplished due to existing state.
+        :param message: Optional message for consumer
+        """
+        self.message = message

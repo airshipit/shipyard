@@ -11,95 +11,89 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import falcon
-import uuid
 import json
-import configparser
-import os
 import logging
+import uuid
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    OrderedDict = dict
+import falcon
+import falcon.request as request
+import falcon.routing as routing
 
-from shipyard_airflow.errors import (
-    AppError,
-    ERR_UNKNOWN,
-)
+from shipyard_airflow.control.json_schemas import validate_json
+from shipyard_airflow.errors import InvalidFormatError
 
 
 class BaseResource(object):
+    def __init__(self):
+        self.logger = logging.getLogger('shipyard.control')
 
-    def on_options(self, req, resp):
-        self_attrs = dir(self)
-        methods = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH']
-        allowed_methods = []
-
-        for m in methods:
-            if 'on_' + m.lower() in self_attrs:
-                allowed_methods.append(m)
-
-        resp.headers['Allow'] = ','.join(allowed_methods)
+    def on_options(self, req, resp, **kwargs):
+        """
+        Handle options requests
+        """
+        method_map = routing.create_http_method_map(self)
+        for method in method_map:
+            if method_map.get(method).__name__ != 'method_not_allowed':
+                resp.append_header('Allow', method)
         resp.status = falcon.HTTP_200
 
-    def to_json(self, body_dict):
-        return json.dumps(body_dict)
-
-    def on_success(self, res, message=None):
-        res.status = falcon.HTTP_200
-        response_dict = OrderedDict()
-        response_dict['type'] = 'success'
-        response_dict['message'] = message
-        res.body = self.to_json(response_dict)
-
-    # Error Handling
-    def return_error(self, resp, status_code, message="", retry=False):
+    def req_json(self, req, validate_json_schema=None):
         """
-        Write a error message body and throw a Falcon exception to trigger
-        an HTTP status
-
-        :param resp: Falcon response object to update
-        :param status_code: Falcon status_code constant
-        :param message: Optional error message to include in the body
-        :param retry: Optional flag whether client should retry the operation.
-        Can ignore if we rely solely on 4XX vs 5xx status codes
+        Reads and returns the input json message, optionally validates against
+        a provided jsonschema
+        :param req: the falcon request object
+        :param validate_json_schema: the optional jsonschema to use for
+                                     validation
         """
-        resp.body = self.to_json(
-            {'type': 'error', 'message': message, 'retry': retry})
-        resp.content_type = 'application/json'
-        resp.status = status_code
-
-    # Get Config Data
-    def retrieve_config(self, section="", data=""):
-
-        # Shipyard config will be located at /etc/shipyard/shipyard.conf
-        path = '/etc/shipyard/shipyard.conf'
-
-        # Check that shipyard.conf exists
-        if os.path.isfile(path):
-            config = configparser.ConfigParser()
-            config.read(path)
-
-            # Retrieve data from shipyard.conf
-            query_data = config.get(section, data)
-
-            return query_data
+        has_input = False
+        if ((req.content_length is not None or req.content_length != 0) and
+            (req.content_type is not None and
+             req.content_type.lower() == 'application/json')):
+            raw_body = req.stream.read(req.content_length or 0)
+            if raw_body is not None:
+                has_input = True
+                self.info(req.context, 'Input message body: %s' % raw_body)
+            else:
+                self.info(req.context, 'No message body specified')
+        if has_input:
+            # read the json and validate if necessary
+            try:
+                raw_body = raw_body.decode('utf-8')
+                json_body = json.loads(raw_body)
+                if validate_json_schema:
+                    # rasises an exception if it doesn't validate
+                    validate_json(json_body, validate_json_schema)
+                return json_body
+            except json.JSONDecodeError as jex:
+                self.error(req.context, "Invalid JSON in request: \n%s" %
+                           raw_body)
+                raise InvalidFormatError(
+                    title='JSON could not be decoded',
+                    description='%s: Invalid JSON in body: %s' %
+                    (req.path, jex)
+                )
         else:
-            raise AppError(ERR_UNKNOWN, "Missing Configuration File")
+            # No body passed as input. Fail validation if it was asekd for
+            if validate_json_schema is not None:
+                raise InvalidFormatError(
+                    title='Json body is required',
+                    description='%s: Bad input, no body provided' %
+                    (req.path)
+                )
+            else:
+                return None
 
-    def error(self, ctx, msg):
-        self.log_error(ctx, logging.ERROR, msg)
+    def to_json(self, body_dict):
+        """
+        Thin wrapper around json.dumps, providing the default=str config
+        """
+        return json.dumps(body_dict, default=str)
 
-    def info(self, ctx, msg):
-        self.log_error(ctx, logging.INFO, msg)
-
-    def log_error(self, ctx, level, msg):
-        extra = {
-            'user': 'N/A',
-            'req_id': 'N/A',
-            'external_ctx': 'N/A'
-        }
+    def log_message(self, ctx, level, msg):
+        """
+        Logs a message with context, and extra populated.
+        """
+        extra = {'user': 'N/A', 'req_id': 'N/A', 'external_ctx': 'N/A'}
 
         if ctx is not None:
             extra = {
@@ -108,8 +102,36 @@ class BaseResource(object):
                 'external_ctx': ctx.external_marker,
             }
 
-class ShipyardRequestContext(object):
+        self.logger.log(level, msg, extra=extra)
 
+    def debug(self, ctx, msg):
+        """
+        Debug logger for resources, incorporating context.
+        """
+        self.log_message(ctx, logging.DEBUG, msg)
+
+    def info(self, ctx, msg):
+        """
+        Info logger for resources, incorporating context.
+        """
+        self.log_message(ctx, logging.INFO, msg)
+
+    def warn(self, ctx, msg):
+        """
+        Warn logger for resources, incorporating context.
+        """
+        self.log_message(ctx, logging.WARN, msg)
+
+    def error(self, ctx, msg):
+        """
+        Error logger for resources, incorporating context.
+        """
+        self.log_message(ctx, logging.ERROR, msg)
+
+class ShipyardRequestContext(object):
+    """
+    Context object for shipyard resource requests
+    """
     def __init__(self):
         self.log_level = 'error'
         self.user = None
@@ -123,7 +145,6 @@ class ShipyardRequestContext(object):
         self.project_domain_id = None  # Domain owning project
         self.is_admin_project = False
         self.authenticated = False
-        self.request_id = str(uuid.uuid4())
 
     def set_log_level(self, level):
         if level in ['error', 'info', 'debug']:
@@ -142,8 +163,7 @@ class ShipyardRequestContext(object):
         self.roles.extend(roles)
 
     def remove_role(self, role):
-        self.roles = [x for x in self.roles
-                      if x != role]
+        self.roles = [x for x in self.roles if x != role]
 
     def set_external_marker(self, marker):
         self.external_marker = marker
@@ -163,5 +183,6 @@ class ShipyardRequestContext(object):
 
         return policy_dict
 
-class ShipyardRequest(falcon.request.Request):
+
+class ShipyardRequest(request.Request):
     context_type = ShipyardRequestContext

@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import logging
 import functools
-import falcon
+import logging
 
+import falcon
 from oslo_config import cfg
 from oslo_policy import policy
 
+from shipyard_airflow.errors import ApiError, AppError
+
+CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 policy_engine = None
 
 
@@ -26,6 +30,9 @@ class ShipyardPolicy(object):
     """
     Initialize policy defaults
     """
+
+    RULE_ADMIN_REQUIRED = 'rule:admin_required'
+
     # Base Policy
     base_rules = [
         policy.RuleDefault(
@@ -36,18 +43,61 @@ class ShipyardPolicy(object):
 
     # Orchestrator Policy
     task_rules = [
-        policy.DocumentedRuleDefault('workflow_orchestrator:get_regions',
-                                     'role:admin', 'Get region information', [{
-                                         'path':
-                                         '/api/v1.0/regions',
-                                         'method':
-                                         'GET'
-                                     }, {
-                                         'path':
-                                         '/api/v1.0/regions/{region_id}',
-                                         'method':
-                                         'GET'
-                                     }])
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:list_actions',
+            RULE_ADMIN_REQUIRED,
+            'List workflow actions invoked by users',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:create_action',
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_action',
+            RULE_ADMIN_REQUIRED,
+            'Retreive an action by its id',
+            [{
+                'path': '/api/v1.0/actions/{action_id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_action_step',
+            RULE_ADMIN_REQUIRED,
+            'Retreive an action step by its id',
+            [{
+                'path': '/api/v1.0/actions/{action_id}/steps/{step_id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_action_validation',
+            RULE_ADMIN_REQUIRED,
+            'Retreive an action validation by its id',
+            [{
+                'path':
+                '/api/v1.0/actions/{action_id}/validations/{validation_id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:invoke_action_control',
+            RULE_ADMIN_REQUIRED,
+            'Send a control to an action',
+            [{
+                'path': '/api/v1.0/actions/{action_id}/control/{control_verb}',
+                'method': 'POST'
+            }]
+        ),
     ]
 
     # Regions Policy
@@ -61,7 +111,6 @@ class ShipyardPolicy(object):
 
     def authorize(self, action, ctx):
         target = {'project_id': ctx.project_id, 'user_id': ctx.user_id}
-        self.enforcer.authorize(action, target, ctx.to_policy_view())
         return self.enforcer.authorize(action, target, ctx.to_policy_view())
 
 
@@ -72,44 +121,68 @@ class ApiEnforcer(object):
 
     def __init__(self, action):
         self.action = action
-        self.logger = logging.getLogger('shipyard.policy')
+        self.logger = LOG
 
     def __call__(self, f):
         @functools.wraps(f)
         def secure_handler(slf, req, resp, *args, **kwargs):
             ctx = req.context
-            policy_engine = ctx.policy_engine
-            self.logger.debug("Enforcing policy %s on request %s" %
-                              (self.action, ctx.request_id))
+            policy_eng = ctx.policy_engine
+            slf.info(ctx, "Policy Engine: %s" % policy_eng.__class__.__name__)
+            # perform auth
+            slf.info(ctx, "Enforcing policy %s on request %s" %
+                     (self.action, ctx.request_id))
+            # policy engine must be configured
+            if policy_eng is None:
+                slf.error(
+                    ctx,
+                    "Error-Policy engine required-action: %s" % self.action)
+                raise AppError(
+                    title="Auth is not being handled by any policy engine",
+                    status=falcon.HTTP_500,
+                    retry=False
+                )
+            authorized = False
             try:
-                if policy_engine is not None and policy_engine.authorize(
-                        self.action, ctx):
-                    return f(slf, req, resp, *args, **kwargs)
-                else:
-                    if ctx.authenticated:
-                        slf.info(ctx, "Error - Forbidden access - action: %s" %
-                                 self.action)
-                        slf.return_error(
-                            resp,
-                            falcon.HTTP_403,
-                            message="Forbidden",
-                            retry=False)
-                    else:
-                        slf.info(ctx, "Error - Unauthenticated access")
-                        slf.return_error(
-                            resp,
-                            falcon.HTTP_401,
-                            message="Unauthenticated",
-                            retry=False)
+                if policy_eng.authorize(self.action, ctx):
+                    # authorized
+                    slf.info(ctx, "Request is authorized")
+                    authorized = True
             except:
-                slf.info(
+                # couldn't service the auth request
+                slf.error(
                     ctx,
                     "Error - Expectation Failed - action: %s" % self.action)
-                slf.return_error(
-                    resp,
-                    falcon.HTTP_417,
-                    message="Expectation Failed",
-                    retry=False)
+                raise ApiError(
+                    title="Expectation Failed",
+                    status=falcon.HTTP_417,
+                    retry=False
+                )
+            if authorized:
+                return f(slf, req, resp, *args, **kwargs)
+            else:
+                slf.error(ctx,
+                          "Auth check failed. Authenticated:%s" %
+                          ctx.authenticated)
+                # raise the appropriate response exeception
+                if ctx.authenticated:
+                    slf.error(ctx,
+                              "Error: Forbidden access - action: %s" %
+                              self.action)
+                    raise ApiError(
+                        title="Forbidden",
+                        status=falcon.HTTP_403,
+                        description="Credentials do not permit access",
+                        retry=False
+                    )
+                else:
+                    slf.error(ctx, "Error - Unauthenticated access")
+                    raise ApiError(
+                        title="Unauthenticated",
+                        status=falcon.HTTP_401,
+                        description="Credentials are not established",
+                        retry=False
+                    )
 
         return secure_handler
 

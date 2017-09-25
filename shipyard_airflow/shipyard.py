@@ -15,28 +15,30 @@ import logging
 
 from oslo_config import cfg
 
-from shipyard_airflow import policy
 import shipyard_airflow.control.api as api
-# We need to import config so the initializing code can run for oslo config
-import shipyard_airflow.config as config  # noqa: F401
+from shipyard_airflow import policy
+from shipyard_airflow.conf import config
+from shipyard_airflow.db import db
+
+CONF = cfg.CONF
 
 
 def start_shipyard():
-
-    # Setup configuration parsing
-    cli_options = [
-        cfg.BoolOpt(
-            'debug', short='d', default=False, help='Enable debug logging'),
-    ]
+    # Trigger configuration resolution.
+    config.parse_args()
 
     # Setup root logger
-    logger = logging.getLogger('shipyard')
+    base_console_handler = logging.StreamHandler()
 
-    logger.setLevel('DEBUG')
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        handlers=[base_console_handler])
+    logging.getLogger().info("Setting logging level to: %s",
+                             logging.getLevelName(CONF.logging.log_level))
+
+    logging.basicConfig(level=CONF.logging.log_level,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        handlers=[base_console_handler])
 
     # Specalized format for API logging
     logger = logging.getLogger('shipyard.control')
@@ -45,14 +47,21 @@ def start_shipyard():
         ('%(asctime)s - %(levelname)s - %(user)s - %(req_id)s - '
          '%(external_ctx)s - %(message)s'))
 
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
     # Setup the RBAC policy enforcer
     policy.policy_engine = policy.ShipyardPolicy()
     policy.policy_engine.register_policy()
 
+    # Upgrade database
+    if CONF.base.upgrade_db:
+        # this is a reasonable place to put any online alembic upgrades
+        # desired. Currently only shipyard db is under shipyard control.
+        db.SHIPYARD_DB.update_db()
+
+    # Start the API
     return api.start_api()
 
 

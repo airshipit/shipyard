@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from uuid import UUID
+
 from oslo_utils import uuidutils
+
 from shipyard_airflow import policy
 
 
@@ -73,28 +74,27 @@ class AuthMiddleware(object):
                 ctx.is_admin_project = False
 
             self.logger.debug(
-                'Request from authenticated user %s with roles %s' %
-                (ctx.user, ','.join(ctx.roles)))
+                'Request from authenticated user %s with roles %s',
+                ctx.user, ','.join(ctx.roles)
+            )
         else:
             ctx.authenticated = False
 
 
 class ContextMiddleware(object):
-    def __init__(self):
-        # Setup validation pattern for external marker
-        try:
-            uuid_value = uuidutils.generate_uuid(dashed=True)
-            UUID(uuid_value)
-        except:
-            self.logger.error('UUID generation fail')
-
+    """
+    Handle looking at the X-Context_Marker to see if it has value and that
+    value is a UUID (or close enough). If not, generate one.
+    """
     def process_request(self, req, resp):
         ctx = req.context
-
         ext_marker = req.get_header('X-Context-Marker')
-
-        if ext_marker is not None and self.marker_re.fullmatch(ext_marker):
+        if ext_marker is not None and uuidutils.is_uuid_like(ext_marker):
+            # external passed in an ok context marker
             ctx.set_external_marker(ext_marker)
+        else:
+            # use the request id
+            ctx.set_external_marker(ctx.request_id)
 
 
 class LoggingMiddleware(object):
@@ -111,4 +111,11 @@ class LoggingMiddleware(object):
         }
 
         resp.append_header('X-Shipyard-Req', ctx.request_id)
-        self.logger.info("%s - %s" % (req.uri, resp.status), extra=extra)
+        self.logger.info('%s %s - %s',
+                         req.method,
+                         req.uri,
+                         resp.status,
+                         extra=extra)
+        self.logger.debug('Response body:\n%s',
+                          resp.body,
+                          extra=extra)
