@@ -78,7 +78,6 @@ class ActionsResource(BaseResource):
         # respond with the action and location for checking status
         resp.status = falcon.HTTP_201
         resp.body = self.to_json(action)
-        # TODO (Bryan Strassner) figure out the right way to do this:
         resp.location = '/api/v1.0/actions/{}'.format(action['id'])
 
     def create_action(self, action, context):
@@ -245,16 +244,17 @@ class ActionsResource(BaseResource):
                                          dag_id, self.to_json(conf_value)))
 
             try:
-                resp = requests.get(req_url, timeout=15)
+                resp = requests.get(req_url, timeout=(5, 15))
                 self.info(context,
                           'Response code from Airflow trigger_dag: %s' %
                           resp.status_code)
+                # any 4xx/5xx will be HTTPError, which are RequestException
                 resp.raise_for_status()
                 response = resp.json()
                 self.info(context,
                           'Response from Airflow trigger_dag: %s' %
                           response)
-            except (RequestException) as rex:
+            except RequestException as rex:
                 self.error(context, "Request to airflow failed: %s" % rex.args)
                 raise ApiError(
                     title='Unable to complete request to Airflow',
@@ -267,24 +267,10 @@ class ActionsResource(BaseResource):
                     }],
                     retry=True, )
 
-            # Returns error response if API call returns
-            # response code other than 200
-            if response["http_response_code"] != 200:
-                raise ApiError(
-                    title='Unable to invoke workflow',
-                    description=(
-                        'Airflow URL not found by Shipyard.',
-                        'Shipyard configuration is missing web_server value'),
-                    status=falcon.HTTP_503,
-                    error_list=[{
-                        'message': response['output']
-                    }],
-                    retry=True, )
-            else:
-                dag_time = self._exhume_date(dag_id,
-                                             response['output']['stdout'])
-                dag_execution_date = dag_time.strftime('%Y-%m-%dT%H:%M:%S')
-                return dag_execution_date
+            dag_time = self._exhume_date(dag_id,
+                                         response['output']['stdout'])
+            dag_execution_date = dag_time.strftime('%Y-%m-%dT%H:%M:%S')
+            return dag_execution_date
 
     def _exhume_date(self, dag_id, log_string):
         # we are unable to use the response time because that

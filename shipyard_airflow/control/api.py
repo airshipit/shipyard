@@ -22,10 +22,14 @@ from shipyard_airflow.control.actions_steps_id_api import ActionsStepsResource
 from shipyard_airflow.control.actions_validations_id_api import \
     ActionsValidationsResource
 from shipyard_airflow.control.base import BaseResource, ShipyardRequest
+from shipyard_airflow.control.configdocs_api import (CommitConfigDocsResource,
+                                                     ConfigDocsResource)
 from shipyard_airflow.control.health import HealthResource
 from shipyard_airflow.control.middleware import (AuthMiddleware,
                                                  ContextMiddleware,
                                                  LoggingMiddleware)
+from shipyard_airflow.control.rendered_configdocs_api import \
+    RenderedConfigDocsResource
 from shipyard_airflow.errors import (AppError, default_error_serializer,
                                      default_exception_handler)
 
@@ -55,6 +59,9 @@ def start_api():
          ActionsStepsResource()),
         ('/actions/{action_id}/validations/{validation_id}',
          ActionsValidationsResource()),
+        ('/configdocs/{collection_id}', ConfigDocsResource()),
+        ('/commitconfigdocs', CommitConfigDocsResource()),
+        ('/renderedconfigdocs', RenderedConfigDocsResource()),
     ]
 
     # Set up the 1.0 routes

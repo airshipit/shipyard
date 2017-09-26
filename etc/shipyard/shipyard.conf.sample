@@ -7,11 +7,10 @@
 # From shipyard_airflow
 #
 
-# FQDN for the armada service (string value)
-#host = armada-int.ucp
-
-# Port for the armada service (integer value)
-#port = 8000
+# The service type for the service playing the role of Armada. The specified
+# type is used to perform the service lookup in the Keystone service catalog.
+# (string value)
+#service_type = armada
 
 
 [base]
@@ -42,11 +41,10 @@
 # From shipyard_airflow
 #
 
-# FQDN for the deckhand service (string value)
-#host = deckhand-int.ucp
-
-# Port for the deckhand service (integer value)
-#port = 80
+# The service type for the service playing the role of Deckhand. The specified
+# type is used to perform the service lookup in the Keystone service catalog.
+# (string value)
+#service_type = deckhand
 
 
 [drydock]
@@ -55,20 +53,10 @@
 # From shipyard_airflow
 #
 
-# FQDN for the drydock service (string value)
-#host = drydock-int.ucp
-
-# Port for the drydock service (integer value)
-#port = 9000
-
-# TEMPORARY: password for drydock (string value)
-#token = bigboss
-
-# TEMPORARY: location of drydock yaml file (string value)
-#site_yaml = /usr/local/airflow/plugins/drydock.yaml
-
-# TEMPORARY: location of promenade yaml file (string value)
-#prom_yaml = /usr/local/airflow/plugins/promenade.yaml
+# The service type for the service playing the role of Drydock. The specified
+# type is used to perform the service lookup in the Keystone service catalog.
+# (string value)
+#service_type = physicalprovisioner
 
 
 [healthcheck]
@@ -82,34 +70,6 @@
 
 # Health check standard endpoint (string value)
 #endpoint = /api/v1.0/health
-
-
-[keystone]
-
-#
-# From shipyard_airflow
-#
-
-# The url for OpenStack Authentication (string value)
-#OS_AUTH_URL = http://keystone-api.ucp:80/v3
-
-# OpenStack project name (string value)
-#OS_PROJECT_NAME = service
-
-# The OpenStack user domain name (string value)
-#OS_USER_DOMAIN_NAME = Default
-
-# The OpenStack username (string value)
-#OS_USERNAME = shipyard
-
-# THe OpenStack password for the shipyard svc acct (string value)
-#OS_PASSWORD = password
-
-# The OpenStack user domain name (string value)
-#OS_REGION_NAME = Regionone
-
-# The OpenStack identity api version (integer value)
-#OS_IDENTITY_API_VERSION = 3
 
 
 [keystone_authtoken]
@@ -303,8 +263,7 @@
 # From shipyard_airflow
 #
 
-# FQDN for the shipyard service (string value)
-#host = shipyard-int.ucp
-
-# Port for the shipyard service (integer value)
-#port = 9000
+# The service type for the service playing the role of Shipyard. The specified
+# type is used to perform the service lookup in the Keystone service catalog.
+# (string value)
+#service_type = shipyard

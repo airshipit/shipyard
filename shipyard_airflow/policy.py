@@ -98,6 +98,44 @@ class ShipyardPolicy(object):
                 'method': 'POST'
             }]
         ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:create_configdocs',
+            RULE_ADMIN_REQUIRED,
+            'Ingest configuration documents for the site design',
+            [{
+                'path': '/api/v1.0/configdocs/{collection_id}',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_configdocs',
+            RULE_ADMIN_REQUIRED,
+            'Retrieve a collection of configuration documents',
+            [{
+                'path': '/api/v1.0/configdocs/{collection_id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:commit_configdocs',
+            RULE_ADMIN_REQUIRED,
+            ('Move documents from the Shipyard buffer to the committed '
+             'documents'),
+            [{
+                'path': '/api/v1.0/commitconfigdocs',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_renderedconfigdocs',
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve the configuration documents rendered by Deckhand into '
+             'a complete design'),
+            [{
+                'path': '/api/v1.0/renderedconfigdocs',
+                'method': 'GET'
+            }]
+        ),
     ]
 
     # Regions Policy

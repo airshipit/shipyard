@@ -61,7 +61,7 @@ def upgrade():
         'action_command_audit',
         # ID (ULID) of the audit
         sa.Column('id', types.String(26), primary_key=True),
-        # The ID of action this audit record
+        # The ID of the action for this audit record
         sa.Column('action_id', types.String(26), nullable=False),
         # The text indicating command invoked
         sa.Column('command', sa.Text, nullable=False),
@@ -73,6 +73,25 @@ def upgrade():
                   server_default=func.now()),
     )
 
+    op.create_table(
+        'api_locks',
+        # ID (ULID) of the lock
+        sa.Column('id', types.String(26), primary_key=True),
+        # The category/type of the lock
+        sa.Column('lock_type', types.String(20), nullable=False),
+        # Timestamp of when the lock was acquired
+        sa.Column('datetime',
+                  types.TIMESTAMP(timezone=True),
+                  server_default=func.now(),
+                  nullable=False),
+        # Expires
+        sa.Column('expires', types.Integer, nullable=False, default=60),
+        # A marker if the lock is released
+        sa.Column('released', types.Boolean, nullable=False, default=False),
+        sa.Column('user', types.String(64), nullable=False),
+        sa.Column('reference_id', types.String(36), nullable=False),
+    )
+
 
 def downgrade():
     """
@@ -81,3 +100,4 @@ def downgrade():
     op.drop_table('actions')
     op.drop_table('preflight_validation_failures')
     op.drop_table('action_command_audit')
+    op.drop_table('api_locks')
