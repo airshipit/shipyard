@@ -30,6 +30,7 @@ DAG_STATE_MAPPING = {
     'PAUSED': 'Paused'
 }
 
+
 def determine_lifecycle(dag_status=None):
     """
     Convert a dag_status to an action_lifecycle value
@@ -37,6 +38,7 @@ def determine_lifecycle(dag_status=None):
     if dag_status is None:
         dag_status = 'NONE'
     return DAG_STATE_MAPPING.get(dag_status.upper())
+
 
 def format_action_steps(action_id, steps):
     """
@@ -50,6 +52,7 @@ def format_action_steps(action_id, steps):
                                           step=step,
                                           index=idx + 1))
     return steps_response
+
 
 def format_step(action_id, step, index):
     """

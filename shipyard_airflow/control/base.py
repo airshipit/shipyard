@@ -128,10 +128,12 @@ class BaseResource(object):
         """
         self.log_message(ctx, logging.ERROR, msg)
 
+
 class ShipyardRequestContext(object):
     """
     Context object for shipyard resource requests
     """
+
     def __init__(self):
         self.log_level = 'error'
         self.user = None

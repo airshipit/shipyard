@@ -142,6 +142,7 @@ def tasks_db():
         },
     ]
 
+
 def airflow_stub(**kwargs):
     """
     asserts that the airflow invocation method was called with the right
@@ -152,11 +153,13 @@ def airflow_stub(**kwargs):
     print(kwargs)
     return '2017-09-06 14:10:08.528402'
 
+
 def insert_action_stub(**kwargs):
     """
     asserts that the insert action was called with the right parameters
     """
     assert kwargs['action']
+
 
 def audit_control_command_db(action_audit):
     """
@@ -166,6 +169,7 @@ def audit_control_command_db(action_audit):
 
 
 context = ShipyardRequestContext()
+
 
 def test_get_all_actions():
     """
@@ -187,6 +191,7 @@ def test_get_all_actions():
         if action['name'] == 'dag2':
             assert len(action['steps']) == 3
             assert action['dag_status'] == 'SUCCESS'
+
 
 def test_create_action():
     action_resource = ActionsResource()

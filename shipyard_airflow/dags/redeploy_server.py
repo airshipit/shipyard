@@ -52,6 +52,8 @@ Define push function to store the content of 'action' that is
 defined via 'dag_run' in XCOM so that it can be used by the
 Operators
 """
+
+
 def xcom_push(**kwargs):
     # Pushes action XCom
     kwargs['ti'].xcom_push(key='action',

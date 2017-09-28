@@ -98,6 +98,7 @@ def test_find_conflicting_dag():
     assert cco.find_conflicting_dag('buffalo') != 'monkey'
     assert cco.find_conflicting_dag('buffalo') == 'chicken'
 
+
 def test_execute_exception():
     """
     Run the whole execute function for testing
@@ -113,6 +114,7 @@ def test_execute_exception():
         pytest.fail('AirflowException should have been raised')
     except AirflowException as airflow_exception:
         assert 'Aborting run' in airflow_exception.args[0]
+
 
 def test_execute_success():
     """

@@ -15,6 +15,7 @@ import pytest
 
 from shipyard_airflow.conf import config
 
+
 @pytest.fixture
 def setup_config():
     """

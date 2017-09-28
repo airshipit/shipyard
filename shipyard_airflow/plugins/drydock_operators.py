@@ -403,32 +403,33 @@ class DryDockOperator(BaseOperator):
     def drydock_query_task(self, drydock_client, interval, time_out,
                            task_id, desired_state):
 
-            # Calculate number of times to execute the 'for' loop
-            end_range = int(time_out / interval)
+        # Calculate number of times to execute the 'for' loop
+        end_range = int(time_out / interval)
 
-            # Query task state
-            for i in range(0, end_range + 1):
+        # Query task state
+        for i in range(0, end_range + 1):
 
-                # Retrieve current task state
-                task_state = drydock_client.get_task(self.task_id)
-                logging.info(task_state)
+            # Retrieve current task state
+            task_state = drydock_client.get_task(self.task_id)
+            logging.info(task_state)
 
-                # Return Time Out Exception
-                if task_state['status'] == 'running' and i == end_range:
-                    logging.info('Timed Out!')
-                    return 'timed_out'
+            # Return Time Out Exception
+            if task_state['status'] == 'running' and i == end_range:
+                logging.info('Timed Out!')
+                return 'timed_out'
 
-                # Exit 'for' loop if task is in 'complete' state
-                if task_state['status'] == 'complete':
-                    break
-                else:
-                    time.sleep(interval)
-
-            # Get final task state
-            if task_state['result'] == desired_state:
-                return drydock_client.get_task(self.task_id)
+            # Exit 'for' loop if task is in 'complete' state
+            if task_state['status'] == 'complete':
+                break
             else:
-                return 'task_failed'
+                time.sleep(interval)
+
+        # Get final task state
+        if task_state['result'] == desired_state:
+            return drydock_client.get_task(self.task_id)
+        else:
+            return 'task_failed'
+
 
 class DryDockClientPlugin(AirflowPlugin):
     name = "drydock_client_plugin"

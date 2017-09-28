@@ -1,4 +1,4 @@
-# Original Source Code: https://github.com/teamclairvoyant/airflow-rest-api-plugin 
+# Original Source Code: https://github.com/teamclairvoyant/airflow-rest-api-plugin
 # Date when airflow-rest-api-plugin source codes were downloaded: 2017-06-27
 # Kept majority of the codes and removed those that are not needed for our purpose
 
@@ -780,4 +780,3 @@ class REST_API_Plugin(AirflowPlugin):
     executors = []
     admin_views = [rest_api_view]
     menu_links = []
-

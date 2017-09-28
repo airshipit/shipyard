@@ -17,6 +17,7 @@ from shipyard_airflow.control.actions_validations_id_api import (
 )
 from shipyard_airflow.errors import ApiError
 
+
 def actions_db(action_id):
     """
     replaces the actual db call
@@ -35,6 +36,7 @@ def actions_db(action_id):
             'context_marker': '8-4-4-4-12a'
         }
 
+
 def get_validations(validation_id):
     """
     Stub to return validations
@@ -48,6 +50,7 @@ def get_validations(validation_id):
         }
     else:
         return None
+
 
 def test_get_action_validation():
     """

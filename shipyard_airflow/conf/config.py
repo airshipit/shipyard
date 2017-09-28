@@ -214,6 +214,7 @@ SECTIONS = [
     ),
 ]
 
+
 def register_opts(conf):
     """
     Registers all the sections in this module.

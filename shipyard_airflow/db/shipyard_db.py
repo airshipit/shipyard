@@ -28,6 +28,7 @@ from shipyard_airflow.db.common_db import DbAccess
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
+
 class ShipyardDbAccess(DbAccess):
     """
     Shipyard database access

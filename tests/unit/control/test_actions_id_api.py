@@ -20,6 +20,7 @@ DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
 DATE_TWO_STR = DATE_TWO.strftime('%Y-%m-%dT%H:%M:%S')
 
+
 def actions_db(action_id):
     """
     replaces the actual db call
@@ -35,6 +36,7 @@ def actions_db(action_id):
         'context_marker': '8-4-4-4-12a'
     }
 
+
 def dag_runs_db(dag_id, execution_date):
     """
     replaces the actual db call
@@ -48,6 +50,7 @@ def dag_runs_db(dag_id, execution_date):
         'start_date': DATE_ONE,
         'end_date': DATE_ONE
     }]
+
 
 def tasks_db(dag_id, execution_date):
     """
@@ -98,6 +101,7 @@ def tasks_db(dag_id, execution_date):
         }
     ]
 
+
 def get_validations(action_id):
     """
     Stub to return validations
@@ -110,6 +114,7 @@ def get_validations(action_id):
             'details': 'This was not very shiny.'
         }
     ]
+
 
 def get_ac_audit(action_id):
     """
@@ -131,6 +136,7 @@ def get_ac_audit(action_id):
             'datetime': DATE_TWO
         }
     ]
+
 
 def test_get_action():
     """

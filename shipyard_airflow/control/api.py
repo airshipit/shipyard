@@ -77,10 +77,12 @@ def start_api():
 
     return control_api
 
+
 class VersionsResource(BaseResource):
     """
     Lists the versions supported by this API
     """
+
     def on_get(self, req, resp):
         resp.body = self.to_json({
             'v1.0': {

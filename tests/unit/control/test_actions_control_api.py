@@ -47,6 +47,7 @@ def actions_db(action_id):
             'context_marker': '8-4-4-4-12a'
         }
 
+
 def control_dag_run(dag_id,
                     execution_date,
                     expected_state,
@@ -56,8 +57,10 @@ def control_dag_run(dag_id,
     else:
         pass
 
+
 def audit_control_command_db(action_audit):
     pass
+
 
 def test_get_action():
     """

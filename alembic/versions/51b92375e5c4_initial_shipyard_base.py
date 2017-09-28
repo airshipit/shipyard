@@ -73,6 +73,7 @@ def upgrade():
                   server_default=func.now()),
     )
 
+
 def downgrade():
     """
     Remove the database objects created by this revision

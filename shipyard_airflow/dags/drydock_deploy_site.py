@@ -35,6 +35,7 @@ promenade_conf = config.get('drydock', 'prom_yaml')
 parent_dag = 'deploy_site'
 child_dag = 'deploy_site.drydock_build'
 
+
 def create_drydock_client(parent_dag_name, child_dag_name, args):
     '''
     Create Drydock Client
@@ -56,6 +57,7 @@ def create_drydock_client(parent_dag_name, child_dag_name, args):
 
     return dag
 
+
 def drydock_get_design_id(parent_dag_name, child_dag_name, args):
     '''
     Get Design ID
@@ -72,6 +74,7 @@ def drydock_get_design_id(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     return dag
+
 
 def drydock_load_parts(parent_dag_name, child_dag_name, args):
     '''
@@ -91,6 +94,7 @@ def drydock_load_parts(parent_dag_name, child_dag_name, args):
 
     return dag
 
+
 def promenade_load_parts(parent_dag_name, child_dag_name, args):
     '''
     Load Promenade Yaml
@@ -109,6 +113,7 @@ def promenade_load_parts(parent_dag_name, child_dag_name, args):
 
     return dag
 
+
 def drydock_verify_site(parent_dag_name, child_dag_name, args):
     '''
     Verify connectivity between DryDock and MAAS
@@ -125,6 +130,7 @@ def drydock_verify_site(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     return dag
+
 
 def drydock_prepare_site(parent_dag_name, child_dag_name, args):
     '''
@@ -143,6 +149,7 @@ def drydock_prepare_site(parent_dag_name, child_dag_name, args):
 
     return dag
 
+
 def drydock_prepare_node(parent_dag_name, child_dag_name, args):
     '''
     Prepare nodes for deployment
@@ -159,6 +166,7 @@ def drydock_prepare_node(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     return dag
+
 
 def drydock_deploy_node(parent_dag_name, child_dag_name, args):
     '''
@@ -187,6 +195,7 @@ DRYDOCK_VERIFY_SITE_DAG_NAME = 'drydock_verify_site'
 DRYDOCK_PREPARE_SITE_DAG_NAME = 'drydock_prepare_site'
 DRYDOCK_PREPARE_NODE_DAG_NAME = 'drydock_prepare_node'
 DRYDOCK_DEPLOY_NODE_DAG_NAME = 'drydock_deploy_node'
+
 
 def deploy_site_drydock(parent_dag_name, child_dag_name, args):
     '''

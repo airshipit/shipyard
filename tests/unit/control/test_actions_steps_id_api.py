@@ -38,6 +38,7 @@ def actions_db(action_id):
         'context_marker': '8-4-4-4-12a'
     }
 
+
 def tasks_db(dag_id, execution_date):
     """
     replaces the actual db call
@@ -86,6 +87,7 @@ def tasks_db(dag_id, execution_date):
             'queued_dttm': DATE_TWO
         }
     ]
+
 
 def test_get_action_steps():
     """

@@ -19,6 +19,7 @@ from shipyard_airflow.errors import DatabaseError
 
 LOG = logging.getLogger(__name__)
 
+
 class DbAccess:
     """
     Base class for simple database access

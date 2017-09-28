@@ -70,6 +70,7 @@ def format_resp(req,
     resp.content_type = 'application/json'
     resp.status = status_code
 
+
 def default_error_serializer(req, resp, exception):
     """
     Writes the default error message body, when we don't handle it otherwise
@@ -83,6 +84,7 @@ def default_error_serializer(req, resp, exception):
         error_type=exception.__class__.__name__,
         error_list=[{'message': exception.description}]
     )
+
 
 def default_exception_handler(ex, req, resp, params):
     """
@@ -110,6 +112,7 @@ class AppError(Exception):
     """
     Base error containing enough information to make a shipyard formatted error
     """
+
     def __init__(self,
                  title='Internal Server Error',
                  description=None,
@@ -146,6 +149,7 @@ class AirflowError(AppError):
     """
     An error to handle errors returned by the Airflow API
     """
+
     def __init__(self, description=None, error_list=None):
         super().__init__(
             title='Error response from Airflow',
@@ -155,10 +159,12 @@ class AirflowError(AppError):
             retry=False
         )
 
+
 class DatabaseError(AppError):
     """
     An error to handle general api errors.
     """
+
     def __init__(self,
                  description=None,
                  error_list=None,
@@ -178,6 +184,7 @@ class ApiError(AppError):
     """
     An error to handle general api errors.
     """
+
     def __init__(self,
                  description="",
                  error_list=None,
@@ -197,6 +204,7 @@ class InvalidFormatError(AppError):
     """
     An exception to cover invalid input formatting
     """
+
     def __init__(self, title, description="Not Specified", error_list=None):
 
         super().__init__(

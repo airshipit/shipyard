@@ -24,6 +24,7 @@ config_path = '/usr/local/airflow/plugins/shipyard.conf'
 # Note that the shipyard.conf file needs to be placed on a volume
 # that can be accessed by the containers
 
+
 def k8s_preflight_check(parent_dag_name, child_dag_name, args):
     '''
     The k8s_preflight_check checks that k8s is in a good state for

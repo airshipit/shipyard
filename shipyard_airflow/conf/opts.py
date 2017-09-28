@@ -26,6 +26,7 @@ class ConfigSection(object):
     """
     Defines a configuration section
     """
+
     def __init__(self, name, title, options, help=None):
         self.name = name
         self.title = title
