@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,11 +13,7 @@
 # limitations under the License.
 
 import logging
-import subprocess
-import os
 import time
-import re
-import configparser
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -27,13 +23,14 @@ from airflow.utils.decorators import apply_defaults
 import drydock_provisioner.drydock_client.client as client
 import drydock_provisioner.drydock_client.session as session
 
+from service_token import shipyard_service_token
+
 
 class DryDockOperator(BaseOperator):
     """
     DryDock Client
     :host: Target Host
     :port: DryDock Port
-    :token: DryDock Token
     :shipyard_conf: Location of shipyard.conf
     :drydock_conf: Location of drydock YAML
     :promenade_conf: Location of promenade YAML
@@ -47,7 +44,6 @@ class DryDockOperator(BaseOperator):
     def __init__(self,
                  host=None,
                  port=None,
-                 token=None,
                  action=None,
                  design_id=None,
                  shipyard_conf=None,
@@ -62,7 +58,6 @@ class DryDockOperator(BaseOperator):
         super(DryDockOperator, self).__init__(*args, **kwargs)
         self.host = host
         self.port = port
-        self.token = token
         self.shipyard_conf = shipyard_conf
         self.drydock_conf = drydock_conf
         self.promenade_conf = promenade_conf
@@ -236,70 +231,20 @@ class DryDockOperator(BaseOperator):
         else:
             logging.info('No Action to Perform')
 
-    def keystone_token_get(self, conf_path):
-
-        # Read and parse shiyard.conf
-        config = configparser.ConfigParser()
-        config.read(conf_path)
-
-        # Construct Envrionment variables
-        for attr in ('OS_AUTH_URL', 'OS_PROJECT_NAME', 'OS_USER_DOMAIN_NAME',
-                     'OS_USERNAME', 'OS_PASSWORD', 'OS_REGION_NAME',
-                     'OS_IDENTITY_API_VERSION'):
-            os.environ[attr] = config.get('keystone', attr)
-
-        # Execute 'openstack token issue' command
-        logging.info("Get Keystone Token")
-        keystone_output = subprocess.Popen(["openstack", "token", "issue"],
-                                           stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT)
-
-        # Get Keystone Token from output
-        line = ''
-        for line in iter(keystone_output.stdout.readline, b''):
-            line = line.strip()
-            if re.search(r'\bid\b', str(line, 'utf-8')):
-                token = str(line, 'utf-8').split(' |')[1].split(' ')[1]
-
-        # Wait for child process to terminate
-        # Set and return returncode attribute.
-        keystone_output.wait()
-        logging.info(
-            "Command exited with "
-            "return code {0}".format(keystone_output.returncode))
-
-        # Raise Execptions if 'openstack token issue' fails to execute
-        if keystone_output.returncode:
-            raise AirflowException("Unable to get Keystone Token!")
-            return 'keystone_token_error'
-        else:
-            logging.info(token)
-            return token
-
+    @shipyard_service_token
     def drydock_session_client(self, context):
 
-        # Retrieve Keystone Token
-        keystone_token = self.keystone_token_get(self.shipyard_conf)
-
-        # Raise Exception and Exit if we are not able to get Keystone
-        # Token, else continue
-        if keystone_token == 'keystone_token_error':
-            raise AirflowException("Unable to get Keystone Token!")
-        else:
-            pass
-
         # Build a DrydockSession with credentials and target host
-        # information.  Note that hard-coded token will be replaced
-        # by keystone_token in near future
+        # information.
         logging.info("Build DryDock Session")
         dd_session = session.DrydockSession(self.host, port=self.port,
-                                            token=self.token)
+                                            token=context['svc_token'])
 
         # Raise Exception if we are not able to get a drydock session
         if dd_session:
-            pass
+            logging.info("Successfully Built DryDock Session")
         else:
-            raise AirflowException("Unable to get a drydock session")
+            raise AirflowException("Unable to get a Drydock Session")
 
         # Use session to build a DrydockClient to make one or more API calls
         # The DrydockSession will care for TCP connection pooling
@@ -309,9 +254,9 @@ class DryDockOperator(BaseOperator):
 
         # Raise Exception if we are not able to build drydock client
         if dd_client:
-            pass
+            logging.info("Successfully Built DryDock client")
         else:
-            raise AirflowException("Unable to build drydock client")
+            raise AirflowException("Unable to Build Drydock Client")
 
         # Drydock client for XCOM Usage
         return dd_client

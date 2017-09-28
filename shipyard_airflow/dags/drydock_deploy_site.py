@@ -29,7 +29,6 @@ config.read(config_path)
 # Define Variables
 drydock_target_host = config.get('drydock', 'host')
 drydock_port = config.get('drydock', 'port')
-drydock_token = config.get('drydock', 'token')
 drydock_conf = config.get('drydock', 'site_yaml')
 promenade_conf = config.get('drydock', 'prom_yaml')
 parent_dag = 'deploy_site'
@@ -48,7 +47,6 @@ def create_drydock_client(parent_dag_name, child_dag_name, args):
         task_id='create_drydock_client',
         host=drydock_target_host,
         port=drydock_port,
-        token=drydock_token,
         shipyard_conf=config_path,
         action='create_drydock_client',
         main_dag_name=parent_dag,
