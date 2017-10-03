@@ -12,50 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import configparser
+from functools import wraps
 import logging
 import time
 
 from airflow.exceptions import AirflowException
 
-from functools import wraps
-
-from keystoneauth1.identity import v3 as keystone_v3
-from keystoneauth1 import session as keystone_session
-from keystoneclient.v3 import client as keystone_client
+from service_session import ucp_keystone_session
 
 
 def shipyard_service_token(func):
     @wraps(func)
     def keystone_token_get(self, context):
-        # Read and parse shiyard.conf
-        config = configparser.ConfigParser()
-        config.read(self.shipyard_conf)
+        """This function retrieves Keystone token for UCP Services
 
+        :param context: Information on the current workflow
+
+        Example::
+
+            from service_token import shipyard_service_token
+
+            @shipyard_service_token
+            def on_get(self, context):
+                svc_token=context['svc_token']
+
+                # Use the token to perform tasks such as setting
+                # up a DrydockSession which requires keystone
+                # token for authentication
+        """
         # Initialize variables
         retry = 0
         token = None
-        keystone_auth = {}
+
+        # Retrieve Keystone Session
+        sess = ucp_keystone_session(self, context)
 
         # We will allow 1 retry in getting the Keystone Token with a
         # backoff interval of 10 seconds in case there is a temporary
         # glitch in the network or transient problems with the keystone-api
         # pod
         while retry <= 1:
-            # Construct Session Argument
-            for attr in ('auth_url', 'password', 'project_domain_name',
-                         'project_name', 'username', 'user_domain_name'):
-                keystone_auth[attr] = config.get('keystone_authtoken', attr)
-
-            # Set up keystone session
-            auth = keystone_v3.Password(**keystone_auth)
-            sess = keystone_session.Session(auth=auth)
-            keystone = keystone_client.Client(session=sess)
-
             # Retrieve Keystone Token
             logging.info("Get Keystone Token")
-            token = keystone.get_raw_token_from_identity_service(
-                **keystone_auth)['auth_token']
+            token = sess.get_auth_headers().get('X-Auth-Token')
 
             # Retry if we fail to get the keystone token
             if token:
