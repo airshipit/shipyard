@@ -116,9 +116,8 @@ class ShipyardClient(BaseClient):
         """
         action_data = {"name": name, "parameters": parameters}
         url = ApiPaths.POST_GET_ACTIONS.value.format(self.shipyard_url)
-        return self.post_resp(url,
-                              data=json.dumps(action_data),
-                              content_type='application/json')
+        return self.post_resp(
+            url, data=json.dumps(action_data), content_type='application/json')
 
     def get_action_detail(self, action_id=None):
         """
