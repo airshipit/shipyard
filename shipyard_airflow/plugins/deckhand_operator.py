@@ -11,32 +11,110 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import logging
+import requests
+import yaml
 
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.plugins_manager import AirflowPlugin
+from airflow.exceptions import AirflowException
+
+from service_endpoint import ucp_service_endpoint
 
 
 class DeckhandOperator(BaseOperator):
     """
-    Supports interaction with Deckhand.
+    Supports interaction with Deckhand
+    :param action: Task to perform
+    :param main_dag_name: Parent Dag
+    :param shipyard_conf: Location of shipyard.conf
+    :param sub_dag_name: Child Dag
     """
 
-    # TODO () remove this special coloring when the operator is done.
-    ui_color = '#e8f7e4'
-
     @apply_defaults
-    def __init__(self, *args, **kwargs):
-        super(DeckhandOperator, self).__init__(*args, **kwargs)
+    def __init__(self,
+                 action=None,
+                 main_dag_name=None,
+                 shipyard_conf=None,
+                 sub_dag_name=None,
+                 workflow_info={},
+                 xcom_push=True,
+                 *args, **kwargs):
 
-    # TODO () make this communicate with Deckhand.
-    # Needs to expose functionality so general interaction
-    # with deckhand can occur.
+        super(DeckhandOperator, self).__init__(*args, **kwargs)
+        self.action = action
+        self.main_dag_name = main_dag_name
+        self.shipyard_conf = shipyard_conf
+        self.sub_dag_name = sub_dag_name
+        self.workflow_info = workflow_info
+        self.xcom_push_flag = xcom_push
+
     def execute(self, context):
-        logging.info('%s : %s !!! not implemented. '
-                     'Need to get design revision from Deckhand',
-                     self.dag.dag_id, self.task_id)
+        # Initialize Variables
+        context['svc_type'] = 'deckhand'
+        deckhand_design_version = None
+
+        # Define task_instance
+        task_instance = context['task_instance']
+
+        # Extract information related to current workflow
+        # The workflow_info variable will be a dictionary
+        # that contains information about the workflow such
+        # as action_id, name and other related parameters
+        workflow_info = task_instance.xcom_pull(
+            task_ids='action_xcom', key='action',
+            dag_id=self.main_dag_name)
+
+        # Logs uuid of action performed by the Operator
+        logging.info("DeckHand Operator for action %s", workflow_info['id'])
+
+        # Deckhand API Call
+        if self.action == 'deckhand_get_design_version':
+            # Retrieve Endpoint Information
+            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+            logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
+
+            # Retrieve DeckHand Design Version
+            deckhand_design_version = self.deckhand_get_design(context)
+
+            if deckhand_design_version:
+                return deckhand_design_version
+            else:
+                raise AirflowException('Failed to retrieve revision ID!')
+        else:
+            logging.info('No Action to Perform')
+
+    def deckhand_get_design(self, context):
+        # Form Revision Endpoint
+        revision_endpoint = context['svc_endpoint'] + '/revisions'
+
+        # Retrieve Revision
+        logging.info("Retrieving revisions information...")
+        revisions = yaml.safe_load(requests.get(revision_endpoint).text)
+
+        # Print the number of revisions that is currently available on
+        # DeckHand
+        logging.info("The number of revisions is %s", revisions['count'])
+
+        # Initialize Revision ID
+        committed_ver = None
+
+        # Construct revision_list
+        revision_list = revisions.get('results')
+
+        # Search for the last committed version and save it as xcom
+        for revision in reversed(revision_list):
+            if 'committed' in revision.get('tags'):
+                committed_ver = revision.get('id')
+                break
+
+        if committed_ver:
+            logging.info("Last committed revision is %d", committed_ver)
+            return committed_ver
+        else:
+            raise AirflowException("Failed to retrieve committed revision!")
 
 
 class DeckhandOperatorPlugin(AirflowPlugin):

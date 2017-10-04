@@ -14,16 +14,17 @@
 from datetime import timedelta
 
 import airflow
-from airflow import DAG
 import failure_handlers
-from preflight_checks import all_preflight_checks
-from drydock_deploy_site import deploy_site_drydock
-from validate_site_design import validate_site_design
-from airflow.operators.subdag_operator import SubDagOperator
+from airflow import DAG
 from airflow.operators import ConcurrencyCheckOperator
-from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.subdag_operator import SubDagOperator
+
+from deckhand_get_design import get_design_deckhand
+from drydock_deploy_site import deploy_site_drydock
+from preflight_checks import all_preflight_checks
+from validate_site_design import validate_site_design
 """
 deploy_site is the top-level orchestration DAG for deploying a site using the
 Undercloud platform.
@@ -77,7 +78,9 @@ preflight = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-get_design_version = DeckhandOperator(
+get_design_version = SubDagOperator(
+    subdag=get_design_deckhand(
+        PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
     task_id=DECKHAND_GET_DESIGN_VERSION,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
