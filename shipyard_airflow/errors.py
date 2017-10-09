@@ -72,7 +72,7 @@ def format_error_resp(req,
     # message list as well.  In both cases, if the error flag is not
     # set, set it appropriately.
     if error_list is None:
-        error_list = [{'message': 'An error ocurred, but was not specified',
+        error_list = [{'message': 'An error occurred, but was not specified',
                        'error': True}]
     else:
         for error_item in error_list:

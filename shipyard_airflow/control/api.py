@@ -21,6 +21,8 @@ from shipyard_airflow.control.actions_id_api import ActionsIdResource
 from shipyard_airflow.control.actions_steps_id_api import ActionsStepsResource
 from shipyard_airflow.control.actions_validations_id_api import \
     ActionsValidationsResource
+from shipyard_airflow.control.af_monitoring.workflows_api import \
+    WorkflowIdResource, WorkflowResource
 from shipyard_airflow.control.base import BaseResource, ShipyardRequest
 from shipyard_airflow.control.configdocs_api import (CommitConfigDocsResource,
                                                      ConfigDocsResource)
@@ -62,6 +64,8 @@ def start_api():
         ('/configdocs/{collection_id}', ConfigDocsResource()),
         ('/commitconfigdocs', CommitConfigDocsResource()),
         ('/renderedconfigdocs', RenderedConfigDocsResource()),
+        ('/workflows', WorkflowResource()),
+        ('/workflows/{workflow_id}', WorkflowIdResource()),
     ]
 
     # Set up the 1.0 routes

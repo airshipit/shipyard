@@ -604,12 +604,6 @@ The resource that represents DAGs (workflows) in airflow
 
 #### Entity Structure
 A list of objects representing the DAGs that have run in airflow.
-```
-[
-  {TBD},
-  ...
-]
-```
 
 #### GET /v1.0/workflows
 Queries airflow for DAGs that are running or have run (successfully or
@@ -621,18 +615,141 @@ optional, a boundary in the past within which to retrieve results. Default is
 ##### Responses
 * 200 OK
 
+##### Example
+
+Note the workflow_id values, these can be used for drilldown.
+
+```
+curl -D - -X GET $URL/api/v1.0/workflows -H "X-Auth-Token:$TOKEN"
+
+HTTP/1.1 200 OK
+content-type: application/json; charset=UTF-8
+x-shipyard-req: 3ab4ccc6-b956-4c7a-9ae6-183c562d8297
+
+[
+  {
+    "execution_date": "2017-10-09 21:18:56",
+    "end_date": null,
+    "workflow_id": "deploy_site__2017-10-09T21:18:56.000000",
+    "start_date": "2017-10-09 21:18:56.685999",
+    "external_trigger": true,
+    "dag_id": "deploy_site",
+    "state": "failed",
+    "run_id": "manual__2017-10-09T21:18:56"
+  },
+  {
+    "execution_date": "2017-10-09 21:19:03",
+    "end_date": null,
+    "workflow_id": "deploy_site__2017-10-09T21:19:03.000000",
+    "start_date": "2017-10-09 21:19:03.361522",
+    "external_trigger": true,
+    "dag_id": "deploy_site",
+    "state": "failed",
+    "run_id": "manual__2017-10-09T21:19:03"
+  }
+  ...
+]
+```
+
 ---
-### /v1.0/workflows/{id}
+### /v1.0/workflows/{workflow_id}
 
 #### Entity Structure
 An object representing the information available from airflow regarding a DAG's
 execution
 
-```
-{ TBD }
-```
-
 #### GET /v1.0/workflows/{id}
-Further details of a particular scheduled DAG's output
+Further details of a particular workflow's steps. All steps of all sub-dags
+will be included in the list of steps, as well as  section indicating the
+sub-dags for this parent workflow.
 ##### Responses
 * 200 OK
+##### Example
+
+Note that sub_dags can be queried to restrict to only that sub-dag's steps.
+e.g. using this as {workflow_id}:
+deploy_site.preflight.armada_preflight_check__2017-10-09T21:19:03.000000
+
+
+```
+curl -D - \
+    -X GET $URL/api/v1.0/workflows/deploy_site__2017-10-09T21:19:03.000000 \
+    -H "X-Auth-Token:$TOKEN"
+
+HTTP/1.1 200 OK
+content-type: application/json; charset=UTF-8
+x-shipyard-req: 98d71530-816a-4692-9df2-68f22c057467
+
+{
+  "execution_date": "2017-10-09 21:19:03",
+  "end_date": null,
+  "workflow_id": "deploy_site__2017-10-09T21:19:03.000000",
+  "start_date": "2017-10-09 21:19:03.361522",
+  "external_trigger": true,
+  "steps": [
+    {
+      "end_date": "2017-10-09 21:19:14.916220",
+      "task_id": "action_xcom",
+      "start_date": "2017-10-09 21:19:14.798053",
+      "duration": 0.118167,
+      "queued_dttm": "2017-10-09 21:19:08.432582",
+      "try_number": 1,
+      "state": "success",
+      "operator": "PythonOperator",
+      "dag_id": "deploy_site",
+      "execution_date": "2017-10-09 21:19:03"
+    },
+    {
+      "end_date": "2017-10-09 21:19:25.283785",
+      "task_id": "dag_concurrency_check",
+      "start_date": "2017-10-09 21:19:25.181492",
+      "duration": 0.102293,
+      "queued_dttm": "2017-10-09 21:19:19.283132",
+      "try_number": 1,
+      "state": "success",
+      "operator": "ConcurrencyCheckOperator",
+      "dag_id": "deploy_site",
+      "execution_date": "2017-10-09 21:19:03"
+    },
+    {
+      "end_date": "2017-10-09 21:20:05.394677",
+      "task_id": "preflight",
+      "start_date": "2017-10-09 21:19:34.994775",
+      "duration": 30.399902,
+      "queued_dttm": "2017-10-09 21:19:28.449848",
+      "try_number": 1,
+      "state": "failed",
+      "operator": "SubDagOperator",
+      "dag_id": "deploy_site",
+      "execution_date": "2017-10-09 21:19:03"
+    },
+    ...
+  ],
+  "dag_id": "deploy_site",
+  "state": "failed",
+  "run_id": "manual__2017-10-09T21:19:03",
+  "sub_dags": [
+    {
+      "execution_date": "2017-10-09 21:19:03",
+      "end_date": null,
+      "workflow_id": "deploy_site.preflight__2017-10-09T21:19:03.000000",
+      "start_date": "2017-10-09 21:19:35.082479",
+      "external_trigger": false,
+      "dag_id": "deploy_site.preflight",
+      "state": "failed",
+      "run_id": "backfill_2017-10-09T21:19:03"
+    },
+    ...,
+    {
+      "execution_date": "2017-10-09 21:19:03",
+      "end_date": null,
+      "workflow_id": "deploy_site.preflight.armada_preflight_check__2017-10-09T21:19:03.000000",
+      "start_date": "2017-10-09 21:19:48.265023",
+      "external_trigger": false,
+      "dag_id": "deploy_site.preflight.armada_preflight_check",
+      "state": "failed",
+      "run_id": "backfill_2017-10-09T21:19:03"
+    }
+  ]
+}
+```

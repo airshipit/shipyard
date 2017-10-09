@@ -173,7 +173,7 @@ class ActionsResource(BaseResource):
     def get_all_actions_db(self):
         """
         Wrapper for call to the shipyard database to get all actions
-        :returns: a dictionary of dictionaries keyed by action id
+        :returns: a list of dictionaries keyed by action id
         """
         return SHIPYARD_DB.get_all_submitted_actions()
 
@@ -192,8 +192,7 @@ class ActionsResource(BaseResource):
     def get_all_dag_runs_db(self):
         """
         Wrapper for call to the airflow db to get all dag runs
-        :returns: a dictionary of dictionaries keyed by dag_id and
-                  execution_date
+        :returns: a list of dictionaries representing dag runs in airflow
         """
         return AIRFLOW_DB.get_all_dag_runs()
 

@@ -63,6 +63,25 @@ class AirflowDbAccess(DbAccess):
         execution_date = :execution_date
     ''')
 
+    # The like parameter must have '%' appropriately applied to the args
+    # used to merge into this query.
+    SELECT_DAG_RUNS_LIKE_ID = sqlalchemy.sql.text('''
+    SELECT
+        "dag_id",
+        "execution_date",
+        "state",
+        "run_id",
+        "external_trigger",
+        "start_date",
+        "end_date"
+    FROM
+        dag_run
+    WHERE
+        dag_id LIKE :dag_id
+    AND
+        execution_date = :execution_date
+    ''')
+
     SELECT_ALL_TASKS = sqlalchemy.sql.text('''
     SELECT
         "task_id",
@@ -82,6 +101,8 @@ class AirflowDbAccess(DbAccess):
         start_date
     ''')
 
+    # The like parameter must have '%' appropriately applied to the args
+    # used to merge into this query.
     SELECT_TASKS_BY_ID = sqlalchemy.sql.text('''
     SELECT
         "task_id",
@@ -138,6 +159,16 @@ class AirflowDbAccess(DbAccess):
         return self.get_as_dict_array(
             AirflowDbAccess.SELECT_DAG_RUNS_BY_ID,
             dag_id=dag_id,
+            execution_date=execution_date)
+
+    def get_dag_runs_like_id(self, dag_id, execution_date):
+        """
+        Retrieves dag runs, for parent and child dags by the parent
+        dag id and execution date
+        """
+        return self.get_as_dict_array(
+            AirflowDbAccess.SELECT_DAG_RUNS_LIKE_ID,
+            dag_id=dag_id + '%',
             execution_date=execution_date)
 
     def get_all_tasks(self):

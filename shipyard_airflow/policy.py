@@ -136,6 +136,26 @@ class ShipyardPolicy(object):
                 'method': 'GET'
             }]
         ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:list_workflows',
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve the list of workflows (DAGs) that have been invoked '
+             'in Airflow, whether via Shipyard or scheduled'),
+            [{
+                'path': '/api/v1.0/workflows',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_workflow',
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve the detailed information for a workflow (DAG) from '
+             'Airflow'),
+            [{
+                'path': '/api/v1.0/workflows/{id}',
+                'method': 'GET'
+            }]
+        ),
     ]
 
     # Regions Policy

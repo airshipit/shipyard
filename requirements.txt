@@ -13,6 +13,7 @@
 # limitations under the License.
 
 alembic==0.9.5
+arrow==0.10.0
 configparser==3.5.0
 falcon==1.2.0
 jsonschema==2.6.0
