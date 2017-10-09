@@ -15,6 +15,46 @@
 from airflow.models import DAG
 from airflow.operators import DeckhandOperator
 from airflow.operators import PlaceholderOperator
+from airflow.operators.subdag_operator import SubDagOperator
+
+
+'''
+Note that in the event where the 'deploy_site' Action is triggered
+from Shipyard, the 'parent_dag_name' variable gets assigned with
+'deploy_site.validate_site_design'. The name of the main dag will
+be the front part of that value, i.e. 'deploy_site'. Hence we will
+extract the front part and assign it to main_dag for the functions
+defined below
+'''
+# Location of shiyard.conf
+config_path = '/usr/local/airflow/plugins/shipyard.conf'
+
+# Names used for sub-subdags in UCP components design verification
+DECKHAND_VALIDATE_DOCS_DAG_NAME = 'deckhand_validate_site_design'
+
+
+def deckhand_validate_site_design(parent_dag_name, child_dag_name, args):
+    '''
+    Validate Site Design - Deckhand
+    '''
+    dag = DAG(
+        '{}.{}'.format(parent_dag_name, child_dag_name),
+        default_args=args, )
+
+    # Assigns value 'deploy_site.deckhand_validate_site_design' to
+    # the sub_dag
+    child_dag = parent_dag_name[0:parent_dag_name.find('.')] + \
+        '.' + DECKHAND_VALIDATE_DOCS_DAG_NAME
+
+    operator = DeckhandOperator(
+        task_id=DECKHAND_VALIDATE_DOCS_DAG_NAME,
+        shipyard_conf=config_path,
+        action=DECKHAND_VALIDATE_DOCS_DAG_NAME,
+        main_dag_name=parent_dag_name[0:parent_dag_name.find('.')],
+        sub_dag_name=child_dag,
+        dag=dag)
+
+    return dag
 
 
 def validate_site_design(parent_dag_name, child_dag_name, args):
@@ -23,10 +63,14 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
     '''
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args, )
+        default_args=args)
 
-    deckhand_validate_docs = DeckhandOperator(
-        task_id='deckhand_validate_site_design', dag=dag)
+    deckhand_validate_docs = SubDagOperator(
+        subdag=deckhand_validate_site_design(dag.dag_id,
+                                             DECKHAND_VALIDATE_DOCS_DAG_NAME,
+                                             args),
+        task_id=DECKHAND_VALIDATE_DOCS_DAG_NAME,
+        dag=dag)
 
     # TODO () use the real operator here
     drydock_validate_docs = PlaceholderOperator(

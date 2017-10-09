@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import os
 import requests
 import yaml
 
@@ -70,12 +71,13 @@ class DeckhandOperator(BaseOperator):
         # Logs uuid of action performed by the Operator
         logging.info("DeckHand Operator for action %s", workflow_info['id'])
 
-        # Deckhand API Call
-        if self.action == 'deckhand_get_design_version':
-            # Retrieve Endpoint Information
-            context['svc_endpoint'] = ucp_service_endpoint(self, context)
-            logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
+        # Retrieve Endpoint Information
+        context['svc_endpoint'] = ucp_service_endpoint(self, context)
+        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
+        # Deckhand API Call
+        # Retrieve Design Version from DeckHand
+        if self.action == 'deckhand_get_design_version':
             # Retrieve DeckHand Design Version
             deckhand_design_version = self.deckhand_get_design(context)
 
@@ -83,12 +85,30 @@ class DeckhandOperator(BaseOperator):
                 return deckhand_design_version
             else:
                 raise AirflowException('Failed to retrieve revision ID!')
+
+        # Validate Design using DeckHand
+        elif self.action == 'deckhand_validate_site_design':
+            # Retrieve revision_id from xcom
+            # Note that in the case of 'deploy_site', the dag_id will be
+            # 'deploy_site.deckhand_get_design_version.deckhand_get_design_version'
+            # for the 'deckhand_get_design_version' task. We need to extract
+            # the xcom value from it in order to get the value of the last
+            # committed revision ID
+            context['revision_id'] = task_instance.xcom_pull(
+                task_ids='deckhand_get_design_version',
+                dag_id=self.main_dag_name + '.deckhand_get_design_version' * 2)
+
+            logging.info("Revision ID is %d", context['revision_id'])
+            self.deckhand_validate_site(context)
+
+        # No action to perform
         else:
             logging.info('No Action to Perform')
 
     def deckhand_get_design(self, context):
         # Form Revision Endpoint
-        revision_endpoint = context['svc_endpoint'] + '/revisions'
+        revision_endpoint = os.path.join(context['svc_endpoint'],
+                                         'revisions')
 
         # Retrieve Revision
         logging.info("Retrieving revisions information...")
@@ -98,11 +118,11 @@ class DeckhandOperator(BaseOperator):
         # DeckHand
         logging.info("The number of revisions is %s", revisions['count'])
 
-        # Initialize Revision ID
+        # Initialize Committed Version
         committed_ver = None
 
         # Construct revision_list
-        revision_list = revisions.get('results')
+        revision_list = revisions.get('results', [])
 
         # Search for the last committed version and save it as xcom
         for revision in reversed(revision_list):
@@ -115,6 +135,36 @@ class DeckhandOperator(BaseOperator):
             return committed_ver
         else:
             raise AirflowException("Failed to retrieve committed revision!")
+
+    def deckhand_validate_site(self, context):
+        # Form Validation Endpoint
+        validation_endpoint = os.path.join(context['svc_endpoint'],
+                                           str(context['revision_id']),
+                                           'validations')
+        logging.info(validation_endpoint)
+
+        # Retrieve Validation list
+        logging.info("Retrieving validation list...")
+        retrieved_list = yaml.safe_load(requests.get(validation_endpoint).text)
+
+        # Initialize Validation Status
+        validation_status = True
+
+        # Construct validation_list
+        validation_list = retrieved_list.get('results', [])
+
+        # Assigns 'False' to validation_status if result status
+        # is 'failure'
+        for validation in validation_list:
+            if validation.get('status') == 'failure':
+                validation_status = False
+                break
+
+        if validation_status:
+            logging.info("Revision %d has been successfully validated",
+                         context['revision_id'])
+        else:
+            raise AirflowException("DeckHand Site Design Validation Failed!")
 
 
 class DeckhandOperatorPlugin(AirflowPlugin):
