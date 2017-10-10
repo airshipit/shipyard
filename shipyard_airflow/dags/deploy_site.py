@@ -23,6 +23,7 @@ from airflow.operators.subdag_operator import SubDagOperator
 
 from deckhand_get_design import get_design_deckhand
 from drydock_deploy_site import deploy_site_drydock
+from armada_deploy_site import deploy_site_armada
 from preflight_checks import all_preflight_checks
 from validate_site_design import validate_site_design
 """
@@ -36,6 +37,7 @@ ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
+ARMADA_BUILD_DAG_NAME = 'armada_build'
 
 default_args = {
     'owner': 'airflow',
@@ -104,8 +106,10 @@ query_node_status = PlaceholderOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-armada_build = PlaceholderOperator(
-    task_id='armada_build',
+armada_build = SubDagOperator(
+    subdag=deploy_site_armada(
+        PARENT_DAG_NAME, ARMADA_BUILD_DAG_NAME, args=default_args),
+    task_id=ARMADA_BUILD_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
