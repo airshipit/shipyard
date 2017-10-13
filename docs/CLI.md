@@ -156,18 +156,25 @@ Example:
 </dl>
 
 ## create configdocs
-Load documents into the Shipyard Buffer.
+Load documents into the Shipyard Buffer. The use of one or more filename or
+a single directory option must be specified.
+
 ```
 shipyard create configdocs
     <collection>
     [--append | --replace]
-    [--filename=<filename>    (repeatable)
+    --filename=<filename>    (repeatable)
         |
-     --directory=<directory>]
+     --directory=<directory>
 
 Example:
     shipyard create configdocs design --append --filename=site_design.yaml
 ```
+Note: If neither append or replace are specified, the Shipyard API default
+value of rejectoncontents will be used.
+
+Note: Either --filename or --directory must be specified, but both may not be
+specified for the same invocation of shipyard.
 <dl>
   <dt>&lt;collection&gt;</dt>
   <dd>
@@ -186,13 +193,15 @@ Example:
   <dd>
     The file name to use as the contents of the collection. (repeatable)
     If any documents specified fail basic validation, all of the documents
-    will be rejected.
+    will be rejected.  Use of filename parameters may not be used in
+    conjunction with the directory parameter.
   </dd>
   <dt>--directory=&lt;directory&gt;</dt>
   <dd>
     A directory containing documents that will be joined and loaded as a
     collection. Any documents that fail basic validation will reject the
-    whole set.
+    whole set. Use of the directory parameter may not be used with the filename
+    parameter.
   </dd>
 </dl>
 
