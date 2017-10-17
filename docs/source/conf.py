@@ -19,6 +19,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import sphinx_rtd_theme
 
 
 # -- General configuration ------------------------------------------------
@@ -96,7 +97,6 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-import sphinx_rtd_theme
 html_theme = "sphinx_rtd_theme"
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
@@ -165,6 +165,7 @@ man_pages = [
 texinfo_documents = [
     (master_doc, 'Shipyard', u'Shipyard Documentation',
      author, 'Shipyard',
-     'Directed acyclic graph controller for Kubernetes and OpenStack CP life-cycle management.',
+     'Directed acyclic graph controller for Kubernetes'
+     ' and OpenStack CP life-cycle management.',
      'Miscellaneous'),
 ]
