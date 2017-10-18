@@ -23,6 +23,7 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from service_endpoint import ucp_service_endpoint
+from service_token import shipyard_service_token
 
 
 class DeckhandOperator(BaseOperator):
@@ -105,14 +106,23 @@ class DeckhandOperator(BaseOperator):
         else:
             logging.info('No Action to Perform')
 
+    @shipyard_service_token
     def deckhand_get_design(self, context):
+        # Retrieve Keystone Token and assign to X-Auth-Token Header
+        x_auth_token = {"X-Auth-Token": context['svc_token']}
+
         # Form Revision Endpoint
         revision_endpoint = os.path.join(context['svc_endpoint'],
                                          'revisions')
 
         # Retrieve Revision
         logging.info("Retrieving revisions information...")
-        revisions = yaml.safe_load(requests.get(revision_endpoint).text)
+
+        try:
+            revisions = yaml.safe_load(requests.get(
+                revision_endpoint, headers=x_auth_token).text)
+        except requests.exceptions.RequestException as e:
+            raise AirflowException(e)
 
         # Print the number of revisions that is currently available on
         # DeckHand
@@ -136,7 +146,11 @@ class DeckhandOperator(BaseOperator):
         else:
             raise AirflowException("Failed to retrieve committed revision!")
 
+    @shipyard_service_token
     def deckhand_validate_site(self, context):
+        # Retrieve Keystone Token and assign to X-Auth-Token Header
+        x_auth_token = {"X-Auth-Token": context['svc_token']}
+
         # Form Validation Endpoint
         validation_endpoint = os.path.join(context['svc_endpoint'],
                                            str(context['revision_id']),
@@ -145,7 +159,12 @@ class DeckhandOperator(BaseOperator):
 
         # Retrieve Validation list
         logging.info("Retrieving validation list...")
-        retrieved_list = yaml.safe_load(requests.get(validation_endpoint).text)
+
+        try:
+            retrieved_list = yaml.safe_load(
+                requests.get(validation_endpoint, headers=x_auth_token).text)
+        except requests.exceptions.RequestException as e:
+            raise AirflowException(e)
 
         # Initialize Validation Status
         validation_status = True
