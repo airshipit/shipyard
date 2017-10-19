@@ -124,6 +124,8 @@ class DeckhandOperator(BaseOperator):
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
+        logging.info(revisions)
+
         # Print the number of revisions that is currently available on
         # DeckHand
         logging.info("The number of revisions is %s", revisions['count'])
@@ -153,6 +155,7 @@ class DeckhandOperator(BaseOperator):
 
         # Form Validation Endpoint
         validation_endpoint = os.path.join(context['svc_endpoint'],
+                                           'revisions',
                                            str(context['revision_id']),
                                            'validations')
         logging.info(validation_endpoint)
@@ -165,6 +168,8 @@ class DeckhandOperator(BaseOperator):
                 requests.get(validation_endpoint, headers=x_auth_token).text)
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
+
+        logging.info(retrieved_list)
 
         # Initialize Validation Status
         validation_status = True
