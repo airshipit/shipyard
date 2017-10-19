@@ -1,0 +1,83 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- if .Values.manifests.job_shipyard_db_init }}
+{{- $envAll := . }}
+{{- $dependencies := .Values.dependencies.shipyard_db_init }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: shipyard-db-init
+spec:
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "shipyard" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+      initContainers:
+{{ tuple $envAll $dependencies "[]" | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: shipyard-db-init
+          image: {{ .Values.images.shipyard_db_init | quote }}
+          imagePullPolicy: {{ .Values.images.pull_policy | quote }}
+{{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_init | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+            - name: ROOT_DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.admin }}
+                  key: DB_CONNECTION_SHIPYARD
+            - name: SHIPYARD_CONFIG_FILE
+              value: /etc/shipyard/shipyard.conf
+            - name: DB_NAME
+              value: {{ .Values.database.postgresql_shipyard.db_name }}
+            - name: DB_USER
+              value: {{ .Values.endpoints.postgresql_shipyard_db.auth.user.username }}
+            - name: DB_PASS
+              value: {{ .Values.endpoints.postgresql_shipyard_db.auth.user.password }}
+            - name: ROOT_DB_USER
+              value: {{ .Values.database.postgresql_shipyard.db_root_user }}
+            - name: AIRFLOW_DB_USER
+              value: {{ .Values.endpoints.postgresql_airflow_db.auth.user.username }}
+          command:
+            - /tmp/shipyard-db-init.sh
+          volumeMounts:
+            - name: shipyard-bin
+              mountPath: /tmp/shipyard-db-init.sh
+              subPath: shipyard-db-init.sh
+              readOnly: true
+            - name: etc-shipyard
+              mountPath: /etc/shipyard
+            - name: shipyard-etc
+              mountPath: /etc/shipyard/shipyard.conf
+              subPath: shipyard.conf
+              readOnly: true
+      volumes:
+        - name: etc-shipyard
+          emptyDir: {}
+        - name: shipyard-etc
+          configMap:
+            name: shipyard-etc
+            defaultMode: 0444
+        - name: shipyard-bin
+          configMap:
+            name: shipyard-bin
+            defaultMode: 0555
+{{- end }}

@@ -1,0 +1,59 @@
+# Copyright 2017 The Openstack-Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{- $envAll := . }}
+
+{{ include "airflow.conf.airflow_values_skeleton" .Values.conf.airflow | trunc 0 }}
+
+# Add endpoint URI lookup for Airflow Web Server
+{{- if empty .Values.conf.airflow.webserver.base_url -}}
+{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.airflow.webserver "base_url" | quote | trunc 0 -}}
+{{- end -}}
+
+{{- if empty .Values.conf.airflow.cli.endpoint_url -}}
+{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.airflow.cli "endpoint_url" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for Postgresql DB Connection
+{{- if empty .Values.conf.airflow.core.sql_alchemy_conn -}}
+{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.core "sql_alchemy_conn" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for RabbitMQ Connection
+{{- if empty .Values.conf.airflow.celery.broker_url -}}
+{{- tuple "oslo_messaging" "internal" "user" "amqp" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.celery "broker_url" | quote | trunc 0 -}}
+{{- end -}}
+
+{{- if empty .Values.conf.airflow.celery.celery_result_backend -}}
+{{- tuple "oslo_messaging" "internal" "user" "amqp" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.celery "celery_result_backend" | quote | trunc 0 -}}
+{{- end -}}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-etc
+data:
+  airflow.cfg: |+
+{{ if .Values.conf.airflow.override -}}
+{{ .Values.conf.airflow.override | indent 4 }}
+{{- else -}}
+{{- if .Values.conf.airflow.prefix -}}
+{{ .Values.conf.airflow.prefix | indent 4 }}
+{{- end }}
+{{ tuple "etc/_airflow.cfg.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{- end }}
+{{- if .Values.conf.airflow.append -}}
+{{ .Values.conf.airflow.append | indent 4 }}
+{{- end }}

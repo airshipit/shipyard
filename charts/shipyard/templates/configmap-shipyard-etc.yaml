@@ -1,0 +1,105 @@
+# Copyright 2017 The Openstack-Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{- $envAll := . }}
+
+{{ include "shipyard.conf.shipyard_values_skeleton" .Values.conf.shipyard | trunc 0 }}
+
+{{- if empty .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token.auth_uri -}}
+{{- tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | set .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token "auth_uri" | quote | trunc 0 -}}
+{{- end -}}
+
+# FIXME fix for broken keystonemiddleware oslo config gen in newton - will remove in future
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.auth_url -}}
+{{- tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "auth_url" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for Airflow Web Server
+{{- if empty .Values.conf.shipyard.base.web_server -}}
+{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.shipyard.base "web_server" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for Shipyard Postgresql DB Connection
+{{- if empty .Values.conf.shipyard.base.postgresql_db -}}
+{{- tuple "postgresql_shipyard_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.shipyard.base "postgresql_db" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for Shipyard Airflow Postgresql DB Connection
+{{- if empty .Values.conf.shipyard.base.postgresql_airflow_db -}}
+{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.shipyard.base "postgresql_airflow_db" | quote | trunc 0 -}}
+{{- end -}}
+
+# Add endpoint URI lookup for memcached servers Connection
+{{- if empty .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token.memcached_servers -}}
+{{- tuple "oslo_cache" "internal" "memcache" . | include "helm-toolkit.endpoints.host_and_port_endpoint_uri_lookup" | set .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token "memcached_servers" | quote | trunc 0 -}}
+{{- end -}}
+
+{{- $userIdentity := .Values.endpoints.identity.auth.user -}}
+
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.project_name -}}
+{{- set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "project_name" $userIdentity.project_name | quote | trunc 0 -}}
+{{- end -}}
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.project_domain_name -}}
+{{- set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "project_domain_name" $userIdentity.project_domain_name | quote | trunc 0 -}}
+{{- end -}}
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.user_domain_name -}}
+{{- set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "user_domain_name" $userIdentity.user_domain_name | quote | trunc 0 -}}
+{{- end -}}
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.username -}}
+{{- set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "username" $userIdentity.username | quote | trunc 0 -}}
+{{- end -}}
+{{- if empty .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator.password -}}
+{{- set .Values.conf.shipyard.keystone_authtoken.shipyard_orchestrator "password" $userIdentity.password | quote | trunc 0 -}}
+{{- end -}}
+
+# Set a random string as secret key.
+{{- if empty .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token.memcache_secret_key -}}
+{{- randAlphaNum 64 | set .Values.conf.shipyard.keystone_authtoken.keystonemiddleware.auth_token "memcache_secret_key" | quote | trunc 0 -}}
+{{- end -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shipyard-etc
+data:
+  shipyard.conf: |+
+{{ if .Values.conf.shipyard.override -}}
+{{ .Values.conf.shipyard.override | indent 4 }}
+{{- else -}}
+{{- if .Values.conf.shipyard.prefix -}}
+{{ .Values.conf.shipyard.prefix | indent 4 }}
+{{- end }}
+{{ tuple "etc/_shipyard.conf.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{- end }}
+{{- if .Values.conf.shipyard.append -}}
+{{ .Values.conf.shipyard.append | indent 4 }}
+{{- end }}
+  api-paste.ini: |+
+{{ if .Values.conf.paste.override -}}
+{{ .Values.conf.paste.override | indent 4 }}
+{{- else -}}
+{{- if .Values.conf.paste.prefix -}}
+{{ .Values.conf.paste.prefix | indent 4 }}
+{{- end }}
+{{ tuple "etc/_api-paste.ini.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{- if .Values.conf.paste.append -}}
+{{ .Values.conf.paste.append | indent 4 }}
+{{- end }}
+{{- end }}
+  policy.yaml: |+
+{{ if .Values.conf.policy.override -}}
+{{ .Values.conf.policy.override | indent 4 }}
+{{- else -}}
+{{ tuple "etc/_policy.yaml.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{- end }}

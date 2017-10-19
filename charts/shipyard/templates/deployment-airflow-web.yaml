@@ -1,0 +1,131 @@
+# Copyright 2017 The Openstack-Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{- if .Values.manifests.deployment_airflow_web }}
+{{- $envAll := . }}
+{{- $dependencies := .Values.dependencies.airflow_server }}
+{{- $mounts_airflow_web := .Values.pod.mounts.airflow_web.airflow_web }}
+{{- $mounts_airflow_web_init := .Values.pod.mounts.airflow_web.init_container }}
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: airflow-web
+spec:
+  replicas: {{ .Values.pod.replicas.airflow.web }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "airflow" "web" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+    spec:
+      nodeSelector:
+        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.airflow.timeout | default "30" }}
+      initContainers:
+{{ tuple $envAll $dependencies $mounts_airflow_web_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{- if .Values.prod_environment }}
+        - name: airflow-shipyard-init
+          image: {{ .Values.images.shipyard }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          command:
+            - /tmp/airflow-shipyard-init.sh
+          volumeMounts:
+            - name: airflow-bin
+              mountPath: /tmp/airflow-shipyard-init.sh
+              subPath: airflow-shipyard-init.sh
+              readOnly: true
+            - name: pod-shipyard-share-airflow-dags
+              mountPath: /tmp/airflow/dags/
+            - name: pod-shipyard-share-airflow-plugins
+              mountPath: /tmp/airflow/plugins/
+{{- end }}
+      containers:
+        - name: airflow-web
+          image: {{ .Values.images.airflow }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.airflow.web | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
+            valueFrom:
+                secretKeyRef:
+                    name: {{ .Values.secrets.postgresql_airflow_db.admin }}
+                    key: DB_CONNECTION_AIRFLOW
+          ports:
+            - containerPort: {{ .Values.network.airflow.web.port }}
+          args: ["webserver"]
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.network.airflow.web.port }}
+          volumeMounts:
+            - name: airflow-etc
+              mountPath: {{ .Values.conf.airflow.airflow_config_file }}
+              subPath: airflow.cfg
+              readOnly: true
+{{- if .Values.prod_environment }}
+            - name: shipyard-etc
+              mountPath: /usr/local/airflow/plugins/shipyard.conf
+              subPath: shipyard.conf
+              readOnly: true
+            - name: pod-shipyard-share-airflow-dags
+              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
+            - name: pod-shipyard-share-airflow-plugins
+              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
+{{ else }}
+            - name: airflow-dags
+              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
+            - name: airflow-plugins
+              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
+{{- end }}
+            - name: airflow-logs
+              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
+{{ if $mounts_airflow_web.volumeMounts }}{{ toYaml $mounts_airflow_web.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: airflow-etc
+          configMap:
+            name: airflow-etc
+            defaultMode: 0444
+{{- if .Values.prod_environment }}
+        - name: shipyard-etc
+          configMap:
+            name: shipyard-etc
+            defaultMode: 0444
+        - name: airflow-bin
+          configMap:
+            name: airflow-bin
+            defaultMode: 0555
+        - name: pod-shipyard-share-airflow-dags
+          emptyDir: {}
+        - name: pod-shipyard-share-airflow-plugins
+          emptyDir: {}
+        - name: airflow-logs
+          emptyDir: {}
+{{ else }}
+        - name: airflow-dags
+          hostPath:
+            path: {{ .Values.pod.mounts.dag_path }}
+        - name: airflow-plugins
+          hostPath:
+            path: {{ .Values.pod.mounts.plugin_path }}
+        - name: airflow-logs
+          hostPath:
+            path: {{ .Values.pod.mounts.log_path }}
+{{- end }}
+{{ if $mounts_airflow_web.volumes }}{{ toYaml $mounts_airflow_web.volumes | indent 8 }}{{ end }}
+{{- end }}
