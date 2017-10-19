@@ -14,24 +14,29 @@
 import logging
 
 import falcon
-
-from shipyard_airflow.control.actions_api import ActionsResource
-from shipyard_airflow.control.actions_control_api import ActionsControlResource
-from shipyard_airflow.control.actions_id_api import ActionsIdResource
-from shipyard_airflow.control.actions_steps_id_api import ActionsStepsResource
-from shipyard_airflow.control.actions_validations_id_api import \
+from shipyard_airflow.control.action.actions_api import ActionsResource
+from shipyard_airflow.control.action.actions_control_api import \
+    ActionsControlResource
+from shipyard_airflow.control.action.actions_id_api import ActionsIdResource
+from shipyard_airflow.control.action.actions_steps_id_api import \
+    ActionsStepsResource
+from shipyard_airflow.control.action.actions_validations_id_api import \
     ActionsValidationsResource
-from shipyard_airflow.control.af_monitoring.workflows_api import \
-    WorkflowIdResource, WorkflowResource
+from shipyard_airflow.control.af_monitoring.workflows_api import (
+    WorkflowIdResource,
+    WorkflowResource
+)
 from shipyard_airflow.control.base import BaseResource, ShipyardRequest
-from shipyard_airflow.control.configdocs_api import (CommitConfigDocsResource,
-                                                     ConfigDocsResource)
+from shipyard_airflow.control.configdocs.configdocs_api import (
+    CommitConfigDocsResource,
+    ConfigDocsResource
+)
+from shipyard_airflow.control.configdocs.rendered_configdocs_api import \
+    RenderedConfigDocsResource
 from shipyard_airflow.control.health import HealthResource
 from shipyard_airflow.control.middleware import (AuthMiddleware,
                                                  ContextMiddleware,
                                                  LoggingMiddleware)
-from shipyard_airflow.control.rendered_configdocs_api import \
-    RenderedConfigDocsResource
 from shipyard_airflow.errors import (AppError, default_error_serializer,
                                      default_exception_handler)
 

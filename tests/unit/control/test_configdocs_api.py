@@ -17,9 +17,12 @@ from mock import patch
 
 import pytest
 
-from shipyard_airflow.control.configdocs_helper import ConfigdocsHelper
-from shipyard_airflow.control.configdocs_api import (CommitConfigDocsResource,
-                                                     ConfigDocsResource)
+from shipyard_airflow.control.configdocs.configdocs_api import (
+    CommitConfigDocsResource,
+    ConfigDocsResource
+)
+from shipyard_airflow.control.configdocs.configdocs_helper import \
+    ConfigdocsHelper
 from shipyard_airflow.errors import ApiError
 
 

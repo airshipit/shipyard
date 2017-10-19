@@ -15,7 +15,7 @@ import json
 import os
 from datetime import datetime
 
-from shipyard_airflow.control.actions_api import ActionsResource
+from shipyard_airflow.control.action.actions_api import ActionsResource
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.errors import ApiError
 

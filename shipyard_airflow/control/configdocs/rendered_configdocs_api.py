@@ -20,7 +20,8 @@ from oslo_config import cfg
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.configdocs_helper import ConfigdocsHelper
+from shipyard_airflow.control.configdocs.configdocs_helper import \
+    ConfigdocsHelper
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
