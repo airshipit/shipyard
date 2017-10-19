@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+""" Module providing the oslo_config based configuration for Shipyard
+"""
 import logging
 
 import keystoneauth1.loading as ks_loading
@@ -75,14 +77,13 @@ SECTIONS = [
         title='Shipyard connection info',
         options=[
             cfg.StrOpt(
-                'host',
-                default='shipyard-int.ucp',
-                help='FQDN for the shipyard service'
-            ),
-            cfg.IntOpt(
-                'port',
-                default=9000,
-                help='Port for the shipyard service'
+                'service_type',
+                default='shipyard',
+                help=(
+                    'The service type for the service playing the role '
+                    'of Shipyard. The specified type is used to perform '
+                    'the service lookup in the Keystone service catalog. '
+                )
             ),
         ]
     ),
@@ -91,14 +92,13 @@ SECTIONS = [
         title='Deckhand connection info',
         options=[
             cfg.StrOpt(
-                'host',
-                default='deckhand-int.ucp',
-                help='FQDN for the deckhand service'
-            ),
-            cfg.IntOpt(
-                'port',
-                default=80,
-                help='Port for the deckhand service'
+                'service_type',
+                default='deckhand',
+                help=(
+                    'The service type for the service playing the role '
+                    'of Deckhand. The specified type is used to perform '
+                    'the service lookup in the Keystone service catalog. '
+                )
             ),
         ]
     ),
@@ -107,14 +107,13 @@ SECTIONS = [
         title='Armada connection info',
         options=[
             cfg.StrOpt(
-                'host',
-                default='armada-int.ucp',
-                help='FQDN for the armada service'
-            ),
-            cfg.IntOpt(
-                'port',
-                default=8000,
-                help='Port for the armada service'
+                'service_type',
+                default='armada',
+                help=(
+                    'The service type for the service playing the role '
+                    'of Armada. The specified type is used to perform '
+                    'the service lookup in the Keystone service catalog. '
+                )
             ),
         ]
     ),
@@ -123,32 +122,13 @@ SECTIONS = [
         title='Drydock connection info',
         options=[
             cfg.StrOpt(
-                'host',
-                default='drydock-int.ucp',
-                help='FQDN for the drydock service'
-            ),
-            cfg.IntOpt(
-                'port',
-                default=9000,
-                help='Port for the drydock service'
-            ),
-            # TODO(Bryan Strassner) Remove this when integrated
-            cfg.StrOpt(
-                'token',
-                default='bigboss',
-                help='TEMPORARY: password for drydock'
-            ),
-            # TODO(Bryan Strassner) Remove this when integrated
-            cfg.StrOpt(
-                'site_yaml',
-                default='/usr/local/airflow/plugins/drydock.yaml',
-                help='TEMPORARY: location of drydock yaml file'
-            ),
-            # TODO(Bryan Strassner) Remove this when integrated
-            cfg.StrOpt(
-                'prom_yaml',
-                default='/usr/local/airflow/plugins/promenade.yaml',
-                help='TEMPORARY: location of promenade yaml file'
+                'service_type',
+                default='physicalprovisioner',
+                help=(
+                    'The service type for the service playing the role '
+                    'of Drydock. The specified type is used to perform '
+                    'the service lookup in the Keystone service catalog. '
+                )
             ),
         ]
     ),
@@ -168,56 +148,11 @@ SECTIONS = [
             ),
         ]
     ),
-    # TODO (Bryan Strassner) This section is in use by the operators we send
-    #                        to the airflow pod(s). Needs to be refactored out
-    #                        when those operators are updated.
-    ConfigSection(
-        name='keystone',
-        title='Keystone connection and credential information',
-        options=[
-            cfg.StrOpt(
-                'OS_AUTH_URL',
-                default='http://keystone-api.ucp:80/v3',
-                help='The url for OpenStack Authentication'
-            ),
-            cfg.StrOpt(
-                'OS_PROJECT_NAME',
-                default='service',
-                help='OpenStack project name'
-            ),
-            cfg.StrOpt(
-                'OS_USER_DOMAIN_NAME',
-                default='Default',
-                help='The OpenStack user domain name'
-            ),
-            cfg.StrOpt(
-                'OS_USERNAME',
-                default='shipyard',
-                help='The OpenStack username'
-            ),
-            cfg.StrOpt(
-                'OS_PASSWORD',
-                default='password',
-                help='THe OpenStack password for the shipyard svc acct'
-            ),
-            cfg.StrOpt(
-                'OS_REGION_NAME',
-                default='Regionone',
-                help='The OpenStack user domain name'
-            ),
-            cfg.IntOpt(
-                'OS_IDENTITY_API_VERSION',
-                default=3,
-                help='The OpenStack identity api version'
-            ),
-        ]
-    ),
 ]
 
 
 def register_opts(conf):
-    """
-    Registers all the sections in this module.
+    """ Registers all the sections in this module.
     """
     for section in SECTIONS:
         conf.register_group(
@@ -226,9 +161,6 @@ def register_opts(conf):
                          help=section.help))
         conf.register_opts(section.options, group=section.name)
 
-    # TODO (Bryan Strassner) is there a better, more general way to do this,
-    #                        or is password enough? Probably need some guidance
-    #                        from someone with more experience in this space.
     conf.register_opts(
         ks_loading.get_auth_plugin_conf_options('password'),
         group='keystone_authtoken'
@@ -236,12 +168,16 @@ def register_opts(conf):
 
 
 def list_opts():
+    """ List the options identified by this configuration
+    """
     return {
         section.name: section.options for section in SECTIONS
     }
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
+    """ Triggers the parsing of the arguments/configs
+    """
     CONF(args=args,
          project='shipyard',
          usage=usage,

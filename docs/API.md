@@ -90,6 +90,9 @@ indicates that the specified collection should be deleted when the Shipyard
 Buffer is committed. If a POST to the commitconfigdocs is in progress, this
 POST should be rejected with a 409 error.
 
+Important:  
+The expected input type for this request is 'Content-Type: application/x-yaml'
+
 ##### Query Parameters
 * bufferMode=append|replace|**rejectOnContents**  
 Indicates how the existing Shipyard Buffer should be handled. By default,
@@ -121,6 +124,9 @@ Returns the source documents for a collection of documents
 * version=committed|**buffer**  
 Return the documents for the version specified - buffer by default.
 
+Important:  
+The output type for this request is 'Content-Type: application/x-yaml'
+
 ##### Responses
 * 200 OK  
 If documents can be retrieved.
@@ -141,6 +147,10 @@ consider collections in any way.
 
 #### GET /v1.0/renderedconfigdocs
 Returns the full set of configdocs in their rendered form.
+
+Important:  
+The output type for this request is 'Content-Type: application/x-yaml'
+
 ##### Query Parameters
 * version=committed|**buffer**  
 Return the documents for the version specified - buffer by default.
@@ -180,7 +190,7 @@ a 400 response. With force=true, allows for the commit to succeed (with a 200
 response) even if there are validation failures from downstream components. The
 aggregate response of validation failures will be returned in this case, but
 the invalid documents will still be moved from the Shipyard Buffer to the
-Committed Documents. 
+Committed Documents.
 
 ##### Responses
 * 200 OK  
@@ -188,7 +198,7 @@ If the validations are successful. Returns an "empty" structure as as response
 indicating no errors. A 200 may also be returned if there are validation
 failures, but the force=true query parameter was specified. In this case, the
 response will contain the list of validations.
-* 400 Bad Request
+* 400 Bad Request  
 If the validations fail.  Returns a populated response structure containing
 the aggregation of the failed validations.
 * 409 Conflict  
@@ -290,13 +300,13 @@ airflow.
 ##### Responses
 * 201 Created  
 If the action is created successfully, and all preconditions to run the DAG
-are successful. The response body is the action entity created.  
+are successful. The response body is the action entity created.
 * 400 Bad Request  
-If the action name doesn't exist, or the input entity is otherwise malformed.  
+If the action name doesn't exist, or the input entity is otherwise malformed.
 * 409 Conflict  
 For any failed pre-run validations. The response body is the action entity
 created, with the failed validations. The DAG will not begin execution in this
-case.  
+case.
 
 ##### Example
 ```

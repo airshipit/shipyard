@@ -24,6 +24,10 @@ from shipyard_airflow.errors import InvalidFormatError
 
 
 class BaseResource(object):
+    """
+    The base resource for Shipyard entities/api handlers. This class
+    provides some reusable functionality.
+    """
     def __init__(self):
         self.logger = logging.getLogger('shipyard.control')
 
@@ -46,9 +50,7 @@ class BaseResource(object):
                                      validation
         """
         has_input = False
-        if ((req.content_length is not None or req.content_length != 0) and
-            (req.content_type is not None and
-             req.content_type.lower() == 'application/json')):
+        if req.content_length > 0 and 'application/json' in req.content_type:
             raw_body = req.stream.read(req.content_length or 0)
             if raw_body is not None:
                 has_input = True

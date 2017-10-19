@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+module for reused or baseclass portions of DB access
+"""
+
 import logging
 
 import sqlalchemy
@@ -98,19 +102,19 @@ class DbAccess:
         """
         Performs a parameterized insert
         """
-        self.perform_change_dml(query, **kwargs)
+        return self.perform_change_dml(query, **kwargs)
 
     def perform_update(self, query, **kwargs):
         """
         Performs a parameterized update
         """
-        self.perform_change_dml(query, **kwargs)
+        return self.perform_change_dml(query, **kwargs)
 
     def perform_delete(self, query, **kwargs):
         """
         Performs a parameterized delete
         """
-        self.perform_change_dml(query, **kwargs)
+        return self.perform_change_dml(query, **kwargs)
 
     def perform_change_dml(self, query, **kwargs):
         """
@@ -119,4 +123,4 @@ class DbAccess:
         LOG.debug('Query: %s', query)
         if query is not None:
             with self.get_engine().connect() as connection:
-                connection.execute(query, **kwargs)
+                return connection.execute(query, **kwargs)

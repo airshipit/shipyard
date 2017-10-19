@@ -148,6 +148,63 @@ class ShipyardDbAccess(DbAccess):
         :user )
     ''')
 
+    # Insert a lock record if there's not a conflicting one
+    INSERT_API_LOCK = sqlalchemy.sql.text('''
+    INSERT INTO
+        api_locks (
+            "id",
+            "lock_type",
+            "datetime",
+            "expires",
+            "released",
+            "user",
+            "reference_id"
+        )
+    SELECT
+        :id,
+        :lock_type,
+        CURRENT_TIMESTAMP,
+        :expires,
+        'false',
+        :user,
+        :reference_id
+    WHERE
+        NOT EXISTS (SELECT
+            "id"
+        FROM
+            api_locks
+        WHERE
+            "lock_type" = :lock_type
+            AND "released" = 'false'
+            AND "datetime" + (interval '1 second' * "expires") > now())
+    ''')
+
+    # Find the latest active lock for the type
+    SELECT_LATEST_LOCK_BY_TYPE = sqlalchemy.sql.text('''
+    SELECT
+        "id"
+    FROM
+        api_locks
+    WHERE
+        "lock_type" = :lock_type
+        AND "datetime" + (interval '1 second' * "expires") > now()
+        AND "released" = 'false'
+    ORDER BY
+        "datetime" DESC,
+        "id" DESC
+    LIMIT 1
+    ''')
+
+    # Releasea a lock
+    UPDATE_LOCK_RELEASE = sqlalchemy.sql.text('''
+    UPDATE
+        api_locks
+    SET
+        "released" = 'true'
+    WHERE
+        "id" = :id
+    ''')
+
     def __init__(self):
         DbAccess.__init__(self)
 
@@ -155,6 +212,7 @@ class ShipyardDbAccess(DbAccess):
         """
         Returns the connection string for this db connection
         """
+
         return CONF.base.postgresql_db
 
     def update_db(self):
@@ -192,9 +250,8 @@ class ShipyardDbAccess(DbAccess):
             ShipyardDbAccess.SELECT_ACTION_BY_ID, action_id=action_id)
         if actions_array:
             return actions_array[0]
-        else:
-            # Not found
-            return None
+        # Not found
+        return None
 
     def get_preflight_validation_fails(self):
         """
@@ -211,8 +268,8 @@ class ShipyardDbAccess(DbAccess):
             validation_id=validation_id)
         if validation_array:
             return validation_array[0]
-        else:
-            return None
+        # No validations
+        return None
 
     def get_validation_by_action_id(self, action_id):
         """
@@ -253,3 +310,41 @@ class ShipyardDbAccess(DbAccess):
                             action_id=ac_audit['action_id'],
                             command=ac_audit['command'],
                             user=ac_audit['user'])
+
+    def insert_api_lock(self,
+                        lock_id,
+                        lock_type,
+                        expires,
+                        user,
+                        reference_id):
+        """
+        Inserts an api lock
+        """
+        result = self.perform_insert(ShipyardDbAccess.INSERT_API_LOCK,
+                                     id=lock_id,
+                                     lock_type=lock_type,
+                                     expires=expires,
+                                     user=user,
+                                     reference_id=reference_id)
+        return result.rowcount == 1
+
+    def get_api_lock(self, lock_type):
+        """
+        Retreives the id of the newest current lock for the given
+        type.
+        """
+        result_dict = self.get_as_dict_array(
+            ShipyardDbAccess.SELECT_LATEST_LOCK_BY_TYPE,
+            lock_type=lock_type
+        )
+        if result_dict:
+            return result_dict[0].get('id')
+        # No lock found
+        return None
+
+    def release_api_lock(self, lock_id):
+        """
+        Marks the lock specified by the id as released.
+        """
+        self.perform_update(ShipyardDbAccess.UPDATE_LOCK_RELEASE,
+                            id=lock_id)

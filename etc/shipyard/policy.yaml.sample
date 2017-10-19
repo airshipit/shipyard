@@ -7,7 +7,7 @@
 
 # Create a workflow action
 # POST  /api/v1.0/actions
-#"workflow_orchestrator:create_actions": "rule:admin_required"
+#"workflow_orchestrator:create_action": "rule:admin_required"
 
 # Retreive an action by its id
 # GET  /api/v1.0/actions/{action_id}
@@ -24,4 +24,21 @@
 # Send a control to an action
 # POST  /api/v1.0/actions/{action_id}/control/{control_verb}
 #"workflow_orchestrator:invoke_action_control": "rule:admin_required"
+
+# Ingest configuration documents for the site design
+# POST  /api/v1.0/configdocs/{collection_id}
+#"workflow_orchestrator:create_configdocs": "rule:admin_required"
+
+# Retrieve a collection of configuration documents
+# GET  /api/v1.0/configdocs/{collection_id}
+#"workflow_orchestrator:get_configdocs": "rule:admin_required"
+
+# Move documents from the Shipyard buffer to the committed documents
+# POST  /api/v1.0/commitconfigdocs
+#"workflow_orchestrator:commit_configdocs": "rule:admin_required"
+
+# Retrieve the configuration documents rendered by Deckhand into a
+# complete design
+# GET  /api/v1.0/renderedconfigdocs
+#"workflow_orchestrator:get_renderedconfigdocs": "rule:admin_required"
 
