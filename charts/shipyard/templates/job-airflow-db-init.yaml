@@ -1,0 +1,81 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- if .Values.manifests.job_airflow_db_init }}
+{{- $envAll := . }}
+{{- $dependencies := .Values.dependencies.airflow_db_init }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-db-init
+spec:
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "airflow" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+      initContainers:
+{{ tuple $envAll $dependencies "[]" | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: airflow-db-init
+          image: {{ .Values.images.airflow_db_init | quote }}
+          imagePullPolicy: {{ .Values.images.pull_policy | quote }}
+{{ tuple $envAll $envAll.Values.pod.resources.jobs.airflow_db_init | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+            - name: DB_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_airflow_db.admin }}
+                  key: DB_CONNECTION_AIRFLOW
+            - name: AIRFLOW_CONFIG_FILE
+              value: /etc/airflow/airflow.cfg
+            - name: DB_NAME
+              value: {{ .Values.database.postgresql_airflow.db_name }}
+            - name: DB_USER
+              value: {{ .Values.endpoints.postgresql_airflow_db.auth.user.username }}
+            - name: DB_PASS
+              value: {{ .Values.endpoints.postgresql_airflow_db.auth.user.password }}
+            - name: ROOT_DB_USER
+              value: {{ .Values.database.postgresql_airflow.db_root_user }}
+          command:
+            - /tmp/airflow-db-init.sh
+          volumeMounts:
+            - name: airflow-bin
+              mountPath: /tmp/airflow-db-init.sh
+              subPath: airflow-db-init.sh
+              readOnly: true
+            - name: etc-airflow
+              mountPath: /etc/airflow
+            - name: airflow-etc
+              mountPath: /etc/airflow/airflow.cfg
+              subPath: airflow.cfg
+              readOnly: true
+      volumes:
+        - name: etc-airflow
+          emptyDir: {}
+        - name: airflow-etc
+          configMap:
+            name: airflow-etc
+            defaultMode: 0444
+        - name: airflow-bin
+          configMap:
+            name: airflow-bin
+            defaultMode: 0555
+{{- end }}
