@@ -25,7 +25,7 @@ import falcon
 from oslo_config import cfg
 import requests
 
-from shipyard_airflow.control.deckhand_client import (
+from shipyard_airflow.control.configdocs.deckhand_client import (
     DeckhandClient,
     DeckhandPaths,
     DeckhandRejectedInputError,

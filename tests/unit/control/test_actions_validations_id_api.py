@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-from shipyard_airflow.control.actions_validations_id_api import (
+
+from shipyard_airflow.control.action.actions_validations_id_api import \
     ActionsValidationsResource
-)
 from shipyard_airflow.errors import ApiError
 
 

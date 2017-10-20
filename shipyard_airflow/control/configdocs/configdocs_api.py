@@ -18,11 +18,13 @@ import falcon
 from oslo_config import cfg
 
 from shipyard_airflow import policy
-from shipyard_airflow.control import configdocs_helper
+from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.api_lock import (api_lock, ApiLockType)
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.configdocs_helper import (BufferMode,
-                                                        ConfigdocsHelper)
+from shipyard_airflow.control.configdocs.configdocs_helper import (
+    BufferMode,
+    ConfigdocsHelper
+)
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
@@ -68,7 +70,7 @@ class ConfigDocsResource(BaseResource):
             version=version
         )
         resp.append_header('Content-Type', 'application/x-yaml')
-        resp.status = falcon.HTTP_200
+        resp.status = falcon.HTTP_201
 
     def _validate_version_parameter(self, version):
         # performs validation of version parameter

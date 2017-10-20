@@ -21,8 +21,8 @@ from oslo_config import cfg
 import ulid
 
 from shipyard_airflow import policy
-from shipyard_airflow.control.action_helper import (determine_lifecycle,
-                                                    format_action_steps)
+from shipyard_airflow.control.action.action_helper import (determine_lifecycle,
+                                                           format_action_steps)
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.json_schemas import ACTION
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB

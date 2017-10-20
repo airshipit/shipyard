@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 from datetime import datetime
-from shipyard_airflow.control.actions_id_api import (ActionsIdResource)
+import json
+
+from shipyard_airflow.control.action.actions_id_api import (ActionsIdResource)
 
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)

@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from shipyard_airflow.control.actions_control_api import ActionsControlResource
+from shipyard_airflow.control.action.actions_control_api import \
+    ActionsControlResource
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.db.errors import AirflowStateError
 from shipyard_airflow.db.db import AIRFLOW_DB

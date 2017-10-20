@@ -18,12 +18,16 @@ import yaml
 import pytest
 
 from .fake_response import FakeResponse
-from shipyard_airflow.control import configdocs_helper
-from shipyard_airflow.control.configdocs_helper import (BufferMode,
-                                                        ConfigdocsHelper)
-from shipyard_airflow.control.deckhand_client import (DeckhandClient,
-                                                      DeckhandResponseError,
-                                                      NoRevisionsExistError)
+from shipyard_airflow.control.configdocs import configdocs_helper
+from shipyard_airflow.control.configdocs.configdocs_helper import (
+    BufferMode,
+    ConfigdocsHelper
+)
+from shipyard_airflow.control.configdocs.deckhand_client import (
+    DeckhandClient,
+    DeckhandResponseError,
+    NoRevisionsExistError
+)
 from shipyard_airflow.errors import ApiError, AppError
 
 REV_BUFFER_DICT = {
