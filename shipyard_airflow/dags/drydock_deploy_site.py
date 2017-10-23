@@ -24,8 +24,8 @@ config_path = '/usr/local/airflow/plugins/shipyard.conf'
 CREATE_DRYDOCK_CLIENT_DAG_NAME = 'create_drydock_client'
 DRYDOCK_VERIFY_SITE_DAG_NAME = 'verify_site'
 DRYDOCK_PREPARE_SITE_DAG_NAME = 'prepare_site'
-DRYDOCK_PREPARE_NODE_DAG_NAME = 'prepare_node'
-DRYDOCK_DEPLOY_NODE_DAG_NAME = 'deploy_node'
+DRYDOCK_PREPARE_NODE_DAG_NAME = 'prepare_nodes'
+DRYDOCK_DEPLOY_NODE_DAG_NAME = 'deploy_nodes'
 
 
 def get_drydock_subdag_step(parent_dag_name, child_dag_name, args):
@@ -84,14 +84,14 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
         task_id=DRYDOCK_PREPARE_SITE_DAG_NAME,
         dag=dag)
 
-    drydock_prepare_node = SubDagOperator(
+    drydock_prepare_nodes = SubDagOperator(
         subdag=get_drydock_subdag_step(dag.dag_id,
                                        DRYDOCK_PREPARE_NODE_DAG_NAME,
                                        args),
         task_id=DRYDOCK_PREPARE_NODE_DAG_NAME,
         dag=dag)
 
-    drydock_deploy_node = SubDagOperator(
+    drydock_deploy_nodes = SubDagOperator(
         subdag=get_drydock_subdag_step(dag.dag_id,
                                        DRYDOCK_DEPLOY_NODE_DAG_NAME,
                                        args),
@@ -101,7 +101,7 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
     # DAG Wiring
     drydock_verify_site.set_upstream(drydock_client)
     drydock_prepare_site.set_upstream(drydock_verify_site)
-    drydock_prepare_node.set_upstream(drydock_prepare_site)
-    drydock_deploy_node.set_upstream(drydock_prepare_node)
+    drydock_prepare_nodes.set_upstream(drydock_prepare_site)
+    drydock_deploy_nodes.set_upstream(drydock_prepare_nodes)
 
     return dag

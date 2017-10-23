@@ -51,7 +51,15 @@
 {{ if not .armada.service_type }}#{{ end }}service_type = {{ .armada.service_type | default "armada" }}
 
 [drydock]
-{{ if not .drydock.service_type }}#{{ end }}service_type = {{ .drydock.service_type | default "drydock" }}
+{{ if not .drydock.service_type }}#{{ end }}service_type = {{ .drydock.service_type | default "physicalprovisioner" }}
+{{ if not .drydock.verify_site_query_interval }}#{{ end }}verify_site_query_interval = {{ .drydock.verify_site_query_interval | default "10" }}
+{{ if not .drydock.verify_site_task_timeout }}#{{ end }}verify_site_task_timeout = {{ .drydock.verify_site_task_timeout | default "60" }}
+{{ if not .drydock.prepare_site_query_interval }}#{{ end }}prepare_site_query_interval = {{ .drydock.prepare_site_query_interval | default "10" }}
+{{ if not .drydock.prepare_site_task_timeout }}#{{ end }}prepare_site_task_timeout = {{ .drydock.prepare_site_task_timeout | default "120" }}
+{{ if not .drydock.prepare_node_query_interval }}#{{ end }}prepare_node_query_interval = {{ .drydock.prepare_node_query_interval | default "30" }}
+{{ if not .drydock.prepare_node_task_timeout }}#{{ end }}prepare_node_task_timeout = {{ .drydock.prepare_node_task_timeout | default "1800" }}
+{{ if not .drydock.deploy_node_query_interval }}#{{ end }}deploy_node_query_interval = {{ .drydock.deploy_node_query_interval | default "30" }}
+{{ if not .drydock.deploy_node_task_timeout }}#{{ end }}deploy_node_task_timeout = {{ .drydock.deploy_node_task_timeout | default "3600" }}
 
 [healthcheck]
 {{ if not .healthcheck.schema }}#{{ end }}schema = {{ .healthcheck.schema | default "<None>" }}

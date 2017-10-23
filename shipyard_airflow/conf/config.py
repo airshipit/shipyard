@@ -130,6 +130,46 @@ SECTIONS = [
                     'the service lookup in the Keystone service catalog. '
                 )
             ),
+            cfg.IntOpt(
+                'verify_site_query_interval',
+                default=10,
+                help='Query interval (in seconds) for verify_site task'
+            ),
+            cfg.IntOpt(
+                'verify_site_task_timeout',
+                default=60,
+                help='Time out (in seconds) for verify_site task'
+            ),
+            cfg.IntOpt(
+                'prepare_site_query_interval',
+                default=10,
+                help='Query interval (in seconds) for prepare_site task'
+            ),
+            cfg.IntOpt(
+                'prepare_site_task_timeout',
+                default=120,
+                help='Time out (in seconds) for prepare_site task'
+            ),
+            cfg.IntOpt(
+                'prepare_node_query_interval',
+                default=30,
+                help='Query interval (in seconds) for prepare_node task'
+            ),
+            cfg.IntOpt(
+                'prepare_node_task_timeout',
+                default=1800,
+                help='Time out (in seconds) for prepare_node task'
+            ),
+            cfg.IntOpt(
+                'deploy_node_query_interval',
+                default=30,
+                help='Query interval (in seconds) for deploy_node task'
+            ),
+            cfg.IntOpt(
+                'deploy_node_task_timeout',
+                default=3600,
+                help='Time out (in seconds) for deploy_node task'
+            ),
         ]
     ),
     ConfigSection(
