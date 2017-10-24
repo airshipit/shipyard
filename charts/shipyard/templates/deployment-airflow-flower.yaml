@@ -41,7 +41,7 @@ spec:
 {{ tuple $envAll $dependencies $mounts_airflow_flower_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: airflow-flower
-          image: {{ .Values.images.airflow }}
+          image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.flower | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:

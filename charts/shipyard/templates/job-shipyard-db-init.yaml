@@ -35,7 +35,7 @@ spec:
 {{ tuple $envAll $dependencies "[]" | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: shipyard-db-init
-          image: {{ .Values.images.shipyard_db_init | quote }}
+          image: {{ .Values.images.tags.shipyard_db_init | quote }}
           imagePullPolicy: {{ .Values.images.pull_policy | quote }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_init | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
