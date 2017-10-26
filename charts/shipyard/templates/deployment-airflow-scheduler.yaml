@@ -41,7 +41,7 @@ spec:
 {{ tuple $envAll $dependencies $mounts_airflow_scheduler_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
 {{- if .Values.prod_environment }}
         - name: airflow-shipyard-init
-          image: {{ .Values.images.shipyard }}
+          image: {{ .Values.images.tags.shipyard }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           command:
@@ -58,7 +58,7 @@ spec:
 {{- end }}
       containers:
         - name: airflow-scheduler
-          image: {{ .Values.images.airflow }}
+          image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.scheduler | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:

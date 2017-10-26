@@ -22,16 +22,17 @@ labels:
   node_selector_value: enabled
 
 images:
-  airflow: quay.io/attcomdev/airflow:latest
-  shipyard: quay.io/attcomdev/shipyard:latest
-  dep_check: docker.io/kolla/ubuntu-source-kubernetes-entrypoint:4.0.0
-  shipyard_db_init: docker.io/postgres:9.5
-  shipyard_db_sync: docker.io/postgres:9.5
-  airflow_db_init: docker.io/postgres:9.5
-  airflow_db_sync: quay.io/attcomdev/airflow:latest
-  ks_user: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
-  ks_service: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
-  ks_endpoints: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
+  tags:
+    airflow: quay.io/attcomdev/airflow:latest
+    shipyard: quay.io/attcomdev/shipyard:latest
+    dep_check: docker.io/kolla/ubuntu-source-kubernetes-entrypoint:4.0.0
+    shipyard_db_init: docker.io/postgres:9.5
+    shipyard_db_sync: docker.io/postgres:9.5
+    airflow_db_init: docker.io/postgres:9.5
+    airflow_db_sync: quay.io/attcomdev/airflow:latest
+    ks_user: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
+    ks_service: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
+    ks_endpoints: docker.io/kolla/ubuntu-source-kolla-toolbox:3.0.3
   pull_policy: "IfNotPresent"
 
 release_group: null
@@ -288,8 +289,28 @@ database:
     db_root_user: postgres
 
 conf:
+  policy:
+    admin_required: role:admin
+    workflow_orchestrator:list_actions: rule:admin_required
+    workflow_orchestrator:create_action: rule:admin_required
+    workflow_orchestrator:get_action: rule:admin_required
+    workflow_orchestrator:get_action_step: rule:admin_required
+    workflow_orchestrator:get_action_validation: rule:admin_required
+    workflow_orchestrator:invoke_action_control: rule:admin_required
+    workflow_orchestrator:create_configdocs: rule:admin_required
+    workflow_orchestrator:get_configdocs: rule:admin_required
+    workflow_orchestrator:commit_configdocs: rule:admin_required
+    workflow_orchestrator:get_renderedconfigdocs: rule:admin_required
+  paste:
+    app:shipyard-api:
+      paste.app_factory: shipyard_airflow.shipyard:paste_start_shipyard
+    pipeline:main:
+      pipeline: authtoken shipyard-api
+    filter:authtoken:
+      paste.filter_factory: keystonemiddleware.auth_token:filter_factory
   shipyard:
     base:
+      web_server:
     shipyard:
       service_type: shipyard
     deckhand:
@@ -310,19 +331,11 @@ conf:
       schema: http
       endpoint: /api/v1.0/health
     keystone_authtoken:
-      keystonemiddleware:
-        auth_token:
-          delay_auth_decision: true
-          auth_type: password
-          auth_section: keystone_authtoken
-          auth_version: v3
-          memcache_security_strategy: ENCRYPT
-  paste:
-    override:
-    append:
-  policy:
-    override:
-    append:
+      delay_auth_decision: true
+      auth_type: password
+      auth_section: keystone_authtoken
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
   airflow:
     override:
     append:
