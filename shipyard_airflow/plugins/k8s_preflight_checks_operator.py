@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import logging
-import subprocess
+# Using nosec to prevent Bandit blacklist reporting. Subprocess is used
+# in a controlled way as part of this operator.
+import subprocess  # nosec
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -53,7 +55,7 @@ class K8sHealthCheckOperator(BaseOperator):
             'get', 'pods', '--all-namespaces']
 
         # Execute the Kubernetes Health Check Command
-        k8s_output = subprocess.Popen(
+        k8s_output = subprocess.Popen(  # nosec
             k8s_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)

@@ -1,5 +1,6 @@
 # Testing
 pytest==3.2.1
+pytest-cov==2.5.1
 mock==2.0.0
 testfixtures==5.1.1
 apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.8.1

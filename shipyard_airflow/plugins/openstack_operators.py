@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import logging
-import subprocess
+# Using nosec to prevent Bandit blacklist reporting. Subprocess is used
+# in a controlled way as part of this operator.
+import subprocess  # nosec
 import os
 import configparser
 
@@ -55,7 +57,7 @@ class OpenStackOperator(BaseOperator):
             os.environ[attr] = config.get('keystone', attr)
 
         # Execute the OpenStack CLI Command
-        openstack_cli = subprocess.Popen(
+        openstack_cli = subprocess.Popen(  # nosec
             self.openstack_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)

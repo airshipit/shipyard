@@ -59,7 +59,9 @@ class UcpHealthCheckOperator(BaseOperator):
 
         try:
             # Set health check timeout to 30 seconds
-            req = urlopen(url, timeout=30).read().decode('utf-8')
+            # using nosec since the urls are taken from our own configuration
+            # files only, never external.
+            req = urlopen(url, timeout=30).read().decode('utf-8')  # nosec
         except (HTTPError, URLError) as error:
             # Raise Exception for HTTP/URL Error
             logging.error('Error Encountered: %s', error)

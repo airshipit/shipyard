@@ -93,7 +93,7 @@ class DeckhandClient(object):
             DeckhandClient.get_path(DeckhandPaths.REVISION_LIST)
         )
         self._handle_bad_response(response)
-        revisions = yaml.load(response.text)
+        revisions = yaml.safe_load(response.text)
         return revisions.get('results', [])
 
     def get_revision_count(self):
@@ -104,7 +104,7 @@ class DeckhandClient(object):
             DeckhandClient.get_path(DeckhandPaths.REVISION_LIST)
         )
         self._handle_bad_response(response)
-        revisions = yaml.load(response.text)
+        revisions = yaml.safe_load(response.text)
         return revisions['count']
 
     def get_latest_rev_id(self):
@@ -154,7 +154,7 @@ class DeckhandClient(object):
 
         response = self._post_request(url)
         response.raise_for_status()
-        return yaml.load(response.text)
+        return yaml.safe_load(response.text)
 
     def rollback(self, target_revision_id):
         """
@@ -186,7 +186,7 @@ class DeckhandClient(object):
 
         response = self._get_request(url)
         self._handle_bad_response(response)
-        diff = yaml.load(response.text)
+        diff = yaml.safe_load(response.text)
         return diff
 
     def get_docs_from_revision(self, revision_id, bucket_id=None):
@@ -246,7 +246,7 @@ class DeckhandClient(object):
         response = self._get_base_validation_resp(revision_id)
         # if the base call is no good, stop.
         self._handle_bad_response(response)
-        all_validation_resp = yaml.load(response.text)
+        all_validation_resp = yaml.safe_load(response.text)
         if all_validation_resp:
             val_resp = DeckhandClient._build_validation_base(
                 all_validation_resp
@@ -266,7 +266,7 @@ class DeckhandClient(object):
                         'Failed to retrieve %s validations for revision %s',
                         subset_name, revision_id
                     )
-                val_subset = yaml.load(subset_response.text)
+                val_subset = yaml.safe_load(subset_response.text)
                 entries = val_subset.get('results')
                 for entry in entries:
                     entry_id = entry.get('id')
@@ -282,7 +282,7 @@ class DeckhandClient(object):
                             'for revision %s',
                             entry_id, subset_name, revision_id
                         )
-                    entry = yaml.load(e_resp.text)
+                    entry = yaml.safe_load(e_resp.text)
                     val_resp.get('results').append(
                         DeckhandClient._build_validation_entry(entry)
                     )

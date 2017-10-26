@@ -1,0 +1,3 @@
+[run]
+# omit third party code
+omit = shipyard_airflow/plugins/rest_api_plugin.py

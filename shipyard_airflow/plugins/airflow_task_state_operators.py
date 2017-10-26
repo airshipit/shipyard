@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import logging
-import subprocess
+# Using nosec to prevent Bandit blacklist reporting. Subprocess is used
+# in a controlled way as part of this operator.
+import subprocess  # nosec
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -51,7 +53,7 @@ class TaskStateOperator(BaseOperator):
         logging.info("Running Airflow Command: %s", self.airflow_command)
 
         # Execute Airflow CLI Command
-        airflow_cli = subprocess.Popen(
+        airflow_cli = subprocess.Popen(  # nosec
             self.airflow_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
