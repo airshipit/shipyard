@@ -34,7 +34,7 @@ class DeckhandPaths(enum.Enum):
     """
     Enumeration of the paths to deckhand
     """
-    BUCKET_DOCS = '/bucket/{}/documents'
+    BUCKET_DOCS = '/buckets/{}/documents'
     RENDERED_REVISION_DOCS = '/revisions/{}/rendered-documents'
     REVISION = '/revisions/{}'
     REVISION_DIFF = '/revisions/{}/diff/{}'
