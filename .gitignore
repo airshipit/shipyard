@@ -103,3 +103,7 @@ ENV/
 
 # Generated bogus docs
 ChangeLog
+
+# build/lint artifacts
+/charts/shipyard/charts
+/charts/shipyard/requirements.lock

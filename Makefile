@@ -16,6 +16,28 @@ AIRFLOW_IMAGE_NAME         ?= airflow
 IMAGE_PREFIX               ?= attcomdev
 IMAGE_TAG                  ?= latest
 SHIPYARD_IMAGE_NAME        ?= shipyard
+HELM                       ?= helm
+
+# Build all docker images for this project
+.PHONY: images
+images: build_airflow build_shipyard
+
+# Create tgz of the chart
+.PHONY: charts
+charts: clean
+	$(HELM) package charts/shipyard
+
+# Perform Linting
+.PHONY: lint
+lint: pep8 helm_lint
+
+# Dry run templating of chart
+.PHONY: dry-run
+dry-run: clean
+	tools/helm_tk.sh $(HELM)
+	$(HELM) template charts/shipyard
+
+# Make targets intended for use by the primary targets above.
 
 .PHONY: build_airflow
 build_airflow:
@@ -24,3 +46,16 @@ build_airflow:
 .PHONY: build_shipyard
 build_shipyard:
 	docker build -t $(IMAGE_PREFIX)/$(SHIPYARD_IMAGE_NAME):$(IMAGE_TAG) -f images/shipyard/Dockerfile .
+
+.PHONY: clean
+clean:
+	rm -rf build
+
+.PHONY: pep8
+pep8:
+	tox -e pep8
+
+.PHONY: helm_lint
+helm_lint: clean
+	tools/helm_tk.sh $(HELM)
+	$(HELM) lint charts/shipyard
