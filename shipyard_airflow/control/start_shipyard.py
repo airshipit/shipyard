@@ -11,49 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
+"""Shipyard startup
 
+Sets up the global configurations for the Shipyard service. Hands off
+to the api startup to handle the Falcon specific setup.
+"""
 from oslo_config import cfg
 
-import shipyard_airflow.control.api as api
-from shipyard_airflow import policy
 from shipyard_airflow.conf import config
+import shipyard_airflow.control.api as api
+from shipyard_airflow.control import ucp_logging
 from shipyard_airflow.db import db
+from shipyard_airflow import policy
 
 CONF = cfg.CONF
 
 
 def start_shipyard(default_config_files=None):
-    """Initializer for shipyard service.
-
-    Sets up global options before setting up API endpoints.
-    """
     # Trigger configuration resolution.
     config.parse_args(args=[], default_config_files=default_config_files)
 
-    # Setup root logger
-    base_console_handler = logging.StreamHandler()
-
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[base_console_handler])
-    logging.getLogger().info("Setting logging level to: %s",
-                             logging.getLevelName(CONF.logging.log_level))
-
-    logging.basicConfig(level=CONF.logging.log_level,
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[base_console_handler])
-
-    # Specalized format for API logging
-    logger = logging.getLogger('shipyard.control')
-    logger.propagate = False
-    formatter = logging.Formatter(
-        ('%(asctime)s - %(levelname)s - %(user)s - %(req_id)s - '
-         '%(external_ctx)s - %(message)s'))
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    ucp_logging.setup_logging(CONF.logging.log_level)
 
     # Setup the RBAC policy enforcer
     policy.policy_engine = policy.ShipyardPolicy()

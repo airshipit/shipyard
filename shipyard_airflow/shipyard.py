@@ -18,6 +18,7 @@ Bootstraps to the start_shipyard module.
 from shipyard_airflow.control.start_shipyard import start_shipyard
 
 
+# Initialization compatible with PasteDeploy
 def paste_start_shipyard(global_conf, **kwargs):
     """Paste deploy compatible initializer"""
     return shipyard

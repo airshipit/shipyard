@@ -15,11 +15,14 @@ from mock import patch
 
 import pytest
 
+from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.control.configdocs.rendered_configdocs_api import \
     RenderedConfigDocsResource
 from shipyard_airflow.control.configdocs.configdocs_helper import \
     ConfigdocsHelper
 from shipyard_airflow.errors import ApiError
+
+CTX = ShipyardRequestContext()
 
 
 def test__validate_version_parameter():
@@ -46,7 +49,7 @@ def test_get_rendered_configdocs():
     with patch.object(
         ConfigdocsHelper, 'get_rendered_configdocs'
     ) as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         rcdr.get_rendered_configdocs(helper, version='buffer')
 
     mock_method.assert_called_once_with('buffer')

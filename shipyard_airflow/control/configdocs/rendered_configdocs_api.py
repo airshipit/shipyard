@@ -41,7 +41,7 @@ class RenderedConfigDocsResource(BaseResource):
         """
         version = (req.params.get('version') or 'buffer')
         self._validate_version_parameter(version)
-        helper = ConfigdocsHelper(req.context.external_marker)
+        helper = ConfigdocsHelper(req.context)
         resp.body = self.get_rendered_configdocs(
             helper=helper,
             version=version

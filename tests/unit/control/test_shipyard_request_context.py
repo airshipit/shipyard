@@ -15,19 +15,6 @@
 from shipyard_airflow.control.base import ShipyardRequestContext
 
 
-def test_set_log_level():
-    '''test set_log_level'''
-    ctx = ShipyardRequestContext()
-    ctx.set_log_level('error')
-    assert ctx.log_level == 'error'
-
-    ctx.set_log_level('info')
-    assert ctx.log_level == 'info'
-
-    ctx.set_log_level('debug')
-    assert ctx.log_level == 'debug'
-
-
 def test_set_user():
     '''test set_user '''
     ctx = ShipyardRequestContext()

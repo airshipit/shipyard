@@ -42,7 +42,6 @@ class WorkflowResource(BaseResource):
             self.get_all_workflows(helper=helper, since_date=since_date)
         )
         resp.status = falcon.HTTP_200
-        self.info(req.context, 'response data is %s' % resp.body)
 
     def get_all_workflows(self, helper, since_date=None):
         """
@@ -72,7 +71,6 @@ class WorkflowIdResource(BaseResource):
             self.get_workflow_detail(helper=helper, workflow_id=workflow_id)
         )
         resp.status = falcon.HTTP_200
-        self.info(req.context, 'response data is %s' % resp.body)
 
     def get_workflow_detail(self, helper, workflow_id):
         """

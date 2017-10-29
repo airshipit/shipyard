@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import json
-import logging
-from mock import patch
 import pytest
 
 import falcon
@@ -80,8 +78,7 @@ def test_req_json_no_body():
     assert result is None
 
 
-@patch('shipyard_airflow.control.base.BaseResource.log_message')
-def test_req_json_with_body(mock_logger):
+def test_req_json_with_body():
     '''test req_json when there is a body'''
     baseResource = BaseResource()
     ctx = ShipyardRequestContext()
@@ -96,9 +93,6 @@ def test_req_json_with_body(mock_logger):
     req = create_req(ctx, body=json_body)
 
     result = baseResource.req_json(req, validate_json_schema=ACTION)
-    mock_logger.assert_called_with(
-        ctx, logging.INFO,
-        'Input message body: b\'' + json_body.decode('utf-8') + '\'')
     assert result == json.loads(json_body.decode('utf-8'))
 
     req = create_req(ctx, body=json_body)
@@ -108,9 +102,6 @@ def test_req_json_with_body(mock_logger):
 
     with pytest.raises(InvalidFormatError) as expected_exc:
         baseResource.req_json(req)
-    mock_logger.assert_called_with(
-        ctx, logging.ERROR,
-        'Invalid JSON in request: \n' + json_body.decode('utf-8'))
     assert 'JSON could not be decoded' in str(expected_exc)
     assert str(req.path) in str(expected_exc)
 
@@ -126,64 +117,3 @@ def test_to_json():
     }
     results = baseResource.to_json(body_dict)
     assert results == json.dumps(body_dict)
-
-
-@patch('logging.Logger.log')
-def test_log_message(mock_log):
-    '''test log_message'''
-    baseResource = BaseResource()
-    ctx = None
-    level = logging.ERROR
-    msg = 'test_message'
-    extra = {'user': 'N/A', 'req_id': 'N/A', 'external_ctx': 'N/A'}
-    baseResource.log_message(ctx, level, msg)
-    mock_log.assert_called_with(level, msg, extra=extra)
-
-    ctx = ShipyardRequestContext()
-    extra = {
-        'user': ctx.user,
-        'req_id': ctx.request_id,
-        'external_ctx': ctx.external_marker,
-    }
-    baseResource.log_message(ctx, level, msg)
-    mock_log.assert_called_with(level, msg, extra=extra)
-
-
-def test_debug():
-    '''test debug'''
-    baseResource = BaseResource()
-    ctx = ShipyardRequestContext()
-    msg = 'test_msg'
-    with patch.object(BaseResource, 'log_message') as mock_method:
-        baseResource.debug(ctx, msg)
-    mock_method.assert_called_once_with(ctx, logging.DEBUG, msg)
-
-
-def test_info():
-    '''test info'''
-    baseResource = BaseResource()
-    ctx = ShipyardRequestContext()
-    msg = 'test_msg'
-    with patch.object(BaseResource, 'log_message') as mock_method:
-        baseResource.info(ctx, msg)
-    mock_method.assert_called_once_with(ctx, logging.INFO, msg)
-
-
-def test_warn():
-    '''test warn '''
-    baseResource = BaseResource()
-    ctx = ShipyardRequestContext()
-    msg = 'test_msg'
-    with patch.object(BaseResource, 'log_message') as mock_method:
-        baseResource.warn(ctx, msg)
-    mock_method.assert_called_once_with(ctx, logging.WARN, msg)
-
-
-def test_error():
-    '''test error'''
-    baseResource = BaseResource()
-    ctx = ShipyardRequestContext()
-    msg = 'test_msg'
-    with patch.object(BaseResource, 'log_message') as mock_method:
-        baseResource.error(ctx, msg)
-    mock_method.assert_called_once_with(ctx, logging.ERROR, msg)

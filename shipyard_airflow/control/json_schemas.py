@@ -25,6 +25,8 @@ from jsonschema.exceptions import FormatError, SchemaError, ValidationError
 
 from shipyard_airflow.errors import AppError, InvalidFormatError
 
+LOG = logging.getLogger(__name__)
+
 
 def validate_json(json_string, schema):
     """
@@ -40,8 +42,8 @@ def validate_json(json_string, schema):
             err.validator,
             err.validator_value
         )
-        logging.error(title)
-        logging.error(description)
+        LOG.error(title)
+        LOG.error(description)
         raise InvalidFormatError(
             title=title,
             description=description,
@@ -49,8 +51,8 @@ def validate_json(json_string, schema):
     except SchemaError as err:
         title = 'SchemaError: Unable to validate JSON: {}'.format(err)
         description = 'Invalid Schema: {}'.format(schema_title)
-        logging.error(title)
-        logging.error(description)
+        LOG.error(title)
+        LOG.error(description)
         raise AppError(
             title=title,
             description=description
@@ -58,8 +60,8 @@ def validate_json(json_string, schema):
     except FormatError as err:
         title = 'FormatError: Unable to validate JSON: {}'.format(err)
         description = 'Invalid Format: {}'.format(schema_title)
-        logging.error(title)
-        logging.error(description)
+        LOG.error(title)
+        LOG.error(description)
         raise AppError(
             title=title,
             description=description
