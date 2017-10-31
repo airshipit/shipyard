@@ -108,3 +108,11 @@ done
 # Delete the temporary files
 rm /tmp/deploy_site_response.json
 rm /tmp/get_action_status.json
+
+# Return exit code so that we can use it to determine the final
+# state of the workflow
+if [[ $action_lifecycle == "Complete" ]]; then
+    exit 0
+else
+    exit 1
+fi
