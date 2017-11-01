@@ -23,7 +23,10 @@ keystone_ip=`kubectl get pods -n ${namespace} -o wide | grep keystone | awk '{pr
 host="localhost"
 port=31901
 
-#Define Color
+# Define query time and default to 90 seconds if not provided
+query_time=${1:-90}
+
+# Define Color
 NC='\033[0m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -77,7 +80,7 @@ do
     if [[ $action_lifecycle == "Complete" ]] || [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]]; then
         # Print final results
         echo -e '\nFinal State of Deployment\n'
-        cat /tmp/get_action_status.json | jq
+        cat /tmp/get_action_status.json | jq .
         break
     else
         # Get Current State of Action Lifecycle
@@ -92,9 +95,9 @@ do
 
         action_lifecycle=`cat /tmp/get_action_status.json | jq -r '.action_lifecycle'`
 
-        # Sleep for 10 seconds between each iteration
-        echo -e "Back Off for 10 seconds...\n"
-        sleep 10
+        # Back off between each iteration
+        echo -e "Back Off for $query_time seconds...\n"
+        sleep $query_time
 
         # Check Dag state
         if [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]]; then
