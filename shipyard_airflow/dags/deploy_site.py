@@ -16,9 +16,11 @@ from datetime import timedelta
 import airflow
 import failure_handlers
 from airflow import DAG
+from airflow.operators import ConcurrencyCheckOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
+from armada_deploy_site import deploy_site_armada
 from drydock_deploy_site import deploy_site_drydock
 """
 NOTE: We are currently in the process of reviewing and merging patch sets
@@ -27,13 +29,15 @@ work properly. In order to proceed with integration testing with the CI/CD
 team, there is a need to rename the 'deploy_site.py' dag as 'deploy_site.wip'
 while we sort out, review and merge the outstanding patch sets.
 
-NOTE: We will only include the DryDock workflow here for our current testing.
-Updates will be made to this test dag as we progress along with the integration
-testing and UCP code reviews/merge.
+NOTE: We will only include Concurrency_Check, Armada and DryDock workflow here
+for our current testing. Updates will be made to this test dag as we progress
+along with the integration testing and UCP code reviews/merge.
 """
 
-PARENT_DAG_NAME = 'deploy_site'
+ARMADA_BUILD_DAG_NAME = 'armada_build'
+DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
+PARENT_DAG_NAME = 'deploy_site'
 
 default_args = {
     'owner': 'airflow',
@@ -64,6 +68,11 @@ def xcom_push(**kwargs):
 action_xcom = PythonOperator(
     task_id='action_xcom', dag=dag, python_callable=xcom_push)
 
+concurrency_check = ConcurrencyCheckOperator(
+    task_id=DAG_CONCURRENCY_CHECK_DAG_NAME,
+    on_failure_callback=failure_handlers.step_failure_handler,
+    dag=dag)
+
 drydock_build = SubDagOperator(
     subdag=deploy_site_drydock(
         PARENT_DAG_NAME, DRYDOCK_BUILD_DAG_NAME, args=default_args),
@@ -71,5 +80,14 @@ drydock_build = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
+armada_build = SubDagOperator(
+    subdag=deploy_site_armada(
+        PARENT_DAG_NAME, ARMADA_BUILD_DAG_NAME, args=default_args),
+    task_id=ARMADA_BUILD_DAG_NAME,
+    on_failure_callback=failure_handlers.step_failure_handler,
+    dag=dag)
+
 # DAG Wiring
-drydock_build.set_upstream(action_xcom)
+concurrency_check.set_upstream(action_xcom)
+drydock_build.set_upstream(concurrency_check)
+armada_build.set_upstream(drydock_build)
