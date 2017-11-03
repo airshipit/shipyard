@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import logging
+import os
+import requests
 from urllib.parse import urlparse
 
 from airflow.models import BaseOperator
@@ -89,12 +91,12 @@ class ArmadaOperator(BaseOperator):
             task_ids='create_armada_client',
             dag_id=self.sub_dag_name + '.create_armada_client')
 
+        # Retrieve Tiller Information and assign to context 'query'
+        context['query'] = self.get_tiller_info(context)
+
         # Armada API Call
         # Armada Status
         if self.action == 'armada_status':
-            # Retrieve Tiller Information and assign to context 'query'
-            context['query'] = self.get_tiller_info(context)
-
             self.get_armada_status(context, armada_client)
 
         # Armada Validate
@@ -103,16 +105,10 @@ class ArmadaOperator(BaseOperator):
 
         # Armada Apply
         elif self.action == 'armada_apply':
-            # Retrieve Tiller Information and assign to context 'query'
-            context['query'] = self.get_tiller_info(context)
-
             self.armada_apply(context, armada_client)
 
         # Armada Get Releases
         elif self.action == 'armada_get_releases':
-            # Retrieve Tiller Information and assign to context 'query'
-            context['query'] = self.get_tiller_info(context)
-
             self.armada_get_releases(context, armada_client)
 
         else:
@@ -189,17 +185,8 @@ class ArmadaOperator(BaseOperator):
         armada_manifest = None
         valid_armada_yaml = {}
 
-        # At this point in time, testing of the operator is being done by
-        # reading the armada.yaml file on airflow and feeding it to Armada as
-        # a string. We will assume that the file name is fixed and will always
-        # be 'armada_site.yaml'. This will change in the near future when
-        # Armada is integrated with DeckHand.
-        yaml_path = '/usr/local/airflow/plugins/armada_site.yaml'
-
-        # TODO: We will implement the new approach when Armada and DeckHand
-        # integration is completed.
-        with open(yaml_path, 'r') as armada_yaml:
-            armada_manifest = armada_yaml.read()
+        # Retrieve Armada Manifest
+        armada_manifest = self.get_armada_yaml(context)
 
         # Validate armada yaml file
         logging.info("Armada Validate")
@@ -220,18 +207,8 @@ class ArmadaOperator(BaseOperator):
         override_values = []
         chart_set = []
 
-        # At this point in time, testing of the operator is being done by
-        # reading the armada.yaml file on airflow and feeding it to Armada as
-        # a string. We will assume that the file name is fixed and will always
-        # be 'armada_site.yaml'. This will change in the near future when
-        # Armada is integrated with DeckHand.
-        yaml_path = '/usr/local/airflow/plugins/armada_site.yaml'
-
-        # TODO: We will implement the new approach when Armada and DeckHand
-        # integration is completed. Override and chart_set will be considered
-        # at that time.
-        with open(yaml_path, 'r') as armada_yaml:
-            armada_manifest = armada_yaml.read()
+        # Retrieve Armada Manifest
+        armada_manifest = self.get_armada_yaml(context)
 
         # Execute Armada Apply to install the helm charts in sequence
         logging.info("Armada Apply")
@@ -265,6 +242,35 @@ class ArmadaOperator(BaseOperator):
             logging.info(armada_releases)
         else:
             raise AirflowException("Failed to retrieve Armada Releases")
+
+    def get_armada_yaml(self, context):
+        # Initialize Variables
+        genesis_node_ip = None
+
+        # At this point in time, testing of the operator is being done by
+        # retrieving the armada.yaml from the nginx container on the Genesis
+        # node and feeding it to Armada as a string. We will assume that the
+        # file name is fixed and will always be 'armada_site.yaml'. This file
+        # will always be under the osh directory. This will change in the near
+        # future when Armada is integrated with DeckHand.
+        genesis_node_ip = context['query'].get('tiller_host')
+
+        # Form Endpoint
+        schema = 'http://'
+        nginx_host_port = genesis_node_ip + ':6880'
+        armada_yaml = 'osh/armada.yaml'
+        design_ref = os.path.join(schema, nginx_host_port, armada_yaml)
+
+        logging.info("Armada YAML will be retrieved from %s", design_ref)
+
+        # TODO: We will implement the new approach when Armada and DeckHand
+        # integration is completed.
+        try:
+            armada_manifest = requests.get(design_ref).text
+        except requests.exceptions.RequestException as e:
+            raise AirflowException(e)
+
+        return armada_manifest
 
 
 class ArmadaOperatorPlugin(AirflowPlugin):

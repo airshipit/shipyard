@@ -111,8 +111,8 @@ class DryDockOperator(BaseOperator):
         # Artifactory or Deckhand is able to host the YAMLs
         # NOTE: Testing of the Operator was performed with a nginx server
         # on the genesis host that is listening on port 6880. The name of
-        # the YAML file is 'drydock.yaml'. We will use this assumption
-        # for now.
+        # the YAML file is 'drydock.yaml' under the ucp directory. We will
+        # use this assumption for now.
         # TODO: This logic will be updated once DeckHand is integrated
         # with DryDock
         logging.info("Retrieving information of Tiller pod to obtain Genesis "
@@ -126,7 +126,7 @@ class DryDockOperator(BaseOperator):
         if genesis_node_ip:
             schema = 'http://'
             nginx_host_port = genesis_node_ip + ':6880'
-            drydock_yaml = 'drydock.yaml'
+            drydock_yaml = 'ucp/drydock.yaml'
             self.design_ref = os.path.join(schema,
                                            nginx_host_port,
                                            drydock_yaml)
