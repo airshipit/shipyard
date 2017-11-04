@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if .Values.manifests.shipyard_service_ingress }}
+{{- if .Values.manifests.service_shipyard_ingress }}
 {{- $envAll := . }}
 {{- if .Values.network.shipyard.ingress.public }}
 ---
