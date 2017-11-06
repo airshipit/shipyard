@@ -25,6 +25,7 @@ images: build_airflow build_shipyard
 # Create tgz of the chart
 .PHONY: charts
 charts: clean
+	$(HELM) dep up charts/shipyard
 	$(HELM) package charts/shipyard
 
 # Perform Linting
