@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Common methods for use by action api classes as necessary
-"""
+""" Common methods for use by action api classes as necessary """
 
 DAG_STATE_MAPPING = {
     'QUEUED': 'Pending',
@@ -32,18 +30,17 @@ DAG_STATE_MAPPING = {
 
 
 def determine_lifecycle(dag_status=None):
-    """
-    Convert a dag_status to an action_lifecycle value
-    """
+    """ Convert a dag_status to an action_lifecycle value """
     if dag_status is None:
         dag_status = 'NONE'
-    return DAG_STATE_MAPPING.get(dag_status.upper())
+    lifecycle = DAG_STATE_MAPPING.get(dag_status.upper())
+    if lifecycle is None:
+        lifecycle = 'Unknown ({})'.format(dag_status)
+    return lifecycle
 
 
 def format_action_steps(action_id, steps):
-    """
-    Converts a list of action step database records to desired format
-    """
+    """ Converts a list of action step db records to desired format """
     if not steps:
         return []
     steps_response = []
@@ -55,9 +52,7 @@ def format_action_steps(action_id, steps):
 
 
 def format_step(action_id, step, index):
-    """
-    reformat a step (dictionary) into a common response format
-    """
+    """ reformat a step (dictionary) into a common response format """
     return {
         'url': '/actions/{}/steps/{}'.format(action_id, step.get('task_id')),
         'state': step.get('state'),

@@ -103,6 +103,7 @@ ENV/
 
 # Generated bogus docs
 ChangeLog
+AUTHORS
 
 # build/lint artifacts
 /charts/shipyard/charts
