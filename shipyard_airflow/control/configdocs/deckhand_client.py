@@ -313,7 +313,7 @@ class DeckhandClient(object):
             DeckhandPaths.REVISION_VALIDATION_ENTRY
         ).format(revision_id, subset_name, entry_id)
 
-        e_resp = self._get_request(e_url)
+        return self._get_request(e_url)
 
     @staticmethod
     def _handle_bad_response(response, threshold=400):
