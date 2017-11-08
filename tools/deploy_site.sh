@@ -71,13 +71,32 @@ echo
 # 3) Complete - The action has completed successfully.
 # 4) Failed - The action has encountered an error, and has failed.
 # 5) Paused - The action has been paused by a user.
+# 6) Unknown (*) - Unknown State for corner cases
 #
 # Initialize 'action_lifecycle' to 'Pending'
 action_lifecycle="Pending"
 
+# Polling for site_deploy action
+# Define 'deploy_time_out' and default to 1.5 hrs (5400 seconds) if not provided
+# Note that user will need to define query time in this case
+deploy_timeout=${2:-5400}
+deploy_counter=1
+
+check_timeout_counter() {
+
+    # Check total elapsed time
+    # The default time out is set to 1.5 hrs
+    # This value can be changed by setting $2
+    if [[ $deploy_counter -eq $deploy_timeout ]]; then
+       echo 'Deploy Site task has timed out.'
+       break
+    fi
+}
+
 while true;
 do
-    if [[ $action_lifecycle == "Complete" ]] || [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]]; then
+    if [[ $action_lifecycle == "Complete" ]] || [[ $action_lifecycle == "Failed" ]] || \
+       [[ $action_lifecycle == "Paused" ]] || [[ $action_lifecycle == 'Unknown'* ]]; then
         # Print final results
         echo -e '\nFinal State of Deployment\n'
         cat /tmp/get_action_status.json | jq .
@@ -100,11 +119,16 @@ do
         sleep $query_time
 
         # Check Dag state
-        if [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]]; then
+        if [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]] || \
+           [[ $action_lifecycle == 'Unknown'* ]]; then
             echo -e "Dag Execution is in" ${RED}$action_lifecycle${NC} "state\n"
         else
             echo -e "Dag Execution is in" ${GREEN}$action_lifecycle${NC} "state\n"
         fi
+
+        # Step counter and check if deployment has timed out
+        ((deploy_counter++))
+        check_timeout_counter
     fi
 done
 
