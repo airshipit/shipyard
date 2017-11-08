@@ -4,18 +4,23 @@ All commands will utilize the following environment variables to determine
 necessary information for execution, unless otherwise noted.
 
 <dl>
-  <dt>Openstack Keystone Authorization Environment variables</dt>
+  <dt>Openstack Keystone Authorization environment variables</dt>
   <dd>
     The Shipyard CLI/API Client will check for the presence of appropriate
     environment setup to do authentication on behalf of the user.
     The openrc variables that will be used are as follows:<br />
-    OS_PROJECT_DOMAIN_NAME<br />
-    OS_USER_DOMAIN_NAME<br />
+    OS_PROJECT_DOMAIN_NAME ("default" if not specified)<br />
+    OS_USER_DOMAIN_NAME ("default" if not specified)<br />
     OS_PROJECT_NAME<br />
     OS_USERNAME<br />
     OS_PASSWORD<br />
-    OS_AUTH_URL<br />
-    OS_IDENTITY_API_VERSION<br />
+    OS_AUTH_URL - The fully qualified identity endpoint.
+    E.g. http://keystone.ucp.fully.qualified.name:80/v3<br />
+  </dd>
+  <dt>Openstack Keystone Authorization environment variables not used</dt>
+  <dd>
+    OS_IDENTITY_API_VERSION -- this value will be ignored as Shipyard only
+    supports version 3 at this time<br />
   </dd>
 </dl>
 
@@ -28,8 +33,9 @@ shipyard <--these options> subcommands...
 
 shipyard
   [--context-marker=<uuid>]
-  [--os_{various}=<value>]
   [--debug/--no-debug]
+  [--os_{various}=<value>]
+  [--output-format=[format | raw | cli]]  (default = cli)
   <subcommands, as noted in this document>
 ```
 <dl>
@@ -40,21 +46,34 @@ shipyard
     interaction. If not specified, Shipyard will supply a new UUID to serve
     as this marker. (optional)
   </dd>
+  <dt>--debug | --no-debug (default)</dt>
+  <dd>
+    Enable/disable debugging of this CLI and API client.
+  </dd>
   <dt>--os_{various}=&lt;value&gt;</dt>
   <dd>
     See supported Openstack Keystone Authorization Environment variables above
     for the list of supported names, converting to a downcase version of the
     environment variable.<br />
-    E.g.: --os_auth_url=http://...:80/v3
-    While these options are optional, if not specified, the environment
-    variables will be used instead. The Keystone os_auth_url should reference
-    the exposed keystone:port for the target Shipyard environment, as this
-    Keystone will be used to discover the instance of Shipyard.
+    E.g.: --os_auth_url=http://keystone.ucp:80/v3<br />
+    If not specified, the environment variables matching these actions will be
+    used instead. The Keystone os_auth_url should reference the exposed
+    keystone:port for the target Shipyard environment, as this Keystone will
+    be used to discover the instance of Shipyard. For most invocations other
+    than help, a valid combination of values must be resolved to authenticate
+    and authorize the user's invocation.
+  </dd>
+  <dt>--output-format=[format | raw | cli]  (default = cli)</dt>
+  <dd>
+    Specifies the desired output formating such that:<br />
+    <b>format</b>: Display the raw ouptut from the invoked Shipyard API in a
+    column restricted mode.<br />
+    <b>raw</b>: Display the result from the invoked Shipyard API as-is, without
+    modification.<br />
+    <b>cli</b>: (default) Display results in a plain text interpretation of the
+    response from the invoked Shipyard API.
   </dd>
 </dl>
-
-## Context Marker
-
 
 # Commit Commands
 ## commit configdocs
@@ -147,7 +166,6 @@ Example:
   <dt>&lt;action command&gt;</dt>
   <dd>
     The action to invoke.
-    See [Action Commands](API_action_commands.md) for supported actions
   </dd>
   <dt>--param=&lt;parameter&gt;</dt>
   <dd>

@@ -21,7 +21,7 @@ from shipyard_client.api_client.shipyardclient_context import \
 
 
 def test_shipyard():
-    context_marker = '--context-marker=UUID'
+    context_marker = '--context-marker=88888888-4444-4444-4444-121212121212'
     debug = '--debug'
     os_project_domain_name = (
         '--os_project_domain_name=OS_PROJECT_DOMAIN_NAME_test')
@@ -47,4 +47,8 @@ def test_shipyard():
             os_project_name, os_username, os_password, os_auth_url, debug,
             'commit', 'configdocs'
         ])
-    mock_method.assert_called_once_with(auth_vars, 'UUID', True)
+    mock_method.assert_called_once_with(
+        auth_vars,
+        '88888888-4444-4444-4444-121212121212',
+        True
+    )

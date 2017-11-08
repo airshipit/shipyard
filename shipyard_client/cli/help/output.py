@@ -32,24 +32,16 @@ For information of the following topics, run shipyard help <topic>
 
 def actions():
     return '''ACTIONS
-
-
-Supported Actions
-No supported actions at this time.
-
-
-Actions Under Development
+The workflow actions that may be invoked using Shipyard
 
 deploy_site: Triggers the initial deployment of a site using the latest
              committed configuration documents.
 
 update_site: Triggers the initial deployment of a site, using the latest
              committed configuration documents.
-             Steps:
-                 (same as deploy_site)
 
 redeploy_server: Using parameters to indicate which server(s), triggers a
-                 redeployment of server to the last known good design and
+                 redeployment of servers to the last committed design and
                  secrets.
     '''
 

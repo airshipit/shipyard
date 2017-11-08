@@ -35,20 +35,24 @@ from shipyard_client.cli.input_checks import check_control_action, check_id
     ' logs, transactions, etc. in downstream activities triggered by this'
     ' interaction. If not specified, Shipyard will supply a new UUID to serve'
     ' as this marker. (optional)',
-    required=False)
+    required=False,
+    type=click.UUID)
 @click.option('--debug/--no-debug', default=False, help='Turn Debug on.')
 @click.option(
     '--output-format',
     'output_format',
     required=False,
-    type=click.Choice(['format', 'raw']))
+    type=click.Choice(['format', 'raw', 'cli']),
+    default='cli')
 # Supported Environment Variables
-@click.option(
-    '--os_project_domain_name',
-    envvar='OS_PROJECT_DOMAIN_NAME',
-    required=False)
-@click.option(
-    '--os_user_domain_name', envvar='OS_USER_DOMAIN_NAME', required=False)
+@click.option('--os_project_domain_name',
+              envvar='OS_PROJECT_DOMAIN_NAME',
+              required=False,
+              default='default')
+@click.option('--os_user_domain_name',
+              envvar='OS_USER_DOMAIN_NAME',
+              required=False,
+              default='default')
 @click.option('--os_project_name', envvar='OS_PROJECT_NAME', required=False)
 @click.option('--os_username', envvar='OS_USERNAME', required=False)
 @click.option('--os_password', envvar='OS_PASSWORD', required=False)
@@ -94,7 +98,7 @@ def shipyard(ctx, context_marker, debug, os_project_domain_name,
 
     ctx.obj['API_PARAMETERS'] = {
         'auth_vars': auth_vars,
-        'context_marker': context_marker,
+        'context_marker': str(context_marker) if context_marker else None,
         'debug': debug
     }
 
