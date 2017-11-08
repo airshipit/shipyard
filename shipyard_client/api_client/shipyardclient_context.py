@@ -32,6 +32,7 @@ class ShipyardClientContext:
         :param dict keystone_auth: auth_url, password, project_domain_name,
                project_name, username, user_domain_name
         """
+
         self.debug = debug
         self.keystone_auth = keystone_auth
         # the service type will for now just be shipyard will change later

@@ -116,8 +116,7 @@ def test_commit_configs(*args):
 def test_get_actions(*args):
     shipyard_client = get_api_client()
     result = shipyard_client.get_actions()
-    assert result['url'] == '{}/actions'.format(
-        shipyard_client.shipyard_url)
+    assert result['url'] == '{}/actions'.format(shipyard_client.shipyard_url)
 
 
 @mock.patch.object(BaseClient, '__init__', replace_base_constructor)
@@ -129,8 +128,7 @@ def test_post_actions(*args):
     parameters = {'hello': 'world'}
     result = shipyard_client.post_actions(name, parameters)
     data = json.loads(result['data'])
-    assert result['url'] == '{}/actions'.format(
-        shipyard_client.shipyard_url)
+    assert result['url'] == '{}/actions'.format(shipyard_client.shipyard_url)
     assert data['name'] == name
     assert data['parameters']['hello'] == 'world'
 
@@ -154,9 +152,8 @@ def test_get_val_details(*args):
     action_id = 'GoodAction'
     validation_id = 'Validation'
     result = shipyard_client.get_validation_detail(action_id, validation_id)
-    assert result[
-        'url'] == '{}/actions/{}/validationdetails/{}'.format(
-            shipyard_client.shipyard_url, action_id, validation_id)
+    assert result['url'] == '{}/actions/{}/validationdetails/{}'.format(
+        shipyard_client.shipyard_url, action_id, validation_id)
 
 
 @mock.patch.object(BaseClient, '__init__', replace_base_constructor)
@@ -190,8 +187,8 @@ def test_get_workflows(*args):
     shipyard_client = get_api_client()
     since_mode = 'TestSince'
     result = shipyard_client.get_workflows(since_mode)
-    assert result['url'] == '{}/workflows'.format(
-        shipyard_client.shipyard_url, since_mode)
+    assert result['url'] == '{}/workflows'.format(shipyard_client.shipyard_url,
+                                                  since_mode)
 
 
 @mock.patch.object(BaseClient, '__init__', replace_base_constructor)

@@ -1,0 +1,94 @@
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from click.testing import CliRunner
+from mock import patch, ANY
+
+from shipyard_client.cli.get.actions import (GetActions, GetConfigdocs,
+                                             GetRenderedConfigdocs)
+from shipyard_client.cli.commands import shipyard
+
+auth_vars = ('--os_project_domain_name=OS_PROJECT_DOMAIN_NAME_test '
+             '--os_user_domain_name=OS_USER_DOMAIN_NAME_test '
+             '--os_project_name=OS_PROJECT_NAME_test '
+             '--os_username=OS_USERNAME_test --os_password=OS_PASSWORD_test '
+             '--os_auth_url=OS_AUTH_URL_test')
+
+
+def test_get_actions(*args):
+    """test get_actions"""
+
+    runner = CliRunner()
+    with patch.object(GetActions, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'actions'])
+    mock_method.assert_called_once_with(ANY)
+
+
+def test_get_actions_negative(*args):
+    """
+    negative unit test for get actions command
+    verifies invalid argument results in error
+    """
+
+    invalid_arg = 'invalid'
+    runner = CliRunner()
+    results = runner.invoke(shipyard,
+                            [auth_vars, 'get', 'actions', invalid_arg])
+    assert 'Error' in results.output
+
+
+def test_get_configdocs(*args):
+    """test get_configdocs"""
+
+    collection = 'design'
+    runner = CliRunner()
+    with patch.object(GetConfigdocs, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'configdocs', collection])
+    mock_method.assert_called_once_with(ANY, collection, 'buffer')
+
+
+def test_get_configdocs_negative(*args):
+    """
+    negative unit test for get actions command
+    verifies invalid argument results in error
+    """
+
+    collection = 'design'
+    invalid_arg = 'invalid'
+    runner = CliRunner()
+    results = runner.invoke(
+        shipyard, [auth_vars, 'get', 'configdocs', collection, invalid_arg])
+    assert 'Error' in results.output
+
+
+def test_get_renderedconfigdocs(*args):
+    """test get_rendereddocs"""
+
+    runner = CliRunner()
+    with patch.object(GetRenderedConfigdocs, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'renderedconfigdocs'])
+    mock_method.assert_called_once_with(ANY, 'buffer')
+
+
+def test_get_renderedconfigdocs_negative(*args):
+    """
+    negative unit test for get actions command
+    verfies invalid argument results in error
+    """
+
+    invalid_arg = 'invalid'
+    runner = CliRunner()
+    results = runner.invoke(
+        shipyard, [auth_vars, 'get', 'renderedconfigdocs', invalid_arg])
+    assert 'Error' in results.output
