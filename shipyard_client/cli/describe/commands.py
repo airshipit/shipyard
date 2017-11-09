@@ -21,7 +21,8 @@ from click_default_group import DefaultGroup
 from shipyard_client.cli.describe.actions import DescribeAction
 from shipyard_client.cli.describe.actions import DescribeStep
 from shipyard_client.cli.describe.actions import DescribeValidation
-from shipyard_client.cli.input_checks import check_id
+from shipyard_client.cli.describe.actions import DescribeWorkflow
+from shipyard_client.cli.input_checks import check_id, check_workflow_id
 
 
 @click.group(cls=DefaultGroup, default='describe_default_command')
@@ -48,27 +49,32 @@ def describe(ctx):
 @click.argument('namespace_item')
 @click.pass_context
 def describe_default_command(ctx, namespace_item):
-
     try:
         namespace = namespace_item.split("/")
-        if (namespace[0] == 'action'):
+        if namespace[0] == 'action':
             ctx.invoke(describe_action, action_id=namespace[1])
-        elif (namespace[0] == 'step'):
+        elif namespace[0] == 'step':
             ctx.invoke(
                 describe_step, step_id=namespace[2], action=namespace[1])
-        elif (namespace[0] == 'validation'):
+        elif namespace[0] == 'validation':
             ctx.invoke(
                 describe_validation,
                 validation_id=namespace[1],
                 action=namespace[2])
+        elif namespace[0] == 'workflow':
+            ctx.invoke(
+                describe_workflow,
+                workflow_id=namespace[1]
+            )
         else:
-            raise
-    except:
-        ctx.fail("Invalid namespace item.  Please utilize one of the following"
-                 " formats for the namespace item. \n"
-                 "action: action/action id \n"
-                 "step: step/action id/step id \n"
-                 "validation: validation/validation id/action id")
+            raise Exception('Invalid namespaced describe action')
+    except Exception:
+        ctx.fail("Invalid namespace item. Please utilize one of the following "
+                 "formats for the namespace item.\n"
+                 "action: action/action id\n"
+                 "step: step/action id/step id\n"
+                 "validation: validation/validation id/action id\n"
+                 "workflow: workflow/workflow id")
 
 
 DESC_ACTION = """
@@ -89,7 +95,7 @@ SHORT_DESC_ACTION = ("Retrieves the detailed information about the supplied"
 def describe_action(ctx, action_id):
 
     if not action_id:
-        click.fail("An action id argument must be passed.")
+        ctx.fail("An action id argument must be passed.")
 
     check_id(ctx, action_id)
 
@@ -151,3 +157,31 @@ def describe_validation(ctx, validation_id, action):
     click.echo(
         DescribeValidation(ctx, validation_id, action)
         .invoke_and_return_resp())
+
+
+DESC_WORKFLOW = """
+COMMAND: describe workflow \n
+DESCRIPTION: Retrieves the detailed information about the supplied workflow
+id. \n
+FORMAT: shipyard describe workflow <workflow id> \n
+EXAMPLE: shipyard describe workflow deploy_site__2017-10-09T21:19:03.000000
+"""
+
+SHORT_DESC_WORKFLOW = ("Retrieves the detailed information about the supplied"
+                       " workflow id.")
+
+
+@describe.command(
+    'workflow',
+    help=DESC_WORKFLOW,
+    short_help=SHORT_DESC_WORKFLOW)
+@click.argument('workflow_id')
+@click.pass_context
+def describe_workflow(ctx, workflow_id):
+
+    if not workflow_id:
+        ctx.fail("An action id argument must be passed.")
+
+    check_workflow_id(ctx, workflow_id)
+
+    click.echo(DescribeWorkflow(ctx, workflow_id).invoke_and_return_resp())

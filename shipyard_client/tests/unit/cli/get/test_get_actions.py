@@ -16,7 +16,7 @@
 import mock
 
 from shipyard_client.cli.get.actions import GetActions, GetConfigdocs, \
-    GetRenderedConfigdocs
+    GetRenderedConfigdocs, GetWorkflows
 from shipyard_client.api_client.base_client import BaseClient
 from shipyard_client.tests.unit.cli.replace_api_client import \
     replace_base_constructor, replace_post_rep, replace_get_resp, \
@@ -35,7 +35,7 @@ auth_vars = {
 }
 api_parameters = {
     'auth_vars': auth_vars,
-    'context_marker': 'UUID',
+    'context_marker': '88888888-4444-4444-4444-121212121212',
     'debug': False
 }
 
@@ -95,3 +95,30 @@ def test_GetRenderedConfigdocs(*args):
     assert 'renderedconfigdocs' in url
     params = response.get('params')
     assert params.get('version') == 'buffer'
+
+
+@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
+@mock.patch(
+    'shipyard_client.cli.get.actions.output_formatting',
+    side_effect=replace_output_formatting)
+def test_GetWorkflows(*args):
+    response = GetWorkflows(ctx, since=None).invoke_and_return_resp()
+    url = response.get('url')
+    assert 'workflows' in url
+    assert 'since' not in url
+
+    response = GetWorkflows(ctx).invoke_and_return_resp()
+    url = response.get('url')
+    assert 'workflows' in url
+    assert 'since' not in url
+
+    since_val = '2017-01-01T12:34:56Z'
+    response = GetWorkflows(ctx,
+                            since=since_val).invoke_and_return_resp()
+    url = response.get('url')
+    assert 'workflows' in url
+    params = response.get('params')
+    assert params.get('since') == since_val

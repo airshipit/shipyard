@@ -15,8 +15,12 @@
 from click.testing import CliRunner
 from mock import patch, ANY
 
-from shipyard_client.cli.get.actions import (GetActions, GetConfigdocs,
-                                             GetRenderedConfigdocs)
+from shipyard_client.cli.get.actions import (
+    GetActions,
+    GetConfigdocs,
+    GetRenderedConfigdocs,
+    GetWorkflows
+)
 from shipyard_client.cli.commands import shipyard
 
 auth_vars = ('--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test '
@@ -37,9 +41,9 @@ def test_get_actions(*args):
 
 
 def test_get_actions_negative(*args):
-    """
-    negative unit test for get actions command
-    verifies invalid argument results in error
+    """Negative unit test for get actions command.
+
+    Verifies invalid argument results in error.
     """
 
     invalid_arg = 'invalid'
@@ -60,9 +64,9 @@ def test_get_configdocs(*args):
 
 
 def test_get_configdocs_negative(*args):
-    """
-    negative unit test for get actions command
-    verifies invalid argument results in error
+    """Negative unit test for get configdocs command.
+
+    Verifies invalid argument results in error.
     """
 
     collection = 'design'
@@ -83,13 +87,38 @@ def test_get_renderedconfigdocs(*args):
 
 
 def test_get_renderedconfigdocs_negative(*args):
-    """
-    negative unit test for get actions command
-    verfies invalid argument results in error
+    """Negative unit test for get renderedconfigdocs command.
+
+    Verifies invalid argument results in error.
     """
 
     invalid_arg = 'invalid'
     runner = CliRunner()
     results = runner.invoke(
         shipyard, [auth_vars, 'get', 'renderedconfigdocs', invalid_arg])
+    assert 'Error' in results.output
+
+
+def test_get_workflows(*args):
+    """test get_workflows"""
+
+    runner = CliRunner()
+    with patch.object(GetWorkflows, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'workflows'])
+    mock_method.assert_called_once_with(ANY, None)
+
+    since_val = '2017-01-01T12:34:56Z'
+    since_arg = '--since={}'.format(since_val)
+    with patch.object(GetWorkflows, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'workflows', since_arg])
+    mock_method.assert_called_once_with(ANY, since_val)
+
+
+def test_get_workflows_negative(*args):
+    """Negative unit test for get workflows command"""
+
+    invalid_arg = 'invalid_date'
+    runner = CliRunner()
+    results = runner.invoke(
+        shipyard, [auth_vars, 'get', 'workflows', invalid_arg])
     assert 'Error' in results.output

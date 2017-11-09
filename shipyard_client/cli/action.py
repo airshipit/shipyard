@@ -37,7 +37,7 @@ class CliAction(object):
         context_marker = self.api_parameters['context_marker']
         debug = self.api_parameters['debug']
 
-        validate_auth_vars(self, ctx)
+        validate_auth_vars(ctx, self.api_parameters.get('auth_vars'))
 
         self.logger.debug("Passing environment varibles to the API client")
         try:

@@ -18,6 +18,7 @@ from mock import patch, ANY
 from shipyard_client.cli.describe.actions import DescribeAction
 from shipyard_client.cli.describe.actions import DescribeStep
 from shipyard_client.cli.describe.actions import DescribeValidation
+from shipyard_client.cli.describe.actions import DescribeWorkflow
 from shipyard_client.cli.commands import shipyard
 
 auth_vars = ('--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test '
@@ -115,4 +116,28 @@ def test_describe_validation_negative():
         auth_vars, 'describe', 'validation', validation_id,
         '--action=' + action_id
     ])
+    assert 'Error' in results.output
+
+
+def test_describe_workflow():
+    """test describe_workflow"""
+
+    workflow_id = 'deploy_site__2017-01-01T12:34:56.123456'
+    runner = CliRunner()
+    with patch.object(DescribeWorkflow, '__init__') as mock_method:
+        runner.invoke(shipyard, [
+            auth_vars, 'describe', 'workflow', workflow_id])
+    mock_method.assert_called_once_with(ANY, workflow_id)
+
+
+def test_describe_workflow_negative():
+    """
+    negative unit test for describe workflow command
+    verifies invalid workflow_id results in error
+    """
+
+    workflow_id = 'deploysite20170101T123456123456'
+    runner = CliRunner()
+    results = runner.invoke(shipyard, [
+        auth_vars, 'describe', 'workflow', workflow_id])
     assert 'Error' in results.output

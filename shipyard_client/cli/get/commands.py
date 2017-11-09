@@ -19,6 +19,7 @@ import click
 from shipyard_client.cli.get.actions import GetActions
 from shipyard_client.cli.get.actions import GetConfigdocs
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
+from shipyard_client.cli.get.actions import GetWorkflows
 
 
 @click.group()
@@ -141,3 +142,29 @@ def get_renderedconfigdocs(ctx, buffer, committed):
         version = 'buffer'
 
     click.echo(GetRenderedConfigdocs(ctx, version).invoke_and_return_resp())
+
+
+DESC_WORKFLOWS = """
+COMMAND: workflows \n
+DESCRIPTION: Lists the workflows from airflow. \n
+FORMAT: shipyard get workflows [since]\n
+EXAMPLE: \n
+    shipyard get workflows \n
+    shipyard get workflows --since=2017-11-09T15:02:18Z
+"""
+
+SHORT_DESC_WORKFLOWS = "Lists the workflows from airflow."
+
+
+@get.command(
+    name='workflows',
+    help=DESC_WORKFLOWS,
+    short_help=SHORT_DESC_WORKFLOWS)
+@click.option(
+    '--since',
+    help=('A boundary in the past within which to retrieve results.'
+          'Default is 30 days in the past.'))
+@click.pass_context
+def get_workflows(ctx, since):
+
+    click.echo(GetWorkflows(ctx, since).invoke_and_return_resp())

@@ -183,7 +183,7 @@ shipyard create configdocs
     [--append | --replace]
     --filename=<filename>    (repeatable)
         |
-     --directory=<directory>
+    --directory=<directory>
 
 Example:
     shipyard create configdocs design --append --filename=site_design.yaml
@@ -233,7 +233,7 @@ shipyard describe
 Example:
     shipyard describe action/01BTG32JW87G0YKA1K29TKNAFX
       Equivalent to:
-        shipyard describe action/01BTG32JW87G0YKA1K29TKNAFX
+    shipyard describe action 01BTG32JW87G0YKA1K29TKNAFX
 
     shipyard describe step/01BTG32JW87G0YKA1K29TKNAFX/preflight
       Equivalent to:
@@ -243,6 +243,10 @@ Example:
       Equivalent to:
     shipyard describe validation 01BTG3PKBS15KCKFZ56XXXBGF2 \
         --action=01BTG32JW87G0YKA1K29TKNAFX
+
+    shipyard describe workflow/deploy_site__2017-01-01T12:34:56.123456
+      Equivalent to:
+    shipyard describe workflow deploy_site__2017-01-01T12:34:56.123456
 ```
 
 ## describe action
@@ -277,7 +281,7 @@ Example:
 </dl>
 
 ## describe validation
-Retrieves the validation details assocaited with an action and validation id
+Retrieves the validation details associated with an action and validation id
 ```
 shipyard describe validation
     <validation id>
@@ -288,13 +292,30 @@ Example:
         --action=01BTG32JW87G0YKA1K29TKNAFX
 ```
 <dl>
-  <dt>&lt;step id&gt;</dt>
+  <dt>&lt;validation id&gt;</dt>
   <dd>
     The id of the validation found in the describe action response.
   </dd>
   <dt>--action=&lt;action id&gt;</dt>
   <dd>
     The action id that provides the context for this validation.
+  </dd>
+</dl>
+
+## describe workflow
+Retrieves the details for a workflow that is running or has run in the workflow
+engine.
+```
+shipyard describe workflow
+    <workflow id>
+
+Example:
+    shipyard describe workflow deploy_site__2017-01-01T12:34:56.123456
+```
+<dl>
+  <dt>&lt;workflow id&gt;</dt>
+  <dd>
+    The id of the workflow found in the get workflows response.
   </dd>
 </dl>
 
@@ -358,6 +379,26 @@ Example:
   </dd>
 </dl>
 
+## get workflows
+Retrieve workflows that are running or have run in the workflow engine. This
+includes processses that may not have been started as an action
+(e.g. scheduled tasks).
+```
+shipyard get workflows
+  [--since=<date>]
+
+Example:
+    shipyard get workflows
+
+    shipyard get workflows --since=2017-01-01T12:34:56.123456
+```
+<dl>
+  <dt>--since=&lt;date&gt;</dt>
+  <dd>
+    The historical cutoff date to limit the results of of this response.
+  </dd>
+</dl>
+
 # help commands
 Provides topical help for shipyard.  Note that --help will provide more
 specific command help.
@@ -369,7 +410,7 @@ Example:
     shipyard help configdocs
 ```
 <dl>
-  <dt>[&lt;topic&gt;]</dt>
+  <dt>&lt;topic&gt;</dt>
   <dd>
     The topic of the help to be displayed. If this parameter is not specified
     the list of avaialable topics will be displayed.

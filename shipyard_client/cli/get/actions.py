@@ -68,3 +68,21 @@ class GetRenderedConfigdocs(CliAction):
         self.resp_txt = output_formatting(
             self.output_format,
             self.api_client.get_rendereddocs(version=self.version))
+
+
+class GetWorkflows(CliAction):
+    """Action to get workflows"""
+
+    def __init__(self, ctx, since=None):
+        """Initializes api_client, sets parameters, and sets output_format"""
+        super().__init__(ctx)
+        self.logger.debug("GetWorkflows action initialized.")
+        self.since = since
+        self.output_format = ctx.obj['FORMAT']
+
+    def invoke(self):
+        """Calls API Client and formats response from API Client"""
+        self.logger.debug("Calling API Client get_actions.")
+        self.resp_txt = output_formatting(
+            self.output_format,
+            self.api_client.get_workflows(self.since))

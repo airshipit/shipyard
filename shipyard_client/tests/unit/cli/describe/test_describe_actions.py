@@ -15,7 +15,7 @@
 import mock
 
 from shipyard_client.cli.describe.actions import \
-    DescribeAction, DescribeStep, DescribeValidation
+    DescribeAction, DescribeStep, DescribeValidation, DescribeWorkflow
 from shipyard_client.api_client.base_client import BaseClient
 from shipyard_client.tests.unit.cli.replace_api_client import \
     replace_base_constructor, replace_post_rep, replace_get_resp, \
@@ -97,3 +97,20 @@ def test_DescribeValidation(*args):
     assert '01BTG32JW87G0YKA1K29TKNAFX' in url
     assert 'validationdetails' in url
     assert '01BTG3PKBS15KCKFZ56XXXBGF2' in url
+
+
+@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
+@mock.patch(
+    'shipyard_client.cli.describe.actions.output_formatting',
+    side_effect=replace_output_formatting)
+def test_DescribeWorkflow(*args):
+    response = DescribeWorkflow(
+        ctx, 'deploy_site__2017-01-01T12:34:56.123456'
+    ).invoke_and_return_resp()
+    # test correct function was called
+    url = response.get('url')
+    assert 'workflows' in url
+    assert 'deploy_site__2017-01-01T12:34:56.123456' in url

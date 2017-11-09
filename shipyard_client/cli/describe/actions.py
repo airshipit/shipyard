@@ -75,3 +75,23 @@ class DescribeValidation(CliAction):
             self.output_format,
             self.api_client.get_validation_detail(
                 action_id=self.action_id, validation_id=self.validation_id))
+
+
+class DescribeWorkflow(CliAction):
+    """Action to describe a workflow"""
+
+    def __init__(self, ctx, workflow_id):
+        """Initializes api_client, sets parameters, and sets output_format"""
+        super().__init__(ctx)
+        self.logger.debug(
+            "DescribeWorkflow action initialized with workflow_id=%s",
+            workflow_id)
+        self.workflow_id = workflow_id
+        self.output_format = ctx.obj['FORMAT']
+
+    def invoke(self):
+        """Calls API Client and formats response from API Client"""
+        self.logger.debug("Calling API Client get_action_detail.")
+        self.resp_txt = output_formatting(
+            self.output_format,
+            self.api_client.get_dag_detail(workflow_id=self.workflow_id))
