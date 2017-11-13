@@ -32,9 +32,7 @@ class BaseResource(object):
         self.logger = logging.getLogger('shipyard.control')
 
     def on_options(self, req, resp, **kwargs):
-        """
-        Handle options requests
-        """
+        """Handle options requests"""
         method_map = routing.create_http_method_map(self)
         for method in method_map:
             if method_map.get(method).__name__ != 'method_not_allowed':
@@ -50,7 +48,8 @@ class BaseResource(object):
                                      validation
         """
         has_input = False
-        if req.content_length > 0 and 'application/json' in req.content_type:
+        if (req.content_length is not None and 'application/json' in
+                req.content_type):
             raw_body = req.stream.read(req.content_length or 0)
             if raw_body is not None:
                 has_input = True
@@ -86,17 +85,12 @@ class BaseResource(object):
                 return None
 
     def to_json(self, body_dict):
-        """
-        Thin wrapper around json.dumps, providing the default=str config
-        """
+        """Thin wrapper around json.dumps, providing the default=str config"""
         return json.dumps(body_dict, default=str)
 
     def log_message(self, ctx, level, msg):
-        """
-        Logs a message with context, and extra populated.
-        """
+        """Logs a message with context, and extra populated."""
         extra = {'user': 'N/A', 'req_id': 'N/A', 'external_ctx': 'N/A'}
-
         if ctx is not None:
             extra = {
                 'user': ctx.user,
