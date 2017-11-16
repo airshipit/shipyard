@@ -1,5 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property. replace_shipyard  All other rights
-# reserved.
+# Copyright 2017 AT&T Intellectual Property. All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,113 +11,218 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import mock
 
-from shipyard_client.cli.get.actions import GetActions, GetConfigdocs, \
-    GetRenderedConfigdocs, GetWorkflows
+import responses
+
 from shipyard_client.api_client.base_client import BaseClient
-from shipyard_client.tests.unit.cli.replace_api_client import \
-    replace_base_constructor, replace_post_rep, replace_get_resp, \
-    replace_output_formatting
-from shipyard_client.tests.unit.cli.utils import temporary_context
-from shipyard_client.api_client.shipyardclient_context import \
-    ShipyardClientContext
+from shipyard_client.cli.get.actions import GetActions
+from shipyard_client.cli.get.actions import GetConfigdocs
+from shipyard_client.cli.get.actions import GetRenderedConfigdocs
+from shipyard_client.cli.get.actions import GetWorkflows
+from shipyard_client.tests.unit.cli import stubs
 
-auth_vars = {
-    'project_domain_name': 'projDomainTest',
-    'user_domain_name': 'userDomainTest',
-    'project_name': 'projectTest',
-    'username': 'usernameTest',
-    'password': 'passwordTest',
-    'auth_url': 'urlTest'
-}
-api_parameters = {
-    'auth_vars': auth_vars,
-    'context_marker': '88888888-4444-4444-4444-121212121212',
-    'debug': False
-}
-
-
-class MockCTX():
-    pass
-
-
-ctx = MockCTX()
-ctx.obj = {}
-ctx.obj['API_PARAMETERS'] = api_parameters
-ctx.obj['FORMAT'] = 'format'
-
-
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.get.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_GetActions(*args):
-    response = GetActions(ctx).invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'actions' in url
-    assert response.get('params') == {}
+GET_ACTIONS_API_RESP = """
+[
+  {
+    "dag_status": "failed",
+    "parameters": {},
+    "steps": [
+      {
+        "id": "action_xcom",
+        "url": "/actions/01BTP9T2WCE1PAJR2DWYXG805V/steps/action_xcom",
+        "index": 1,
+        "state": "success"
+      },
+      {
+        "id": "concurrency_check",
+        "url": "/actions/01BTP9T2WCE1PAJR2DWYXG805V/steps/concurrency_check",
+        "index": 2,
+        "state": "success"
+      },
+      {
+        "id": "preflight",
+        "url": "/actions/01BTP9T2WCE1PAJR2DWYXG805V/steps/preflight",
+        "index": 3,
+        "state": "failed"
+      }
+    ],
+    "action_lifecycle": "Failed",
+    "dag_execution_date": "2017-09-23T02:42:12",
+    "id": "01BTP9T2WCE1PAJR2DWYXG805V",
+    "dag_id": "deploy_site",
+    "datetime": "2017-09-23 02:42:06.860597+00:00",
+    "user": "shipyard",
+    "context_marker": "416dec4b-82f9-4339-8886-3a0c4982aec3",
+    "name": "deploy_site"
+  }
+]
+"""
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.get.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_GetConfigdocs(*args):
-    response = GetConfigdocs(ctx, 'design', 'buffer').invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'configdocs/design' in url
-    params = response.get('params')
-    assert params.get('version') == 'buffer'
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_actions(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/actions',
+                  body=GET_ACTIONS_API_RESP,
+                  status=200)
+    response = GetActions(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'deploy_site' in response
+    assert 'action/01BTP9T2WCE1PAJR2DWYXG805V' in response
+    assert 'Lifecycle' in response
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.get.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_GetRenderedConfigdocs(*args):
-    response = GetRenderedConfigdocs(ctx, 'buffer').invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'renderedconfigdocs' in url
-    params = response.get('params')
-    assert params.get('version') == 'buffer'
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_actions_empty(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/actions',
+                  body="[]",
+                  status=200)
+    response = GetActions(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'None' in response
+    assert 'Lifecycle' in response
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.get.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_GetWorkflows(*args):
-    response = GetWorkflows(ctx, since=None).invoke_and_return_resp()
-    url = response.get('url')
-    assert 'workflows' in url
-    assert 'since' not in url
+GET_CONFIGDOCS_API_RESP = """
+---
+yaml: yaml
+---
+yaml2: yaml2
+...
+"""
 
-    response = GetWorkflows(ctx).invoke_and_return_resp()
-    url = response.get('url')
-    assert 'workflows' in url
-    assert 'since' not in url
 
-    since_val = '2017-01-01T12:34:56Z'
-    response = GetWorkflows(ctx,
-                            since=since_val).invoke_and_return_resp()
-    url = response.get('url')
-    assert 'workflows' in url
-    params = response.get('params')
-    assert params.get('since') == since_val
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_configdocs(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/configdocs/design?version=buffer',
+                  body=GET_CONFIGDOCS_API_RESP,
+                  status=200)
+    response = GetConfigdocs(stubs.StubCliContext(),
+                             collection='design',
+                             version='buffer').invoke_and_return_resp()
+    assert response == GET_CONFIGDOCS_API_RESP
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_configdocs_not_found(*args):
+    api_resp = stubs.gen_err_resp(message='Not Found',
+                                  sub_error_count=0,
+                                  sub_info_count=0,
+                                  reason='It does not exist',
+                                  code=404)
+
+    responses.add(responses.GET,
+                  'http://shiptest/configdocs/design?version=buffer',
+                  body=api_resp,
+                  status=404)
+    response = GetConfigdocs(stubs.StubCliContext(),
+                             collection='design',
+                             version='buffer').invoke_and_return_resp()
+    assert 'Error: Not Found' in response
+    assert 'Reason: It does not exist' in response
+
+
+GET_RENDEREDCONFIGDOCS_API_RESP = """
+---
+yaml: yaml
+---
+yaml2: yaml2
+...
+"""
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_renderedconfigdocs(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/renderedconfigdocs?version=buffer',
+                  body=GET_RENDEREDCONFIGDOCS_API_RESP,
+                  status=200)
+    response = GetRenderedConfigdocs(
+        stubs.StubCliContext(),
+        version='buffer').invoke_and_return_resp()
+    assert response == GET_RENDEREDCONFIGDOCS_API_RESP
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_renderedconfigdocs_not_found(*args):
+    api_resp = stubs.gen_err_resp(message='Not Found',
+                                  sub_error_count=0,
+                                  sub_info_count=0,
+                                  reason='It does not exist',
+                                  code=404)
+
+    responses.add(responses.GET,
+                  'http://shiptest/renderedconfigdocs?version=buffer',
+                  body=api_resp,
+                  status=404)
+    response = GetRenderedConfigdocs(stubs.StubCliContext(),
+                                     version='buffer').invoke_and_return_resp()
+    assert 'Error: Not Found' in response
+    assert 'Reason: It does not exist' in response
+
+
+GET_WORKFLOWS_API_RESP = """
+[
+  {
+    "execution_date": "2017-10-09 21:18:56",
+    "end_date": null,
+    "workflow_id": "deploy_site__2017-10-09T21:18:56.000000",
+    "start_date": "2017-10-09 21:18:56.685999",
+    "external_trigger": true,
+    "dag_id": "deploy_site",
+    "state": "failed",
+    "run_id": "manual__2017-10-09T21:18:56"
+  },
+  {
+    "execution_date": "2017-10-09 21:19:03",
+    "end_date": null,
+    "workflow_id": "deploy_site__2017-10-09T21:19:03.000000",
+    "start_date": "2017-10-09 21:19:03.361522",
+    "external_trigger": true,
+    "dag_id": "deploy_site",
+    "state": "failed",
+    "run_id": "manual__2017-10-09T21:19:03"
+  }
+]
+"""
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_workflows(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/workflows',
+                  body=GET_WORKFLOWS_API_RESP,
+                  status=200)
+    response = GetWorkflows(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'deploy_site__2017-10-09T21:19:03.000000' in response
+    assert 'deploy_site__2017-10-09T21:18:56.000000' in response
+    assert 'State' in response
+    assert 'Workflow' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_workflows_empty(*args):
+    responses.add(responses.GET,
+                  'http://shiptest/workflows',
+                  body="[]",
+                  status=200)
+    response = GetWorkflows(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'None' in response
+    assert 'State' in response

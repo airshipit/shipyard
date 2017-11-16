@@ -11,24 +11,38 @@
 # limitations under the License.
 
 from shipyard_client.cli.action import CliAction
-from shipyard_client.cli.output_formatting import output_formatting
 
 
 class Control(CliAction):
     """Action to Pause Process"""
 
     def __init__(self, ctx, control_verb, action_id):
-        """Initializes api_client, sets parameters, and sets output_format"""
+        """Sets parameters."""
         super().__init__(ctx)
         self.action_id = action_id
         self.control_verb = control_verb
-        self.output_format = ctx.obj['FORMAT']
         self.logger.debug("ControlPause action initialized")
 
     def invoke(self):
         """Calls API Client and formats response from API Client"""
         self.logger.debug("Calling API Client post_control_action.")
-        self.resp_txt = output_formatting(self.output_format,
-                                          self.api_client.post_control_action(
-                                              action_id=self.action_id,
-                                              control_verb=self.control_verb))
+        return self.get_api_client().post_control_action(
+            action_id=self.action_id,
+            control_verb=self.control_verb
+        )
+
+    # Handle 400, 409 with default error handler for cli.
+    cli_handled_err_resp_codes = [400, 409]
+
+    # Handle 202 responses using the cli_format_response_handler
+    cli_handled_succ_resp_codes = [202]
+
+    def cli_format_response_handler(self, response):
+        """CLI output handler
+
+        :param response: a requests response object
+        :returns: a string representing a formatted response
+            Handles 202 responses
+        """
+        return "{} successfully submitted for action {}".format(
+            self.control_verb, self.action_id)

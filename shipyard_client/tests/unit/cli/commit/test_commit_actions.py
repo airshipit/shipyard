@@ -11,56 +11,65 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import mock
 
-from shipyard_client.cli.commit.actions import CommitConfigdocs
+import responses
+
 from shipyard_client.api_client.base_client import BaseClient
-from shipyard_client.tests.unit.cli.replace_api_client import \
-    replace_base_constructor, replace_post_rep, replace_get_resp, \
-    replace_output_formatting
-from shipyard_client.tests.unit.cli.utils import temporary_context
-from shipyard_client.api_client.shipyardclient_context import \
-    ShipyardClientContext
-
-auth_vars = {
-    'project_domain_name': 'projDomainTest',
-    'user_domain_name': 'userDomainTest',
-    'project_name': 'projectTest',
-    'username': 'usernameTest',
-    'password': 'passwordTest',
-    'auth_url': 'urlTest'
-}
-
-api_parameters = {
-    'auth_vars': auth_vars,
-    'context_marker': 'UUID',
-    'debug': False
-}
+from shipyard_client.cli.commit.actions import CommitConfigdocs
+from shipyard_client.tests.unit.cli import stubs
 
 
-class MockCTX():
-    pass
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_commit_configdocs(*args):
+    responses.add(responses.POST,
+                  'http://shiptest/commitconfigdocs?force=false',
+                  body=None,
+                  status=200)
+    response = CommitConfigdocs(stubs.StubCliContext(),
+                                False).invoke_and_return_resp()
+    assert response == 'Configuration documents committed.\n'
 
 
-ctx = MockCTX()
-ctx.obj = {}
-ctx.obj['API_PARAMETERS'] = api_parameters
-ctx.obj['FORMAT'] = 'format'
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_commit_configdocs_409(*args):
+    api_resp = stubs.gen_err_resp(message="Conflicts message",
+                                  sub_message='Another bucket message',
+                                  sub_error_count=1,
+                                  sub_info_count=0,
+                                  reason='Conflicts reason',
+                                  code=409)
+    responses.add(responses.POST,
+                  'http://shiptest/commitconfigdocs?force=false',
+                  body=api_resp,
+                  status=409)
+    response = CommitConfigdocs(stubs.StubCliContext(),
+                                False).invoke_and_return_resp()
+    assert 'Error: Conflicts message' in response
+    assert 'Configuration documents committed' not in response
+    assert 'Reason: Conflicts reason' in response
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.commit.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_CommitConfigdocs(*args):
-    response = CommitConfigdocs(ctx, True).invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'commitconfigdocs' in url
-    # test function was called with correct parameters
-    params = response.get('params')
-    assert params.get('force') is True
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_commit_configdocs_forced(*args):
+    api_resp = stubs.gen_err_resp(message="Conflicts message forced",
+                                  sub_message='Another bucket message',
+                                  sub_error_count=1,
+                                  sub_info_count=0,
+                                  reason='Conflicts reason',
+                                  code=200)
+    responses.add(responses.POST,
+                  'http://shiptest/commitconfigdocs?force=true',
+                  body=api_resp,
+                  status=200)
+    response = CommitConfigdocs(stubs.StubCliContext(),
+                                True).invoke_and_return_resp()
+    assert 'Status: Conflicts message forced' in response
+    assert 'Configuration documents committed' in response
+    assert 'Reason: Conflicts reason' in response

@@ -15,3 +15,11 @@
 
 class ClientError(Exception):
     pass
+
+
+class UnauthorizedClientError(ClientError):
+    pass
+
+
+class UnauthenticatedClientError(ClientError):
+    pass

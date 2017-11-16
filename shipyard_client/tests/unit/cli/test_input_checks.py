@@ -200,62 +200,6 @@ def test_check_action_commands_none():
     assert 'call.fail(' in str(ctx.mock_calls[0])
 
 
-def test_validate_auth_vars_valid():
-    ctx = Mock(side_effect=Exception("failed"))
-    auth_vars = {
-        'project_domain_name': 'default',
-        'user_domain_name': 'default',
-        'project_name': 'service',
-        'username': 'shipyard',
-        'password': 'password',
-        'auth_url': 'abcdefg'
-    }
-    input_checks.validate_auth_vars(ctx, auth_vars)
-    ctx.fail.assert_not_called()
-
-
-def test_validate_auth_vars_missing_required():
-    ctx = Mock(side_effect=Exception("failed"))
-    auth_vars = {
-        'project_domain_name': 'default',
-        'user_domain_name': 'default',
-        'project_name': 'service',
-        'username': 'shipyard',
-        'password': 'password',
-        'auth_url': None
-    }
-    try:
-        input_checks.validate_auth_vars(ctx, auth_vars)
-    except Exception:
-        pass
-    # py 3.6: ctx.fail.assert_called()
-    assert 'call.fail(' in str(ctx.mock_calls[0])
-    assert 'os_auth_url' in str(ctx.mock_calls[0])
-    assert 'os_username' not in str(ctx.mock_calls[0])
-    assert 'os_password' not in str(ctx.mock_calls[0])
-
-
-def test_validate_auth_vars_missing_required_and_others():
-    ctx = Mock(side_effect=Exception("failed"))
-    auth_vars = {
-        'project_domain_name': 'default',
-        'user_domain_name': 'default',
-        'project_name': 'service',
-        'username': None,
-        'password': 'password',
-        'auth_url': None
-    }
-    try:
-        input_checks.validate_auth_vars(ctx, auth_vars)
-    except Exception:
-        pass
-    # py 3.6: ctx.fail.assert_called()
-    assert 'call.fail(' in str(ctx.mock_calls[0])
-    assert 'os_auth_url' in str(ctx.mock_calls[0])
-    assert 'os_username' in str(ctx.mock_calls[0])
-    assert 'os_password' not in str(ctx.mock_calls[0])
-
-
 def test_check_reformat_parameter_valid():
     ctx = Mock(side_effect=Exception("failed"))
     param = ['this=that']

@@ -15,81 +15,156 @@
 import mock
 import yaml
 
-from shipyard_client.cli.create.actions import CreateAction, CreateConfigdocs
+import responses
+
 from shipyard_client.api_client.base_client import BaseClient
-from shipyard_client.tests.unit.cli.replace_api_client import \
-    replace_base_constructor, replace_post_rep, replace_get_resp, \
-    replace_output_formatting
-from shipyard_client.tests.unit.cli.utils import temporary_context
-from shipyard_client.api_client.shipyardclient_context import \
-    ShipyardClientContext
+from shipyard_client.cli.create.actions import CreateAction
+from shipyard_client.cli.create.actions import CreateConfigdocs
+from shipyard_client.tests.unit.cli import stubs
 
-auth_vars = {
-    'project_domain_name': 'projDomainTest',
-    'user_domain_name': 'userDomainTest',
-    'project_name': 'projectTest',
-    'username': 'usernameTest',
-    'password': 'passwordTest',
-    'auth_url': 'urlTest'
+resp_body = """
+{
+  "dag_status": "SCHEDULED",
+  "parameters": {},
+  "dag_execution_date": "2017-09-24T19:05:49",
+  "id": "01BTTMFVDKZFRJM80FGD7J1AKN",
+  "dag_id": "deploy_site",
+  "name": "deploy_site",
+  "user": "shipyard",
+  "context_marker": "629f2ea2-c59d-46b9-8641-7367a91a7016",
+  "timestamp": "2017-09-24 19:05:43.603591"
 }
-
-api_parameters = {
-    'auth_vars': auth_vars,
-    'context_marker': 'UUID',
-    'debug': False
-}
+"""
 
 
-class MockCTX():
-    pass
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_action(*args):
+    responses.add(responses.POST,
+                  'http://shiptest/actions',
+                  body=resp_body,
+                  status=201)
+    response = CreateAction(stubs.StubCliContext(),
+                            action_name='deploy_site',
+                            param=None).invoke_and_return_resp()
+    assert 'Name' in response
+    assert 'Action' in response
+    assert 'Lifecycle' in response
+    assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' in response
+    assert 'Error:' not in response
 
 
-ctx = MockCTX()
-ctx.obj = {}
-ctx.obj['API_PARAMETERS'] = api_parameters
-ctx.obj['FORMAT'] = 'format'
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_action_400(*args):
+    responses.add(responses.POST,
+                  'http://shiptest/actions',
+                  body=stubs.gen_err_resp(message='Error_400',
+                                          reason='bad action'),
+                  status=400)
+    response = CreateAction(stubs.StubCliContext(),
+                            action_name='deploy_dogs',
+                            param=None).invoke_and_return_resp()
+    assert 'Error_400' in response
+    assert 'bad action' in response
+    assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' not in response
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.create.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_CreateAction(*args):
-    action_name = 'redeploy_server'
-    param = {'server-name': 'mcp'}
-    response = CreateAction(ctx, action_name, param).invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'actions' in url
-    # test function was called with correct parameters
-    data = response.get('data')
-    assert '"name": "redeploy_server"' in data
-    assert '"parameters": {"server-name": "mcp"}' in data
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_action_409(*args):
+    responses.add(responses.POST,
+                  'http://shiptest/actions',
+                  body=stubs.gen_err_resp(message='Error_409',
+                                          reason='bad validations'),
+                  status=409)
+    response = CreateAction(stubs.StubCliContext(),
+                            action_name='deploy_site',
+                            param=None).invoke_and_return_resp()
+    assert 'Error_409' in response
+    assert 'bad validations' in response
+    assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' not in response
 
 
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.create.actions.output_formatting',
-    side_effect=replace_output_formatting)
-def test_CreateConfigdocs(*args):
-    collection = 'design'
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_configdocs(*args):
+    succ_resp = stubs.gen_err_resp(message='Validations succeeded',
+                                   sub_error_count=0,
+                                   sub_info_count=0,
+                                   reason='Validation',
+                                   code=200)
+    responses.add(responses.POST,
+                  'http://shiptest/configdocs/design',
+                  body=succ_resp,
+                  status=201)
+
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
     document_data = yaml.dump_all(filename)
-    buffer = 'append'
-    response = CreateConfigdocs(ctx, collection, buffer,
+
+    response = CreateConfigdocs(stubs.StubCliContext(),
+                                'design',
+                                'append',
                                 document_data).invoke_and_return_resp()
-    # test correct function was called
-    url = response.get('url')
-    assert 'configdocs' in url
-    # test function was called with correct parameters
-    assert collection in url
-    data = response.get('data')
-    assert document_data in data
-    params = response.get('params')
-    assert params.get('buffermode') == buffer
+    assert 'Configuration documents added.'
+    assert 'Status: Validations succeeded' in response
+    assert 'Reason: Validation' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_configdocs_201_with_val_fails(*args):
+    succ_resp = stubs.gen_err_resp(message='Validations failed',
+                                   sub_message='Some reason',
+                                   sub_error_count=2,
+                                   sub_info_count=1,
+                                   reason='Validation',
+                                   code=400)
+    responses.add(responses.POST,
+                  'http://shiptest/configdocs/design',
+                  body=succ_resp,
+                  status=201)
+
+    filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
+    document_data = yaml.dump_all(filename)
+
+    response = CreateConfigdocs(stubs.StubCliContext(),
+                                'design',
+                                'append',
+                                document_data).invoke_and_return_resp()
+    assert 'Configuration documents added.' in response
+    assert 'Status: Validations failed' in response
+    assert 'Reason: Validation' in response
+    assert 'Some reason-1' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_configdocs_409(*args):
+    err_resp = stubs.gen_err_resp(message='Invalid collection',
+                                  sub_message='Buffer is either not...',
+                                  sub_error_count=1,
+                                  sub_info_count=0,
+                                  reason='Buffermode : append',
+                                  code=409)
+    responses.add(responses.POST,
+                  'http://shiptest/configdocs/design',
+                  body=err_resp,
+                  status=409)
+
+    filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
+    document_data = yaml.dump_all(filename)
+
+    response = CreateConfigdocs(stubs.StubCliContext(),
+                                'design',
+                                'append',
+                                document_data).invoke_and_return_resp()
+    assert 'Error: Invalid collection' in response
+    assert 'Reason: Buffermode : append' in response
+    assert 'Buffer is either not...' in response

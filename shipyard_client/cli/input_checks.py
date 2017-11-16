@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""CLI value checks invoked from commands"""
 import arrow
 from arrow.parser import ParserError
 
@@ -57,25 +58,6 @@ def check_workflow_id(ctx, workflow_id):
     if not date_format_ok:
         ctx.fail('Invalid ID. The date portion of the ID must conform to '
                  'YYYY-MM-DDTHH:mm:ss.SSSSSS')
-
-
-def validate_auth_vars(ctx, auth_vars):
-    """Checks that the required authurization varible have been entered"""
-
-    required_auth_vars = ['auth_url']
-    err_txt = ""
-    for var in required_auth_vars:
-        if auth_vars[var] is None:
-            err_txt += (
-                'Missing the required authorization variable: '
-                '--os_{}\n'.format(var))
-    if err_txt != "":
-        err_txt += ('\nMissing the following additional authorization '
-                    'options: ')
-        for var in auth_vars:
-            if auth_vars[var] is None and var not in required_auth_vars:
-                err_txt += '\n--os_{}'.format(var)
-        ctx.fail(err_txt)
 
 
 def check_reformat_parameter(ctx, param):

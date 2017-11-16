@@ -42,10 +42,9 @@ class ShipyardClient(BaseClient):
     A client for shipyard API
     :param context: shipyardclient_context, context object
     """
-
-    def __init__(self, context):
-        super().__init__(context)
-        self.shipyard_url = context.shipyard_endpoint
+    # Set up the values used to look up the service endpoint.
+    interface = 'public'
+    service_type = 'shipyard'
 
     def post_configdocs(self,
                         collection_id=None,
@@ -60,8 +59,10 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"buffermode": buffer_mode}
-        url = ApiPaths.POST_GET_CONFIG.value.format(self.shipyard_url,
-                                                    collection_id)
+        url = ApiPaths.POST_GET_CONFIG.value.format(
+            self.get_endpoint(),
+            collection_id
+        )
         return self.post_resp(url, query_params, document_data)
 
     def get_configdocs(self, collection_id=None, version='buffer'):
@@ -73,8 +74,9 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"version": version}
-        url = ApiPaths.POST_GET_CONFIG.value.format(self.shipyard_url,
-                                                    collection_id)
+        url = ApiPaths.POST_GET_CONFIG.value.format(
+            self.get_endpoint(),
+            collection_id)
         return self.get_resp(url, query_params)
 
     def get_rendereddocs(self, version='buffer'):
@@ -84,7 +86,9 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"version": version}
-        url = ApiPaths.GET_RENDERED.value.format(self.shipyard_url)
+        url = ApiPaths.GET_RENDERED.value.format(
+            self.get_endpoint()
+        )
         return self.get_resp(url, query_params)
 
     def commit_configdocs(self, force=False):
@@ -94,7 +98,7 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"force": force}
-        url = ApiPaths.COMMIT_CONFIG.value.format(self.shipyard_url)
+        url = ApiPaths.COMMIT_CONFIG.value.format(self.get_endpoint())
         return self.post_resp(url, query_params)
 
     def get_actions(self):
@@ -103,7 +107,9 @@ class ShipyardClient(BaseClient):
         :returns: lists all actions
         :rtype: Response object
         """
-        url = ApiPaths.POST_GET_ACTIONS.value.format(self.shipyard_url)
+        url = ApiPaths.POST_GET_ACTIONS.value.format(
+            self.get_endpoint()
+        )
         return self.get_resp(url)
 
     def post_actions(self, name=None, parameters=None):
@@ -115,7 +121,9 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         action_data = {"name": name, "parameters": parameters}
-        url = ApiPaths.POST_GET_ACTIONS.value.format(self.shipyard_url)
+        url = ApiPaths.POST_GET_ACTIONS.value.format(
+            self.get_endpoint()
+        )
         return self.post_resp(
             url, data=json.dumps(action_data), content_type='application/json')
 
@@ -126,8 +134,10 @@ class ShipyardClient(BaseClient):
         :returns: information describing the action
         :rtype: Response object
         """
-        url = ApiPaths.GET_ACTION_DETAIL.value.format(self.shipyard_url,
-                                                      action_id)
+        url = ApiPaths.GET_ACTION_DETAIL.value.format(
+            self.get_endpoint(),
+            action_id
+        )
         return self.get_resp(url)
 
     def get_validation_detail(self, action_id=None, validation_id=None):
@@ -139,7 +149,7 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         url = ApiPaths.GET_VALIDATION_DETAIL.value.format(
-            self.shipyard_url, action_id, validation_id)
+            self.get_endpoint(), action_id, validation_id)
         return self.get_resp(url)
 
     def get_step_detail(self, action_id=None, step_id=None):
@@ -150,8 +160,11 @@ class ShipyardClient(BaseClient):
         :returns: details for a step by id for the given action by Id
         :rtype: Response object
         """
-        url = ApiPaths.GET_STEP_DETAIL.value.format(self.shipyard_url,
-                                                    action_id, step_id)
+        url = ApiPaths.GET_STEP_DETAIL.value.format(
+            self.get_endpoint(),
+            action_id,
+            step_id
+        )
         return self.get_resp(url)
 
     def post_control_action(self, action_id=None, control_verb=None):
@@ -163,7 +176,7 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         url = ApiPaths.POST_CONTROL_ACTION.value.format(
-            self.shipyard_url, action_id, control_verb)
+            self.get_endpoint(), action_id, control_verb)
         return self.post_resp(url)
 
     def get_workflows(self, since=None):
@@ -175,7 +188,7 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {'since': since}
-        url = ApiPaths.GET_WORKFLOWS.value.format(self.shipyard_url)
+        url = ApiPaths.GET_WORKFLOWS.value.format(self.get_endpoint())
         return self.get_resp(url, query_params)
 
     def get_dag_detail(self, workflow_id=None):
@@ -185,6 +198,6 @@ class ShipyardClient(BaseClient):
         :returns: details of a DAGs output
         :rtype: Response object
         """
-        url = ApiPaths.GET_DAG_DETAIL.value.format(self.shipyard_url,
+        url = ApiPaths.GET_DAG_DETAIL.value.format(self.get_endpoint(),
                                                    workflow_id)
         return self.get_resp(url)

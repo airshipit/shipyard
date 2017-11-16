@@ -11,59 +11,109 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import mock
 
-from shipyard_client.cli.control.actions import Control
+import responses
+
 from shipyard_client.api_client.base_client import BaseClient
-from shipyard_client.tests.unit.cli.replace_api_client import \
-    replace_base_constructor, replace_post_rep, replace_get_resp, \
-    replace_output_formatting
-from shipyard_client.tests.unit.cli.utils import temporary_context
-from shipyard_client.api_client.shipyardclient_context import \
-    ShipyardClientContext
-
-auth_vars = {
-    'project_domain_name': 'projDomainTest',
-    'user_domain_name': 'userDomainTest',
-    'project_name': 'projectTest',
-    'username': 'usernameTest',
-    'password': 'passwordTest',
-    'auth_url': 'urlTest'
-}
-
-api_parameters = {
-    'auth_vars': auth_vars,
-    'context_marker': 'UUID',
-    'debug': False
-}
+from shipyard_client.cli.control.actions import Control
+from shipyard_client.tests.unit.cli import stubs
 
 
-class MockCTX():
-    pass
-
-
-ctx = MockCTX()
-ctx.obj = {}
-ctx.obj['API_PARAMETERS'] = api_parameters
-ctx.obj['FORMAT'] = 'format'
-
-
-@mock.patch.object(BaseClient, '__init__', replace_base_constructor)
-@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
-@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
-@mock.patch.object(ShipyardClientContext, '__init__', temporary_context)
-@mock.patch(
-    'shipyard_client.cli.control.actions.output_formatting',
-    side_effect=replace_output_formatting)
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_Control(*args):
+    responses.add(
+        responses.POST,
+        'http://shiptest/actions/01BTG32JW87G0YKA1K29TKNAFX/control/pause',
+        body=None,
+        status=202
+    )
     control_verb = 'pause'
     id = '01BTG32JW87G0YKA1K29TKNAFX'
-    response = Control(ctx, control_verb, id).invoke_and_return_resp()
+    response = Control(stubs.StubCliContext(),
+                       control_verb,
+                       id).invoke_and_return_resp()
     # test correct function was called
-    url = response.get('url')
-    assert 'control' in url
+    assert response == ('pause successfully submitted for action'
+                        ' 01BTG32JW87G0YKA1K29TKNAFX')
 
-    # test function was called with correct parameters
-    assert control_verb in url
-    assert id in url
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_control_unpause(*args):
+    responses.add(
+        responses.POST,
+        'http://shiptest/actions/01BTG32JW87G0YKA1K29TKNAFX/control/unpause',
+        body=None,
+        status=202
+    )
+    control_verb = 'unpause'
+    id = '01BTG32JW87G0YKA1K29TKNAFX'
+    response = Control(stubs.StubCliContext(),
+                       control_verb,
+                       id).invoke_and_return_resp()
+    # test correct function was called
+    assert response == ('unpause successfully submitted for action'
+                        ' 01BTG32JW87G0YKA1K29TKNAFX')
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_control_stop(*args):
+    responses.add(
+        responses.POST,
+        'http://shiptest/actions/01BTG32JW87G0YKA1K29TKNAFX/control/stop',
+        body=None,
+        status=202
+    )
+    control_verb = 'stop'
+    id = '01BTG32JW87G0YKA1K29TKNAFX'
+    response = Control(stubs.StubCliContext(),
+                       control_verb,
+                       id).invoke_and_return_resp()
+    # test correct function was called
+    assert response == ('stop successfully submitted for action'
+                        ' 01BTG32JW87G0YKA1K29TKNAFX')
+
+
+resp_body = """
+{
+    "message": "Unable to pause action",
+    "details": {
+        "messageList": [
+            {
+                "message": "Conflicting things",
+                "error": true
+            },
+            {
+                "message": "Try soup",
+                "error": false
+            }
+        ]
+    },
+    "reason": "Conflicts"
+}
+"""
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_control_409(*args):
+    responses.add(
+        responses.POST,
+        'http://shiptest/actions/01BTG32JW87G0YKA1K29TKNAFX/control/pause',
+        body=resp_body,
+        status=409
+    )
+    control_verb = 'pause'
+    id = '01BTG32JW87G0YKA1K29TKNAFX'
+    response = Control(stubs.StubCliContext(),
+                       control_verb,
+                       id).invoke_and_return_resp()
+    # test correct function was called
+    assert 'Unable to pause action' in response

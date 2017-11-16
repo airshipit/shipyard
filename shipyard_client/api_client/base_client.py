@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,17 +11,44 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import abc
 import logging
+
+from keystoneauth1.exceptions.auth import AuthorizationFailure
+from keystoneauth1.exceptions.catalog import EndpointNotFound
+from keystoneauth1.identity import v3
+from keystoneauth1 import session
 import requests
 
-from .client_error import ClientError
+from shipyard_client.api_client.client_error import ClientError
+from shipyard_client.api_client.client_error import UnauthenticatedClientError
+from shipyard_client.api_client.client_error import UnauthorizedClientError
 
 
-class BaseClient:
+class BaseClient(metaclass=abc.ABCMeta):
+    """Abstract base client class
+
+    Requrires the definition of service_type and interface by child classes
+    """
+    @property
+    @abc.abstractmethod
+    def service_type(self):
+        """Specify the name/type used to lookup the service"""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def interface(self):
+        """The interface to choose from during service lookup
+
+        Specify the interface to look up the service: public, internal admin
+        """
+        pass
+
     def __init__(self, context):
         self.logger = logging.Logger('api_client')
         self.context = context
+        self.endpoint = None
 
     def log_message(self, level, msg):
         """ Logs a message with context, and extra populated. """
@@ -57,14 +84,21 @@ class BaseClient:
             headers = {
                 'X-Context-Marker': self.context.context_marker,
                 'content-type': content_type,
-                'X-Auth-Token': self.context.get_token()
+                'X-Auth-Token': self.get_token()
             }
             self.debug('Post request url: ' + url)
             self.debug('Query Params: ' + str(query_params))
             # This could use keystoneauth1 session, but that library handles
             # responses strangely (wraps all 400/500 in a keystone exception)
-            return requests.post(
+            response = requests.post(
                 url, data=data, params=query_params, headers=headers)
+            # handle some cases where the response code is sufficient to know
+            # what needs to be done
+            if response.status_code == 401:
+                raise UnauthenticatedClientError()
+            if response.status_code == 403:
+                raise UnauthorizedClientError()
+            return response
         except requests.exceptions.RequestException as e:
             self.error(str(e))
             raise ClientError(str(e))
@@ -76,11 +110,52 @@ class BaseClient:
         try:
             headers = {
                 'X-Context-Marker': self.context.context_marker,
-                'X-Auth-Token': self.context.get_token()
+                'X-Auth-Token': self.get_token()
             }
             self.debug('url: ' + url)
             self.debug('Query Params: ' + str(query_params))
-            return requests.get(url, params=query_params, headers=headers)
+            response = requests.get(url, params=query_params, headers=headers)
+            # handle some cases where the response code is sufficient to know
+            # what needs to be done
+            if response.status_code == 401:
+                raise UnauthenticatedClientError()
+            if response.status_code == 403:
+                raise UnauthorizedClientError()
+            return response
         except requests.exceptions.RequestException as e:
             self.error(str(e))
             raise ClientError(str(e))
+
+    def get_token(self):
+        """
+        Returns the simple token string for a token acquired from keystone
+        """
+        return self._get_ks_session().get_auth_headers().get('X-Auth-Token')
+
+    def _get_ks_session(self):
+        self.logger.debug('Accessing keystone for keystone session')
+        try:
+            auth = v3.Password(**self.context.keystone_auth)
+            return session.Session(auth=auth)
+        except AuthorizationFailure as e:
+            self.logger.error('Could not authorize against keystone: %s',
+                              str(e))
+            raise ClientError(str(e))
+
+    def get_endpoint(self):
+        """Lookup the endpoint for the client. Cache it.
+
+        Uses a keystone session to find an endpoint for the specified
+        service_type at the specified interface (public, internal, admin)
+        """
+        if self.endpoint is None:
+            self.logger.debug('Accessing keystone for %s endpoint',
+                              self.service_type)
+            try:
+                self.endpoint = self._get_ks_session().get_endpoint(
+                    interface=self.interface, service_type=self.service_type)
+            except EndpointNotFound as e:
+                self.logger.error('Could not find %s interface for %s',
+                                  self.interface, self.service_type)
+                raise ClientError(str(e))
+        return self.endpoint

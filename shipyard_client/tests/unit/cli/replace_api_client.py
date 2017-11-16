@@ -15,14 +15,9 @@
 # For testing purposes only
 
 
-class TemporaryContext(object):
-    def __init__(self):
-        self.debug = True
-        self.keystone_Auth = {}
-        self.token = 'abcdefgh'
-        self.service_type = 'http://shipyard'
-        self.shipyard_endpoint = 'http://shipyard/api/v1.0'
-        self.context_marker = '123456'
+def replace_get_endpoint():
+    """Replaces the get endpoint call to isolate tests"""
+    return 'http://shipyard-test'
 
 
 def replace_post_rep(self, url, query_params={}, data={}, content_type=''):
@@ -39,11 +34,3 @@ def replace_get_resp(self, url, query_params={}, json=False):
     :returns: dict with url and parameters
     """
     return {'url': url, 'params': query_params}
-
-
-def replace_base_constructor(self, context):
-    pass
-
-
-def replace_output_formatting(format, response):
-    return response
