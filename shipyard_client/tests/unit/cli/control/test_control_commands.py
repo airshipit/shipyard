@@ -18,11 +18,12 @@ from mock import patch, ANY
 from shipyard_client.cli.control.actions import Control
 from shipyard_client.cli.commands import shipyard
 
-auth_vars = ('--os_project_domain_name=OS_PROJECT_DOMAIN_NAME_test '
-             '--os_user_domain_name=OS_USER_DOMAIN_NAME_test '
-             '--os_project_name=OS_PROJECT_NAME_test '
-             '--os_username=OS_USERNAME_test --os_password=OS_PASSWORD_test '
-             '--os_auth_url=OS_AUTH_URL_test')
+auth_vars = ('--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test '
+             '--os-user-domain-name=OS_USER_DOMAIN_NAME_test '
+             '--os-project-name=OS_PROJECT_NAME_test '
+             '--os-username=OS_USERNAME_test '
+             '--os-password=OS_PASSWORD_test '
+             '--os-auth-url=OS_AUTH_URL_test')
 
 
 def test_control_pause(*args):

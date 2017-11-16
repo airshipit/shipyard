@@ -24,12 +24,12 @@ def test_shipyard():
     context_marker = '--context-marker=88888888-4444-4444-4444-121212121212'
     debug = '--debug'
     os_project_domain_name = (
-        '--os_project_domain_name=OS_PROJECT_DOMAIN_NAME_test')
-    os_user_domain_name = '--os_user_domain_name=OS_USER_DOMAIN_NAME_test'
-    os_project_name = '--os_project_name=OS_PROJECT_NAME_test'
-    os_username = '--os_username=OS_USERNAME_test'
-    os_password = '--os_password=OS_PASSWORD_test'
-    os_auth_url = '--os_auth_url=OS_AUTH_URL_test'
+        '--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test')
+    os_user_domain_name = '--os-user-domain-name=OS_USER_DOMAIN_NAME_test'
+    os_project_name = '--os-project-name=OS_PROJECT_NAME_test'
+    os_username = '--os-username=OS_USERNAME_test'
+    os_password = '--os-password=OS_PASSWORD_test'
+    os_auth_url = '--os-auth-url=OS_AUTH_URL_test'
 
     auth_vars = {
         'project_domain_name': 'OS_PROJECT_DOMAIN_NAME_test',

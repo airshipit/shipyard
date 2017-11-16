@@ -45,20 +45,20 @@ from shipyard_client.cli.input_checks import check_control_action, check_id
     type=click.Choice(['format', 'raw', 'cli']),
     default='cli')
 # Supported Environment Variables
-@click.option('--os_project_domain_name',
+@click.option('--os-project-domain-name',
               envvar='OS_PROJECT_DOMAIN_NAME',
               required=False,
               default='default')
-@click.option('--os_user_domain_name',
+@click.option('--os-user-domain-name',
               envvar='OS_USER_DOMAIN_NAME',
               required=False,
               default='default')
-@click.option('--os_project_name', envvar='OS_PROJECT_NAME', required=False)
-@click.option('--os_username', envvar='OS_USERNAME', required=False)
-@click.option('--os_password', envvar='OS_PASSWORD', required=False)
+@click.option('--os-project-name', envvar='OS_PROJECT_NAME', required=False)
+@click.option('--os-username', envvar='OS_USERNAME', required=False)
+@click.option('--os-password', envvar='OS_PASSWORD', required=False)
 # os_auth_url is required for all command except help, please see shipyard def
 @click.option(
-    '--os_auth_url', envvar='OS_AUTH_URL', required=False)
+    '--os-auth-url', envvar='OS_AUTH_URL', required=False)
 # Allows context (ctx) to be passed
 @click.pass_context
 def shipyard(ctx, context_marker, debug, os_project_domain_name,
