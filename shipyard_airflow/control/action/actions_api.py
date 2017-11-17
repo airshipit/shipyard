@@ -100,7 +100,6 @@ class ActionsResource(BaseResource):
         # populate action parameters if they are not set
         if 'parameters' not in action:
             action['parameters'] = {}
-
         # validate if there is any validation to do
         validator = SUPPORTED_ACTION_MAPPINGS.get(action['name'])['validator']
         if validator is not None:
@@ -284,13 +283,13 @@ class ActionsResource(BaseResource):
             raise ApiError(
                 title='Unable to determine if workflow has started',
                 description=(
-                    'Airflow has not responded with parseable output. ',
+                    'Airflow has not responded with parseable output. '
                     'Shipyard is unable to determine run timestamp'),
                 status=falcon.HTTP_500,
                 error_list=[{
                     'message': log_string
                 }],
-                retry=True,
+                retry=True
             )
         else:
             # everything before the ': ' should be a date/time
@@ -300,9 +299,9 @@ class ActionsResource(BaseResource):
             except ValueError as valerr:
                 raise ApiError(
                     title='Unable to determine if workflow has started',
-                    description=(
-                        'Airflow has not responded with parseable output. ',
-                        'Shipyard is unable to determine run timestamp'),
+                    description=('Airflow has not responded with parseable '
+                                 'output. Shipyard is unable to determine run '
+                                 'timestamp'),
                     status=falcon.HTTP_500,
                     error_list=[{
                         'message': 'value {} has caused {}'.format(date_split,

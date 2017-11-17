@@ -29,7 +29,7 @@ SECTIONS = [
         options=[
             cfg.StrOpt(
                 'web_server',
-                default='http://localhost:32080',
+                default='http://localhost:32080/',
                 help='The web server for Airflow'
             ),
             cfg.StrOpt(
