@@ -25,7 +25,6 @@ from airflow.utils.decorators import apply_defaults
 
 import drydock_provisioner.drydock_client.client as client
 import drydock_provisioner.drydock_client.session as session
-from get_k8s_pod_port_ip import get_pod_port_ip
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 
@@ -104,37 +103,14 @@ class DryDockOperator(BaseOperator):
             task_ids='create_drydock_client',
             dag_id=self.sub_dag_name + '.create_drydock_client')
 
-        # Based on the current logic used in CI/CD pipeline, we will
-        # point to the nginx server on the genesis host which is hosting
-        # the drydock YAMLs. That will be the URL for 'design_ref'
-        # NOTE: This is a temporary hack and will be removed once
-        # Artifactory or Deckhand is able to host the YAMLs
-        # NOTE: Testing of the Operator was performed with a nginx server
-        # on the genesis host that is listening on port 6880. The name of
-        # the YAML file is 'drydock.yaml' under the ucp directory. We will
-        # use this assumption for now.
-        # TODO: This logic will be updated once DeckHand is integrated
-        # with DryDock
-        logging.info("Retrieving information of Tiller pod to obtain Genesis "
-                     "Node IP...")
+        # Retrieve Deckhand Design Reference
+        self.design_ref = self.get_deckhand_design_ref(context)
 
-        # Retrieve Genesis Node IP
-        genesis_node_ip = self.get_genesis_node_ip(context)
-
-        # Form the URL path that we will use to retrieve the DryDock YAMLs
-        # Return Exceptions if we are not able to retrieve the URL
-        if genesis_node_ip:
-            schema = 'http://'
-            nginx_host_port = genesis_node_ip + ':6880'
-            drydock_yaml = 'ucp/drydock.yaml'
-            self.design_ref = os.path.join(schema,
-                                           nginx_host_port,
-                                           drydock_yaml)
-
+        if self.design_ref:
             logging.info("Drydock YAMLs will be retrieved from %s",
                          self.design_ref)
         else:
-            raise AirflowException("Unable to Retrieve Genesis Node IP!")
+            raise AirflowException("Unable to Retrieve Design Reference!")
 
         # Read shipyard.conf
         config = configparser.ConfigParser()
@@ -312,17 +288,32 @@ class DryDockOperator(BaseOperator):
         else:
             raise AirflowException("Failed to execute/complete task!")
 
-    @get_pod_port_ip('tiller')
-    def get_genesis_node_ip(self, context, *args):
+    def get_deckhand_design_ref(self, context):
 
-        # Get IP and port information of Pods from context
-        k8s_pods_ip_port = context['pods_ip_port']
+        # Retrieve DeckHand Endpoint Information
+        context['svc_type'] = 'deckhand'
+        context['svc_endpoint'] = ucp_service_endpoint(self, context)
+        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
-        # Tiller will take the IP of the Genesis Node. Retrieve
-        # the IP of tiller to get the IP of the Genesis Node
-        genesis_ip = k8s_pods_ip_port['tiller'].get('ip')
+        # Retrieve revision_id from xcom
+        # Note that in the case of 'deploy_site', the dag_id will be
+        # 'deploy_site.deckhand_get_design_version.deckhand_get_design_version'
+        # for the 'deckhand_get_design_version' task. We need to extract
+        # the xcom value from it in order to get the value of the last
+        # committed revision ID
+        committed_revision_id = context['task_instance'].xcom_pull(
+            task_ids='deckhand_get_design_version',
+            dag_id=self.main_dag_name + '.deckhand_get_design_version' * 2)
 
-        return genesis_ip
+        # Form DeckHand Design Reference Path that we will use to retrieve
+        # the DryDock YAMLs
+        deckhand_path = "deckhand+" + context['svc_endpoint']
+        deckhand_design_ref = os.path.join(deckhand_path,
+                                           "revisions",
+                                           str(committed_revision_id),
+                                           "rendered-documents")
+
+        return deckhand_design_ref
 
 
 class DryDockClientPlugin(AirflowPlugin):
