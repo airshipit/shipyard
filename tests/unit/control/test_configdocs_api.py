@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Tests for the configdocs_api
-"""
+""" Tests for the configdocs_api"""
 from mock import patch
 
 import pytest
 
+from tests.unit.control import common
 from shipyard_airflow.control.configdocs.configdocs_api import (
     CommitConfigDocsResource,
     ConfigDocsResource
@@ -147,3 +147,11 @@ def test_commit_configdocs_buffer_err():
         helper.is_buffer_empty = lambda: True
         helper.get_validations_for_buffer = lambda: {'status': 'Valid'}
         ccdr.commit_configdocs(helper, False)
+
+
+@patch.object(ConfigDocsResource, 'get_collection', common.str_responder)
+def test_configdocs_on_get(api_client):
+    """Validate the on_get method returns 200 on success"""
+    result = api_client.simulate_get("/api/v1.0/configdocs/coll1",
+                                     headers=common.AUTH_HEADERS)
+    assert result.status_code == 200

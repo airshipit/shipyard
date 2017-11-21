@@ -70,7 +70,7 @@ class ConfigDocsResource(BaseResource):
             version=version
         )
         resp.append_header('Content-Type', 'application/x-yaml')
-        resp.status = falcon.HTTP_201
+        resp.status = falcon.HTTP_200
 
     def _validate_version_parameter(self, version):
         # performs validation of version parameter
