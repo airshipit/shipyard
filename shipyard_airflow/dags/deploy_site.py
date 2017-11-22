@@ -20,8 +20,10 @@ from airflow.operators import ConcurrencyCheckOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
+from deckhand_get_design import get_design_deckhand
 from armada_deploy_site import deploy_site_armada
 from drydock_deploy_site import deploy_site_drydock
+from validate_site_design import validate_site_design
 """
 NOTE: We are currently in the process of reviewing and merging patch sets
 from various UCP components that are needed for the 'deploy_site' dag to
@@ -36,8 +38,10 @@ along with the integration testing and UCP code reviews/merge.
 
 ARMADA_BUILD_DAG_NAME = 'armada_build'
 DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
+DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
 PARENT_DAG_NAME = 'deploy_site'
+VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 
 default_args = {
     'owner': 'airflow',
@@ -73,6 +77,20 @@ concurrency_check = ConcurrencyCheckOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
+get_design_version = SubDagOperator(
+    subdag=get_design_deckhand(
+        PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
+    task_id=DECKHAND_GET_DESIGN_VERSION,
+    on_failure_callback=failure_handlers.step_failure_handler,
+    dag=dag)
+
+validate_site_design = SubDagOperator(
+    subdag=validate_site_design(
+        PARENT_DAG_NAME, VALIDATE_SITE_DESIGN_DAG_NAME, args=default_args),
+    task_id=VALIDATE_SITE_DESIGN_DAG_NAME,
+    on_failure_callback=failure_handlers.step_failure_handler,
+    dag=dag)
+
 drydock_build = SubDagOperator(
     subdag=deploy_site_drydock(
         PARENT_DAG_NAME, DRYDOCK_BUILD_DAG_NAME, args=default_args),
@@ -89,5 +107,7 @@ armada_build = SubDagOperator(
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
-drydock_build.set_upstream(concurrency_check)
+get_design_version.set_upstream(concurrency_check)
+validate_site_design.set_upstream(get_design_version)
+drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
