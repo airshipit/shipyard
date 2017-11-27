@@ -49,7 +49,7 @@ class DescribeAction(CliAction):
             cli_format_common.gen_action_details(resp_j),
             cli_format_common.gen_action_steps(resp_j.get('steps'),
                                                resp_j.get('id')),
-            cli_format_common.gen_action_commands(resp_j.get('commands')),
+            cli_format_common.gen_action_commands(resp_j.get('command_audit')),
             cli_format_common.gen_action_validations(
                 resp_j.get('validations')
             )
