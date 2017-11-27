@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from datetime import datetime
+import logging
 
 import falcon
 import requests
@@ -29,6 +30,7 @@ from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 
 # Mappings of actions to dags
 SUPPORTED_ACTION_MAPPINGS = {
@@ -64,7 +66,6 @@ class ActionsResource(BaseResource):
         """
         resp.body = self.to_json(self.get_all_actions())
         resp.status = falcon.HTTP_200
-        self.info(req.context, 'response data is %s' % resp.body)
 
     @policy.ApiEnforcer('workflow_orchestrator:create_action')
     def on_post(self, req, resp, **kwargs):
@@ -73,8 +74,7 @@ class ActionsResource(BaseResource):
         """
         input_action = self.req_json(req, validate_json_schema=ACTION)
         action = self.create_action(action=input_action, context=req.context)
-        self.info(req.context, "Id %s generated for action %s " %
-                  (action['id'], action['name']))
+        LOG.info("Id %s generated for action %s", action['id'], action['name'])
         # respond with the action and location for checking status
         resp.status = falcon.HTTP_201
         resp.body = self.to_json(action)
@@ -88,7 +88,7 @@ class ActionsResource(BaseResource):
         # add current timestamp (UTC) to the action.
         action['timestamp'] = str(datetime.utcnow())
         # validate that action is supported.
-        self.info(context, "Attempting action: %s" % action['name'])
+        LOG.info("Attempting action: %s", action['name'])
         if action['name'] not in SUPPORTED_ACTION_MAPPINGS:
             raise ApiError(
                 title='Unable to start action',
@@ -244,17 +244,14 @@ class ActionsResource(BaseResource):
 
             try:
                 resp = requests.get(req_url, timeout=(5, 15))
-                self.info(context,
-                          'Response code from Airflow trigger_dag: %s' %
-                          resp.status_code)
+                LOG.info('Response code from Airflow trigger_dag: %s',
+                         resp.status_code)
                 # any 4xx/5xx will be HTTPError, which are RequestException
                 resp.raise_for_status()
                 response = resp.json()
-                self.info(context,
-                          'Response from Airflow trigger_dag: %s' %
-                          response)
+                LOG.info('Response from Airflow trigger_dag: %s', response)
             except RequestException as rex:
-                self.error(context, "Request to airflow failed: %s" % rex.args)
+                LOG.error("Request to airflow failed: %s", rex.args)
                 raise ApiError(
                     title='Unable to complete request to Airflow',
                     description=(

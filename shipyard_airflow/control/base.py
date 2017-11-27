@@ -22,15 +22,14 @@ import falcon.routing as routing
 from shipyard_airflow.control.json_schemas import validate_json
 from shipyard_airflow.errors import InvalidFormatError
 
+LOG = logging.getLogger(__name__)
+
 
 class BaseResource(object):
     """
     The base resource for Shipyard entities/api handlers. This class
     provides some reusable functionality.
     """
-    def __init__(self):
-        self.logger = logging.getLogger('shipyard.control')
-
     def on_options(self, req, resp, **kwargs):
         """Handle options requests"""
         method_map = routing.create_http_method_map(self)
@@ -53,9 +52,9 @@ class BaseResource(object):
             raw_body = req.stream.read(req.content_length or 0)
             if raw_body is not None:
                 has_input = True
-                self.info(req.context, 'Input message body: %s' % raw_body)
+                LOG.info('Input message body: %s', raw_body)
             else:
-                self.info(req.context, 'No message body specified')
+                LOG.info('No message body specified')
         if has_input:
             # read the json and validate if necessary
             try:
@@ -66,15 +65,14 @@ class BaseResource(object):
                     validate_json(json_body, validate_json_schema)
                 return json_body
             except json.JSONDecodeError as jex:
-                self.error(req.context, "Invalid JSON in request: \n%s" %
-                           raw_body)
+                LOG.error("Invalid JSON in request: %s", raw_body)
                 raise InvalidFormatError(
                     title='JSON could not be decoded',
                     description='%s: Invalid JSON in body: %s' %
                     (req.path, jex)
                 )
         else:
-            # No body passed as input. Fail validation if it was asekd for
+            # No body passed as input. Fail validation if it was asked for
             if validate_json_schema is not None:
                 raise InvalidFormatError(
                     title='Json body is required',
@@ -88,42 +86,6 @@ class BaseResource(object):
         """Thin wrapper around json.dumps, providing the default=str config"""
         return json.dumps(body_dict, default=str)
 
-    def log_message(self, ctx, level, msg):
-        """Logs a message with context, and extra populated."""
-        extra = {'user': 'N/A', 'req_id': 'N/A', 'external_ctx': 'N/A'}
-        if ctx is not None:
-            extra = {
-                'user': ctx.user,
-                'req_id': ctx.request_id,
-                'external_ctx': ctx.external_marker,
-            }
-
-        self.logger.log(level, msg, extra=extra)
-
-    def debug(self, ctx, msg):
-        """
-        Debug logger for resources, incorporating context.
-        """
-        self.log_message(ctx, logging.DEBUG, msg)
-
-    def info(self, ctx, msg):
-        """
-        Info logger for resources, incorporating context.
-        """
-        self.log_message(ctx, logging.INFO, msg)
-
-    def warn(self, ctx, msg):
-        """
-        Warn logger for resources, incorporating context.
-        """
-        self.log_message(ctx, logging.WARN, msg)
-
-    def error(self, ctx, msg):
-        """
-        Error logger for resources, incorporating context.
-        """
-        self.log_message(ctx, logging.ERROR, msg)
-
 
 class ShipyardRequestContext(object):
     """
@@ -131,7 +93,6 @@ class ShipyardRequestContext(object):
     """
 
     def __init__(self):
-        self.log_level = 'error'
         self.user = None
         self.roles = ['anyone']
         self.request_id = str(uuid.uuid4())
@@ -143,10 +104,6 @@ class ShipyardRequestContext(object):
         self.project_domain_id = None  # Domain owning project
         self.is_admin_project = False
         self.authenticated = False
-
-    def set_log_level(self, level):
-        if level in ['error', 'info', 'debug']:
-            self.log_level = level
 
     def set_user(self, user):
         self.user = user

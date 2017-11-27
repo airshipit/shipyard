@@ -16,7 +16,7 @@ from mock import patch
 
 import pytest
 
-from tests.unit.control import common
+from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.control.configdocs.configdocs_api import (
     CommitConfigDocsResource,
     ConfigDocsResource
@@ -24,6 +24,9 @@ from shipyard_airflow.control.configdocs.configdocs_api import (
 from shipyard_airflow.control.configdocs.configdocs_helper import \
     ConfigdocsHelper
 from shipyard_airflow.errors import ApiError
+from tests.unit.control import common
+
+CTX = ShipyardRequestContext()
 
 
 def test__validate_version_parameter():
@@ -46,7 +49,7 @@ def test_get_collection():
     helper = None
     with patch.object(ConfigdocsHelper, 'get_collection_docs') as mock_method:
         cdr = ConfigDocsResource()
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         cdr.get_collection(helper, 'apples')
 
     mock_method.assert_called_once_with('buffer', 'apples')
@@ -61,7 +64,7 @@ def test_post_collection():
     document_data = 'lots of info'
     with patch.object(ConfigdocsHelper, 'add_collection') as mock_method:
         cdr = ConfigDocsResource()
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper.is_buffer_valid_for_bucket = lambda a, b: True
         helper.get_deckhand_validation_status = (
             lambda a: ConfigdocsHelper._format_validations_to_status([], 0)
@@ -74,7 +77,7 @@ def test_post_collection():
 
     with pytest.raises(ApiError):
         cdr = ConfigDocsResource()
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         # not valid for bucket
         helper.is_buffer_valid_for_bucket = lambda a, b: False
         helper.get_deckhand_validation_status = (
@@ -92,7 +95,7 @@ def test_commit_configdocs():
     ccdr = CommitConfigDocsResource()
     commit_resp = None
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: False
         helper.get_validations_for_buffer = lambda: {'status': 'Valid'}
         commit_resp = ccdr.commit_configdocs(helper, False)
@@ -102,7 +105,7 @@ def test_commit_configdocs():
 
     commit_resp = None
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: False
         helper.get_validations_for_buffer = (
             lambda: {
@@ -124,7 +127,7 @@ def test_commit_configdocs_force():
     ccdr = CommitConfigDocsResource()
     commit_resp = None
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: False
         helper.get_validations_for_buffer = lambda: {'status': 'Invalid'}
         commit_resp = ccdr.commit_configdocs(helper, True)
@@ -143,7 +146,7 @@ def test_commit_configdocs_buffer_err():
     ccdr = CommitConfigDocsResource()
 
     with pytest.raises(ApiError):
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: True
         helper.get_validations_for_buffer = lambda: {'status': 'Valid'}
         ccdr.commit_configdocs(helper, False)

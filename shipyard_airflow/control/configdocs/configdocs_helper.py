@@ -71,13 +71,13 @@ class ConfigdocsHelper(object):
     service.
     """
 
-    def __init__(self, context_marker):
+    def __init__(self, context):
         """
         Sets up this Configdocs helper with the supplied
-        context marker
+        request context
         """
-        self.deckhand = DeckhandClient(context_marker)
-        self.context_marker = context_marker
+        self.deckhand = DeckhandClient(context.external_marker)
+        self.ctx = context
         # The revision_dict indicates the revisions that are
         # associated with the buffered and committed doc sets. There
         # is a risk of this being out of sync if there is high volume
@@ -367,7 +367,7 @@ class ConfigdocsHelper(object):
     @staticmethod
     def _get_validation_threads(validation_endpoints,
                                 revision_id,
-                                context_marker):
+                                ctx):
         # create a list of validation threads from the endpoints
         validation_threads = []
         for endpoint in validation_endpoints:
@@ -385,8 +385,15 @@ class ConfigdocsHelper(object):
                             ),
                             response,
                             exception,
-                            context_marker
-                        )
+                            ctx.external_marker
+                        ),
+                        kwargs={
+                            'log_extra': {
+                                'req_id': ctx.request_id,
+                                'external_ctx': ctx.external_marker,
+                                'user': ctx.user
+                            }
+                        }
                     ),
                     'name': endpoint['name'],
                     'url': endpoint['url'],
@@ -401,7 +408,8 @@ class ConfigdocsHelper(object):
                                        design_reference,
                                        response,
                                        exception,
-                                       context_marker):
+                                       context_marker,
+                                       **kwargs):
         # Invoke the POST for validation
         try:
             headers = {
@@ -435,7 +443,7 @@ class ConfigdocsHelper(object):
         validation_threads = ConfigdocsHelper._get_validation_threads(
             ConfigdocsHelper._get_validation_endpoints(),
             revision_id,
-            self.context_marker
+            self.ctx
         )
         # trigger each validation in parallel
         for validation_thread in validation_threads:

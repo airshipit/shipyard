@@ -44,7 +44,7 @@ class ConfigDocsResource(BaseResource):
         Ingests a collection of documents
         """
         document_data = req.stream.read(req.content_length or 0)
-        helper = ConfigdocsHelper(req.context.external_marker)
+        helper = ConfigdocsHelper(req.context)
         validations = self.post_collection(
             helper=helper,
             collection_id=collection_id,
@@ -62,7 +62,7 @@ class ConfigDocsResource(BaseResource):
         """
         version = (req.params.get('version') or 'buffer')
         self._validate_version_parameter(version)
-        helper = ConfigdocsHelper(req.context.external_marker)
+        helper = ConfigdocsHelper(req.context)
         # Not reformatting to JSON or YAML since just passing through
         resp.body = self.get_collection(
             helper=helper,

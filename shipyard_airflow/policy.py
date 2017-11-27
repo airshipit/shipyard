@@ -186,15 +186,14 @@ class ApiEnforcer(object):
         def secure_handler(slf, req, resp, *args, **kwargs):
             ctx = req.context
             policy_eng = ctx.policy_engine
-            slf.info(ctx, "Policy Engine: %s" % policy_eng.__class__.__name__)
+            LOG.info("Policy Engine: %s", policy_eng.__class__.__name__)
             # perform auth
-            slf.info(ctx, "Enforcing policy %s on request %s" %
-                     (self.action, ctx.request_id))
+            LOG.info("Enforcing policy %s on request %s",
+                     self.action, ctx.request_id)
             # policy engine must be configured
             if policy_eng is None:
-                slf.error(
-                    ctx,
-                    "Error-Policy engine required-action: %s" % self.action)
+                LOG.error(
+                    "Error-Policy engine required-action: %s", self.action)
                 raise AppError(
                     title="Auth is not being handled by any policy engine",
                     status=falcon.HTTP_500,
@@ -204,13 +203,12 @@ class ApiEnforcer(object):
             try:
                 if policy_eng.authorize(self.action, ctx):
                     # authorized
-                    slf.info(ctx, "Request is authorized")
+                    LOG.info("Request is authorized")
                     authorized = True
             except:
                 # couldn't service the auth request
-                slf.error(
-                    ctx,
-                    "Error - Expectation Failed - action: %s" % self.action)
+                LOG.error(
+                    "Error - Expectation Failed - action: %s", self.action)
                 raise ApiError(
                     title="Expectation Failed",
                     status=falcon.HTTP_417,
@@ -219,13 +217,11 @@ class ApiEnforcer(object):
             if authorized:
                 return f(slf, req, resp, *args, **kwargs)
             else:
-                slf.error(ctx,
-                          "Auth check failed. Authenticated:%s" %
+                LOG.error("Auth check failed. Authenticated:%s",
                           ctx.authenticated)
                 # raise the appropriate response exeception
                 if ctx.authenticated:
-                    slf.error(ctx,
-                              "Error: Forbidden access - action: %s" %
+                    LOG.error("Error: Forbidden access - action: %s",
                               self.action)
                     raise ApiError(
                         title="Forbidden",
@@ -234,7 +230,7 @@ class ApiEnforcer(object):
                         retry=False
                     )
                 else:
-                    slf.error(ctx, "Error - Unauthenticated access")
+                    LOG.error("Error - Unauthenticated access")
                     raise ApiError(
                         title="Unauthenticated",
                         status=falcon.HTTP_401,

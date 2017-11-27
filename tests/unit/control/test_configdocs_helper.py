@@ -18,6 +18,7 @@ import yaml
 import pytest
 
 from .fake_response import FakeResponse
+from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.configdocs.configdocs_helper import (
     BufferMode,
@@ -29,6 +30,8 @@ from shipyard_airflow.control.configdocs.deckhand_client import (
     NoRevisionsExistError
 )
 from shipyard_airflow.errors import ApiError, AppError
+
+CTX = ShipyardRequestContext()
 
 REV_BUFFER_DICT = {
     'committed': {'id': 3,
@@ -138,13 +141,11 @@ DIFF_COMMIT_AND_BUFFER_DICT = {
 
 def test_construct_configdocs_helper():
     """
-    Creates a configdoc helper, tests that the context_marker
+    Creates a configdoc helper, tests that the context
     is passed to the sub-helper
     """
-    marker = 'marker'
-    helper = ConfigdocsHelper(marker)
-    assert helper.deckhand.context_marker == marker
-    assert helper.context_marker == marker
+    helper = ConfigdocsHelper(CTX)
+    assert helper.ctx == CTX
 
 
 def test_get_buffer_mode():
@@ -185,7 +186,7 @@ def test_is_buffer_emtpy():
     """
     Test the method to check if the configdocs buffer is empty
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
     assert not helper.is_buffer_empty()
 
@@ -203,7 +204,7 @@ def test_is_collection_in_buffer():
     """
     Test that collections are found in the buffer
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
     helper.deckhand.get_diff = (
         lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT
@@ -237,7 +238,7 @@ def test_is_buffer_valid_for_bucket():
         helper._get_revision_dict = lambda: revision_dict
         helper.deckhand.get_diff = lambda: diff_dict
 
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
     helper.deckhand.get_diff = (
         lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT
@@ -308,7 +309,7 @@ def test__get_revision_dict_no_commit():
     Tests the processing of revision dict response from dechand
     with a buffer version, but no committed revision
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_revision_list = lambda: yaml.load("""
 ---
   - id: 1
@@ -345,7 +346,7 @@ def test__get_revision_dict_empty():
     Tests the processing of revision dict response from dechand
     where the response is an empty list
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_revision_list = lambda: []
     rev_dict = helper._get_revision_dict()
     committed = rev_dict.get(configdocs_helper.COMMITTED)
@@ -363,7 +364,7 @@ def test__get_revision_dict_commit_no_buff():
     Tests the processing of revision dict response from dechand
     with a committed and no buffer revision
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_revision_list = lambda: yaml.load("""
 ---
   - id: 1
@@ -400,7 +401,7 @@ def test__get_revision_dict_commit_and_buff():
     Tests the processing of revision dict response from dechand
     with a committed and a buffer revision
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_revision_list = lambda: yaml.load("""
 ---
   - id: 1
@@ -446,7 +447,7 @@ def test__get_revision_dict_errs():
     def _raise_nree():
         raise NoRevisionsExistError()
 
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_revision_list = _raise_dre
 
     with pytest.raises(AppError):
@@ -468,7 +469,7 @@ def test_get_collection_docs():
     """
     Returns the representation of the yaml docs from deckhand
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_docs_from_revision = (
         lambda revision_id, bucket_id: "{'yaml': 'yaml'}"
     )
@@ -508,7 +509,8 @@ def _fake_get_validations_for_component(url,
                                         design_reference,
                                         response,
                                         exception,
-                                        context_marker):
+                                        context_marker,
+                                        **kwargs):
     """
     Responds with a status response
     """
@@ -537,7 +539,7 @@ def test_get_validations_for_revision():
     """
     Tets the functionality of the get_validations_for_revision method
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     hold_ve = helper.__class__._get_validation_endpoints
     hold_vfc = helper.__class__._get_validations_for_component
     helper.__class__._get_validation_endpoints = (
@@ -609,7 +611,7 @@ def test__get_deckhand_validations():
     """
     Tets the functionality of processing a response from deckhand
     """
-    helper = ConfigdocsHelper('')
+    helper = ConfigdocsHelper(CTX)
     helper.deckhand._get_base_validation_resp = (
         lambda revision_id: FK_VAL_BASE_RESP
     )
@@ -627,7 +629,7 @@ def test_tag_buffer():
     Tests that the tag buffer method attempts to tag the right version
     """
     with patch.object(ConfigdocsHelper, 'tag_revision') as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper._get_revision_dict = lambda: REV_BUFFER_DICT
         helper.tag_buffer('artful')
 
@@ -640,7 +642,7 @@ def test_add_collection():
     error handling
     """
     with patch.object(DeckhandClient, 'put_bucket') as mock_method:
-        helper = ConfigdocsHelper('')
+        helper = ConfigdocsHelper(CTX)
         helper._get_revision_dict = lambda: REV_BUFFER_DICT
         assert helper.add_collection('mop', 'yaml:yaml') == 5
 

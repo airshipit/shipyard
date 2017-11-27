@@ -11,24 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" AuthMiddleware provides header processing that will decorate the
+request context with auth values provided by the identity service.
+"""
 import logging
-
-from oslo_utils import uuidutils
 
 from shipyard_airflow import policy
 
+LOG = logging.getLogger(__name__)
+
 
 class AuthMiddleware(object):
-    def __init__(self):
-        self.logger = logging.getLogger('shipyard')
-
-    # Authentication
+    """ Authentication middleware class that handles auth headers
+    and adds them to the request context
+    """
     def process_request(self, req, resp):
         ctx = req.context
         ctx.set_policy_engine(policy.policy_engine)
-
-        for k, v in req.headers.items():
-            self.logger.debug("Request with header %s: %s" % (k, v))
 
         auth_status = req.get_header(
             'X-SERVICE-IDENTITY-STATUS')  # will be set to Confirmed or Invalid
@@ -73,49 +72,7 @@ class AuthMiddleware(object):
             else:
                 ctx.is_admin_project = False
 
-            self.logger.debug(
-                'Request from authenticated user %s with roles %s',
-                ctx.user, ','.join(ctx.roles)
-            )
+            LOG.debug('Request from authenticated user %s with roles %s',
+                      ctx.user, ','.join(ctx.roles))
         else:
             ctx.authenticated = False
-
-
-class ContextMiddleware(object):
-    """
-    Handle looking at the X-Context_Marker to see if it has value and that
-    value is a UUID (or close enough). If not, generate one.
-    """
-    def process_request(self, req, resp):
-        ctx = req.context
-        ext_marker = req.get_header('X-Context-Marker')
-        if ext_marker is not None and uuidutils.is_uuid_like(ext_marker):
-            # external passed in an ok context marker
-            ctx.set_external_marker(ext_marker)
-        else:
-            # use the request id
-            ctx.set_external_marker(ctx.request_id)
-
-
-class LoggingMiddleware(object):
-    def __init__(self):
-        self.logger = logging.getLogger('shipyard.control')
-
-    def process_response(self, req, resp, resource, req_succeeded):
-        ctx = req.context
-
-        extra = {
-            'user': ctx.user,
-            'req_id': ctx.request_id,
-            'external_ctx': ctx.external_marker,
-        }
-
-        resp.append_header('X-Shipyard-Req', ctx.request_id)
-        self.logger.info('%s %s - %s',
-                         req.method,
-                         req.uri,
-                         resp.status,
-                         extra=extra)
-        self.logger.debug('Response body:\n%s',
-                          resp.body,
-                          extra=extra)
