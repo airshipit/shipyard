@@ -89,9 +89,18 @@ Example:
 <dl>
   <dt>--force</dt>
   <dd>
-    Force the commit to occur, even if validations fail.
+    Force the commit to occur, even if validations fail. Note that while this
+    allows for bypassing validations, it does not bypass a failure to
+    communicate with the systems that provide the validations.
   </dd>
 </dl>
+
+### Sample
+```
+TBD
+```
+
+---
 
 # Control commands
 ## pause, unpause, stop
@@ -146,8 +155,23 @@ Example:
   <dd>
     The qualified name of the item to take the specified action upon
   </dd>
-
 </dl>
+
+### Sample
+```
+$ shipyard pause action/01BZZMEXAVYGG7BT0BMA3RHYY7
+pause successfully submitted for action 01BZZMEXAVYGG7BT0BMA3RHYY7
+```
+
+A failed command:
+```
+$ shipyard pause action/01BZZK07NF04XPC5F4SCTHNPKN
+Error: Unable to pause action
+Reason: dag_run state must be running, but is failed
+- Error: dag_run state must be running, but is failed
+```
+
+---
 
 # Create Commands
 ## create action
@@ -172,6 +196,15 @@ Example:
     A parameter to be provided to the action being invoked. (repeatable)
   </dd>
 </dl>
+
+### Sample
+```
+$ shipyard create action deploy_site
+Name               Action                                   Lifecycle
+deploy_site        action/01BZZK07NF04XPC5F4SCTHNPKN        None
+```
+
+---
 
 ## create configdocs
 Load documents into the Shipyard Buffer. The use of one or more filename or
@@ -223,6 +256,30 @@ specified for the same invocation of shipyard.
   </dd>
 </dl>
 
+### Sample
+```
+$ shipyard create configdocs coll1 --filename=/home/ubuntu/yaml/coll1.yaml
+Configuration documents added.
+Status: Validations succeeded
+Reason: Validation
+```
+Attempting to load the same collection into the uncommitted buffer.
+```
+$ shipyard create configdocs coll1 --filename=/home/ubuntu/yaml/coll1.yaml
+Error: Invalid collection specified for buffer
+Reason: Buffermode : rejectoncontents
+- Error: Buffer is either not empty or the collection already exists in buffer. Setting a different buffermode may provide the desired functionality
+```
+Replace the buffer with --replace
+```
+$ shipyard create configdocs coll1 --replace --filename=/home/ubuntu/yaml/coll1.yaml
+Configuration documents added.
+Status: Validations succeeded
+Reason: Validation
+```
+
+---
+
 # Describe Commands
 ## describe
 Retrieves the detailed information about the supplied namespaced item
@@ -249,6 +306,8 @@ Example:
     shipyard describe workflow deploy_site__2017-01-01T12:34:56.123456
 ```
 
+---
+
 ## describe action
 Retrieves the detailed information about the supplied action id.
 ```
@@ -258,6 +317,35 @@ shipyard describe action
 Example:
     shipyard describe action 01BTG32JW87G0YKA1K29TKNAFX
 ```
+
+### Sample
+```
+$ shipyard describe action/01BZZK07NF04XPC5F4SCTHNPKN
+Name:                  deploy_site
+Action:                action/01BZZK07NF04XPC5F4SCTHNPKN
+Lifecycle:             Failed
+Parameters:            {}
+Datetime:              2017-11-27 20:34:24.610604+00:00
+Dag Status:            failed
+Context Marker:        71d4112e-8b6d-44e8-9617-d9587231ffba
+User:                  shipyard
+
+Steps                                                              Index        State
+step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom                        1            success
+step/01BZZK07NF04XPC5F4SCTHNPKN/dag_concurrency_check              2            success
+step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        3            failed
+step/01BZZK07NF04XPC5F4SCTHNPKN/validate_site_design               4            None
+step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        5            failed
+step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        6            failed
+step/01BZZK07NF04XPC5F4SCTHNPKN/drydock_build                      7            None
+
+Commands        User            Datetime
+invoke          shipyard        2017-11-27 20:34:34.443053+00:00
+
+Validations: None
+```
+
+---
 
 ## describe step
 Retrieves the step details associated with an action and step.
@@ -279,6 +367,22 @@ Example:
     The action id that provides the context for this step.
   </dd>
 </dl>
+
+### Sample
+```
+$ shipyard describe step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom
+Name:              action_xcom
+Task ID:           step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom
+Index:             1
+State:             success
+Start Date:        2017-11-27 20:34:45.604109
+End Date:          2017-11-27 20:34:45.818946
+Duration:          0.214837
+Try Number:        1
+Operator:          PythonOperator
+```
+
+---
 
 ## describe validation
 Retrieves the validation details associated with an action and validation id
@@ -302,6 +406,13 @@ Example:
   </dd>
 </dl>
 
+### Sample
+```
+TBD
+```
+
+---
+
 ## describe workflow
 Retrieves the details for a workflow that is running or has run in the workflow
 engine.
@@ -319,12 +430,62 @@ Example:
   </dd>
 </dl>
 
+### Sample
+```
+$ shipyard describe workflow deploy_site__2017-11-27T20:34:33.000000
+Workflow:                deploy_site__2017-11-27T20:34:33.000000
+State:                   failed
+Dag ID:                  deploy_site
+Execution Date:          2017-11-27 20:34:33
+Start Date:              2017-11-27 20:34:33.979594
+End Date:                None
+External Trigger:        True
+
+Steps                              State
+action_xcom                        success
+dag_concurrency_check              success
+deckhand_get_design_version        failed
+validate_site_design               None
+deckhand_get_design_version        failed
+deckhand_get_design_version        failed
+drydock_build                      None
+
+Subworkflows:
+Workflow:                deploy_site.deckhand_get_design_version__2017-11-27T20:34:33.000000
+State:                   failed
+Dag ID:                  deploy_site.deckhand_get_design_version
+Execution Date:          2017-11-27 20:34:33
+Start Date:              2017-11-27 20:35:06.281825
+End Date:                None
+External Trigger:        False
+
+Workflow:                deploy_site.deckhand_get_design_version.deckhand_get_design_version__2017-11-27T20:34:33.000000
+State:                   failed
+Dag ID:                  deploy_site.deckhand_get_design_version.deckhand_get_design_version
+Execution Date:          2017-11-27 20:34:33
+Start Date:              2017-11-27 20:35:20.725506
+End Date:                None
+External Trigger:        False
+```
+
+---
+
 # Get Commands
 ## get actions
 Lists the actions that have been invoked.
 ```
 shipyard get actions
 ```
+
+### Sample
+```
+$ shipyard get actions
+Name               Action                                   Lifecycle
+deploy_site        action/01BZZK07NF04XPC5F4SCTHNPKN        Failed
+update_site        action/01BZZKMW60DV2CJZ858QZ93HRS        Processing
+```
+
+---
 
 ## get configdocs
 Retrieve documents loaded into Shipyard, either committed or from the
@@ -356,6 +517,24 @@ Example:
   </dd>
 </dl>
 
+### Sample
+```
+$ shipyard get configdocs coll1
+data:
+  chart_groups: [kubernetes-proxy, container-networking, dns, kubernetes, kubernetes-rbac]
+  release_prefix: ucp
+id: 1
+metadata:
+  layeringDefinition: {abstract: false, layer: site}
+  name: cluster-bootstrap-1
+  schema: metadata/Document/v1.0
+  storagePolicy: cleartext
+schema: armada/Manifest/v1.0
+status: {bucket: coll1, revision: 1}
+```
+
+---
+
 ## get renderedconfigdocs
 Retrieve the rendered version of documents loaded into Shipyard. Rendered
 documents are the "final" version of the documents after applying Deckhand
@@ -379,6 +558,24 @@ Example:
   </dd>
 </dl>
 
+### Sample
+```
+$ shipyard get renderedconfigdocs
+data:
+  chart_groups: [kubernetes-proxy, container-networking, dns, kubernetes, kubernetes-rbac]
+  release_prefix: ucp
+id: 1
+metadata:
+  layeringDefinition: {abstract: false, layer: site}
+  name: cluster-bootstrap-1
+  schema: metadata/Document/v1.0
+  storagePolicy: cleartext
+schema: armada/Manifest/v1.0
+status: {bucket: coll1, revision: 1}
+```
+
+---
+
 ## get workflows
 Retrieve workflows that are running or have run in the workflow engine. This
 includes processses that may not have been started as an action
@@ -399,6 +596,16 @@ Example:
   </dd>
 </dl>
 
+### Sample
+```
+$ shipyard get workflows
+Workflows                                      State
+deploy_site__2017-11-27T20:34:33.000000        failed
+update_site__2017-11-27T20:45:47.000000        running
+```
+
+---
+
 # help commands
 Provides topical help for shipyard.  Note that --help will provide more
 specific command help.
@@ -416,3 +623,22 @@ Example:
     the list of avaialable topics will be displayed.
   </dd>
 </dl>
+
+### Sample
+```
+$ shipyard help
+THE SHIPYARD COMMAND
+The base shipyard command supports options that determine cross-CLI behaviors.
+
+FORMAT
+shipyard [--context-marker=<uuid>] [--os_{various}=<value>]
+    [--debug/--no-debug] [--output-format] <subcommands>
+
+Please Note: --os_auth_url is required for every command except shipyard help
+     <topic>.
+
+TOPICS
+For information of the following topics, run shipyard help <topic>
+    actions
+    configdocs
+```
