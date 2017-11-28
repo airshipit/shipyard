@@ -153,7 +153,7 @@ class DeckhandClient(object):
         ).format(revision_id, tag)
 
         response = self._post_request(url)
-        response.raise_for_status()
+        self._handle_bad_response(response)
         return yaml.safe_load(response.text)
 
     def rollback(self, target_revision_id):
