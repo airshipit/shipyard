@@ -149,7 +149,7 @@ class CommitConfigDocsResource(BaseResource):
         """
         # force query parameter is False unless explicitly true
         force = req.get_param_as_bool(name='force') or False
-        helper = ConfigdocsHelper(req.context.external_marker)
+        helper = ConfigdocsHelper(req.context)
         validations = self.commit_configdocs(helper, force)
         resp.body = self.to_json(validations)
         resp.status = validations.get('code', falcon.HTTP_200)
