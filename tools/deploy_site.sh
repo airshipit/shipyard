@@ -19,7 +19,7 @@ set -x
 namespace="ucp"
 shipyard_username="shipyard"
 shipyard_password="password"
-keystone_ip=`kubectl get pods -n ${namespace} -o wide | grep keystone | awk '{print $6}'`
+keystone_ip=`sudo kubectl get pods -n ${namespace} -o wide | grep keystone | awk '{print $6}'`
 host="localhost"
 port=31901
 
