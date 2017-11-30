@@ -25,6 +25,7 @@ from airflow.utils.decorators import apply_defaults
 
 import drydock_provisioner.drydock_client.client as client
 import drydock_provisioner.drydock_client.session as session
+from check_k8s_node_status import check_node_status
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 
@@ -164,6 +165,11 @@ class DryDockOperator(BaseOperator):
             self.drydock_action(drydock_client, context, self.action,
                                 query_interval, task_timeout)
 
+            # Check that cluster join process is completed before declaring
+            # deploy_node as 'completed'. Set time out to 30 minutes and set
+            # polling interval to 30 seconds.
+            check_node_status(1800, 30)
+
         # Do not perform any action
         else:
             logging.info('No Action to Perform')
@@ -257,13 +263,16 @@ class DryDockOperator(BaseOperator):
         # Query task status
         for i in range(0, end_range + 1):
 
-            # Retrieve current task state
-            task_state = drydock_client.get_task(task_id=task_id)
-            task_status = task_state.get('status')
-            task_results = task_state.get('result')['status']
+            try:
+                # Retrieve current task state
+                task_state = drydock_client.get_task(task_id=task_id)
+                task_status = task_state.get('status')
+                task_result = task_state.get('result')['status']
 
-            logging.info("Current status of task id %s is %s",
-                         task_id, task_status)
+                logging.info("Current status of task id %s is %s",
+                             task_id, task_status)
+            except:
+                logging.info("Unable to retrieve task state. Retrying...")
 
             # Raise Time Out Exception
             if task_status == 'running' and i == end_range:
@@ -272,17 +281,18 @@ class DryDockOperator(BaseOperator):
             # Exit 'for' loop if the task is in 'complete' or 'terminated'
             # state
             if task_status in ['complete', 'terminated']:
+                logging.info('Task result is %s', task_result)
                 break
             else:
                 time.sleep(int(interval))
 
-        # Get final task state
+        # Get final task result
         # NOTE: There is a known bug in Drydock where the task result
-        # for a successfully completed task can either be 'success' or
-        # 'partial success'. This will be fixed in Drydock in the near
-        # future. Updates will be made to the Drydock Operator once the
-        # bug is fixed.
-        if task_results in ['success', 'partial_success']:
+        # for a successfully completed task can either be 'success',
+        # 'partial success' or 'incomplete'. This will be fixed in Drydock
+        # in the near future. Updates will be made to the Drydock Operator
+        # once the bug is fixed.
+        if task_result in ['success', 'partial_success', 'incomplete']:
             logging.info('Task id %s has been successfully completed',
                          self.task_id)
         else:
