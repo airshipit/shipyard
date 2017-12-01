@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import falcon
+from falcon import testing
+
 AUTH_HEADERS = {
     'X-SERVICE-IDENTITY-STATUS': 'Confirmed',
     'X-IDENTITY-STATUS': 'Confirmed',
@@ -29,6 +32,32 @@ AUTH_HEADERS = {
     'X-ROLES': 'Admin',
     'X-IS-ADMIN-PROJECT': 'True'
 }
+
+
+def create_req(ctx, body):
+    '''creates a falcon request'''
+    env = testing.create_environ(
+        path='/',
+        query_string='',
+        protocol='HTTP/1.1',
+        scheme='http',
+        host='falconframework.org',
+        port=None,
+        headers={'Content-Type': 'application/json'},
+        app='',
+        body=body,
+        method='POST',
+        wsgierrors=None,
+        file_wrapper=None)
+    req = falcon.Request(env)
+    req.context = ctx
+    return req
+
+
+def create_resp():
+    '''creates a falcon response'''
+    resp = falcon.Response()
+    return resp
 
 
 def str_responder(*args, **kwargs):
