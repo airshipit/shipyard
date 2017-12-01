@@ -32,3 +32,6 @@ Shipyard Configuration Guide
 
    sampleconf
    policy-enforcement
+   API
+   API_action_commands
+   CLI
