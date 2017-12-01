@@ -42,3 +42,12 @@
 # GET  /api/v1.0/renderedconfigdocs
 #"workflow_orchestrator:get_renderedconfigdocs": "rule:admin_required"
 
+# Retrieve the list of workflows (DAGs) that have been invoked in
+# Airflow, whether via Shipyard or scheduled
+# GET  /api/v1.0/workflows
+#"workflow_orchestrator:list_workflows": "rule:admin_required"
+
+# Retrieve the detailed information for a workflow (DAG) from Airflow
+# GET  /api/v1.0/workflows/{id}
+#"workflow_orchestrator:get_workflow": "rule:admin_required"
+
