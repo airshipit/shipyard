@@ -1,3 +1,5 @@
 [run]
-# omit third party code
-omit = shipyard_airflow/plugins/rest_api_plugin.py
+# omit third party code and unit tests
+omit =
+    shipyard_airflow/plugins/rest_api_plugin.py
+    shipyard_client/tests/*

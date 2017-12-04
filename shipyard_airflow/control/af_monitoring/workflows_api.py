@@ -76,7 +76,7 @@ class WorkflowIdResource(BaseResource):
         """
         Retrieve a workflow by id,
         :param helper: The WorkflowHelper constructed for this invocation
-        :param workflow_id: a string in {dag_id}T{execution_date} format
+        :param workflow_id: a string in {dag_id}__{execution_date} format
                             identifying a workflow
         :returns: a workflow detail dictionary including steps
         """
