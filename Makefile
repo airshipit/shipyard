@@ -30,13 +30,16 @@ charts: clean
 
 # Perform Linting
 .PHONY: lint
-lint: pep8 helm_lint
+lint: pep8 helm_lint build_docs
 
 # Dry run templating of chart
 .PHONY: dry-run
 dry-run: clean
 	tools/helm_tk.sh $(HELM)
 	$(HELM) template charts/shipyard
+
+.PHONY: docs
+docs: clean build_docs
 
 # Make targets intended for use by the primary targets above.
 
@@ -60,3 +63,7 @@ pep8:
 helm_lint: clean
 	tools/helm_tk.sh $(HELM)
 	$(HELM) lint charts/shipyard
+
+.PHONY: build_docs
+build_docs:
+	tox -e docs
