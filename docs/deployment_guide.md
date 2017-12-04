@@ -1,219 +1,185 @@
-## Deployment Guide ##
+## Deployment Guide
 
 *Note that Shipyard is still under active development and this guide will evolve along the way*
 
-The current deployment makes use of OpenStack-Helm to set up the underlaying Kubernetes
-infrastructure and helm charts to deploy the containerized applications.
+The current deployment makes use of the [ucp-integration](https://github.com/att-comdev/ucp-integration)
+repository to set up the underlaying Kubernetes infrastructure, Ceph and UCP components. This
+approach sets up an 'All-In-One' UCP environment that allows developers to bring up Shipyard
+and the rest of the UCP components on a single Ubuntu 16.04 Virtual Machine.
+
+*Note that the minimum recommended size of the VM is 4 vCPUs, 16GB of RAM with 64GB disk space*
 
 
-1) Follow the steps in the OpenStack-Helm All-In-One [guide](http://openstack-helm.readthedocs.io/en/latest/install/all-in-one.html)
-   to set up the environment on an Ubuntu 16.04 Virtual Machine.  Follow the steps from the start of the
-   wiki till the 'Deploy' section to get the base system up.
+### Pre-Deployment Preparations
 
-   *Note that we do not need to install the OpenStack Helm Charts for Shipyard to function*
+1) Set up `etc/hosts` on a freshly installed Ubuntu 16.04 Virtual Machine
 
-   The environment should resemble the following after the executing the required steps in the guide:
+    ```
+    HOST_IFACE=$(ip route | grep "^default" | head -1 | awk '{ print $5 }')
+    LOCAL_IP=$(ip addr | awk "/inet/ && /${HOST_IFACE}/{sub(/\/.*$/,\"\",\$2); print \$2}")
+    cat << EOF | sudo tee -a /etc/hosts
+    ${LOCAL_IP} $(hostname)
+    EOF
+    ```
 
-   ```
-   # kubectl get pods --all-namespaces
-   NAMESPACE     NAME                                        READY     STATUS    RESTARTS   AGE
-   default       nfs-provisioner-3807301966-b7sh4            1/1       Running   0          22h
-   kube-system   calico-etcd-p4fct                           1/1       Running   0          22h
-   kube-system   calico-node-35pbq                           2/2       Running   0          22h
-   kube-system   calico-policy-controller-1777954159-wvp9h   1/1       Running   0          22h
-   kube-system   etcd-labinstance                            1/1       Running   0          22h
-   kube-system   kube-apiserver-labinstance                  1/1       Running   0          22h
-   kube-system   kube-controller-manager-labinstance         1/1       Running   0          22h
-   kube-system   kube-dns-692378583-h9cq2                    3/3       Running   0          22h
-   kube-system   kube-proxy-259th                            1/1       Running   0          22h
-   kube-system   kube-scheduler-labinstance                  1/1       Running   0          22h
-   kube-system   tiller-deploy-1332173772-fplsk              1/1       Running   0          22h
-   ```
-
-2) Deploy Airflow Helm Chart
-
-   Note: The airflow chart requires a postgresql instance and rabbitmq to be running
-
-
-   Create shipyard namespace:
+2) Clone the [ucp-integration](https://github.com/att-comdev/ucp-integration) repository. Update
+   the hostname in the `deploy_ucp.sh` script
 
    ```
-   kubectl create namespace shipyard
+   git clone https://github.com/att-comdev/ucp-integration.git
+   sed -i -e s/node1/$(hostname)/g /home/ubuntu/ucp-integration/manifests/basic_ucp/deploy_ucp.sh
    ```
 
 
-   Postgresql Helm Chart Installation:
+### Production Deployment
 
-   Clone the [OpenStack-Helm-Addons](https://github.com/att-comdev/openstack-helm-addons.git) repository to
-   get the postgresql helm chart.  Bring up the postgresql container using the postgresql helm chart:
+We will use this approach if we are not making any changes to Shipyard and would like to bring up
+the UCP environment as it is
 
-   ```
-   helm install --name=shipyard-postgresql postgresql/ --namespace=shipyard
-   ```
-
-   Note: Postgresql may take a short time to reach the 'Running' state. Verify that postgresql is running:
+1) Switch to root user after performing the steps in the *Pre-Deployment Preparations* section.
 
    ```
-   # kubectl get pods -n shipyard
-   NAME                         READY     STATUS        RESTARTS   AGE
-   postgresql-0                 1/1       Running       0          1m
+   sudo -i
+   cd /home/ubuntu/ucp-integration/manifests/basic_ucp/
    ```
 
-
-   Rabbitmq Helm Chart Installation:
-
-   Go to the openstack-helm directory that was created in Step 1
-
-   Update the values.yaml of the rabbitmq charts to reflect the appropriate username and password for the
-   environment, e.g. *airflow / airflow*
-
-   Execute the following commands:
+2) Export the variables that are unique to the environment. For instance, we can do the following
+   to update the environment variables for a VM that is assigned an IP of *30.30.30.4* on interface
+   *ens3* (network *30.30.30.0/24*):
 
    ```
-   helm install --name=shipyard-etcd-rabbitmq etcd/ --namespace=shipyard
-   helm install --name=shipyard-rabbitmq rabbitmq/ --namespace=shipyard
+   export CEPH_CLUSTER_NET=30.30.30.0/24
+   export CEPH_PUBLIC_NET=30.30.30.0/24
+   export GENESIS_NODE_IP=30.30.30.4
+   export NODE_NET_IFACE=ens3
    ```
 
-   Note: We need to make sure that the etcd chart is executed before the rabbitmq chart due to dependencies
+3) Start the UCP deployment
 
    ```
-   # kubectl get pods -n shipyard
-   NAME                       READY     STATUS    RESTARTS   AGE
-   etcd-2810752095-054xb      1/1       Running   0          2m
-   postgresql-0               1/1       Running   0          3m
-   rabbitmq-646028817-0bwgp   1/1       Running   0          1m
-   rabbitmq-646028817-3hb1z   1/1       Running   0          1m
-   rabbitmq-646028817-sq6cw   1/1       Running   0          1m
+   ./deploy_ucp.sh
    ```
 
 
-   Airflow Helm Chart Installation:
+### Dev Environment Deployment
 
-   Create the following directories on the target host machine:
+We will use this approach if we want to bring up a dev environment that allows us to test our own
+dags and operators in Airflow. Changes to Shipyard API/CLI will require a rebuild of the Shipyard
+images with the updates. We will need to reference to the custom image in our environment variables
+so that it does not point to the image in the Master branch.
+
+1) Create the following directories on the target host machine:
+
    ```
-   $ mkdir -p /home/ubuntu/workbench/dags
-   $ mkdir -p /home/ubuntu/workbench/plugins
-   $ mkdir -p /home/ubuntu/workbench/logs
+   mkdir -p /home/ubuntu/workbench/dags
+   mkdir -p /home/ubuntu/workbench/plugins
+   mkdir -p /home/ubuntu/workbench/logs
    ```
 
-   Copy the [rest_api_plugin](https://github.com/att-comdev/shipyard/blob/master/shipyard_airflow/plugins/rest_api_plugin.py)
-   into the newly created plugins directory, i.e. `/home/ubuntu/workbench/plugins` so that it can be loaded by Airflow during
-   startup.  Note that other custom operators can also be added to the directory as required.
+2) Copy the [rest_api_plugin](https://github.com/att-comdev/shipyard/blob/master/shipyard_airflow/plugins/rest_api_plugin.py)
+   into the newly created plugins directory, i.e. `/home/ubuntu/workbench/plugins` so that it can
+   be loaded by Airflow during startup.  Note that other custom operators can also be added to the
+   directory as required.
 
    Note: Custom dags should be added into the newly created dags directory, i.e. `/home/ubuntu/workbench/dags`
 
-   Next, proceed to clone the [AIC-Helm](https://github.com/att-comdev/aic-helm.git) repository to get the Airflow Helm Charts.
-   The charts can be found under the airflow directory.
+3) Update `armada.yaml.sub` to override the settings for Shipyard
 
    ```
-   helm install --name=airflow airflow/ --namespace=shipyard
+   sed -i -e 's/prod_environment: true/prod_environment: false/g' /home/ubuntu/ucp-integration/manifests/basic_ucp/armada.yaml.sub
    ```
 
-   Verify that the airflow helm charts were successful deployed:
+4) Switch to root user after performing Step 1 to 3
 
    ```
-   # kubectl get pods -n shipyard
-   NAME                         READY     STATUS    RESTARTS   AGE
-   etcd-2810752095-054xb        1/1       Running   0          1h
-   flower-57424757-xqzls        1/1       Running   0          1m
-   postgresql-0                 1/1       Running   0          1h
-   rabbitmq-646028817-0bwgp     1/1       Running   0          1h
-   rabbitmq-646028817-3hb1z     1/1       Running   0          1h
-   rabbitmq-646028817-sq6cw     1/1       Running   0          1h
-   scheduler-1793121224-z57t9   1/1       Running   0          1m
-   web-1556478053-t06t9         1/1       Running   0          1m
-   worker-3775326852-0747g      1/1       Running   0          1m
-
+   sudo -i
+   cd /home/ubuntu/ucp-integration/manifests/basic_ucp/
    ```
 
+5) Export the variables that are unique to the environment. For instance, we can do the below
+   to update the environment variables for a VM that is assigned an IP of *30.30.30.4* on interface
+   *ens3* (network *30.30.30.0/24*).
 
-   To check that all resources are working as intended:
+   Update image references in the environment variables if we want to test a new Shipyard and/or Airflow
+   image, e.g. image v0.1.0 as a result of code changes.
 
    ```
-   $ kubectl get all --namespace=shipyard
-   NAME                            READY     STATUS    RESTARTS   AGE
-   po/etcd-2810752095-054xb        1/1       Running   0          1h
-   po/flower-57424757-xqzls        1/1       Running   0          1m
-   po/postgresql-0                 1/1       Running   0          1h
-   po/rabbitmq-646028817-0bwgp     1/1       Running   0          1h
-   po/rabbitmq-646028817-3hb1z     1/1       Running   0          1h
-   po/rabbitmq-646028817-sq6cw     1/1       Running   0          1h
-   po/scheduler-1793121224-z57t9   1/1       Running   0          1m
-   po/web-1556478053-t06t9         1/1       Running   0          1m
-   po/worker-3775326852-0747g      1/1       Running   0          1m
+   export CEPH_CLUSTER_NET=30.30.30.0/24
+   export CEPH_PUBLIC_NET=30.30.30.0/24
+   export GENESIS_NODE_IP=30.30.30.4
+   export NODE_NET_IFACE=ens3
+   export SHIPYARD_IMAGE="attcomdev/shipyard:v0.1.0"
+   export AIRFLOW_IMAGE="attcomdev/airflow:v0.1.0"
+   ```
 
-   NAME             CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
-   svc/etcd         10.102.166.90    <none>        2379/TCP         1h
-   svc/flower       10.105.87.167    <nodes>       5555:32081/TCP   1m
-   svc/postgresql   10.96.110.4      <none>        5432/TCP         1h
-   svc/rabbitmq     10.100.94.226    <none>        5672/TCP         1h
-   svc/web          10.103.245.128   <nodes>       8080:32080/TCP   1m
+6) Start the UCP deployment
 
-   NAME                      DESIRED   CURRENT   AGE
-   statefulsets/postgresql   1         1         1h
-
-   NAME                              DESIRED   SUCCESSFUL   AGE
-   jobs/airflow-db-init-postgresql   1         1            1m
-   jobs/airflow-db-sync              1         1            1m
-
-   NAME               DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-   deploy/etcd        1         1         1            1           1h
-   deploy/flower      1         1         1            1           1m
-   deploy/rabbitmq    3         3         3            3           1h
-   deploy/scheduler   1         1         1            1           1m
-   deploy/web         1         1         1            1           1m
-   deploy/worker      1         1         1            1           1m
-
-   NAME                      DESIRED   CURRENT   READY     AGE
-   rs/etcd-2810752095        1         1         1         1h
-   rs/flower-57424757        1         1         1         1m
-   rs/rabbitmq-646028817     3         3         3         1h
-   rs/scheduler-1793121224   1         1         1         1m
-   rs/web-1556478053         1         1         1         1m
-   rs/worker-3775326852      1         1         1         1m
-
+   ```
+   ./deploy_ucp.sh
    ```
 
 
-3) Deploy Shipyard Helm Chart
+### Post Deployment
 
-   The Shipyard helm chart can be retrieved by performing the the following step:
+1) The deployment is fully automated and can take a while to complete (it can take 30 minutes to an
+   hour for a full deployment to complete)
 
-   ```
-   $ git clone http://review.gerrithub.io/att-comdev/aic-helm
-   ```
-
-   Shipyard Helm Chart Installation:
+2) The environment should resemble the following after executing the required steps:
 
    ```
-   $ helm install --name=shipyard shipyard/ --namespace=shipyard
+   # sudo kubectl get pods -n ucp
+   NAME                                   READY     STATUS    RESTARTS   AGE
+   airflow-flower-6cdc6f9cb4-5r62v        1/1       Running   0          3h
+   airflow-scheduler-6d54445bf8-6ldrd     1/1       Running   0          3h
+   airflow-web-7bd69d857d-qlptj           1/1       Running   0          3h
+   airflow-worker-666696d6c5-vffpg        1/1       Running   0          3h
+   armada-api-84df5b7fc9-4nxp5            1/1       Running   0          4h
+   barbican-api-85c956c84f-p4q7h          1/1       Running   0          4h
+   deckhand-5468d59455-2mcqd              1/1       Running   0          4h
+   drydock-api-f9897cf44-csbc8            1/1       Running   0          4h
+   drydock-api-f9897cf44-jgv4q            1/1       Running   0          4h
+   etcd-5bcbbd679c-rb5rf                  1/1       Running   0          4h
+   ingress-api-xvkzx                      1/1       Running   0          4h
+   ingress-error-pages-5d79688f6c-9b8xc   1/1       Running   0          4h
+   keystone-api-6bc85c98-886mg            1/1       Running   0          4h
+   maas-rack-5d4b84c4d5-dt87j             1/1       Running   0          4h
+   maas-region-0                          1/1       Running   0          4h
+   mariadb-0                              1/1       Running   0          4h
+   mariadb-1                              1/1       Running   0          4h
+   mariadb-2                              1/1       Running   0          4h
+   memcached-5bf49657db-kq6qh             1/1       Running   0          4h
+   postgresql-0                           1/1       Running   0          4h
+   rabbitmq-f68649644-pnw6p               1/1       Running   0          4h
+   shipyard-6f4c7765d-n2kx6               1/1       Running   0          3h
    ```
 
-   Check that all the helm charts have been properly deployed and that all services are up and running:
+   To check that all relevant helm charts have been deployed:
 
    ```
-   # kubectl get pods -n shipyard
-   NAME                         READY     STATUS    RESTARTS   AGE
-   etcd-2810752095-7xbj2        1/1       Running   0          14m
-   flower-3408049844-ntpt3      1/1       Running   0          6m
-   postgresql-0                 1/1       Running   0          17m
-   rabbitmq-4130740871-716vm    1/1       Running   0          13m
-   rabbitmq-4130740871-dlxjk    1/1       Running   0          13m
-   rabbitmq-4130740871-rj0pd    1/1       Running   0          13m
-   scheduler-2853377807-jghld   1/1       Running   0          6m
-   shipyard-1823745968-t794w    1/1       Running   0          2m
-   web-3069981571-9tjt9         1/1       Running   0          6m
-   worker-2534280303-fcb49      1/1       Running   0          6m
-
-
-   # kubectl get service -n shipyard
-   NAME           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
-   etcd           10.97.149.59     <none>        2379/TCP         13m
-   flower         10.108.197.84    <nodes>       5555:32081/TCP   5m
-   postgresql     10.108.17.95     <none>        5432/TCP         17m
-   rabbitmq       10.98.1.115      <none>        5672/TCP         12m
-   shipyard-api   10.108.189.157   <nodes>       9000:31901/TCP   1m
-   web            10.97.88.69      <nodes>       8080:32080/TCP   5m
-
+   # sudo helm ls
+   NAME                                    REVISION        UPDATED                         STATUS          CHART                           NAMESPACE
+   ucp-armada                              1               Fri Dec  1 10:03:44 2017        DEPLOYED        armada-0.1.0                    ucp
+   ucp-barbican                            1               Fri Dec  1 10:03:47 2017        DEPLOYED        barbican-0.1.0                  ucp
+   ucp-calico                              1               Fri Dec  1 10:00:05 2017        DEPLOYED        calico-0.1.0                    kube-system
+   ucp-calico-etcd                         1               Fri Dec  1 09:59:28 2017        DEPLOYED        etcd-0.1.0                      kube-system
+   ucp-ceph                                1               Fri Dec  1 10:00:58 2017        DEPLOYED        ceph-0.1.0                      ceph
+   ucp-coredns                             1               Fri Dec  1 10:00:26 2017        DEPLOYED        coredns-0.1.0                   kube-system
+   ucp-deckhand                            1               Fri Dec  1 10:03:39 2017        DEPLOYED        deckhand-0.1.0                  ucp
+   ucp-drydock                             1               Fri Dec  1 10:03:37 2017        DEPLOYED        drydock-0.1.0                   ucp
+   ucp-etcd-rabbitmq                       1               Fri Dec  1 10:02:44 2017        DEPLOYED        etcd-0.1.0                      ucp
+   ucp-ingress                             1               Fri Dec  1 10:02:45 2017        DEPLOYED        ingress-0.1.0                   ucp
+   ucp-keystone                            1               Fri Dec  1 10:03:45 2017        DEPLOYED        keystone-0.1.0                  ucp
+   ucp-kubernetes-apiserver                1               Fri Dec  1 10:00:32 2017        DEPLOYED        apiserver-0.1.0                 kube-system
+   ucp-kubernetes-controller-manager       1               Fri Dec  1 10:00:33 2017        DEPLOYED        controller_manager-0.1.0        kube-system
+   ucp-kubernetes-etcd                     1               Fri Dec  1 10:00:31 2017        DEPLOYED        etcd-0.1.0                      kube-system
+   ucp-kubernetes-proxy                    1               Fri Dec  1 09:58:46 2017        DEPLOYED        proxy-0.1.0                     kube-system
+   ucp-kubernetes-scheduler                1               Fri Dec  1 10:00:34 2017        DEPLOYED        scheduler-0.1.0                 kube-system
+   ucp-maas                                1               Fri Dec  1 10:03:36 2017        DEPLOYED        maas-0.1.0                      ucp
+   ucp-maas-postgresql                     1               Fri Dec  1 10:02:44 2017        DEPLOYED        postgresql-0.1.0                ucp
+   ucp-rabbitmq                            1               Fri Dec  1 10:02:45 2017        DEPLOYED        rabbitmq-0.1.0                  ucp
+   ucp-rbac                                1               Fri Dec  1 10:00:44 2017        DEPLOYED        rbac-0.1.0                      kube-system
+   ucp-shipyard                            1               Fri Dec  1 10:38:08 2017        DEPLOYED        shipyard-0.1.0                  ucp
+   ucp-ucp-ceph-config                     1               Fri Dec  1 10:02:40 2017        DEPLOYED        ceph-0.1.0                      ucp
+   ucp-ucp-mariadb                         1               Fri Dec  1 10:02:43 2017        DEPLOYED        mariadb-0.1.0                   ucp
+   ucp-ucp-memcached                       1               Fri Dec  1 10:02:44 2017        DEPLOYED        memcached-0.1.0                 ucp
    ```
-
