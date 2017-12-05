@@ -26,6 +26,7 @@ from shipyard_airflow.control.configdocs.configdocs_helper import (
 )
 from shipyard_airflow.control.configdocs.deckhand_client import (
     DeckhandClient,
+    DeckhandPaths,
     DeckhandResponseError,
     NoRevisionsExistError
 )
@@ -539,25 +540,29 @@ def test_get_validations_for_revision():
     """
     Tets the functionality of the get_validations_for_revision method
     """
-    helper = ConfigdocsHelper(CTX)
-    hold_ve = helper.__class__._get_validation_endpoints
-    hold_vfc = helper.__class__._get_validations_for_component
-    helper.__class__._get_validation_endpoints = (
-        _fake_get_validation_endpoints
-    )
-    helper.__class__._get_validations_for_component = (
-        _fake_get_validations_for_component
-    )
-    helper._get_deckhand_validations = lambda revision_id: []
-    try:
-        val_status = helper.get_validations_for_revision(3)
-        err_count = val_status['details']['errorCount']
-        err_list_count = len(val_status['details']['messageList'])
-        assert err_count == err_list_count
-        assert val_status['details']['errorCount'] == 4
-    finally:
-        helper.__class__._get_validation_endpoints = hold_ve
-        helper.__class__._get_validations_for_component = hold_vfc
+    with patch('shipyard_airflow.control.configdocs.deckhand_client.'
+               'DeckhandClient.get_path') as mock_get_path:
+        mock_get_path.return_value = 'path{}'
+        helper = ConfigdocsHelper(CTX)
+        hold_ve = helper.__class__._get_validation_endpoints
+        hold_vfc = helper.__class__._get_validations_for_component
+        helper.__class__._get_validation_endpoints = (
+            _fake_get_validation_endpoints
+        )
+        helper.__class__._get_validations_for_component = (
+            _fake_get_validations_for_component
+        )
+        helper._get_deckhand_validations = lambda revision_id: []
+        try:
+            val_status = helper.get_validations_for_revision(3)
+            err_count = val_status['details']['errorCount']
+            err_list_count = len(val_status['details']['messageList'])
+            assert err_count == err_list_count
+            assert val_status['details']['errorCount'] == 4
+        finally:
+            helper.__class__._get_validation_endpoints = hold_ve
+            helper.__class__._get_validations_for_component = hold_vfc
+    mock_get_path.assert_called_with(DeckhandPaths.RENDERED_REVISION_DOCS)
 
 
 FK_VAL_BASE_RESP = FakeResponse(status_code=200, text="""

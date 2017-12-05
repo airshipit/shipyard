@@ -346,8 +346,8 @@ class ConfigdocsHelper(object):
         # Constructs the design reference as json for use by other components
         design_reference = {
             "rel": "design",
-            "href": "deckhand+{}/rendered-documents".format(
-                DeckhandPaths.RENDERED_REVISION_DOCS.value.format(revision_id)
+            "href": "deckhand+{}".format(DeckhandClient.get_path(
+                DeckhandPaths.RENDERED_REVISION_DOCS).format(revision_id)
             ),
             "type": "application/x-yaml"
         }
@@ -374,20 +374,18 @@ class ConfigdocsHelper(object):
             # create a holder for things we need back from the threads
             response = {'response': None}
             exception = {'exception': None}
+            design_ref = ConfigdocsHelper._get_design_reference(revision_id)
             validation_threads.append(
                 {
                     'thread': threading.Thread(
                         target=ConfigdocsHelper._get_validations_for_component,
-                        args=(
-                            endpoint['url'],
-                            ConfigdocsHelper._get_design_reference(
-                                revision_id
-                            ),
-                            response,
-                            exception,
-                            ctx.external_marker
-                        ),
                         kwargs={
+                            'url': endpoint['url'],
+                            'design_reference': design_ref,
+                            'response': response,
+                            'exception': exception,
+                            'context_marker': ctx.external_marker,
+                            'thread_name': endpoint['name'],
                             'log_extra': {
                                 'req_id': ctx.request_id,
                                 'external_ctx': ctx.external_marker,
@@ -409,26 +407,44 @@ class ConfigdocsHelper(object):
                                        response,
                                        exception,
                                        context_marker,
+                                       thread_name,
                                        **kwargs):
         # Invoke the POST for validation
         try:
             headers = {
                 'X-Context-Marker': context_marker,
                 'X-Auth-Token': get_token(),
-                'content-type': 'application/x-yaml'
+                'content-type': 'application/json'
             }
 
             http_resp = requests.post(url,
                                       headers=headers,
                                       data=design_reference,
                                       timeout=(5, 30))
-            http_resp.raise_for_status()
-            raw_response = http_resp.decode('utf-8')
-            response_dict = json.loads(raw_response)
+            # 400 response is "valid" failure to validate. > 400 is a problem.
+            if http_resp.status_code > 400:
+                http_resp.raise_for_status()
+            response_dict = http_resp.json()
             response['response'] = response_dict
         except Exception as ex:
-            # catch anything exceptional as a failure to validate
-            LOG.error(ex)
+            # catch anything exceptional as a failure to run validations
+            unable_str = '{} unable to validate configdocs'.format(thread_name)
+            LOG.error("%s. Exception follows.", unable_str)
+            LOG.error(str(ex))
+            response['response'] = {
+                'details': {
+                    'messageList': [
+                        {
+                            'message': unable_str,
+                            'error': True
+                        },
+                        {
+                            'message': str(ex),
+                            'error': True
+                        }
+                    ]
+                }
+            }
             exception['exception'] = ex
 
     def get_validations_for_revision(self, revision_id):
@@ -456,37 +472,25 @@ class ConfigdocsHelper(object):
         # check on the response, extract the validations
         error_count = 0
         for validation_thread in validation_threads:
-            val_response = validation_thread.get('response')['response']
-            if (not val_response or
-                    validation_thread.get('exception')['exception']):
-                # exception was raised, or no body was returned.
-                raise AppError(
-                    title='Unable to properly validate configdocs',
-                    description=(
-                        'Invocation of validation by {} has failed'.format(
-                            validation_thread.get('name')
-                        )
-                    ),
-                    status=falcon.HTTP_500,
-                    retry=False,
-                )
-            if not val_response:
-                raise AppError(
-                    title='An invalid response was returned by validation',
-                    description='No valid response status from {}'.format(
-                        validation_thread.get('name')),
-                    status=falcon.HTTP_500,
-                    retry=False,
-                )
+            th_name = validation_thread.get('name')
+            val_response = validation_thread.get('response',
+                                                 {}).get('response')
+            LOG.debug("Validation from:  %s response: %s",
+                      th_name, str(val_response))
+            if validation_thread.get('exception', {}).get('exception'):
+                LOG.error('Invocation of validation by %s has failed', th_name)
             # invalid status needs collection of messages
             # valid status means that it passed. No messages to collect
-            msg_list = val_response.get('details').get('messageList')
+            if val_response.get('details') is None:
+                msg_list = [{'message': str(val_response), 'error': True}]
+            else:
+                msg_list = val_response.get('details').get('messageList', [])
             for msg in msg_list:
                 if msg.get('error'):
                     error_count = error_count + 1
                     resp_msgs.append(
                         {
-                            'name': validation_thread.get('name'),
+                            'name': th_name,
                             'message': msg.get('message'),
                             'error': True
                         }
@@ -494,7 +498,7 @@ class ConfigdocsHelper(object):
                 else:
                     resp_msgs.append(
                         {
-                            'name': validation_thread.get('name'),
+                            'name': th_name,
                             'message': msg.get('message'),
                             'error': False
                         }
