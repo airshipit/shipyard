@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
+from mock import patch
+import pytest
 
 from shipyard_airflow.control.action.actions_validations_id_api import \
     ActionsValidationsResource
 from shipyard_airflow.errors import ApiError
+from tests.unit.control import common
 
 
 def actions_db(action_id):
@@ -52,39 +54,53 @@ def get_validations(validation_id):
         return None
 
 
-def test_get_action_validation():
-    """
-    Tests the main response from get all actions
-    """
-    action_resource = ActionsValidationsResource()
-    # stubs for db
-    action_resource.get_action_db = actions_db
-    action_resource.get_validation_db = get_validations
+class TestActionsValidationsResource():
+    @patch.object(ActionsValidationsResource, 'get_action_validation',
+                  common.str_responder)
+    def test_on_get(self, api_client):
+        """Validate the on_get method returns 200 on success"""
+        result = api_client.simulate_get(
+            "/api/v1.0/actions/123456/validations/123456",
+            headers=common.AUTH_HEADERS)
+        assert result.status_code == 200
 
-    validation = action_resource.get_action_validation(
-        action_id='59bb330a-9e64-49be-a586-d253bb67d443',
-        validation_id='43'
-    )
-    print(json.dumps(validation, default=str))
-    assert validation['action_id'] == '59bb330a-9e64-49be-a586-d253bb67d443'
-    assert validation['validation_name'] == 'It has shiny goodness'
+    def test_get_action_validation(self):
+        """Tests the main response from get all actions"""
+        action_resource = ActionsValidationsResource()
+        # stubs for db
+        action_resource.get_action_db = actions_db
+        action_resource.get_validation_db = get_validations
 
-    try:
         validation = action_resource.get_action_validation(
             action_id='59bb330a-9e64-49be-a586-d253bb67d443',
-            validation_id='not a chance'
-        )
-        assert False
-    except ApiError as api_error:
-        assert api_error.status == '404 Not Found'
-        assert api_error.title == 'Validation not found'
+            validation_id='43')
+        assert validation[
+            'action_id'] == '59bb330a-9e64-49be-a586-d253bb67d443'
+        assert validation['validation_name'] == 'It has shiny goodness'
 
-    try:
-        validation = action_resource.get_action_validation(
-            action_id='error_it',
-            validation_id='not a chance'
-        )
-        assert False
-    except ApiError as api_error:
-        assert api_error.status == '404 Not Found'
-        assert api_error.title == 'Action not found'
+        with pytest.raises(ApiError) as api_error:
+            action_resource.get_action_validation(
+                action_id='59bb330a-9e64-49be-a586-d253bb67d443',
+                validation_id='not a chance')
+        assert 'Validation not found' in str(api_error)
+
+        with pytest.raises(ApiError) as api_error:
+            validation = action_resource.get_action_validation(
+                action_id='error_it', validation_id='not a chance')
+        assert 'Action not found' in str(api_error)
+
+    @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.get_action_by_id')
+    def test_get_action_db(self, mock_get_action_by_id):
+        action_resource = ActionsValidationsResource()
+        action_id = '123456789'
+        action_resource.get_action_db(action_id)
+        mock_get_action_by_id.assert_called_with(action_id=action_id)
+
+    @patch(
+        'shipyard_airflow.db.shipyard_db.ShipyardDbAccess.get_validation_by_id'
+    )
+    def test_get_validation_db(self, mock_get_tasks_by_id):
+        action_resource = ActionsValidationsResource()
+        validation_id = '123456'
+        action_resource.get_validation_db(validation_id)
+        mock_get_tasks_by_id.assert_called_with(validation_id=validation_id)
