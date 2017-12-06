@@ -35,3 +35,4 @@ Shipyard Configuration Guide
    API
    API_action_commands
    CLI
+   client_user_guide
