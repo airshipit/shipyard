@@ -19,3 +19,4 @@ sphinx_rtd_theme==0.2.4
 # Documentation, repeated from requirements.txt to support readthedocs build.
 oslo.config==4.11.0
 oslo.policy==1.25.1
+keystoneauth1==2.13.0
