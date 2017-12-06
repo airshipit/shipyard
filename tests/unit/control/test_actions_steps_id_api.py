@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from mock import patch
 from datetime import datetime
-import json
+import pytest
 
 from shipyard_airflow.errors import ApiError
 from shipyard_airflow.control.action.actions_steps_id_api import \
     ActionsStepsResource
+from tests.unit.control import common
 
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
@@ -44,76 +46,106 @@ def tasks_db(dag_id, execution_date):
     """
     replaces the actual db call
     """
-    return [
-        {
-            'task_id': '1a',
-            'dag_id': 'did2',
-            'execution_date': DATE_ONE,
-            'state': 'SUCCESS',
-            'run_id': '12345',
-            'external_trigger': 'something',
-            'start_date': DATE_ONE,
-            'end_date': DATE_ONE,
-            'duration': '20mins',
-            'try_number': '1',
-            'operator': 'smooth',
-            'queued_dttm': DATE_ONE
-        },
-        {
-            'task_id': '1b',
-            'dag_id': 'did2',
-            'execution_date': DATE_ONE,
-            'state': 'SUCCESS',
-            'run_id': '12345',
-            'external_trigger': 'something',
-            'start_date': DATE_TWO,
-            'end_date': DATE_TWO,
-            'duration': '1minute',
-            'try_number': '1',
-            'operator': 'smooth',
-            'queued_dttm': DATE_ONE
-        },
-        {
-            'task_id': '1c',
-            'dag_id': 'did2',
-            'execution_date': DATE_ONE,
-            'state': 'FAILED',
-            'run_id': '12345',
-            'external_trigger': 'something',
-            'start_date': DATE_TWO,
-            'end_date': DATE_TWO,
-            'duration': '1day',
-            'try_number': '3',
-            'operator': 'smooth',
-            'queued_dttm': DATE_TWO
-        }
-    ]
+    return [{
+        'task_id': '1a',
+        'dag_id': 'did2',
+        'execution_date': DATE_ONE,
+        'state': 'SUCCESS',
+        'run_id': '12345',
+        'external_trigger': 'something',
+        'start_date': DATE_ONE,
+        'end_date': DATE_ONE,
+        'duration': '20mins',
+        'try_number': '1',
+        'operator': 'smooth',
+        'queued_dttm': DATE_ONE
+    }, {
+        'task_id': '1b',
+        'dag_id': 'did2',
+        'execution_date': DATE_ONE,
+        'state': 'SUCCESS',
+        'run_id': '12345',
+        'external_trigger': 'something',
+        'start_date': DATE_TWO,
+        'end_date': DATE_TWO,
+        'duration': '1minute',
+        'try_number': '1',
+        'operator': 'smooth',
+        'queued_dttm': DATE_ONE
+    }, {
+        'task_id': '1c',
+        'dag_id': 'did2',
+        'execution_date': DATE_ONE,
+        'state': 'FAILED',
+        'run_id': '12345',
+        'external_trigger': 'something',
+        'start_date': DATE_TWO,
+        'end_date': DATE_TWO,
+        'duration': '1day',
+        'try_number': '3',
+        'operator': 'smooth',
+        'queued_dttm': DATE_TWO
+    }]
 
 
-def test_get_action_steps():
-    """
-    Tests the main response from get all actions
-    """
-    action_resource = ActionsStepsResource()
-    # stubs for db
-    action_resource.get_action_db = actions_db
-    action_resource.get_tasks_db = tasks_db
+class TestActionsStepsResource():
+    @patch.object(ActionsStepsResource, 'get_action_step',
+                  common.str_responder)
+    def test_on_get(self, api_client):
+        """Validate the on_get method returns 200 on success"""
+        result = api_client.simulate_get(
+            "/api/v1.0/actions/123456/steps/123456",
+            headers=common.AUTH_HEADERS)
+        assert result.status_code == 200
 
-    step = action_resource.get_action_step(
-        '59bb330a-9e64-49be-a586-d253bb67d443',
-        '1c'
-    )
-    assert step['index'] == 3
-    assert step['try_number'] == '3'
-    assert step['operator'] == 'smooth'
-    print(json.dumps(step, default=str))
+    def test_get_action_step_success(self):
+        """Tests the main response from get all actions"""
+        action_resource = ActionsStepsResource()
+        # stubs for db
+        action_resource.get_action_db = actions_db
+        action_resource.get_tasks_db = tasks_db
 
-    try:
         step = action_resource.get_action_step(
-            '59bb330a-9e64-49be-a586-d253bb67d443',
-            'cheese'
-        )
-        assert False, 'should raise an ApiError'
-    except ApiError as api_error:
-        assert api_error.title == 'Step not found'
-        assert api_error.status == '404 Not Found'
+            '59bb330a-9e64-49be-a586-d253bb67d443', '1c')
+        assert step['index'] == 3
+        assert step['try_number'] == '3'
+        assert step['operator'] == 'smooth'
+
+    def test_get_action_step_error_action(self):
+        """Validate ApiError, 'Action not found' is raised"""
+        action_resource = ActionsStepsResource()
+        with patch.object(ActionsStepsResource,
+                          'get_action_db') as mock_method:
+            mock_method.return_value = None
+            with pytest.raises(ApiError) as api_error:
+                action_resource.get_action_step(
+                    '59bb330a-9e64-49be-a586-d253bb67d443', 'cheese')
+            assert 'Action not found' in str(api_error)
+
+    def test_get_action_step_error_step(self):
+        """Validate ApiError, 'Step not found' is raised"""
+        action_resource = ActionsStepsResource()
+        # stubs for db
+        action_resource.get_action_db = actions_db
+        action_resource.get_tasks_db = tasks_db
+
+        with pytest.raises(ApiError) as api_error:
+            step = action_resource.get_action_step(
+                '59bb330a-9e64-49be-a586-d253bb67d443', 'cheese')
+        assert 'Step not found' in str(api_error)
+
+    @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.get_action_by_id')
+    def test_get_action_db(self, mock_get_action_by_id):
+        action_resource = ActionsStepsResource()
+        action_id = '123456789'
+        action_resource.get_action_db(action_id)
+        mock_get_action_by_id.assert_called_with(action_id=action_id)
+
+    @patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_tasks_by_id')
+    def test_get_tasks_db(self, mock_get_tasks_by_id):
+        action_resource = ActionsStepsResource()
+        dag_id = '123456'
+        execution_date = DATE_ONE
+        action_resource.get_tasks_db(dag_id, execution_date)
+        mock_get_tasks_by_id.assert_called_with(
+            dag_id=dag_id, execution_date=execution_date)
