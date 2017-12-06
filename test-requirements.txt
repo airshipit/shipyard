@@ -15,5 +15,7 @@ bandit>=1.1.0 # Apache-2.0
 # Documentation
 sphinx>=1.6.2
 sphinx_rtd_theme==0.2.4
+
 # Documentation, repeated from requirements.txt to support readthedocs build.
 oslo.config==4.11.0
+oslo.policy==1.25.1
