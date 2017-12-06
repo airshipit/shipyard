@@ -20,3 +20,5 @@ sphinx_rtd_theme==0.2.4
 oslo.config==4.11.0
 oslo.policy==1.25.1
 keystoneauth1==2.13.0
+keystonemiddleware==4.17.0
+falcon==1.2.0
