@@ -21,10 +21,9 @@ from kubernetes import client, config
 
 def check_pods_status(required_pods):
     """This function retrieves the current state of pods in the
-       Kubernetes cluster. We can use it to check the state of the
-       cluster join process (drydock/promenade) and determine if all
-       the bare metal nodes have successfully joined the Kubernetes
-       cluster.
+       Kubernetes cluster. We can use it to check that all the pods
+       that are of interest to us are up in the cluster. Function
+       returns boolean True/False and queries every 30 seconds.
 
        :param required_pods: List of pods that are of interest to us
 
@@ -32,12 +31,12 @@ def check_pods_status(required_pods):
 
         from check_k8s_pod_status import check_pods_status
 
-        join_complete = False
+        pods_ready = False
         required_pods = ['ceph-', 'calico-', 'coredns-', 'kubernetes-']
 
         # Time out can be set as required
-        while not join_complete:
-            join_complete = check_pods_status(required_pods)
+        while not pods_ready:
+            pods_ready = check_pods_status(required_pods)
     """
     # Note that we are using 'in_cluster_config'
     config.load_incluster_config()
@@ -52,7 +51,7 @@ def check_pods_status(required_pods):
                 # Return Boolean 'False' if required pods are not in
                 # 'Succeeded' or 'Running' state
                 if i.status.phase not in ['Succeeded', 'Running']:
-                    logging.info("Cluster is not in ready state...")
+                    logging.info("Pods are not in ready state...")
                     logging.info("%s is in %s state", i.metadata.name,
                                  i.status.phase)
                     logging.info("Wait for 30 seconds...")
