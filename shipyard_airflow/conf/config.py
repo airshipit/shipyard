@@ -170,6 +170,11 @@ SECTIONS = [
                 default=3600,
                 help='Time out (in seconds) for deploy_node task'
             ),
+            cfg.IntOpt(
+                'cluster_join_check_backoff_time',
+                default=120,
+                help='Backoff time (in seconds) before checking cluster join'
+            ),
         ]
     ),
     ConfigSection(

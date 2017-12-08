@@ -165,6 +165,16 @@ class DryDockOperator(BaseOperator):
             self.drydock_action(drydock_client, context, self.action,
                                 query_interval, task_timeout)
 
+            # Wait for 120 seconds (default value) before checking the cluster
+            # join process as it takes time for process to be triggered across
+            # all nodes
+            cluster_join_check_backoff_time = config.get(
+                'drydock', 'cluster_join_check_backoff_time')
+            logging.info("All nodes deployed in MAAS")
+            logging.info("Wait for %d seconds before checking node state...",
+                         int(cluster_join_check_backoff_time))
+            time.sleep(cluster_join_check_backoff_time)
+
             # Check that cluster join process is completed before declaring
             # deploy_node as 'completed'. Set time out to 30 minutes and set
             # polling interval to 30 seconds.

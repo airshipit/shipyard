@@ -31,7 +31,13 @@ def check_node_status(time_out, interval):
 
         Example::
 
+        import time
         from check_k8s_node_status import check_node_status
+
+        # Wait for a while before checking the cluster-join process as
+        # it takes time for process to be triggered across all nodes
+        # We will wait for 120 seconds in this example
+        time.sleep(120)
 
         # Calls function to check that all nodes are in Ready State
         # Time out in this case is set to 15 mins, the time interval
@@ -48,8 +54,9 @@ def check_node_status(time_out, interval):
     # Logs initial state of all nodes in the cluster
     ret_init = v1.list_node(watch=False)
 
+    logging.info("Current state of nodes in Cluster is")
+
     for i in ret_init.items:
-        logging.info("Current state of nodes in Cluster is")
         logging.info("%s\t%s\t%s", i.metadata.name,
                      i.status.conditions[-1].status,
                      i.status.conditions[-1].type)
