@@ -74,12 +74,22 @@ def get_pod_port_ip(*pods):
 
                         # Get pod port
                         logging.info("Retrieving %s Port", pod_name)
-                        specs_dict = i.spec.containers[0].__dict__
-                        ports_dict = specs_dict['_ports'][0].__dict__
-                        pod_attr[pod_name]['port'] = (
-                            ports_dict['_container_port'])
-                        logging.info("%s Port is %s", pod_name,
-                                     pod_attr[pod_name]['port'])
+
+                        # It is possible for a pod to have an IP with no
+                        # port. For instance maas-rack takes on genesis
+                        # node IP and has no port associated with it. We
+                        # will assign the value 'None' to the port value
+                        # in such cases.
+                        try:
+                            specs_dict = i.spec.containers[0].__dict__
+                            ports_dict = specs_dict['_ports'][0].__dict__
+                            pod_attr[pod_name]['port'] = (
+                                ports_dict['_container_port'])
+                            logging.info("%s Port is %s", pod_name,
+                                         pod_attr[pod_name]['port'])
+                        except:
+                            pod_attr[pod_name]['port'] = 'None'
+                            logging.info("%s Port is None", pod_name)
 
                         # Update k8s_pods with new entry
                         k8s_pods.update(pod_attr)

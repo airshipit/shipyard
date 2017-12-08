@@ -173,7 +173,7 @@ class DryDockOperator(BaseOperator):
             logging.info("All nodes deployed in MAAS")
             logging.info("Wait for %d seconds before checking node state...",
                          int(cluster_join_check_backoff_time))
-            time.sleep(cluster_join_check_backoff_time)
+            time.sleep(int(cluster_join_check_backoff_time))
 
             # Check that cluster join process is completed before declaring
             # deploy_node as 'completed'. Set time out to 30 minutes and set

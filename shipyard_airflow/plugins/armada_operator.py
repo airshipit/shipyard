@@ -94,6 +94,9 @@ class ArmadaOperator(BaseOperator):
         # Retrieve Tiller Information and assign to context 'query'
         context['query'] = self.get_tiller_info(context)
 
+        # Retrieve Genesis Node IP and assign it to context 'genesis_ip'
+        context['genesis_ip'] = self.get_genesis_node_info(context)
+
         # Armada API Call
         # Armada Status
         if self.action == 'armada_status':
@@ -243,6 +246,16 @@ class ArmadaOperator(BaseOperator):
         else:
             raise AirflowException("Failed to retrieve Armada Releases")
 
+    @get_pod_port_ip('maas-rack')
+    def get_genesis_node_info(self, context, *args):
+
+        # Get IP and port information of Pods from context
+        k8s_pods_ip_port = context['pods_ip_port']
+
+        # The maas-rack pod has the same IP as the genesis node
+        # We will retieve that IP and return the value
+        return k8s_pods_ip_port['maas-rack'].get('ip')
+
     def get_armada_yaml(self, context):
         # Initialize Variables
         genesis_node_ip = None
@@ -253,7 +266,7 @@ class ArmadaOperator(BaseOperator):
         # file name is fixed and will always be 'armada_site.yaml'. This file
         # will always be under the osh directory. This will change in the near
         # future when Armada is integrated with DeckHand.
-        genesis_node_ip = context['query'].get('tiller_host')
+        genesis_node_ip = context['genesis_ip']
 
         # Form Endpoint
         schema = 'http://'
