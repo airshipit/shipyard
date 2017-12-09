@@ -41,6 +41,17 @@ elif [[ $cmd == *scheduler* ]]; then
         airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow scheduler $2 $3"
         eval $airflow_cmd
     done
+elif [[ $cmd == 'quicktest' ]]; then
+    test_cmd="/usr/bin/python3 /usr/local/bin/airflow initdb"
+    eval $test_cmd
+    test_cmd2="/usr/bin/python3 /usr/local/bin/airflow webserver -p 8080 &"
+    eval $test_cmd2
+    test_cmd3="airflow run example_bash_operator runme_0 2015-01-01"
+    eval $test_cmd3
+    test_cmd4="airflow backfill example_bash_operator -s 2015-01-01 -e 2015-01-02"
+    eval $test_cmd4
+    test_cmd5="airflow dag_state example_bash_operator 2015-01-01"
+    eval $test_cmd5
 else
      echo "Invalid Command!"
      exit 0

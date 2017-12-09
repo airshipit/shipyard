@@ -41,7 +41,18 @@ dry-run: clean
 .PHONY: docs
 docs: clean build_docs
 
+.PHONY: run_images
+run_images: run_shipyard run_airflow
+
 # Make targets intended for use by the primary targets above.
+
+.PHONY: run_shipyard
+run_shipyard: clean build_shipyard
+	tools/shipyard_image_run.sh $(IMAGE_PREFIX) $(SHIPYARD_IMAGE_NAME) $(IMAGE_TAG)
+
+.PHONY: run_airflow
+run_airflow: clean build_airflow
+	tools/airflow_image_run.sh  $(IMAGE_PREFIX) $(AIRFLOW_IMAGE_NAME) $(IMAGE_TAG)
 
 .PHONY: build_airflow
 build_airflow:

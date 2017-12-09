@@ -61,6 +61,11 @@ RUN set -ex && \
 # Install Armada libraries
 COPY ./requirements.txt /tmp/
 RUN pip3 install -r /tmp/requirements.txt
+
+# Note - removing snakebite (python 2 vs. 3). See:
+#    https://github.com/puckel/docker-airflow/issues/77
+RUN pip3 uninstall -y snakebite || true
+
 RUN pip3 install -e git://github.com/att-comdev/drydock.git#egg=drydock_provisioner
 RUN pip3 install -e git://github.com/att-comdev/armada.git#egg=armada
 
