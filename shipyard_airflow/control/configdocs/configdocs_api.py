@@ -166,9 +166,9 @@ class CommitConfigDocsResource(BaseResource):
                 retry=True
             )
         validations = helper.get_validations_for_buffer()
-        if force or validations.get('status') == 'Valid':
+        if force or validations.get('status') == 'Success':
             helper.tag_buffer(configdocs_helper.COMMITTED)
-        if force and validations.get('status') == 'Invalid':
+        if force and validations.get('status') == 'Failure':
             # override the status in the response
             validations['code'] = falcon.HTTP_200
             if validations.get('message'):

@@ -290,7 +290,7 @@ Example
         "message": "Validations failed",
         "metadata": {},
         "reason": "Validation",
-        "status": "Invalid"
+        "status": "Failure"
     }
 
 Action API

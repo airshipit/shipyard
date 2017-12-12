@@ -549,17 +549,17 @@ class ConfigdocsHelper(object):
         # Using a list of validation messages and an error count,
         # formulates and returns a status response dict
 
-        status = 'Valid'
+        status = 'Success'
         message = 'Validations succeeded'
         code = falcon.HTTP_200
         if error_count > 0:
-            status = 'Invalid'
+            status = 'Failure'
             message = 'Validations failed'
             code = falcon.HTTP_400
 
         return {
             "kind": "Status",
-            "apiVersion": "v1",
+            "apiVersion": "v1.0",
             "metadata": {},
             "status": status,
             "message": message,

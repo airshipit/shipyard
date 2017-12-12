@@ -97,11 +97,11 @@ def test_commit_configdocs():
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
         helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: False
-        helper.get_validations_for_buffer = lambda: {'status': 'Valid'}
+        helper.get_validations_for_buffer = lambda: {'status': 'Success'}
         commit_resp = ccdr.commit_configdocs(helper, False)
 
     mock_method.assert_called_once_with('committed')
-    assert commit_resp['status'] == 'Valid'
+    assert commit_resp['status'] == 'Success'
 
     commit_resp = None
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
@@ -109,7 +109,7 @@ def test_commit_configdocs():
         helper.is_buffer_empty = lambda: False
         helper.get_validations_for_buffer = (
             lambda: {
-                'status': 'Invalid',
+                'status': 'Failure',
                 'code': '400 Bad Request',
                 'message': 'this is a mock response'
             }
@@ -117,7 +117,7 @@ def test_commit_configdocs():
         commit_resp = ccdr.commit_configdocs(helper, False)
     assert '400' in commit_resp['code']
     assert commit_resp['message'] is not None
-    assert commit_resp['status'] == 'Invalid'
+    assert commit_resp['status'] == 'Failure'
 
 
 def test_commit_configdocs_force():
@@ -129,14 +129,14 @@ def test_commit_configdocs_force():
     with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
         helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: False
-        helper.get_validations_for_buffer = lambda: {'status': 'Invalid'}
+        helper.get_validations_for_buffer = lambda: {'status': 'Failure'}
         commit_resp = ccdr.commit_configdocs(helper, True)
 
     mock_method.assert_called_once_with('committed')
     print(commit_resp)
     assert '200' in commit_resp['code']
     assert 'FORCED' in commit_resp['message']
-    assert commit_resp['status'] == 'Invalid'
+    assert commit_resp['status'] == 'Failure'
 
 
 def test_commit_configdocs_buffer_err():
@@ -148,7 +148,7 @@ def test_commit_configdocs_buffer_err():
     with pytest.raises(ApiError):
         helper = ConfigdocsHelper(CTX)
         helper.is_buffer_empty = lambda: True
-        helper.get_validations_for_buffer = lambda: {'status': 'Valid'}
+        helper.get_validations_for_buffer = lambda: {'status': 'Success'}
         ccdr.commit_configdocs(helper, False)
 
 

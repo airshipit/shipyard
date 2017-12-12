@@ -518,7 +518,7 @@ def _fake_get_validations_for_component(url,
     response['response'] = json.loads(("""
 {
   "kind": "Status",
-  "apiVersion": "v1",
+  "apiVersion": "v1.0",
   "metadata": {},
   "status": "Failure",
   "message": "%s",

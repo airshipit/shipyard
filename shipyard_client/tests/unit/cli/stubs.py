@@ -53,9 +53,9 @@ DEFAULT_BODY = """
 STATUS_TEMPL = """
 {{
     "kind": "Status",
-    "apiVersion": "v1",
+    "apiVersion": "v1.0",
     "metadata": {{}},
-    "status": "Valid",
+    "status": "Success",
     "message": "{}",
     "reason": "{}",
     "details": {{

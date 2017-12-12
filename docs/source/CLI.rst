@@ -240,7 +240,7 @@ or a single directory option must be specified.
     Example:
         shipyard create configdocs design --append --filename=site_design.yaml
 
-.. note:: 
+.. note::
 
   If neither append nor replace are specified, the Shipyard API default value
   of rejectoncontents will be used.
