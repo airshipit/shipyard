@@ -31,19 +31,25 @@ NC='\033[0m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
+# Define get_keystone_token function
+get_keystone_token() {
+    # Retrieve Keystone Token
+    echo -e "Retrieving Keystone Token...\n"
+    TOKEN=`sudo docker run -t \
+           -e "OS_AUTH_URL=http://${keystone_ip}:80/v3" \
+           -e "OS_PROJECT_NAME=service" \
+           -e "OS_USER_DOMAIN_NAME=Default" \
+           -e "OS_USERNAME=${shipyard_username}" \
+           -e "OS_PASSWORD=${shipyard_password}" \
+           -e "OS_REGION_NAME=RegionOne" \
+           -e "OS_IDENTITY_API_VERSION=3" \
+           --net=host \
+           docker.io/kolla/ubuntu-source-keystone:3.0.3 \
+           openstack token issue | grep -w 'id' | awk '{print $4}'`
+}
+
 # Retrieve Keystone Token
-echo -e "Retrieving Keystone Token...\n"
-TOKEN=`sudo docker run -t \
-       -e "OS_AUTH_URL=http://${keystone_ip}:80/v3" \
-       -e "OS_PROJECT_NAME=service" \
-       -e "OS_USER_DOMAIN_NAME=Default" \
-       -e "OS_USERNAME=${shipyard_username}" \
-       -e "OS_PASSWORD=${shipyard_password}" \
-       -e "OS_REGION_NAME=RegionOne" \
-       -e "OS_IDENTITY_API_VERSION=3" \
-       --net=host \
-       docker.io/kolla/ubuntu-source-keystone:3.0.3 \
-       openstack token issue | grep -w 'id' | awk '{print $4}'`
+get_keystone_token
 
 # Execute deploy_site
 echo -e "Execute deploy_site Dag...\n"
@@ -72,14 +78,22 @@ echo
 # 4) Failed - The action has encountered an error, and has failed.
 # 5) Paused - The action has been paused by a user.
 # 6) Unknown (*) - Unknown State for corner cases
+# 7) null - It is possible for the script to run for a prolonged period
+#           of time. This can cause the keystone token to expire and we
+#           will end up with `null` response from Shipyard when we query
+#           the status of the task. We will need to retrieve a new token
+#           when that happens.
 #
+
 # Initialize 'action_lifecycle' to 'Pending'
 action_lifecycle="Pending"
 
 # Polling for site_deploy action
-# Define 'deploy_time_out' and default to 1.5 hrs (5400 seconds) if not provided
+# Define 'deploy_time_out' and default it to 60 loops (based on 90 seconds
+# back off per cycle, i.e. 60 * 90 = 5400 seconds = 1.5 hrs) if value was
+# not provided at run time
 # Note that user will need to define query time in this case
-deploy_timeout=${2:-5400}
+deploy_timeout=${2:-60}
 deploy_counter=1
 
 check_timeout_counter() {
@@ -95,6 +109,12 @@ check_timeout_counter() {
 
 while true;
 do
+    if [[ $action_lifecycle == "null" ]]; then
+        # Retrieve new keystone token
+        echo -e '\nKeystone Token has expired. Retrieve new Token.\n'
+        get_keystone_token
+    fi
+
     if [[ $action_lifecycle == "Complete" ]] || [[ $action_lifecycle == "Failed" ]] || \
        [[ $action_lifecycle == "Paused" ]] || [[ $action_lifecycle == 'Unknown'* ]]; then
         # Print final results
