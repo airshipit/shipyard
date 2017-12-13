@@ -221,10 +221,11 @@ class ArmadaOperator(BaseOperator):
                                                      context['query'])
 
         # We will expect Armada to return the releases that it is
-        # deploying.  An empty value for 'install' means that armada
-        # delploy has failed.  Note that if we try and deploy the same
-        # release twice, we will end up with empty response on our
-        # second attempt and that will be treated as a failure scenario.
+        # deploying. An empty value for 'install' means that armada
+        # delploy has failed. Note that if we try and deploy the
+        # same release twice, we will end up with empty response on
+        # our second attempt and that will be treated as a failure
+        # scenario.
         if armada_post_apply['message']['install']:
             logging.info("Armada Apply Successfully Executed")
             logging.info(armada_post_apply)
