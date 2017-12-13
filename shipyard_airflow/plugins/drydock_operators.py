@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import configparser
+import json
 import logging
 import os
+import requests
 import time
 from urllib.parse import urlparse
 
@@ -99,11 +101,6 @@ class DryDockOperator(BaseOperator):
 
             return drydock_client
 
-        # Retrieve drydock_client via XCOM so as to perform other tasks
-        drydock_client = task_instance.xcom_pull(
-            task_ids='create_drydock_client',
-            dag_id=self.sub_dag_name + '.create_drydock_client')
-
         # Retrieve Deckhand Design Reference
         self.design_ref = self.get_deckhand_design_ref(context)
 
@@ -112,6 +109,18 @@ class DryDockOperator(BaseOperator):
                          self.design_ref)
         else:
             raise AirflowException("Unable to Retrieve Design Reference!")
+
+        # Drydock Validate Site Design
+        if self.action == 'validate_site_design':
+            # Retrieve Endpoint Information
+            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+
+            self.drydock_validate_design(context)
+
+        # Retrieve drydock_client via XCOM so as to perform other tasks
+        drydock_client = task_instance.xcom_pull(
+            task_ids='create_drydock_client',
+            dag_id=self.sub_dag_name + '.create_drydock_client')
 
         # Read shipyard.conf
         config = configparser.ConfigParser()
@@ -334,6 +343,50 @@ class DryDockOperator(BaseOperator):
                                            "rendered-documents")
 
         return deckhand_design_ref
+
+    @shipyard_service_token
+    def drydock_validate_design(self, context):
+
+        # Form Validation Endpoint
+        validation_endpoint = os.path.join(context['svc_endpoint'],
+                                           'validatedesign')
+
+        logging.info("Validation Endpoint is %s", validation_endpoint)
+
+        # Define Headers and Payload
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Auth-Token': context['svc_token']
+        }
+
+        payload = {
+            'rel': "design",
+            'href': self.design_ref,
+            'type': "application/x-yaml"
+        }
+
+        # Requests DryDock to validate site design
+        logging.info("Waiting for DryDock to validate site design...")
+
+        try:
+            design_validate_response = requests.post(validation_endpoint,
+                                                     headers=headers,
+                                                     data=json.dumps(payload))
+        except requests.exceptions.RequestException as e:
+            raise AirflowException(e)
+
+        # Convert response to string
+        validate_site_design = design_validate_response.text
+
+        # Prints response
+        logging.info("Retrieving DryDock validate site design response...")
+        logging.debug(json.loads(validate_site_design))
+
+        # Check if site design is valid
+        if json.loads(validate_site_design).get('status') == 'Valid':
+            logging.info("DryDock Site Design has been successfully validated")
+        else:
+            raise AirflowException("DryDock Site Design Validation Failed!")
 
 
 class DryDockClientPlugin(AirflowPlugin):

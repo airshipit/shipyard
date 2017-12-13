@@ -14,6 +14,7 @@
 
 from airflow.models import DAG
 from airflow.operators import DeckhandOperator
+from airflow.operators import DryDockOperator
 from airflow.operators import PlaceholderOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
@@ -72,9 +73,11 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         task_id=DECKHAND_VALIDATE_DOCS_DAG_NAME,
         dag=dag)
 
-    # TODO () use the real operator here
-    drydock_validate_docs = PlaceholderOperator(
-        task_id='drydock_validate_site_design', dag=dag)
+    drydock_validate_docs = DryDockOperator(
+        task_id='drydock_validate_site_design',
+        shipyard_conf=config_path,
+        action='validate_site_design',
+        dag=dag)
 
     # TODO () use the real operator here
     armada_validate_docs = PlaceholderOperator(
