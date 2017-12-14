@@ -16,6 +16,8 @@ from airflow.models import DAG
 from airflow.operators import ArmadaOperator
 
 # Location of shiyard.conf
+# Note that the shipyard.conf file needs to be placed on a volume
+# that can be accessed by the containers
 config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
 
@@ -32,6 +34,8 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='create_armada_client',
         shipyard_conf=config_path,
         action='create_armada_client',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Get Tiller Status
@@ -39,6 +43,8 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='armada_status',
         shipyard_conf=config_path,
         action='armada_status',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Validate Armada YAMLs
@@ -46,6 +52,8 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='armada_validate',
         shipyard_conf=config_path,
         action='armada_validate',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Armada Apply
@@ -53,6 +61,8 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='armada_apply',
         shipyard_conf=config_path,
         action='armada_apply',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         retries=10,
         dag=dag)
 
@@ -61,6 +71,8 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='armada_get_releases',
         shipyard_conf=config_path,
         action='armada_get_releases',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Define dependencies

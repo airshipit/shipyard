@@ -89,7 +89,7 @@ class ArmadaOperator(BaseOperator):
         # Retrieve armada_client via XCOM so as to perform other tasks
         armada_client = task_instance.xcom_pull(
             task_ids='create_armada_client',
-            dag_id=self.sub_dag_name + '.create_armada_client')
+            dag_id=self.main_dag_name + '.' + self.sub_dag_name)
 
         # Retrieve Tiller Information and assign to context 'query'
         context['query'] = self.get_tiller_info(context)

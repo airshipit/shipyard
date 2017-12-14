@@ -112,15 +112,23 @@ class DryDockOperator(BaseOperator):
 
         # Drydock Validate Site Design
         if self.action == 'validate_site_design':
+            # Initialize variable
+            site_design_validity = 'invalid'
+
+            # Reset 'svc_type' to DryDock instead of DeckHand
+            context['svc_type'] = 'physicalprovisioner'
+
             # Retrieve Endpoint Information
             context['svc_endpoint'] = ucp_service_endpoint(self, context)
 
-            self.drydock_validate_design(context)
+            site_design_validity = self.drydock_validate_design(context)
+
+            return site_design_validity
 
         # Retrieve drydock_client via XCOM so as to perform other tasks
         drydock_client = task_instance.xcom_pull(
             task_ids='create_drydock_client',
-            dag_id=self.sub_dag_name + '.create_drydock_client')
+            dag_id=self.main_dag_name + '.' + self.sub_dag_name)
 
         # Read shipyard.conf
         config = configparser.ConfigParser()
@@ -325,14 +333,14 @@ class DryDockOperator(BaseOperator):
         logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
         # Retrieve revision_id from xcom
-        # Note that in the case of 'deploy_site', the dag_id will be
-        # 'deploy_site.deckhand_get_design_version.deckhand_get_design_version'
-        # for the 'deckhand_get_design_version' task. We need to extract
-        # the xcom value from it in order to get the value of the last
-        # committed revision ID
+        # Note that in the case of 'deploy_site', the dag_id will
+        # be 'deploy_site.deckhand_get_design_version' for the
+        # 'deckhand_get_design_version' task. We need to extract
+        # the xcom value from it in order to get the value of the
+        # last committed revision ID
         committed_revision_id = context['task_instance'].xcom_pull(
             task_ids='deckhand_get_design_version',
-            dag_id=self.main_dag_name + '.deckhand_get_design_version' * 2)
+            dag_id=self.main_dag_name + '.deckhand_get_design_version')
 
         # Form DeckHand Design Reference Path that we will use to retrieve
         # the DryDock YAMLs
@@ -378,13 +386,14 @@ class DryDockOperator(BaseOperator):
         # Convert response to string
         validate_site_design = design_validate_response.text
 
-        # Prints response
+        # Print response
         logging.info("Retrieving DryDock validate site design response...")
-        logging.debug(json.loads(validate_site_design))
+        logging.info(json.loads(validate_site_design))
 
         # Check if site design is valid
         if json.loads(validate_site_design).get('status') == 'Valid':
             logging.info("DryDock Site Design has been successfully validated")
+            return 'valid'
         else:
             raise AirflowException("DryDock Site Design Validation Failed!")
 

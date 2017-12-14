@@ -90,14 +90,14 @@ class DeckhandOperator(BaseOperator):
         # Validate Design using DeckHand
         elif self.action == 'deckhand_validate_site_design':
             # Retrieve revision_id from xcom
-            # Note that in the case of 'deploy_site', the dag_id will be
-            # 'deploy_site.deckhand_get_design_version.deckhand_get_design_version'
-            # for the 'deckhand_get_design_version' task. We need to extract
-            # the xcom value from it in order to get the value of the last
-            # committed revision ID
+            # Note that in the case of 'deploy_site', the dag_id will
+            # be 'deploy_site.deckhand_get_design_version' for the
+            # 'deckhand_get_design_version' task. We need to extract
+            # the xcom value from it in order to get the value of the
+            # last committed revision ID
             context['revision_id'] = task_instance.xcom_pull(
                 task_ids='deckhand_get_design_version',
-                dag_id=self.main_dag_name + '.deckhand_get_design_version' * 2)
+                dag_id=self.main_dag_name + '.deckhand_get_design_version')
 
             logging.info("Revision ID is %d", context['revision_id'])
             self.deckhand_validate_site(context)

@@ -14,14 +14,15 @@
 
 from airflow.models import DAG
 from airflow.operators import DeckhandOperator
-from airflow.operators.subdag_operator import SubDagOperator
 
 
 # Location of shiyard.conf
+# Note that the shipyard.conf file needs to be placed on a volume
+# that can be accessed by the containers
 config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
 
-def get_design_version(parent_dag_name, child_dag_name, args):
+def get_design_deckhand(parent_dag_name, child_dag_name, args):
     '''
     Get Deckhand Design Version
     '''
@@ -29,39 +30,12 @@ def get_design_version(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    # Note that in the event where the 'deploy_site' Action is
-    # triggered from Shipyard, the 'parent_dag_name' variable
-    # gets assigned with 'deploy_site.deckhand_get_design_version'.
-    # This is the name that we want to assign to the subdag so
-    # that we can reference it for xcom. The name of the main
-    # dag will be the front part of that value, i.e. 'deploy_site'.
-    # Hence we will extract the front part and assign it to main_dag.
-    # We will reuse this pattern for other Actions, e.g. update_site,
-    # redeploy_site as well.
-    operator = DeckhandOperator(
-        task_id=child_dag_name,
+    deckhand_design = DeckhandOperator(
+        task_id='deckhand_get_design_version',
         shipyard_conf=config_path,
-        action=child_dag_name,
-        main_dag_name=parent_dag_name[0:parent_dag_name.find('.')],
-        sub_dag_name=parent_dag_name,
-        dag=dag)
-
-    return dag
-
-
-def get_design_deckhand(parent_dag_name, child_dag_name, args):
-    '''
-    Puts into atomic unit
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
-
-    deckhand_design = SubDagOperator(
-        subdag=get_design_version(dag.dag_id,
-                                  child_dag_name,
-                                  args),
-        task_id=child_dag_name,
+        action='deckhand_get_design_version',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
     return dag

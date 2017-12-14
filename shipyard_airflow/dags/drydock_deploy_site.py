@@ -13,92 +13,64 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators import DryDockOperator
 
 
 # Location of shiyard.conf
+# Note that the shipyard.conf file needs to be placed on a volume
+# that can be accessed by the containers
 config_path = '/usr/local/airflow/plugins/shipyard.conf'
-
-# Names used for sub-subdags in the drydock site deployment subdag
-CREATE_DRYDOCK_CLIENT_DAG_NAME = 'create_drydock_client'
-DRYDOCK_VERIFY_SITE_DAG_NAME = 'verify_site'
-DRYDOCK_PREPARE_SITE_DAG_NAME = 'prepare_site'
-DRYDOCK_PREPARE_NODE_DAG_NAME = 'prepare_nodes'
-DRYDOCK_DEPLOY_NODE_DAG_NAME = 'deploy_nodes'
-
-
-def get_drydock_subdag_step(parent_dag_name, child_dag_name, args):
-    '''
-    Execute DryDock Subdag
-    '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
-    # Note that in the event where the 'deploy_site' action is
-    # triggered from Shipyard, the 'parent_dag_name' variable
-    # gets assigned with 'deploy_site.create_drydock_client'.
-    # This is the name that we want to assign to the subdag so
-    # that we can reference it for xcom. The name of the main
-    # dag will be the front part of that value, i.e. 'deploy_site'.
-    # Hence we will extract the front part and assign it to main_dag.
-    # We will reuse this pattern for other Actions, e.g. update_site,
-    # redeploy_site as well.
-    operator = DryDockOperator(
-        task_id=child_dag_name,
-        shipyard_conf=config_path,
-        action=child_dag_name,
-        main_dag_name=parent_dag_name[0:parent_dag_name.find('.')],
-        sub_dag_name=parent_dag_name,
-        dag=dag)
-
-    return dag
 
 
 def deploy_site_drydock(parent_dag_name, child_dag_name, args):
     '''
-    Puts all of the drydock deploy site into atomic unit
+    DryDock Subdag
     '''
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    drydock_client = SubDagOperator(
-        subdag=get_drydock_subdag_step(dag.dag_id,
-                                       CREATE_DRYDOCK_CLIENT_DAG_NAME,
-                                       args),
-        task_id=CREATE_DRYDOCK_CLIENT_DAG_NAME,
+    drydock_client = DryDockOperator(
+        task_id='create_drydock_client',
+        shipyard_conf=config_path,
+        action='create_drydock_client',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
-    drydock_verify_site = SubDagOperator(
-        subdag=get_drydock_subdag_step(dag.dag_id,
-                                       DRYDOCK_VERIFY_SITE_DAG_NAME,
-                                       args),
-        task_id=DRYDOCK_VERIFY_SITE_DAG_NAME,
+    drydock_verify_site = DryDockOperator(
+        task_id='verify_site',
+        shipyard_conf=config_path,
+        action='verify_site',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
-    drydock_prepare_site = SubDagOperator(
-        subdag=get_drydock_subdag_step(dag.dag_id,
-                                       DRYDOCK_PREPARE_SITE_DAG_NAME,
-                                       args),
-        task_id=DRYDOCK_PREPARE_SITE_DAG_NAME,
+    drydock_prepare_site = DryDockOperator(
+        task_id='prepare_site',
+        shipyard_conf=config_path,
+        action='prepare_site',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
-    drydock_prepare_nodes = SubDagOperator(
-        subdag=get_drydock_subdag_step(dag.dag_id,
-                                       DRYDOCK_PREPARE_NODE_DAG_NAME,
-                                       args),
-        task_id=DRYDOCK_PREPARE_NODE_DAG_NAME,
+    drydock_prepare_nodes = DryDockOperator(
+        task_id='prepare_nodes',
+        shipyard_conf=config_path,
+        action='prepare_nodes',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
-    drydock_deploy_nodes = SubDagOperator(
-        subdag=get_drydock_subdag_step(dag.dag_id,
-                                       DRYDOCK_DEPLOY_NODE_DAG_NAME,
-                                       args),
-        task_id=DRYDOCK_DEPLOY_NODE_DAG_NAME,
+    drydock_deploy_nodes = DryDockOperator(
+        task_id='deploy_nodes',
+        shipyard_conf=config_path,
+        action='deploy_nodes',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
         dag=dag)
 
-    # DAG Wiring
+    # Define dependencies
     drydock_verify_site.set_upstream(drydock_client)
     drydock_prepare_site.set_upstream(drydock_verify_site)
     drydock_prepare_nodes.set_upstream(drydock_prepare_site)
