@@ -52,7 +52,7 @@ default_args = {
     'email_on_retry': False,
     'provide_context': True,
     'retries': 0,
-    'retry_delay': timedelta(minutes=1),
+    'retry_delay': timedelta(seconds=30),
 }
 
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
