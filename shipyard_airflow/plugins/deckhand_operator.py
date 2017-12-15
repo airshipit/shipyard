@@ -122,7 +122,7 @@ class DeckhandOperator(BaseOperator):
             query_params = {'tag': 'committed', 'sort': 'id', 'order': 'desc'}
             revisions = yaml.safe_load(requests.get(
                 revision_endpoint, headers=x_auth_token,
-                params=query_params).text)
+                params=query_params, timeout=30).text)
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
@@ -163,7 +163,8 @@ class DeckhandOperator(BaseOperator):
 
         try:
             retrieved_list = yaml.safe_load(
-                requests.get(validation_endpoint, headers=x_auth_token).text)
+                requests.get(validation_endpoint, headers=x_auth_token,
+                             timeout=30).text)
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 

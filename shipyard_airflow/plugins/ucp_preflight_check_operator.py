@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,65 +13,73 @@
 # limitations under the License.
 
 import logging
-import configparser
+import os
+import requests
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
-from urllib.request import urlopen
-from urllib.error import URLError, HTTPError
-from socket import timeout
+
+from service_endpoint import ucp_service_endpoint
 
 
 class UcpHealthCheckOperator(BaseOperator):
     """
     UCP Health Checks
-    :shipyard_conf: Location of shipyard.conf
-    :ucp_node: ucp node to perform health check on
     """
 
     @apply_defaults
     def __init__(self,
                  shipyard_conf,
-                 ucp_node,
                  *args,
                  **kwargs):
 
         super(UcpHealthCheckOperator, self).__init__(*args, **kwargs)
         self.shipyard_conf = shipyard_conf
-        self.ucp_node = ucp_node
 
     def execute(self, context):
-        logging.info("Performing Health Check on %s", self.ucp_node)
 
-        # Read and parse shiyard.conf
-        config = configparser.ConfigParser()
-        config.read(self.shipyard_conf)
+        # Initialize variable
+        # TODO: Include Promenade when its API endpoint is ready
+        ucp_components = [
+            'armada',
+            'deckhand',
+            'physicalprovisioner',
+            'shipyard']
 
-        # Construct Health Check API Endpoint
-        schema = config.get('healthcheck', 'schema')
-        endpoint = config.get('healthcheck', 'endpoint')
-        host = config.get(self.ucp_node, 'host')
-        port = config.get(self.ucp_node, 'port')
+        # Loop through various UCP Components
+        for i in ucp_components:
 
-        url = schema + '://' + host + ':' + port + endpoint
+            # Define context 'svc_type'
+            context['svc_type'] = i
 
-        try:
-            # Set health check timeout to 30 seconds
-            # using nosec since the urls are taken from our own configuration
-            # files only, never external.
-            req = urlopen(url, timeout=30).read().decode('utf-8')  # nosec
-        except (HTTPError, URLError) as error:
-            # Raise Exception for HTTP/URL Error
-            logging.error('Error Encountered: %s', error)
-            raise AirflowException("HTTP/URL Error Encountered")
-        except timeout:
-            # Raise Exception for Timeout
-            logging.error('Health Check Timed Out for %s', self.ucp_node)
-            raise AirflowException("Health Check Timed Out")
-        else:
-            logging.info("%s is alive and healthy", self.ucp_node)
+            # Retrieve Endpoint Information
+            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+            logging.info("%s endpoint is %s", i, context['svc_endpoint'])
+
+            # Construct Health Check Endpoint
+            healthcheck_endpoint = os.path.join(context['svc_endpoint'],
+                                                'health')
+
+            logging.info("%s healthcheck endpoint is %s", i,
+                         healthcheck_endpoint)
+
+            try:
+                logging.info("Performing Health Check on %s", i)
+
+                # Set health check timeout to 30 seconds
+                req = requests.get(healthcheck_endpoint, timeout=30)
+            except requests.exceptions.RequestException as e:
+                raise AirflowException(e)
+
+            # UCP Component will return empty response/body to show that
+            # it is healthy
+            if req.status_code == 204:
+                logging.info("%s is alive and healthy", i)
+            else:
+                logging.error(req.text)
+                raise AirflowException("Invalid Response!")
 
 
 class UcpHealthCheckPlugin(AirflowPlugin):

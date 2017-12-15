@@ -177,22 +177,6 @@ SECTIONS = [
             ),
         ]
     ),
-    ConfigSection(
-        name='healthcheck',
-        title='Healthcheck connection info',
-        options=[
-            cfg.StrOpt(
-                'schema',
-                default='http',
-                help='Schema to perform health check with'
-            ),
-            cfg.StrOpt(
-                'endpoint',
-                default='/api/v1.0/health',
-                help='Health check standard endpoint'
-            ),
-        ]
-    ),
 ]
 
 

@@ -85,18 +85,6 @@
 # Backoff time (in seconds) before checking cluster join (integer value)
 #cluster_join_check_backoff_time = 120
 
-[healthcheck]
-
-#
-# From shipyard_airflow
-#
-
-# Schema to perform health check with (string value)
-#schema = http
-
-# Health check standard endpoint (string value)
-#endpoint = /api/v1.0/health
-
 
 [keystone_authtoken]
 
