@@ -42,43 +42,12 @@ def all_preflight_checks(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     '''
-    Checks that shipyard is in a good state for the purposes of the
-    Undercloud Platform to proceed with processing
+    Check that all UCP components are in good state for the purposes
+    of the Undercloud Platform to proceed with processing
     '''
     shipyard = UcpHealthCheckOperator(
-        task_id='shipyard_preflight_check',
+        task_id='ucp_preflight_check',
         shipyard_conf=config_path,
-        ucp_node='shipyard',
-        dag=dag)
-
-    '''
-    Checks that deckhand is in a good state for the purposes of the
-    Undercloud Platform to proceed with processing
-    '''
-    deckhand = UcpHealthCheckOperator(
-        task_id='deckhand_preflight_check',
-        shipyard_conf=config_path,
-        ucp_node='deckhand',
-        dag=dag)
-
-    '''
-    Checks that drydock is in a good state for the purposes of the
-    Undercloud Platform to proceed with processing
-    '''
-    drydock = UcpHealthCheckOperator(
-        task_id='drydock_preflight_check',
-        shipyard_conf=config_path,
-        ucp_node='drydock',
-        dag=dag)
-
-    '''
-    Checks that armada is in a good state for the purposes of the
-    Undercloud Platform to proceed with processing
-    '''
-    armada = UcpHealthCheckOperator(
-        task_id='armada_preflight_check',
-        shipyard_conf=config_path,
-        ucp_node='armada',
         dag=dag)
 
     return dag

@@ -280,7 +280,7 @@ class ArmadaOperator(BaseOperator):
         # TODO: We will implement the new approach when Armada and DeckHand
         # integration is completed.
         try:
-            armada_manifest = requests.get(design_ref).text
+            armada_manifest = requests.get(design_ref, timeout=30).text
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
