@@ -1,132 +1,144 @@
-## Deployment Guide
+..
+      Copyright 2017 AT&T Intellectual Property.
+      All Rights Reserved.
 
-*Note that Shipyard is still under active development and this guide will evolve along the way*
+      Licensed under the Apache License, Version 2.0 (the "License"); you may
+      not use this file except in compliance with the License. You may obtain
+      a copy of the License at
 
-The current deployment makes use of the [ucp-integration](https://github.com/att-comdev/ucp-integration)
-repository to set up the underlaying Kubernetes infrastructure, Ceph and UCP components. This
-approach sets up an 'All-In-One' UCP environment that allows developers to bring up Shipyard
+          http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+      WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+      License for the specific language governing permissions and limitations
+      under the License.
+
+.. _shipyard_deployment_guide:
+
+Deployment Guide
+================
+
+.. note::
+  Shipyard is still under active development and this guide will evolve along
+  the way
+
+The current deployment makes use of the `ucp-integration`_ repository to set up
+the underlaying Kubernetes infrastructure, Ceph and UCP components. This approach
+sets up an 'All-In-One' UCP environment that allows developers to bring up Shipyard
 and the rest of the UCP components on a single Ubuntu 16.04 Virtual Machine.
 
-*Note that the minimum recommended size of the VM is 4 vCPUs, 16GB of RAM with 64GB disk space*
+.. note::
+  Note that the minimum recommended size of the VM is 4 vCPUs, 16GB of RAM with
+  64GB disk space
 
 
-### Pre-Deployment Preparations
+Pre-Deployment Preparations
+---------------------------
 
-1) Set up `etc/hosts` on a freshly installed Ubuntu 16.04 Virtual Machine
+#. Set up ``etc/hosts`` on a freshly installed Ubuntu 16.04 Virtual Machine with the
+   IP and hostname of the VM
 
-    ```
+   E.g. ``30.30.30.4 node1``
+
+::
     HOST_IFACE=$(ip route | grep "^default" | head -1 | awk '{ print $5 }')
     LOCAL_IP=$(ip addr | awk "/inet/ && /${HOST_IFACE}/{sub(/\/.*$/,\"\",\$2); print \$2}")
     cat << EOF | sudo tee -a /etc/hosts
     ${LOCAL_IP} $(hostname)
     EOF
-    ```
 
-2) Clone the [ucp-integration](https://github.com/att-comdev/ucp-integration) repository. Update
-   the hostname in the `deploy_ucp.sh` script
-
-   ```
-   git clone https://github.com/att-comdev/ucp-integration.git
-   sed -i -e s/node1/$(hostname)/g /home/ubuntu/ucp-integration/manifests/basic_ucp/deploy_ucp.sh
-   ```
+#. Clone the `ucp-integration`_ repository
 
 
-### Production Deployment
+Production Deployment
+---------------------
 
 We will use this approach if we are not making any changes to Shipyard and would like to bring up
 the UCP environment as it is
 
-1) Switch to root user after performing the steps in the *Pre-Deployment Preparations* section.
+#. Switch to root user after performing the steps in the *Pre-Deployment Preparations* section.
 
-   ```
+::
    sudo -i
    cd /home/ubuntu/ucp-integration/manifests/basic_ucp/
-   ```
 
-2) Export the variables that are unique to the environment. For instance, we can do the following
-   to update the environment variables for a VM that is assigned an IP of *30.30.30.4* on interface
-   *ens3* (network *30.30.30.0/24*):
+#. Export the variables that are unique to the environment. For instance, we can do the following
+   to update the environment variables for a VM with hostname **node1** that is assigned an IP of
+   **30.30.30.4** on interface **ens3** (network **30.30.30.0/24**):
 
-   ```
+::
+   export GENESIS_NODE_NAME=node1
    export CEPH_CLUSTER_NET=30.30.30.0/24
    export CEPH_PUBLIC_NET=30.30.30.0/24
    export GENESIS_NODE_IP=30.30.30.4
    export NODE_NET_IFACE=ens3
-   ```
 
-3) Start the UCP deployment
+#. Start the UCP deployment
 
-   ```
+::
    ./deploy_ucp.sh
-   ```
 
 
-### Dev Environment Deployment
+Dev Environment Deployment
+--------------------------
 
 We will use this approach if we want to bring up a dev environment that allows us to test our own
 dags and operators in Airflow. Changes to Shipyard API/CLI will require a rebuild of the Shipyard
 images with the updates. We will need to reference to the custom image in our environment variables
 so that it does not point to the image in the Master branch.
 
-1) Create the following directories on the target host machine:
+1. Create the following directories on the target host machine:
 
-   ```
-   mkdir -p /home/ubuntu/workbench/dags
-   mkdir -p /home/ubuntu/workbench/plugins
-   mkdir -p /home/ubuntu/workbench/logs
-   ```
+::
+   mkdir -p /var/tmp/airflow/dags
+   mkdir -p /var/tmp/airflow/plugins
+   mkdir -p /var/tmp/airflow/logs
 
-2) Copy the [rest_api_plugin](https://github.com/att-comdev/shipyard/blob/master/shipyard_airflow/plugins/rest_api_plugin.py)
-   into the newly created plugins directory, i.e. `/home/ubuntu/workbench/plugins` so that it can
-   be loaded by Airflow during startup.  Note that other custom operators can also be added to the
-   directory as required.
+2. Copy the `rest_api_plugin`_ into the newly created plugins directory, i.e. ``/var/tmp/airflow/plugins``
+   so that it can be loaded by Airflow during startup.  **Note** that other custom operators
+   should be added to the directory as required.
 
-   Note: Custom dags should be added into the newly created dags directory, i.e. `/home/ubuntu/workbench/dags`
+   **Note** that custom dags should be added into the newly created dags directory, i.e. ``/var/tmp/airflow/dags``
 
-3) Update `armada.yaml.sub` to override the settings for Shipyard
+3. Switch to root user after performing Step 1 and 2
 
-   ```
-   sed -i -e 's/prod_environment: true/prod_environment: false/g' /home/ubuntu/ucp-integration/manifests/basic_ucp/armada.yaml.sub
-   ```
-
-4) Switch to root user after performing Step 1 to 3
-
-   ```
+::
    sudo -i
    cd /home/ubuntu/ucp-integration/manifests/basic_ucp/
-   ```
 
-5) Export the variables that are unique to the environment. For instance, we can do the below
-   to update the environment variables for a VM that is assigned an IP of *30.30.30.4* on interface
-   *ens3* (network *30.30.30.0/24*).
+4. Export the variables that are unique to the environment. For instance, we can do the below
+   to update the environment variables for a VM with hostname **node1** that is assigned an IP
+   of **30.30.30.4** on interface **ens3** (network **30.30.30.0/24**):
 
-   Update image references in the environment variables if we want to test a new Shipyard and/or Airflow
-   image, e.g. image v0.1.0 as a result of code changes.
+   Update image references in the environment variables if we want to test a new Shipyard and
+   Airflow image, e.g. image v0.1.0 as a result of code changes.
 
-   ```
+::
+   export SHIPYARD_PROD_DEPLOY=false
+   export GENESIS_NODE_NAME=node1
    export CEPH_CLUSTER_NET=30.30.30.0/24
    export CEPH_PUBLIC_NET=30.30.30.0/24
    export GENESIS_NODE_IP=30.30.30.4
    export NODE_NET_IFACE=ens3
    export SHIPYARD_IMAGE="attcomdev/shipyard:v0.1.0"
    export AIRFLOW_IMAGE="attcomdev/airflow:v0.1.0"
-   ```
 
-6) Start the UCP deployment
+5. Start the UCP deployment
 
-   ```
+::
    ./deploy_ucp.sh
-   ```
 
 
-### Post Deployment
+Post Deployment
+---------------
 
-1) The deployment is fully automated and can take a while to complete (it can take 30 minutes to an
-   hour for a full deployment to complete)
+#. The deployment is fully automated and can take a while to complete (it can take 30 minutes
+   to an hour for a full deployment to complete)
 
-2) The environment should resemble the following after executing the required steps:
+#. The environment should resemble the following after executing the required steps:
 
-   ```
+::
    # sudo kubectl get pods -n ucp
    NAME                                   READY     STATUS    RESTARTS   AGE
    airflow-flower-6cdc6f9cb4-5r62v        1/1       Running   0          3h
@@ -151,11 +163,10 @@ so that it does not point to the image in the Master branch.
    postgresql-0                           1/1       Running   0          4h
    rabbitmq-f68649644-pnw6p               1/1       Running   0          4h
    shipyard-6f4c7765d-n2kx6               1/1       Running   0          3h
-   ```
 
-   To check that all relevant helm charts have been deployed:
+To check that all relevant helm charts have been deployed:
 
-   ```
+::
    # sudo helm ls
    NAME                                    REVISION        UPDATED                         STATUS          CHART                           NAMESPACE
    ucp-armada                              1               Fri Dec  1 10:03:44 2017        DEPLOYED        armada-0.1.0                    ucp
@@ -182,4 +193,7 @@ so that it does not point to the image in the Master branch.
    ucp-ucp-ceph-config                     1               Fri Dec  1 10:02:40 2017        DEPLOYED        ceph-0.1.0                      ucp
    ucp-ucp-mariadb                         1               Fri Dec  1 10:02:43 2017        DEPLOYED        mariadb-0.1.0                   ucp
    ucp-ucp-memcached                       1               Fri Dec  1 10:02:44 2017        DEPLOYED        memcached-0.1.0                 ucp
-   ```
+
+
+.. _ucp-integration: https://github.com/att-comdev/ucp-integration
+.. _rest_api_plugin: https://github.com/att-comdev/shipyard/blob/master/shipyard_airflow/plugins/rest_api_plugin.py
