@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
 # limitations under the License.
 
 import logging
-# Using nosec to prevent Bandit blacklist reporting. Subprocess is used
-# in a controlled way as part of this operator.
-import subprocess  # nosec
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
+from kubernetes import client, config
 
 
 class K8sHealthCheckOperator(BaseOperator):
@@ -36,60 +34,22 @@ class K8sHealthCheckOperator(BaseOperator):
     def execute(self, context):
         logging.info("Running Basic Kubernetes Cluster Health Check:")
 
-        # Location of Token
-        token_path = '/var/run/secrets/kubernetes.io/serviceaccount/token'
+        # Note that we are using 'in_cluster_config'
+        config.load_incluster_config()
+        v1 = client.CoreV1Api()
+        ret = v1.list_pod_for_all_namespaces(watch=False)
 
-        # Read content of token file as string
-        with open(token_path, "r") as token_file:
-            token = token_file.read()
+        # Loop through items to get the status of all pods
+        # Note that the current health check only checks to
+        # ensure that all pods are either in 'Succeeded' or
+        # in 'Running' state. The k8s health checks can be
+        # expanded in future if need be.
+        for i in ret.items:
+            logging.info("%s is in %s state", i.metadata.name,
+                         i.status.phase)
 
-        # Location of CA Certificate
-        ca = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-
-        # The current health checks only check to ensure that all
-        # pods are in 'running' state.  The k8s health checks can
-        # be expanded in future if need be.
-        k8s_command = [
-            'kubectl', '--token', token,
-            '--certificate-authority', ca,
-            'get', 'pods', '--all-namespaces']
-
-        # Execute the Kubernetes Health Check Command
-        k8s_output = subprocess.Popen(  # nosec
-            k8s_command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT)
-
-        # Logs Output
-        logging.info("Output:")
-
-        line = ''
-        for line in iter(k8s_output.stdout.readline, b''):
-            line = line.strip()
-            logging.info(line)
-            # Skip the first line of output
-            if 'STATUS' in str(line, 'utf-8'):
-                continue
-            # Do nothing if pod is in 'Running' state
-            elif str(line, 'utf-8').split()[3] == 'Running':
-                continue
-            # Raise Exceptions if Pod is in state other than
-            # 'Running'
-            else:
-                pod = str(line, 'utf-8').split()[0]
-                pod_state = str(line, 'utf-8').split()[3]
-                logging.error('Pod %s is in %s state', pod, pod_state)
+            if i.status.phase not in ['Succeeded', 'Running']:
                 raise AirflowException("Kubernetes Health Checks Failed!")
-
-        # Wait for child process to terminate
-        # Set and return returncode attribute.
-        k8s_output.wait()
-        logging.info("Command exited with "
-                     "return code {0}".format(k8s_output.returncode))
-
-        # Raise Execptions if Kubernetes Command Fails
-        if k8s_output.returncode:
-            raise AirflowException("Kubernetes Command Failed")
 
 
 class K8sHealthCheckPlugin(AirflowPlugin):
