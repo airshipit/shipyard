@@ -23,7 +23,6 @@ from airflow.operators import UcpHealthCheckOperator
 config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
 
-# TODO: Add Checks for Promenade when the API is ready
 def all_preflight_checks(parent_dag_name, child_dag_name, args):
     '''
     Pre-Flight Checks Subdag
