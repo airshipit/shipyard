@@ -314,12 +314,15 @@ class DryDockOperator(BaseOperator):
                 time.sleep(int(interval))
 
         # Get final task result
-        # NOTE: There is a known bug in Drydock where the task result
-        # for a successfully completed task can either be 'success',
-        # 'partial success' or 'incomplete'. This will be fixed in Drydock
-        # in the near future. Updates will be made to the Drydock Operator
-        # once the bug is fixed.
-        if task_result in ['success', 'partial_success', 'incomplete']:
+        # NOTE: The promenade join script does not have a call-back step
+        # to indicate that the process is completed at the moment. This
+        # will lead to Drydock returning 'partial success' at the end of
+        # the 'deploy_nodes' task as it times out while waiting for the
+        # response from promenade (bootactions will fail as a result). As
+        # such, we are keeping 'partial_success' as a valid task result
+        # for now and will update the Drydock Operator once the promenade
+        # feature is ready for consumption.
+        if task_result in ['success', 'partial_success']:
             logging.info('Task id %s has been successfully completed',
                          self.task_id)
         else:
