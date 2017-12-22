@@ -16,6 +16,8 @@ FROM ubuntu:16.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV container docker
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
 
 RUN set -x && \
     apt-get -qq update && \
@@ -47,15 +49,17 @@ RUN set -x && \
         /usr/share/doc \
         /usr/share/doc-base
 
-# Copy dependency requirements
-COPY ./requirements.txt /tmp/
-RUN pip3 install -r /tmp/requirements.txt
-
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard
 
 # Clone the shipyard repository
-COPY ./ /home/shipyard/shipyard
+COPY . /home/shipyard/shipyard
+
+# Set work directory
+# Install dependency requirements and packages
+WORKDIR /home/shipyard/shipyard
+RUN pip3 install -r requirements.txt
+RUN python3 setup.py install
 
 # Copy entrypoint.sh to /home/shipyard
 COPY entrypoint.sh /home/shipyard/entrypoint.sh
@@ -64,13 +68,13 @@ COPY entrypoint.sh /home/shipyard/entrypoint.sh
 RUN chown -R shipyard: /home/shipyard \
     && chmod +x /home/shipyard/entrypoint.sh
 
+# Set user to shipyard
+USER shipyard
+
 # Expose port 9000 for application
 EXPOSE 9000
-
-# Set work directory
-USER shipyard
-WORKDIR /home/shipyard/shipyard
 
 # Execute entrypoint
 ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
 
+CMD ["server"]
