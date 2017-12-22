@@ -41,10 +41,10 @@ class UcpHealthCheckOperator(BaseOperator):
     def execute(self, context):
 
         # Initialize variable
-        # TODO: Include Promenade when its API endpoint is ready
         ucp_components = [
             'armada',
             'deckhand',
+            'kubernetesprovisioner',
             'physicalprovisioner',
             'shipyard']
 
