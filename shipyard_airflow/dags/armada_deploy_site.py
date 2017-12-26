@@ -47,15 +47,6 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    # Validate Armada YAMLs
-    armada_validate = ArmadaOperator(
-        task_id='armada_validate',
-        shipyard_conf=config_path,
-        action='armada_validate',
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
-
     # Armada Apply
     armada_apply = ArmadaOperator(
         task_id='armada_apply',
@@ -77,8 +68,7 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
 
     # Define dependencies
     armada_status.set_upstream(armada_client)
-    armada_validate.set_upstream(armada_status)
-    armada_apply.set_upstream(armada_validate)
+    armada_apply.set_upstream(armada_status)
     armada_get_releases.set_upstream(armada_apply)
 
     return dag

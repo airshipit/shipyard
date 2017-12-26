@@ -55,7 +55,6 @@ class DeckhandOperator(BaseOperator):
 
     def execute(self, context):
         # Initialize Variables
-        context['svc_type'] = 'deckhand'
         deckhand_design_version = None
 
         # Define task_instance
@@ -73,7 +72,9 @@ class DeckhandOperator(BaseOperator):
         logging.info("DeckHand Operator for action %s", workflow_info['id'])
 
         # Retrieve Endpoint Information
-        context['svc_endpoint'] = ucp_service_endpoint(self, context)
+        svc_type = 'deckhand'
+        context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
         logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
         # Deckhand API Call

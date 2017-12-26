@@ -23,7 +23,7 @@ from service_session import ucp_keystone_session
 
 def shipyard_service_token(func):
     @wraps(func)
-    def keystone_token_get(self, context):
+    def keystone_token_get(self, context, *args):
         """This function retrieves Keystone token for UCP Services
 
         :param context: Information on the current workflow
@@ -71,6 +71,6 @@ def shipyard_service_token(func):
         if not token:
             raise AirflowException("Unable to get Keystone Token!")
         else:
-            return func(self, context)
+            return func(self, context, *args)
 
     return keystone_token_get

@@ -51,15 +51,12 @@ class UcpHealthCheckOperator(BaseOperator):
         # Loop through various UCP Components
         for i in ucp_components:
 
-            # Define context 'svc_type'
-            context['svc_type'] = i
-
             # Retrieve Endpoint Information
-            context['svc_endpoint'] = ucp_service_endpoint(self, context)
-            logging.info("%s endpoint is %s", i, context['svc_endpoint'])
+            service_endpoint = ucp_service_endpoint(self, svc_type=i)
+            logging.info("%s endpoint is %s", i, service_endpoint)
 
             # Construct Health Check Endpoint
-            healthcheck_endpoint = os.path.join(context['svc_endpoint'],
+            healthcheck_endpoint = os.path.join(service_endpoint,
                                                 'health')
 
             logging.info("%s healthcheck endpoint is %s", i,

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from airflow.models import DAG
+from airflow.operators import ArmadaOperator
 from airflow.operators import DeckhandOperator
 from airflow.operators import DryDockOperator
-from airflow.operators import PlaceholderOperator
 
 # Location of shiyard.conf
 # Note that the shipyard.conf file needs to be placed on a volume
@@ -45,10 +45,16 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         action='validate_site_design',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
+        retries=3,
         dag=dag)
 
-    # TODO () use the real operator here
-    armada_validate_docs = PlaceholderOperator(
-        task_id='armada_validate_site_design', dag=dag)
+    armada_validate_docs = ArmadaOperator(
+        task_id='armada_validate_site_design',
+        shipyard_conf=config_path,
+        action='validate_site_design',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
+        retries=3,
+        dag=dag)
 
     return dag

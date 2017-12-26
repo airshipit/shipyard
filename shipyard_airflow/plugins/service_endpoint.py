@@ -20,14 +20,14 @@ from airflow.exceptions import AirflowException
 from service_session import ucp_keystone_session
 
 
-def ucp_service_endpoint(self, context):
+def ucp_service_endpoint(self, svc_type):
 
     # Initialize variables
     retry = 0
     int_endpoint = None
 
     # Retrieve Keystone Session
-    sess = ucp_keystone_session(self, context)
+    sess = ucp_keystone_session(self, svc_type)
 
     # We will allow 1 retry in getting the Keystone Endpoint with a
     # backoff interval of 10 seconds in case there is a temporary
@@ -38,7 +38,7 @@ def ucp_service_endpoint(self, context):
         # We will make use of internal endpoint
         logging.info("Get Keystone Endpoint")
         int_endpoint = sess.get_endpoint(interface='internal',
-                                         service_type=context['svc_type'])
+                                         service_type=svc_type)
 
         # Retry if we fail to get keystone endpoint
         if int_endpoint:

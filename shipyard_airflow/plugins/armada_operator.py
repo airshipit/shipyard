@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import os
 import requests
@@ -58,8 +59,8 @@ class ArmadaOperator(BaseOperator):
 
     def execute(self, context):
         # Initialize Variables
-        context['svc_type'] = 'armada'
         armada_client = None
+        design_ref = None
 
         # Define task_instance
         task_instance = context['task_instance']
@@ -78,13 +79,44 @@ class ArmadaOperator(BaseOperator):
         # Create Armada Client
         if self.action == 'create_armada_client':
             # Retrieve Endpoint Information
-            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+            svc_type = 'armada'
+            context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                           svc_type=svc_type)
             logging.info("Armada endpoint is %s", context['svc_endpoint'])
 
             # Set up Armada Client
             session_client = self.armada_session_client(context)
 
             return session_client
+
+        # Retrieve Deckhand Design Reference
+        design_ref = self.get_deckhand_design_ref(context)
+
+        if design_ref:
+            logging.info("Design YAMLs will be retrieved from %s",
+                         design_ref)
+        else:
+            raise AirflowException("Unable to Retrieve Design Reference!")
+
+        # Validate Site Design
+        if self.action == 'validate_site_design':
+            # Initialize variable
+            site_design_validity = 'invalid'
+
+            # Retrieve Endpoint Information
+            svc_type = 'armada'
+            context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                           svc_type=svc_type)
+
+            site_design_validity = self.armada_validate_site_design(context,
+                                                                    design_ref)
+
+            if site_design_validity == 'valid':
+                logging.info("Site Design has been successfully validated")
+            else:
+                raise AirflowException("Site Design Validation Failed!")
+
+            return site_design_validity
 
         # Retrieve armada_client via XCOM so as to perform other tasks
         armada_client = task_instance.xcom_pull(
@@ -94,21 +126,14 @@ class ArmadaOperator(BaseOperator):
         # Retrieve Tiller Information and assign to context 'query'
         context['query'] = self.get_tiller_info(context)
 
-        # Retrieve Genesis Node IP and assign it to context 'genesis_ip'
-        context['genesis_ip'] = self.get_genesis_node_info(context)
-
         # Armada API Call
         # Armada Status
         if self.action == 'armada_status':
             self.get_armada_status(context, armada_client)
 
-        # Armada Validate
-        elif self.action == 'armada_validate':
-            self.armada_validate(context, armada_client)
-
         # Armada Apply
         elif self.action == 'armada_apply':
-            self.armada_apply(context, armada_client)
+            self.armada_apply(context, armada_client, design_ref)
 
         # Armada Get Releases
         elif self.action == 'armada_get_releases':
@@ -130,9 +155,11 @@ class ArmadaOperator(BaseOperator):
         # Build a ArmadaSession with credentials and target host
         # information.
         logging.info("Build Armada Session")
-        a_session = session.ArmadaSession(armada_url.hostname,
+        a_session = session.ArmadaSession(host=armada_url.hostname,
                                           port=armada_url.port,
-                                          token=context['svc_token'])
+                                          scheme='http',
+                                          token=context['svc_token'],
+                                          marker=None)
 
         # Raise Exception if we are not able to get armada session
         if a_session:
@@ -183,42 +210,21 @@ class ArmadaOperator(BaseOperator):
         else:
             raise AirflowException("Please check Tiller!")
 
-    def armada_validate(self, context, armada_client):
+    def armada_apply(self, context, armada_client, design_ref):
         # Initialize Variables
         armada_manifest = None
-        valid_armada_yaml = {}
-
-        # Retrieve Armada Manifest
-        armada_manifest = self.get_armada_yaml(context)
-
-        # Validate armada yaml file
-        logging.info("Armada Validate")
-        valid_armada_yaml = armada_client.post_validate(armada_manifest)
-
-        # The response will be a dictionary indicating whether the yaml
-        # file is valid or invalid.  We will check the Boolean value in
-        # this case.
-        if valid_armada_yaml['valid']:
-            logging.info("Armada Yaml File is Valid")
-        else:
-            raise AirflowException("Invalid Armada Yaml File!")
-
-    def armada_apply(self, context, armada_client):
-        # Initialize Variables
-        armada_manifest = None
+        armada_ref = design_ref
         armada_post_apply = {}
         override_values = []
         chart_set = []
 
-        # Retrieve Armada Manifest
-        armada_manifest = self.get_armada_yaml(context)
-
         # Execute Armada Apply to install the helm charts in sequence
         logging.info("Armada Apply")
-        armada_post_apply = armada_client.post_apply(armada_manifest,
-                                                     override_values,
-                                                     chart_set,
-                                                     context['query'])
+        armada_post_apply = armada_client.post_apply(manifest=armada_manifest,
+                                                     manifest_ref=armada_ref,
+                                                     values=override_values,
+                                                     set=chart_set,
+                                                     query=context['query'])
 
         # We will expect Armada to return the releases that it is
         # deploying. An empty value for 'install' means that armada
@@ -247,44 +253,82 @@ class ArmadaOperator(BaseOperator):
         else:
             raise AirflowException("Failed to retrieve Armada Releases")
 
-    @get_pod_port_ip('maas-rack')
-    def get_genesis_node_info(self, context, *args):
+    def get_deckhand_design_ref(self, context):
 
-        # Get IP and port information of Pods from context
-        k8s_pods_ip_port = context['pods_ip_port']
+        # Retrieve DeckHand Endpoint Information
+        svc_type = 'deckhand'
+        context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
+        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
-        # The maas-rack pod has the same IP as the genesis node
-        # We will retieve that IP and return the value
-        return k8s_pods_ip_port['maas-rack'].get('ip')
+        # Retrieve revision_id from xcom
+        # Note that in the case of 'deploy_site', the dag_id will
+        # be 'deploy_site.deckhand_get_design_version' for the
+        # 'deckhand_get_design_version' task. We need to extract
+        # the xcom value from it in order to get the value of the
+        # last committed revision ID
+        committed_revision_id = context['task_instance'].xcom_pull(
+            task_ids='deckhand_get_design_version',
+            dag_id=self.main_dag_name + '.deckhand_get_design_version')
 
-    def get_armada_yaml(self, context):
-        # Initialize Variables
-        genesis_node_ip = None
+        # Form Design Reference Path that we will use to retrieve
+        # the Design YAMLs
+        deckhand_path = "deckhand+" + context['svc_endpoint']
+        deckhand_design_ref = os.path.join(deckhand_path,
+                                           "revisions",
+                                           str(committed_revision_id),
+                                           "rendered-documents")
 
-        # At this point in time, testing of the operator is being done by
-        # retrieving the armada.yaml from the nginx container on the Genesis
-        # node and feeding it to Armada as a string. We will assume that the
-        # file name is fixed and will always be 'armada_site.yaml'. This file
-        # will always be under the osh directory. This will change in the near
-        # future when Armada is integrated with DeckHand.
-        genesis_node_ip = context['genesis_ip']
+        return deckhand_design_ref
 
-        # Form Endpoint
-        schema = 'http://'
-        nginx_host_port = genesis_node_ip + ':6880'
-        armada_yaml = 'osh/armada.yaml'
-        design_ref = os.path.join(schema, nginx_host_port, armada_yaml)
+    @shipyard_service_token
+    def armada_validate_site_design(self, context, design_ref):
 
-        logging.info("Armada YAML will be retrieved from %s", design_ref)
+        # Form Validation Endpoint
+        validation_endpoint = os.path.join(context['svc_endpoint'],
+                                           'validatedesign')
 
-        # TODO: We will implement the new approach when Armada and DeckHand
-        # integration is completed.
+        logging.info("Validation Endpoint is %s", validation_endpoint)
+
+        # Define Headers and Payload
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Auth-Token': context['svc_token']
+        }
+
+        payload = {
+            'rel': "design",
+            'href': design_ref,
+            'type': "application/x-yaml"
+        }
+
+        # Requests Armada to validate site design
+        logging.info("Waiting for Armada to validate site design...")
+
         try:
-            armada_manifest = requests.get(design_ref, timeout=30).text
+            design_validate_response = requests.post(validation_endpoint,
+                                                     headers=headers,
+                                                     data=json.dumps(payload))
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
-        return armada_manifest
+        # Convert response to string
+        validate_site_design = design_validate_response.text
+
+        # Print response
+        logging.info("Retrieving Armada validate site design response...")
+
+        try:
+            validate_site_design_dict = json.loads(validate_site_design)
+            logging.info(validate_site_design_dict)
+        except json.JSONDecodeError as e:
+            raise AirflowException(e)
+
+        # Check if site design is valid
+        if validate_site_design_dict.get('status') == 'Success':
+            return 'valid'
+        else:
+            return 'invalid'
 
 
 class ArmadaOperatorPlugin(AirflowPlugin):

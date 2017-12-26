@@ -68,9 +68,6 @@ class DryDockOperator(BaseOperator):
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
-        # Initialize Variables
-        context['svc_type'] = 'physicalprovisioner'
-        genesis_node_ip = None
 
         # Placeholder definition
         # TODO: Need to decide how to pass the required value from Shipyard to
@@ -94,7 +91,9 @@ class DryDockOperator(BaseOperator):
         # DrydockClient
         if self.action == 'create_drydock_client':
             # Retrieve Endpoint Information
-            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+            svc_type = 'physicalprovisioner'
+            context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                           svc_type=svc_type)
             logging.info("DryDock endpoint is %s", context['svc_endpoint'])
 
             # Set up DryDock Client
@@ -116,11 +115,10 @@ class DryDockOperator(BaseOperator):
             # Initialize variable
             site_design_validity = 'invalid'
 
-            # Reset 'svc_type' to DryDock instead of DeckHand
-            context['svc_type'] = 'physicalprovisioner'
-
             # Retrieve Endpoint Information
-            context['svc_endpoint'] = ucp_service_endpoint(self, context)
+            svc_type = 'physicalprovisioner'
+            context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                           svc_type=svc_type)
 
             site_design_validity = self.drydock_validate_design(context)
 
@@ -372,8 +370,9 @@ class DryDockOperator(BaseOperator):
     def get_deckhand_design_ref(self, context):
 
         # Retrieve DeckHand Endpoint Information
-        context['svc_type'] = 'deckhand'
-        context['svc_endpoint'] = ucp_service_endpoint(self, context)
+        svc_type = 'deckhand'
+        context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
         logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
 
         # Retrieve revision_id from xcom
