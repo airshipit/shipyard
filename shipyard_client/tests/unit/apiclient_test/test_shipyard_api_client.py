@@ -58,8 +58,7 @@ def get_api_client():
     context = ShipyardClientContext(
         debug=True,
         keystone_auth=keystone_auth,
-        context_marker='88888888-4444-4444-4444-121212121212'
-    )
+        context_marker='88888888-4444-4444-4444-121212121212')
     return ShipyardClient(context)
 
 
@@ -87,6 +86,16 @@ def test_get_config_docs(*args):
     assert result['url'] == '{}/configdocs/ABC'.format(
         shipyard_client.get_endpoint())
     assert params['version'] == version
+
+
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(BaseClient, 'get_endpoint', replace_get_endpoint)
+def test_get_configdocs_status(*args):
+    shipyard_client = get_api_client()
+    result = shipyard_client.get_configdocs_status()
+    assert result['url'] == '{}/configdocs'.format(
+        shipyard_client.get_endpoint())
 
 
 @mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
@@ -121,9 +130,7 @@ def test_commit_configs(*args):
 def test_get_actions(*args):
     shipyard_client = get_api_client()
     result = shipyard_client.get_actions()
-    assert result['url'] == '{}/actions'.format(
-        shipyard_client.get_endpoint()
-    )
+    assert result['url'] == '{}/actions'.format(shipyard_client.get_endpoint())
 
 
 @mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
@@ -135,9 +142,7 @@ def test_post_actions(*args):
     parameters = {'hello': 'world'}
     result = shipyard_client.post_actions(name, parameters)
     data = json.loads(result['data'])
-    assert result['url'] == '{}/actions'.format(
-        shipyard_client.get_endpoint()
-    )
+    assert result['url'] == '{}/actions'.format(shipyard_client.get_endpoint())
     assert data['name'] == name
     assert data['parameters']['hello'] == 'world'
 

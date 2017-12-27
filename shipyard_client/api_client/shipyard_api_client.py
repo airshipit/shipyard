@@ -25,6 +25,7 @@ class ApiPaths(enum.Enum):
     includes api/v1.0, so it is not repeated here.
     """
     _BASE_URL = '{}/'
+    GET_CONFIGDOCS = _BASE_URL + 'configdocs'
     POST_GET_CONFIG = _BASE_URL + 'configdocs/{}'
     GET_RENDERED = _BASE_URL + 'renderedconfigdocs'
     COMMIT_CONFIG = _BASE_URL + 'commitconfigdocs'
@@ -78,6 +79,14 @@ class ShipyardClient(BaseClient):
             self.get_endpoint(),
             collection_id)
         return self.get_resp(url, query_params)
+
+    def get_configdocs_status(self):
+        """
+        Get the status of the collection of documents from shipyard
+        :returns: Response object
+        """
+        url = ApiPaths.GET_CONFIGDOCS.value.format(self.get_endpoint())
+        return self.get_resp(url)
 
     def get_rendereddocs(self, version='buffer'):
         """
