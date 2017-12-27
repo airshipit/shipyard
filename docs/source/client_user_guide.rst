@@ -51,9 +51,9 @@ will demonstrate the flow of an invocation of the Shipyard CLI.
 
 As noted in CLI documentation, Shipyard handles authentication by leveraging
 OpenStack's Keystone_ identity service. The CLI provides command line options
-to specify credentials, or extracts them from the envrionment. For the example
+to specify credentials, or extracts them from the environment. For the example
 started above, since the credentials are not specified, they would need to be
-set in the envrionment prior to invocation. The credentials, regardless of
+set in the environment prior to invocation. The credentials, regardless of
 source, are passed from the CLI software to the API Client software.
 
 ``Step 2: API Client secures an authentication token``::
@@ -62,7 +62,7 @@ source, are passed from the CLI software to the API Client software.
                            /
     (Auth Token) <---------
 
-Shpipyard API Client calls Keystone to acquire an authentication token.
+Shipyard API Client calls Keystone to acquire an authentication token.
 
 ``Step 3: API Client discovers Shipyard``::
 
@@ -177,7 +177,7 @@ Shipyard serves as the entrypoint for a deployment of the Undercloud Platform
 (UCP). One can imagine the following activities representing part of the
 lifecycle of a group of servers that the UCP would serve as the control plane:
 
-Defintion
+Definition
   A group of servers making up a ``site`` has been identified. Designs covering
   the hardware, network, and software are assembled.
 
@@ -221,7 +221,7 @@ bucket in a revision.
 
 .. note::
   Alternatively, the command could have loaded a single file using
-  --filename=<file>.yaml insetad of the --directory option
+  --filename=<file>.yaml instead of the --directory option
 
 Following the creation of a configdocs collection in the Shipyard buffer, the
 configdocs must be committed before Shipyard will use those documents as part
