@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import mock
+from mock import patch
+import pytest
 
 import responses
 
 from shipyard_client.api_client.base_client import BaseClient
+from shipyard_client.cli import cli_format_common
 from shipyard_client.cli.get.actions import GetActions
 from shipyard_client.cli.get.actions import GetConfigdocs
+from shipyard_client.cli.get.actions import GetConfigdocsStatus
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
 from shipyard_client.cli.get.actions import GetWorkflows
 from shipyard_client.tests.unit.cli import stubs
@@ -64,10 +68,11 @@ GET_ACTIONS_API_RESP = """
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_actions(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/actions',
-                  body=GET_ACTIONS_API_RESP,
-                  status=200)
+    responses.add(
+        responses.GET,
+        'http://shiptest/actions',
+        body=GET_ACTIONS_API_RESP,
+        status=200)
     response = GetActions(stubs.StubCliContext()).invoke_and_return_resp()
     assert 'deploy_site' in response
     assert 'action/01BTP9T2WCE1PAJR2DWYXG805V' in response
@@ -78,10 +83,8 @@ def test_get_actions(*args):
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_actions_empty(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/actions',
-                  body="[]",
-                  status=200)
+    responses.add(
+        responses.GET, 'http://shiptest/actions', body="[]", status=200)
     response = GetActions(stubs.StubCliContext()).invoke_and_return_resp()
     assert 'None' in response
     assert 'Lifecycle' in response
@@ -100,13 +103,14 @@ yaml2: yaml2
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_configdocs(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/configdocs/design?version=buffer',
-                  body=GET_CONFIGDOCS_API_RESP,
-                  status=200)
-    response = GetConfigdocs(stubs.StubCliContext(),
-                             collection='design',
-                             version='buffer').invoke_and_return_resp()
+    responses.add(
+        responses.GET,
+        'http://shiptest/configdocs/design?version=buffer',
+        body=GET_CONFIGDOCS_API_RESP,
+        status=200)
+    response = GetConfigdocs(
+        stubs.StubCliContext(), collection='design',
+        version='buffer').invoke_and_return_resp()
     assert response == GET_CONFIGDOCS_API_RESP
 
 
@@ -114,21 +118,80 @@ def test_get_configdocs(*args):
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_configdocs_not_found(*args):
-    api_resp = stubs.gen_err_resp(message='Not Found',
-                                  sub_error_count=0,
-                                  sub_info_count=0,
-                                  reason='It does not exist',
-                                  code=404)
+    api_resp = stubs.gen_err_resp(
+        message='Not Found',
+        sub_error_count=0,
+        sub_info_count=0,
+        reason='It does not exist',
+        code=404)
 
-    responses.add(responses.GET,
-                  'http://shiptest/configdocs/design?version=buffer',
-                  body=api_resp,
-                  status=404)
-    response = GetConfigdocs(stubs.StubCliContext(),
-                             collection='design',
-                             version='buffer').invoke_and_return_resp()
+    responses.add(
+        responses.GET,
+        'http://shiptest/configdocs/design?version=buffer',
+        body=api_resp,
+        status=404)
+    response = GetConfigdocs(
+        stubs.StubCliContext(), collection='design',
+        version='buffer').invoke_and_return_resp()
     assert 'Error: Not Found' in response
     assert 'Reason: It does not exist' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+@pytest.mark.parametrize("test_input, expected", [("""
+[
+     {
+        "collection_name":"Collection_1",
+         "committed_status": "present",
+         "buffer_status": "unmodified"
+     },
+     {
+        "collection_name":"Collection_2",
+         "committed_status": "present",
+         "buffer_status": "modified"
+     },
+     {
+        "collection_name":"Collection_3",
+         "committed_status": "not present",
+         "buffer_status": "created"
+     },
+     {
+        "collection_name":"Collection_A",
+         "committed_status": "present",
+         "buffer_status": "deleted"
+     }
+]
+""", [{
+    "collection_name": "Collection_1",
+    "committed_status": "present",
+    "buffer_status": "unmodified"
+}, {
+    "collection_name": "Collection_2",
+    "committed_status": "present",
+    "buffer_status": "modified"
+}, {
+    "collection_name": "Collection_3",
+    "committed_status": "not present",
+    "buffer_status": "created"
+}, {
+    "collection_name": "Collection_A",
+    "committed_status": "present",
+    "buffer_status": "deleted"
+}])])
+def test_get_configdocs_status(test_input, expected, *args):
+    responses.add(
+        responses.GET,
+        'http://shiptest/configdocs',
+        body=test_input,
+        status=200)
+
+    with patch.object(cli_format_common,
+                      'gen_collection_table') as mock_method:
+        response = GetConfigdocsStatus(
+            stubs.StubCliContext()).invoke_and_return_resp()
+    mock_method.assert_called_once_with(expected)
 
 
 GET_RENDEREDCONFIGDOCS_API_RESP = """
@@ -144,13 +207,13 @@ yaml2: yaml2
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_renderedconfigdocs(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/renderedconfigdocs?version=buffer',
-                  body=GET_RENDEREDCONFIGDOCS_API_RESP,
-                  status=200)
+    responses.add(
+        responses.GET,
+        'http://shiptest/renderedconfigdocs?version=buffer',
+        body=GET_RENDEREDCONFIGDOCS_API_RESP,
+        status=200)
     response = GetRenderedConfigdocs(
-        stubs.StubCliContext(),
-        version='buffer').invoke_and_return_resp()
+        stubs.StubCliContext(), version='buffer').invoke_and_return_resp()
     assert response == GET_RENDEREDCONFIGDOCS_API_RESP
 
 
@@ -158,18 +221,20 @@ def test_get_renderedconfigdocs(*args):
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_renderedconfigdocs_not_found(*args):
-    api_resp = stubs.gen_err_resp(message='Not Found',
-                                  sub_error_count=0,
-                                  sub_info_count=0,
-                                  reason='It does not exist',
-                                  code=404)
+    api_resp = stubs.gen_err_resp(
+        message='Not Found',
+        sub_error_count=0,
+        sub_info_count=0,
+        reason='It does not exist',
+        code=404)
 
-    responses.add(responses.GET,
-                  'http://shiptest/renderedconfigdocs?version=buffer',
-                  body=api_resp,
-                  status=404)
-    response = GetRenderedConfigdocs(stubs.StubCliContext(),
-                                     version='buffer').invoke_and_return_resp()
+    responses.add(
+        responses.GET,
+        'http://shiptest/renderedconfigdocs?version=buffer',
+        body=api_resp,
+        status=404)
+    response = GetRenderedConfigdocs(
+        stubs.StubCliContext(), version='buffer').invoke_and_return_resp()
     assert 'Error: Not Found' in response
     assert 'Reason: It does not exist' in response
 
@@ -204,10 +269,11 @@ GET_WORKFLOWS_API_RESP = """
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_workflows(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/workflows',
-                  body=GET_WORKFLOWS_API_RESP,
-                  status=200)
+    responses.add(
+        responses.GET,
+        'http://shiptest/workflows',
+        body=GET_WORKFLOWS_API_RESP,
+        status=200)
     response = GetWorkflows(stubs.StubCliContext()).invoke_and_return_resp()
     assert 'deploy_site__2017-10-09T21:19:03.000000' in response
     assert 'deploy_site__2017-10-09T21:18:56.000000' in response
@@ -219,10 +285,8 @@ def test_get_workflows(*args):
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_get_workflows_empty(*args):
-    responses.add(responses.GET,
-                  'http://shiptest/workflows',
-                  body="[]",
-                  status=200)
+    responses.add(
+        responses.GET, 'http://shiptest/workflows', body="[]", status=200)
     response = GetWorkflows(stubs.StubCliContext()).invoke_and_return_resp()
     assert 'None' in response
     assert 'State' in response

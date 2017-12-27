@@ -18,6 +18,7 @@ import click
 
 from shipyard_client.cli.get.actions import GetActions
 from shipyard_client.cli.get.actions import GetConfigdocs
+from shipyard_client.cli.get.actions import GetConfigdocsStatus
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
 from shipyard_client.cli.get.actions import GetWorkflows
 
@@ -64,7 +65,7 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
 
 @get.command(
     name='configdocs', help=DESC_CONFIGDOCS, short_help=SHORT_DESC_CONFIGDOCS)
-@click.argument('collection')
+@click.argument('collection', nargs=-1, required=False)
 @click.option(
     '--committed',
     '-c',
@@ -80,20 +81,22 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
     'collection, this will return an empty response (default)')
 @click.pass_context
 def get_configdocs(ctx, collection, buffer, committed):
+    if collection:
+        if buffer and committed:
+            ctx.fail(
+                'You must choose whether to retrive the committed OR from the '
+                'Shipyard Buffer with --committed or --buffer. ')
 
-    if buffer and committed:
-        ctx.fail(
-            'You must choose whether to retrive the committed OR from the '
-            'Shipyard Buffer with --committed or --buffer. ')
+        if committed:
+            version = 'committed'
 
-    if (not buffer and not committed) or buffer:
-        version = 'buffer'
+        else:
+            version = 'buffer'
 
-    if committed:
-        version = 'committed'
-
-    click.echo(
-        GetConfigdocs(ctx, collection, version).invoke_and_return_resp())
+        click.echo(
+            GetConfigdocs(ctx, collection, version).invoke_and_return_resp())
+    else:
+        click.echo(GetConfigdocsStatus(ctx).invoke_and_return_resp())
 
 
 DESC_RENDEREDCONFIGDOCS = """
@@ -157,9 +160,7 @@ SHORT_DESC_WORKFLOWS = "Lists the workflows from airflow."
 
 
 @get.command(
-    name='workflows',
-    help=DESC_WORKFLOWS,
-    short_help=SHORT_DESC_WORKFLOWS)
+    name='workflows', help=DESC_WORKFLOWS, short_help=SHORT_DESC_WORKFLOWS)
 @click.option(
     '--since',
     help=('A boundary in the past within which to retrieve results.'

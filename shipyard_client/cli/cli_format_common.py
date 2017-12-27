@@ -24,16 +24,14 @@ def gen_action_steps(step_list, action_id):
     Returns a string representation of the table.
     """
     # Generate the steps table.
-    steps = format_utils.table_factory(
-        field_names=['Steps', 'Index', 'State']
-    )
+    steps = format_utils.table_factory(field_names=['Steps', 'Index', 'State'])
     if step_list:
         for step in step_list:
-            steps.add_row(
-                ['step/{}/{}'.format(action_id, step.get('id')),
-                 step.get('index'),
-                 step.get('state')]
-            )
+            steps.add_row([
+                'step/{}/{}'.format(action_id, step.get('id')),
+                step.get('index'),
+                step.get('state')
+            ])
     else:
         steps.add_row(['None', '', ''])
 
@@ -47,13 +45,13 @@ def gen_action_commands(command_list):
     'datetime'.
     """
     cmds = format_utils.table_factory(
-        field_names=['Commands', 'User', 'Datetime']
-    )
+        field_names=['Commands', 'User', 'Datetime'])
     if command_list:
         for cmd in command_list:
             cmds.add_row(
-                [cmd.get('command'), cmd.get('user'), cmd.get('datetime')]
-            )
+                [cmd.get('command'),
+                 cmd.get('user'),
+                 cmd.get('datetime')])
     else:
         cmds.add_row(['None', '', ''])
 
@@ -70,10 +68,8 @@ def gen_action_validations(validation_list):
         validations = []
         for val in validation_list:
             validations.append('{} : validation/{}/{}\n'.format(
-                val.get('validation_name'),
-                val.get('action_id'),
-                val.get('id')
-            ))
+                val.get('validation_name'), val.get('action_id'), val.get(
+                    'id')))
             validations.append(val.get('details'))
             validations.append('\n\n')
         return 'Validations: {}'.format('\n'.join(validations))
@@ -107,10 +103,8 @@ def gen_action_step_details(step_dict, action_id):
     """
     details = format_utils.table_factory()
     details.add_row(['Name:', step_dict.get('task_id')])
-    details.add_row(['Task ID:', 'step/{}/{}'.format(
-        action_id,
-        step_dict.get('task_id')
-    )])
+    details.add_row(
+        ['Task ID:', 'step/{}/{}'.format(action_id, step_dict.get('task_id'))])
     details.add_row(['Index:', step_dict.get('index')])
     details.add_row(['State:', step_dict.get('state')])
     details.add_row(['Start Date:', step_dict.get('start_date')])
@@ -128,19 +122,39 @@ def gen_action_table(action_list):
     'action_lifecycle'
     """
     actions = format_utils.table_factory(
-        field_names=['Name', 'Action', 'Lifecycle']
-    )
+        field_names=['Name', 'Action', 'Lifecycle'])
     if action_list:
         for action in action_list:
-            actions.add_row(
-                [action.get('name'),
-                 'action/{}'.format(action.get('id')),
-                 action.get('action_lifecycle')]
-            )
+            actions.add_row([
+                action.get('name'), 'action/{}'.format(action.get('id')),
+                action.get('action_lifecycle')
+            ])
     else:
         actions.add_row(['None', '', ''])
 
     return format_utils.table_get_string(actions)
+
+
+def gen_collection_table(collection_list):
+    """Generates a list of collections and their status
+
+    Assumes collection_list is a list of dictionares with 'collection_name',
+    'committed_status', and 'buffer_status'
+    """
+    collections = format_utils.table_factory(
+        field_names=['Collection', 'Committed', 'Buffer'])
+
+    if collection_list:
+        for collection in collection_list:
+            collections.add_row([
+                collection.get('collection_name'),
+                collection.get('committed_status'),
+                collection.get('buffer_status')
+            ])
+    else:
+        collections.add_row(['None', '', ''])
+
+    return format_utils.table_get_string(collections)
 
 
 def gen_workflow_table(workflow_list):
@@ -149,13 +163,12 @@ def gen_workflow_table(workflow_list):
     Assumes workflow_list is a list of dictionaries with 'workflow_id' and
     'state'
     """
-    workflows = format_utils.table_factory(
-        field_names=['Workflows', 'State']
-    )
+    workflows = format_utils.table_factory(field_names=['Workflows', 'State'])
     if workflow_list:
         for workflow in workflow_list:
             workflows.add_row(
-                [workflow.get('workflow_id'), workflow.get('state')])
+                [workflow.get('workflow_id'),
+                 workflow.get('state')])
     else:
         workflows.add_row(['None', ''])
 
@@ -177,8 +190,9 @@ def gen_workflow_details(workflow_dict):
     details.add_row(['Execution Date:', workflow_dict.get('execution_date')])
     details.add_row(['Start Date:', workflow_dict.get('start_date')])
     details.add_row(['End Date:', workflow_dict.get('end_date')])
-    details.add_row(['External Trigger:',
-                     workflow_dict.get('external_trigger')])
+    details.add_row(
+        ['External Trigger:',
+         workflow_dict.get('external_trigger')])
     return format_utils.table_get_string(details)
 
 
@@ -187,9 +201,7 @@ def gen_workflow_steps(step_list):
 
     Assumes step_list is a list of dictionaries with 'task_id' and 'state'
     """
-    steps = format_utils.table_factory(
-        field_names=['Steps', 'State']
-    )
+    steps = format_utils.table_factory(field_names=['Steps', 'State'])
     if step_list:
         for step in step_list:
             steps.add_row([step.get('task_id'), step.get('state')])

@@ -16,11 +16,8 @@ from click.testing import CliRunner
 from mock import patch, ANY
 
 from shipyard_client.cli.get.actions import (
-    GetActions,
-    GetConfigdocs,
-    GetRenderedConfigdocs,
-    GetWorkflows
-)
+    GetActions, GetConfigdocs, GetConfigdocsStatus, GetRenderedConfigdocs,
+    GetWorkflows)
 from shipyard_client.cli.commands import shipyard
 
 auth_vars = ('--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test '
@@ -53,14 +50,23 @@ def test_get_actions_negative(*args):
     assert 'Error' in results.output
 
 
-def test_get_configdocs(*args):
+def test_get_configdocs_with_passing_collection(*args):
     """test get_configdocs"""
 
     collection = 'design'
     runner = CliRunner()
+    # verify GetConfigdocs is called when a collection is entered
     with patch.object(GetConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'configdocs', collection])
-    mock_method.assert_called_once_with(ANY, collection, 'buffer')
+    mock_method.assert_called_once_with(ANY, (collection, ), 'buffer')
+
+
+def test_get_configdocs_without_passing_collection(*args):
+    # verify GetConfigdocsStatus is called when no arguments are entered
+    runner = CliRunner()
+    with patch.object(GetConfigdocsStatus, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'configdocs'])
+    mock_method.assert_called_once_with(ANY)
 
 
 def test_get_configdocs_negative(*args):
@@ -79,7 +85,6 @@ def test_get_configdocs_negative(*args):
 
 def test_get_renderedconfigdocs(*args):
     """test get_rendereddocs"""
-
     runner = CliRunner()
     with patch.object(GetRenderedConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'renderedconfigdocs'])
@@ -119,6 +124,6 @@ def test_get_workflows_negative(*args):
 
     invalid_arg = 'invalid_date'
     runner = CliRunner()
-    results = runner.invoke(
-        shipyard, [auth_vars, 'get', 'workflows', invalid_arg])
+    results = runner.invoke(shipyard,
+                            [auth_vars, 'get', 'workflows', invalid_arg])
     assert 'Error' in results.output
