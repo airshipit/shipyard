@@ -17,6 +17,10 @@ limitations under the License.
 {{- if .Values.manifests.job_shipyard_db_init }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.shipyard_db_init }}
+{{- $mounts_shipyard_db_init := .Values.pod.mounts.shipyard_db_init.shipyard_db_init }}
+{{- $mounts_shipyard_db_init_init := .Values.pod.mounts.shipyard_db_init.init_container }}
+{{- $serviceAccountName := "shipyard-db-init" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -28,11 +32,12 @@ spec:
       labels:
 {{ tuple $envAll "shipyard" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
       initContainers:
-{{ tuple $envAll $dependencies "[]" | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll $dependencies list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: shipyard-db-init
           image: {{ .Values.images.tags.shipyard_db_init | quote }}
@@ -69,6 +74,7 @@ spec:
               mountPath: /etc/shipyard/shipyard.conf
               subPath: shipyard.conf
               readOnly: true
+{{ if $mounts_shipyard_db_init.volumeMounts }}{{ toYaml $mounts_shipyard_db_init.volumeMounts | indent 10 }}{{ end }}
       volumes:
         - name: etc-shipyard
           emptyDir: {}
@@ -80,4 +86,5 @@ spec:
           configMap:
             name: shipyard-bin
             defaultMode: 0555
+{{ if $mounts_shipyard_db_init.volumes }}{{ toYaml $mounts_shipyard_db_init.volumes | indent 6 }}{{ end }}
 {{- end }}

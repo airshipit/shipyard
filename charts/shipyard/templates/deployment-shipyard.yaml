@@ -17,6 +17,8 @@
 {{- $dependencies := .Values.dependencies.shipyard }}
 {{- $mounts_shipyard := .Values.pod.mounts.shipyard.shipyard }}
 {{- $mounts_shipyard_init := .Values.pod.mounts.shipyard.init_container }}
+{{- $serviceAccountName := "shipyard" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -33,6 +35,7 @@ spec:
         configmap-bin-hash: {{ tuple "configmap-shipyard-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-shipyard-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
       terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.shipyard.timeout | default "30" }}
