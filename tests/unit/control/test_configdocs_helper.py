@@ -21,88 +21,89 @@ from .fake_response import FakeResponse
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.configdocs.configdocs_helper import (
-    BufferMode,
-    ConfigdocsHelper
-)
+    BufferMode, ConfigdocsHelper)
 from shipyard_airflow.control.configdocs.deckhand_client import (
-    DeckhandClient,
-    DeckhandPaths,
-    DeckhandResponseError,
-    NoRevisionsExistError
-)
+    DeckhandClient, DeckhandPaths, DeckhandResponseError,
+    NoRevisionsExistError)
 from shipyard_airflow.errors import ApiError, AppError
 
 CTX = ShipyardRequestContext()
 
 REV_BUFFER_DICT = {
-    'committed': {'id': 3,
-                  'url': 'url3',
-                  'createdAt': '2017-07-14T21:23Z',
-                  'buckets': ['mop', 'slop'],
-                  'tags': ['committed'],
-                  'validationPolicies': {}},
-    'buffer': {'id': 5,
-               'url': 'url5',
-               'createdAt': '2017-07-16T21:23Z',
-               'buckets': ['mop', 'chum'],
-               'tags': ['deckhand_sez_hi'],
-               'validationPolicies': {}},
-    'latest': {'id': 5,
-               'url': 'url5',
-               'createdAt': '2017-07-16T21:23Z',
-               'buckets': ['mop', 'chum'],
-               'tags': ['deckhand_sez_hi'],
-               'validationPolicies': {}},
+    'committed': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop', 'slop'],
+        'tags': ['committed'],
+        'validationPolicies': {}
+    },
+    'buffer': {
+        'id': 5,
+        'url': 'url5',
+        'createdAt': '2017-07-16T21:23Z',
+        'buckets': ['mop', 'chum'],
+        'tags': ['deckhand_sez_hi'],
+        'validationPolicies': {}
+    },
+    'latest': {
+        'id': 5,
+        'url': 'url5',
+        'createdAt': '2017-07-16T21:23Z',
+        'buckets': ['mop', 'chum'],
+        'tags': ['deckhand_sez_hi'],
+        'validationPolicies': {}
+    },
     'revision_count': 5
 }
 
-DIFF_BUFFER_DICT = {
-    'mop': 'unmodified',
-    'chum': 'created',
-    'slop': 'deleted'
-}
+DIFF_BUFFER_DICT = {'mop': 'unmodified', 'chum': 'created', 'slop': 'deleted'}
 
 REV_BUFF_EMPTY_DICT = {
-    'committed': {'id': 3,
-                  'url': 'url3',
-                  'createdAt': '2017-07-14T21:23Z',
-                  'buckets': ['mop'],
-                  'tags': ['committed'],
-                  'validationPolicies': {}},
+    'committed': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': ['committed'],
+        'validationPolicies': {}
+    },
     'buffer': None,
-    'latest': {'id': 3,
-               'url': 'url3',
-               'createdAt': '2017-07-14T21:23Z',
-               'buckets': ['mop'],
-               'tags': ['committed'],
-               'validationPolicies': {}},
+    'latest': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': ['committed'],
+        'validationPolicies': {}
+    },
     'revision_count': 3
 }
 
-DIFF_BUFF_EMPTY_DICT = {
-    'mop': 'unmodified'
-}
+DIFF_BUFF_EMPTY_DICT = {'mop': 'unmodified'}
 
 REV_NO_COMMIT_DICT = {
     'committed': None,
-    'buffer': {'id': 3,
-               'url': 'url3',
-               'createdAt': '2017-07-14T21:23Z',
-               'buckets': ['mop'],
-               'tags': [],
-               'validationPolicies': {}},
-    'latest': {'id': 3,
-               'url': 'url3',
-               'createdAt': '2017-07-14T21:23Z',
-               'buckets': ['mop'],
-               'tags': [],
-               'validationPolicies': {}},
+    'buffer': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': [],
+        'validationPolicies': {}
+    },
+    'latest': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': [],
+        'validationPolicies': {}
+    },
     'revision_count': 3
 }
 
-DIFF_NO_COMMIT_DICT = {
-    'mop': 'created'
-}
+DIFF_NO_COMMIT_DICT = {'mop': 'created'}
 
 REV_EMPTY_DICT = {
     'committed': None,
@@ -114,30 +115,34 @@ REV_EMPTY_DICT = {
 DIFF_EMPTY_DICT = {}
 
 REV_COMMIT_AND_BUFFER_DICT = {
-    'committed': {'id': 1,
-                  'url': 'url3',
-                  'createdAt': '2017-07-14T21:23Z',
-                  'buckets': ['mop'],
-                  'tags': ['committed'],
-                  'validationPolicies': {}},
-    'buffer': {'id': 3,
-               'url': 'url3',
-               'createdAt': '2017-07-14T21:23Z',
-               'buckets': ['mop'],
-               'tags': [],
-               'validationPolicies': {}},
-    'latest': {'id': 3,
-               'url': 'url3',
-               'createdAt': '2017-07-14T21:23Z',
-               'buckets': ['mop'],
-               'tags': [],
-               'validationPolicies': {}},
+    'committed': {
+        'id': 1,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': ['committed'],
+        'validationPolicies': {}
+    },
+    'buffer': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': [],
+        'validationPolicies': {}
+    },
+    'latest': {
+        'id': 3,
+        'url': 'url3',
+        'createdAt': '2017-07-14T21:23Z',
+        'buckets': ['mop'],
+        'tags': [],
+        'validationPolicies': {}
+    },
     'revision_count': 3
 }
 
-DIFF_COMMIT_AND_BUFFER_DICT = {
-    'mop': 'modified'
-}
+DIFF_COMMIT_AND_BUFFER_DICT = {'mop': 'modified'}
 
 
 def test_construct_configdocs_helper():
@@ -154,33 +159,22 @@ def test_get_buffer_mode():
     ensures that strings passed to get_buffer_mode are properly handled
     """
     # None cases
+    assert ConfigdocsHelper.get_buffer_mode('') == BufferMode.REJECTONCONTENTS
     assert ConfigdocsHelper.get_buffer_mode(
-        ''
-    ) == BufferMode.REJECTONCONTENTS
-    assert ConfigdocsHelper.get_buffer_mode(
-        None
-    ) == BufferMode.REJECTONCONTENTS
+        None) == BufferMode.REJECTONCONTENTS
 
     # valid cases
     assert ConfigdocsHelper.get_buffer_mode(
-        'rejectoncontents'
-    ) == BufferMode.REJECTONCONTENTS
-    assert ConfigdocsHelper.get_buffer_mode(
-        'append'
-    ) == BufferMode.APPEND
-    assert ConfigdocsHelper.get_buffer_mode(
-        'replace'
-    ) == BufferMode.REPLACE
+        'rejectoncontents') == BufferMode.REJECTONCONTENTS
+    assert ConfigdocsHelper.get_buffer_mode('append') == BufferMode.APPEND
+    assert ConfigdocsHelper.get_buffer_mode('replace') == BufferMode.REPLACE
 
     # case insensitive
     assert ConfigdocsHelper.get_buffer_mode(
-        'ReJEcTOnConTenTs'
-    ) == BufferMode.REJECTONCONTENTS
+        'ReJEcTOnConTenTs') == BufferMode.REJECTONCONTENTS
 
     # bad value
-    assert ConfigdocsHelper.get_buffer_mode(
-        'hippopotomus'
-    ) is None
+    assert ConfigdocsHelper.get_buffer_mode('hippopotomus') is None
 
 
 def test_is_buffer_emtpy():
@@ -208,8 +202,7 @@ def test_is_collection_in_buffer():
     helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT)
     # mop is not in buffer; chum and slop are in buffer.
     # unmodified means it is not in buffer
     assert not helper.is_collection_in_buffer('mop')
@@ -220,9 +213,7 @@ def test_is_collection_in_buffer():
 
     def _raise_dre():
         raise DeckhandResponseError(
-            status_code=9000,
-            response_message='This is bogus'
-        )
+            status_code=9000, response_message='This is bogus')
 
     helper._get_revision_dict = _raise_dre
 
@@ -242,8 +233,7 @@ def test_is_buffer_valid_for_bucket():
     helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT)
     helper.deckhand.rollback = lambda target_revision_id: (
         set_revision_dict(helper, REV_BUFF_EMPTY_DICT, DIFF_BUFF_EMPTY_DICT)
     )
@@ -279,8 +269,7 @@ def test_is_buffer_valid_for_bucket():
     # set up as if there is no committed revision yet
     helper._get_revision_dict = lambda: REV_NO_COMMIT_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_NO_COMMIT_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_NO_COMMIT_DICT)
 
     assert helper.is_buffer_valid_for_bucket('slop', BufferMode.APPEND)
     assert helper.is_buffer_valid_for_bucket('chum', BufferMode.APPEND)
@@ -295,14 +284,37 @@ def test_is_buffer_valid_for_bucket():
     # set up as if there is nothing in deckhand.
     helper._get_revision_dict = lambda: REV_EMPTY_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_EMPTY_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_EMPTY_DICT)
     # should be able to add in any mode.
     assert helper.is_buffer_valid_for_bucket('slop', BufferMode.APPEND)
     assert helper.is_buffer_valid_for_bucket('chum', BufferMode.APPEND)
     assert helper.is_buffer_valid_for_bucket('new',
                                              BufferMode.REJECTONCONTENTS)
     assert helper.is_buffer_valid_for_bucket('mop', BufferMode.REPLACE)
+
+
+def test_get_configdocs_status():
+    helper = ConfigdocsHelper(CTX)
+    helper._get_revision_dict = lambda: REV_BUFFER_DICT
+    helper.deckhand.get_diff = (
+        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT)
+    result = helper.get_configdocs_status()
+
+    expected = [{
+        "collection_name": 'chum',
+        "committed_status": 'not present',
+        "buffer_status": 'created'
+    }, {
+        "collection_name": 'mop',
+        "committed_status": 'present',
+        "buffer_status": 'unmodified'
+    }, {
+        "collection_name": 'slop',
+        "committed_status": 'present',
+        "buffer_status": 'deleted'
+    }]
+
+    assert expected == sorted(result, key=lambda x: x['collection_name'])
 
 
 def test__get_revision_dict_no_commit():
@@ -439,11 +451,10 @@ def test__get_revision_dict_errs():
     tests getting a revision dictionary method when the deckhand
     client has raised an exception
     """
+
     def _raise_dre():
         raise DeckhandResponseError(
-            status_code=9000,
-            response_message='This is bogus'
-        )
+            status_code=9000, response_message='This is bogus')
 
     def _raise_nree():
         raise NoRevisionsExistError()
@@ -472,12 +483,10 @@ def test_get_collection_docs():
     """
     helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_docs_from_revision = (
-        lambda revision_id, bucket_id: "{'yaml': 'yaml'}"
-    )
+        lambda revision_id, bucket_id: "{'yaml': 'yaml'}")
     helper._get_revision_dict = lambda: REV_EMPTY_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_EMPTY_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_EMPTY_DICT)
 
     with pytest.raises(ApiError):
         helper.get_collection_docs(configdocs_helper.BUFFER, 'mop')
@@ -487,31 +496,30 @@ def test_get_collection_docs():
 
     helper._get_revision_dict = lambda: REV_COMMIT_AND_BUFFER_DICT
     helper.deckhand.get_diff = (
-        lambda old_revision_id, new_revision_id: DIFF_COMMIT_AND_BUFFER_DICT
-    )
+        lambda old_revision_id, new_revision_id: DIFF_COMMIT_AND_BUFFER_DICT)
     yaml_str = helper.get_collection_docs(configdocs_helper.BUFFER, 'mop')
-    print(yaml_str)
     assert len(yaml_str) == 16
 
     yaml_str = helper.get_collection_docs(configdocs_helper.COMMITTED, 'mop')
-    print(yaml_str)
     assert len(yaml_str) == 16
 
 
 def _fake_get_validation_endpoints():
     val_ep = '{}/validatedesign'
     return [
-        {'name': 'Drydock', 'url': val_ep.format('drydock')},
-        {'name': 'Armada', 'url': val_ep.format('armada')},
+        {
+            'name': 'Drydock',
+            'url': val_ep.format('drydock')
+        },
+        {
+            'name': 'Armada',
+            'url': val_ep.format('armada')
+        },
     ]
 
 
-def _fake_get_validations_for_component(url,
-                                        design_reference,
-                                        response,
-                                        exception,
-                                        context_marker,
-                                        **kwargs):
+def _fake_get_validations_for_component(url, design_reference, response,
+                                        exception, context_marker, **kwargs):
     """
     Responds with a status response
     """
@@ -547,11 +555,9 @@ def test_get_validations_for_revision():
         hold_ve = helper.__class__._get_validation_endpoints
         hold_vfc = helper.__class__._get_validations_for_component
         helper.__class__._get_validation_endpoints = (
-            _fake_get_validation_endpoints
-        )
+            _fake_get_validation_endpoints)
         helper.__class__._get_validations_for_component = (
-            _fake_get_validations_for_component
-        )
+            _fake_get_validations_for_component)
         helper._get_deckhand_validations = lambda revision_id: []
         try:
             val_status = helper.get_validations_for_revision(3)
@@ -565,7 +571,9 @@ def test_get_validations_for_revision():
     mock_get_path.assert_called_with(DeckhandPaths.RENDERED_REVISION_DOCS)
 
 
-FK_VAL_BASE_RESP = FakeResponse(status_code=200, text="""
+FK_VAL_BASE_RESP = FakeResponse(
+    status_code=200,
+    text="""
 ---
 count: 2
 next: null
@@ -580,7 +588,9 @@ results:
 ...
 """)
 
-FK_VAL_SUBSET_RESP = FakeResponse(status_code=200, text="""
+FK_VAL_SUBSET_RESP = FakeResponse(
+    status_code=200,
+    text="""
 ---
 count: 1
 next: null
@@ -592,8 +602,9 @@ results:
 ...
 """)
 
-
-FK_VAL_ENTRY_RESP = FakeResponse(status_code=200, text="""
+FK_VAL_ENTRY_RESP = FakeResponse(
+    status_code=200,
+    text="""
 ---
 name: promenade-site-validation
 url: https://deckhand/a/url/too/long/for/pep8
@@ -618,14 +629,11 @@ def test__get_deckhand_validations():
     """
     helper = ConfigdocsHelper(CTX)
     helper.deckhand._get_base_validation_resp = (
-        lambda revision_id: FK_VAL_BASE_RESP
-    )
+        lambda revision_id: FK_VAL_BASE_RESP)
     helper.deckhand._get_subset_validation_response = (
-        lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP
-    )
+        lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
     helper.deckhand._get_entry_validation_response = (
-        lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP
-    )
+        lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP)
     assert len(helper._get_deckhand_validations(5)) == 2
 
 

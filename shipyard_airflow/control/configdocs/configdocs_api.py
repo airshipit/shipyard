@@ -22,13 +22,25 @@ from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.api_lock import (api_lock, ApiLockType)
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.configdocs.configdocs_helper import (
-    BufferMode,
-    ConfigdocsHelper
-)
+    BufferMode, ConfigdocsHelper)
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
 VERSION_VALUES = ['buffer', 'committed']
+
+
+class ConfigDocsStatusResource(BaseResource):
+    """
+    Configdocs Status handles the retrieval of the configuration documents'
+    statuses
+    """
+
+    @policy.ApiEnforcer('workflow_orchestrator:get_configdocs_status')
+    def on_get(self, req, resp):
+        """Returns a list of the configdocs and their statuses"""
+        helper = ConfigdocsHelper(req.context)
+        resp.body = helper.get_configdocs_status()
+        resp.status = falcon.HTTP_200
 
 
 class ConfigDocsResource(BaseResource):
@@ -49,8 +61,7 @@ class ConfigDocsResource(BaseResource):
             helper=helper,
             collection_id=collection_id,
             document_data=document_data,
-            buffer_mode_param=req.params.get('buffermode')
-        )
+            buffer_mode_param=req.params.get('buffermode'))
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
         resp.body = self.to_json(validations)
         resp.status = falcon.HTTP_201
@@ -65,10 +76,7 @@ class ConfigDocsResource(BaseResource):
         helper = ConfigdocsHelper(req.context)
         # Not reformatting to JSON or YAML since just passing through
         resp.body = self.get_collection(
-            helper=helper,
-            collection_id=collection_id,
-            version=version
-        )
+            helper=helper, collection_id=collection_id, version=version)
         resp.append_header('Content-Type', 'application/x-yaml')
         resp.status = falcon.HTTP_200
 
@@ -78,16 +86,11 @@ class ConfigDocsResource(BaseResource):
             raise ApiError(
                 title='Invalid version query parameter specified',
                 description=(
-                    'version must be {}'.format(', '.join(VERSION_VALUES))
-                ),
+                    'version must be {}'.format(', '.join(VERSION_VALUES))),
                 status=falcon.HTTP_400,
-                retry=False,
-            )
+                retry=False, )
 
-    def get_collection(self,
-                       helper,
-                       collection_id,
-                       version='buffer'):
+    def get_collection(self, helper, collection_id, version='buffer'):
         """
         Attempts to retrieve the specified collection of documents
         either from the buffer or committed version, as specified
@@ -107,15 +110,10 @@ class ConfigDocsResource(BaseResource):
         else:
             buffer_mode = ConfigdocsHelper.get_buffer_mode(buffer_mode_param)
 
-        if helper.is_buffer_valid_for_bucket(collection_id,
-                                             buffer_mode):
-            buffer_revision = helper.add_collection(
-                collection_id,
-                document_data
-            )
-            return helper.get_deckhand_validation_status(
-                buffer_revision
-            )
+        if helper.is_buffer_valid_for_bucket(collection_id, buffer_mode):
+            buffer_revision = helper.add_collection(collection_id,
+                                                    document_data)
+            return helper.get_deckhand_validation_status(buffer_revision)
         else:
             raise ApiError(
                 title='Invalid collection specified for buffer',
@@ -127,8 +125,7 @@ class ConfigDocsResource(BaseResource):
                                 'Setting a different buffermode may '
                                 'provide the desired functionality')
                 }],
-                retry=False,
-            )
+                retry=False, )
 
 
 class CommitConfigDocsResource(BaseResource):
@@ -163,8 +160,7 @@ class CommitConfigDocsResource(BaseResource):
                 title=CommitConfigDocsResource.unable_to_commmit,
                 description='There are no documents in the buffer to commit',
                 status=falcon.HTTP_409,
-                retry=True
-            )
+                retry=True)
         validations = helper.get_validations_for_buffer()
         if force or validations.get('status') == 'Success':
             helper.tag_buffer(configdocs_helper.COMMITTED)
@@ -173,8 +169,7 @@ class CommitConfigDocsResource(BaseResource):
             validations['code'] = falcon.HTTP_200
             if validations.get('message'):
                 validations['message'] = (
-                    validations['message'] + ' FORCED SUCCESS'
-                )
+                    validations['message'] + ' FORCED SUCCESS')
             else:
                 validations['message'] = 'FORCED SUCCESS'
         return validations

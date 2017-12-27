@@ -26,18 +26,10 @@ from oslo_config import cfg
 import requests
 
 from shipyard_airflow.control.configdocs.deckhand_client import (
-    DeckhandClient,
-    DeckhandPaths,
-    DeckhandRejectedInputError,
-    DeckhandResponseError,
-    DocumentExistsElsewhereError,
-    NoRevisionsExistError
-)
+    DeckhandClient, DeckhandPaths, DeckhandRejectedInputError,
+    DeckhandResponseError, DocumentExistsElsewhereError, NoRevisionsExistError)
 from shipyard_airflow.control.service_endpoints import (
-    Endpoints,
-    get_endpoint,
-    get_token
-)
+    Endpoints, get_endpoint, get_token)
 from shipyard_airflow.errors import ApiError, AppError
 
 CONF = cfg.CONF
@@ -112,28 +104,23 @@ class ConfigdocsHelper(object):
 
         # If there is no committed revision, then it's 0.
         # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self._get_committed_rev_id()
-        if old_revision_id is None:
-            old_revision_id = 0
+        old_revision_id = self._get_committed_rev_id() or 0
+
         try:
             diff = self.deckhand.get_diff(
                 old_revision_id=old_revision_id,
-                new_revision_id=self._get_buffer_rev_id()
-            )
+                new_revision_id=self._get_buffer_rev_id())
             # the collection is in the buffer if it's not unmodified
             return diff.get(collection_id, 'unmodified') != 'unmodified'
+
         except DeckhandResponseError as drex:
             raise AppError(
                 title='Unable to retrieve revisions',
                 description=(
                     'Deckhand has responded unexpectedly: {}:{}'.format(
-                        drex.status_code,
-                        drex.response_message
-                    )
-                ),
+                        drex.status_code, drex.response_message)),
                 status=falcon.HTTP_500,
-                retry=False,
-            )
+                retry=False, )
 
     def is_buffer_valid_for_bucket(self, collection_id, buffermode):
         """
@@ -165,6 +152,56 @@ class ConfigdocsHelper(object):
             else:
                 self.deckhand.rollback(committed_rev_id)
             return True
+
+    def get_configdocs_status(self):
+        """
+        Returns a list of the configdocs, committed or in buffer, and their
+        current committed and buffer statuses
+        """
+        configdocs_status = []
+
+        # If there is no committed revision, then it's 0.
+        # new revision is ok because we just checked for buffer emptiness
+        old_revision_id = self._get_committed_rev_id() or 0
+        new_revision_id = self._get_buffer_rev_id() or old_revision_id
+
+        try:
+            diff = self.deckhand.get_diff(
+                old_revision_id=old_revision_id,
+                new_revision_id=new_revision_id)
+
+        except DeckhandResponseError as drex:
+            raise AppError(
+                title='Unable to retrieve revisions',
+                description=(
+                    'Deckhand has responded unexpectedly: {}:{}'.format(
+                        drex.status_code, drex.response_message)),
+                status=falcon.HTTP_500,
+                retry=False, )
+
+        for collection_id in diff:
+            collection = {"collection_name": collection_id}
+            if diff[collection_id] in [
+                    "unmodified", "modified", "created", "deleted"]:
+                collection['buffer_status'] = diff[collection_id]
+                if diff[collection_id] == "created":
+                    collection['committed_status'] = 'not present'
+                else:
+                    collection['committed_status'] = 'present'
+
+            else:
+                raise AppError(
+                    title='Invalid collection status',
+                    description=(
+                        'Collection_id, {} has an invalid collection status. '
+                        'unmodified, modified, created, and deleted are the'
+                        ' only valid collection statuses.',
+                        collection_id),
+                    status=falcon.HTTP_500,
+                    retry=False, )
+            configdocs_status.append(collection)
+
+        return configdocs_status
 
     def _get_revision_dict(self):
         """
@@ -209,13 +246,9 @@ class ConfigdocsHelper(object):
                 title='Unable to retrieve revisions',
                 description=(
                     'Deckhand has responded unexpectedly: {}:{}'.format(
-                        drex.status_code,
-                        drex.response_message
-                    )
-                ),
+                        drex.status_code, drex.response_message)),
                 status=falcon.HTTP_500,
-                retry=False,
-            )
+                retry=False)
         self.revision_dict = {
             COMMITTED: committed_revision,
             BUFFER: buffer_revision,
@@ -277,16 +310,13 @@ class ConfigdocsHelper(object):
             # revision exists
             buffer_id = self._get_buffer_rev_id()
             return self.deckhand.get_docs_from_revision(
-                revision_id=buffer_id,
-                bucket_id=collection_id
-            )
+                revision_id=buffer_id, bucket_id=collection_id)
         raise ApiError(
             title='No documents to retrieve',
             description=('The Shipyard buffer is empty or does not contain '
                          'this collection'),
             status=falcon.HTTP_404,
-            retry=False,
-        )
+            retry=False)
 
     def _get_committed_docs(self, collection_id):
         """
@@ -295,16 +325,13 @@ class ConfigdocsHelper(object):
         committed_id = self._get_committed_rev_id()
         if committed_id:
             return self.deckhand.get_docs_from_revision(
-                revision_id=committed_id,
-                bucket_id=collection_id
-            )
+                revision_id=committed_id, bucket_id=collection_id)
         # if there is no committed...
         raise ApiError(
             title='No documents to retrieve',
             description='There is no committed version of this collection',
             status=falcon.HTTP_404,
-            retry=False,
-        )
+            retry=False)
 
     def get_rendered_configdocs(self, version=BUFFER):
         """
@@ -316,15 +343,13 @@ class ConfigdocsHelper(object):
             if revision_dict.get(version):
                 revision_id = revision_dict.get(version).get('id')
                 return self.deckhand.get_rendered_docs_from_revision(
-                    revision_id=revision_id
-                )
+                    revision_id=revision_id)
             else:
                 raise ApiError(
                     title='This revision does not exist',
                     description='{} version does not exist'.format(version),
                     status=falcon.HTTP_404,
-                    retry=False,
-                )
+                    retry=False)
 
     def get_validations_for_buffer(self):
         """
@@ -338,17 +363,16 @@ class ConfigdocsHelper(object):
             description=('Buffer revision id could not be determined from'
                          'Deckhand'),
             status=falcon.HTTP_500,
-            retry=False,
-        )
+            retry=False)
 
     @staticmethod
     def _get_design_reference(revision_id):
         # Constructs the design reference as json for use by other components
         design_reference = {
             "rel": "design",
-            "href": "deckhand+{}".format(DeckhandClient.get_path(
-                DeckhandPaths.RENDERED_REVISION_DOCS).format(revision_id)
-            ),
+            "href": "deckhand+{}".format(
+                DeckhandClient.get_path(DeckhandPaths.RENDERED_REVISION_DOCS)
+                .format(revision_id)),
             "type": "application/x-yaml"
         }
         return json.dumps(design_reference)
@@ -358,16 +382,18 @@ class ConfigdocsHelper(object):
         # returns the list of validation endpoint supported
         val_ep = '{}/validatedesign'
         return [
-            {'name': 'Drydock',
-             'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))},
-            {'name': 'Armada',
-             'url': val_ep.format(get_endpoint(Endpoints.ARMADA))},
+            {
+                'name': 'Drydock',
+                'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))
+            },
+            {
+                'name': 'Armada',
+                'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
+            },
         ]
 
     @staticmethod
-    def _get_validation_threads(validation_endpoints,
-                                revision_id,
-                                ctx):
+    def _get_validation_threads(validation_endpoints, revision_id, ctx):
         # create a list of validation threads from the endpoints
         validation_threads = []
         for endpoint in validation_endpoints:
@@ -375,39 +401,33 @@ class ConfigdocsHelper(object):
             response = {'response': None}
             exception = {'exception': None}
             design_ref = ConfigdocsHelper._get_design_reference(revision_id)
-            validation_threads.append(
-                {
-                    'thread': threading.Thread(
-                        target=ConfigdocsHelper._get_validations_for_component,
-                        kwargs={
-                            'url': endpoint['url'],
-                            'design_reference': design_ref,
-                            'response': response,
-                            'exception': exception,
-                            'context_marker': ctx.external_marker,
-                            'thread_name': endpoint['name'],
-                            'log_extra': {
-                                'req_id': ctx.request_id,
-                                'external_ctx': ctx.external_marker,
-                                'user': ctx.user
-                            }
+            validation_threads.append({
+                'thread':
+                threading.Thread(
+                    target=ConfigdocsHelper._get_validations_for_component,
+                    kwargs={
+                        'url': endpoint['url'],
+                        'design_reference': design_ref,
+                        'response': response,
+                        'exception': exception,
+                        'context_marker': ctx.external_marker,
+                        'thread_name': endpoint['name'],
+                        'log_extra': {
+                            'req_id': ctx.request_id,
+                            'external_ctx': ctx.external_marker,
+                            'user': ctx.user
                         }
-                    ),
-                    'name': endpoint['name'],
-                    'url': endpoint['url'],
-                    'response': response,
-                    'exception': exception
-                }
-            )
+                    }),
+                'name': endpoint['name'],
+                'url': endpoint['url'],
+                'response': response,
+                'exception': exception
+            })
         return validation_threads
 
     @staticmethod
-    def _get_validations_for_component(url,
-                                       design_reference,
-                                       response,
-                                       exception,
-                                       context_marker,
-                                       thread_name,
+    def _get_validations_for_component(url, design_reference, response,
+                                       exception, context_marker, thread_name,
                                        **kwargs):
         # Invoke the POST for validation
         try:
@@ -417,10 +437,8 @@ class ConfigdocsHelper(object):
                 'content-type': 'application/json'
             }
 
-            http_resp = requests.post(url,
-                                      headers=headers,
-                                      data=design_reference,
-                                      timeout=(5, 30))
+            http_resp = requests.post(
+                url, headers=headers, data=design_reference, timeout=(5, 30))
             # 400 response is "valid" failure to validate. > 400 is a problem.
             if http_resp.status_code > 400:
                 http_resp.raise_for_status()
@@ -433,16 +451,13 @@ class ConfigdocsHelper(object):
             LOG.error(str(ex))
             response['response'] = {
                 'details': {
-                    'messageList': [
-                        {
-                            'message': unable_str,
-                            'error': True
-                        },
-                        {
-                            'message': str(ex),
-                            'error': True
-                        }
-                    ]
+                    'messageList': [{
+                        'message': unable_str,
+                        'error': True
+                    }, {
+                        'message': str(ex),
+                        'error': True
+                    }]
                 }
             }
             exception['exception'] = ex
@@ -457,10 +472,8 @@ class ConfigdocsHelper(object):
         resp_msgs = []
 
         validation_threads = ConfigdocsHelper._get_validation_threads(
-            ConfigdocsHelper._get_validation_endpoints(),
-            revision_id,
-            self.ctx
-        )
+            ConfigdocsHelper._get_validation_endpoints(), revision_id,
+            self.ctx)
         # trigger each validation in parallel
         for validation_thread in validation_threads:
             if validation_thread.get('thread'):
@@ -475,8 +488,8 @@ class ConfigdocsHelper(object):
             th_name = validation_thread.get('name')
             val_response = validation_thread.get('response',
                                                  {}).get('response')
-            LOG.debug("Validation from:  %s response: %s",
-                      th_name, str(val_response))
+            LOG.debug("Validation from:  %s response: %s", th_name,
+                      str(val_response))
             if validation_thread.get('exception', {}).get('exception'):
                 LOG.error('Invocation of validation by %s has failed', th_name)
             # invalid status needs collection of messages
@@ -488,21 +501,17 @@ class ConfigdocsHelper(object):
             for msg in msg_list:
                 if msg.get('error'):
                     error_count = error_count + 1
-                    resp_msgs.append(
-                        {
-                            'name': th_name,
-                            'message': msg.get('message'),
-                            'error': True
-                        }
-                    )
+                    resp_msgs.append({
+                        'name': th_name,
+                        'message': msg.get('message'),
+                        'error': True
+                    })
                 else:
-                    resp_msgs.append(
-                        {
-                            'name': th_name,
-                            'message': msg.get('message'),
-                            'error': False
-                        }
-                    )
+                    resp_msgs.append({
+                        'name': th_name,
+                        'message': msg.get('message'),
+                        'error': False
+                    })
         # Deckhand does it differently. Incorporate those validation
         # failures
         dh_validations = self._get_deckhand_validations(revision_id)
@@ -510,9 +519,7 @@ class ConfigdocsHelper(object):
         resp_msgs.extend(dh_validations)
         # return the formatted status response
         return ConfigdocsHelper._format_validations_to_status(
-            resp_msgs,
-            error_count
-        )
+            resp_msgs, error_count)
 
     def get_deckhand_validation_status(self, revision_id):
         """
@@ -522,9 +529,7 @@ class ConfigdocsHelper(object):
         dh_validations = self._get_deckhand_validations(revision_id)
         error_count = len(dh_validations)
         return ConfigdocsHelper._format_validations_to_status(
-            dh_validations,
-            error_count
-        )
+            dh_validations, error_count)
 
     def _get_deckhand_validations(self, revision_id):
         # Returns any validations that deckhand has on hand for this
@@ -535,13 +540,11 @@ class ConfigdocsHelper(object):
             for dh_result in deckhand_val.get('results'):
                 if dh_result.get('errors'):
                     for error in dh_result.get('errors'):
-                        resp_msgs.append(
-                            {
-                                'name': dh_result.get('name'),
-                                'message': error.get('message'),
-                                'error': True
-                            }
-                        )
+                        resp_msgs.append({
+                            'name': dh_result.get('name'),
+                            'message': error.get('message'),
+                            'error': True
+                        })
         return resp_msgs
 
     @staticmethod
@@ -582,8 +585,7 @@ class ConfigdocsHelper(object):
                 description=('Buffer revision id could not be determined from'
                              'Deckhand'),
                 status=falcon.HTTP_500,
-                retry=False,
-            )
+                retry=False)
         self.tag_revision(buffer_rev_id, tag)
 
     def tag_revision(self, revision_id, tag):
@@ -607,15 +609,13 @@ class ConfigdocsHelper(object):
             raise ApiError(
                 title='Documents may not exist in more than one collection',
                 description=deee.response_message,
-                status=falcon.HTTP_409
-            )
+                status=falcon.HTTP_409)
         except DeckhandRejectedInputError as drie:
             LOG.info('Deckhand has rejected this input because: %s',
                      drie.response_message)
             raise ApiError(
                 title="Document(s) invalid syntax or otherwise unsuitable",
-                description=drie.response_message,
-            )
+                description=drie.response_message)
         # reset the revision dict so it regenerates.
         self.revision_dict = None
         return self._get_buffer_rev_id()

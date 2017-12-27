@@ -99,6 +99,15 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_configdocs_status',
+            RULE_ADMIN_REQUIRED,
+            'Retrieve the status of the configdocs',
+            [{
+                'path': '/api/v1.0/configdocs',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
             'workflow_orchestrator:create_configdocs',
             RULE_ADMIN_REQUIRED,
             'Ingest configuration documents for the site design',

@@ -29,7 +29,8 @@ from shipyard_airflow.control.af_monitoring.workflows_api import (
 from shipyard_airflow.control.base import BaseResource, ShipyardRequest
 from shipyard_airflow.control.configdocs.configdocs_api import (
     CommitConfigDocsResource,
-    ConfigDocsResource
+    ConfigDocsResource,
+    ConfigDocsStatusResource
 )
 from shipyard_airflow.control.configdocs.rendered_configdocs_api import \
     RenderedConfigDocsResource
@@ -66,6 +67,7 @@ def start_api():
          ActionsStepsResource()),
         ('/actions/{action_id}/validations/{validation_id}',
          ActionsValidationsResource()),
+        ('/configdocs', ConfigDocsStatusResource()),
         ('/configdocs/{collection_id}', ConfigDocsResource()),
         ('/commitconfigdocs', CommitConfigDocsResource()),
         ('/renderedconfigdocs', RenderedConfigDocsResource()),
