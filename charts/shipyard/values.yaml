@@ -453,6 +453,12 @@ pod:
     shipyard:
       init_container: null
       shipyard:
+    shipyard_db_init:
+      init_container: null
+      shipyard_db_init:
+    shipyard_db_sync:
+      init_container: null
+      shipyard_db_sync:
   replicas:
     shipyard:
       api: 2
