@@ -15,60 +15,97 @@
 
 set -x
 
-# Define Variables
+# Define Namespace
 namespace="ucp"
-shipyard_username="shipyard"
-shipyard_password="password"
-keystone_ip=`sudo kubectl get pods -n ${namespace} -o wide | grep keystone | awk '{print $6}'`
-host="localhost"
-port=31901
 
-# Define query time and default to 90 seconds if not provided
-query_time=${1:-90}
+# Initialize Variables with Default Values
+# Note that 'query_time' has a default value of 90 seconds
+# Note that 'deploy_timeout' has a default value of 60 loops (based on
+# 90 seconds back off per cycle, i.e. 60 * 90 = 5400 seconds = 1.5 hrs)
+query_time=90
+deploy_timeout=60
+OS_USER_DOMAIN_NAME="default"
+OS_PROJECT_DOMAIN_NAME="default"
+OS_PROJECT_NAME="service"
+OS_USERNAME="shipyard"
+OS_PASSWORD="password"
+OS_AUTH_URL="http://keystone.${namespace}:80/v3"
+
+# Override OpenStack Environment Variables, query_time and
+# deploy_timeout if need be
+# For instance, we can run the script in the following manner:
+#
+# $ ./deploy_site.sh -q 110 -t 120 -u SY -p supersecret -d test -D test -n admin -l http://keystone.test:80/v3
+#
+# This will set the variables to the following values:
+#
+#    - query_time=110
+#    - deploy_timeout=120
+#    - OS_USERNAME=SY
+#    - OS_PASSWORD=supersecret
+#    - OS_USER_DOMAIN_NAME=test
+#    - OS_PROJECT_DOMAIN_NAME=test
+#    - OS_PROJECT_NAME=admin
+#    - OS_AUTH_URL=http://keystone.test:80/v3
+#
+while getopts q:t:u:p:d:D:n:l: option
+do
+ case "${option}"
+ in
+ q) query_time=${OPTARG};;
+ t) deploy_timeout=${OPTARG};;
+ u) OS_USERNAME=${OPTARG};;
+ p) OS_PASSWORD=${OPTARG};;
+ d) OS_USER_DOMAIN_NAME=${OPTARG};;
+ D) OS_PROJECT_DOMAIN_NAME=${OPTARG};;
+ n) OS_PROJECT_NAME=${OPTARG};;
+ l) OS_AUTH_URL=${OPTARG};;
+ esac
+done
+
+# Export Environment Variables
+export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
+export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
+export OS_PROJECT_NAME=${OS_PROJECT_NAME}
+export OS_USERNAME=${OS_USERNAME}
+export OS_PASSWORD=${OS_PASSWORD}
+export OS_AUTH_URL=${OS_AUTH_URL}
+
+# Determine IP address of Ingress Controller
+# Note that the Ingress Controller currently needs to be in the same
+# namespace as the services that it is serving. The current workaround
+# will be to remove the Ingress Controller from OSH and put the UCP one
+# in the 'openstack' namespace. We should ideally have different Ingress
+# Controller for OpenStack and UCP. This logic will be updated at a
+# later date.
+ingress_controller_ip=`sudo kubectl get pods -n openstack -o wide | grep ingress-api | awk '{print $6}'`
+
+# Update /etc/hosts with the IP of the ingress controller
+# Note that these values would need to be set in the case
+# where DNS resolution of the Keystone and Shipyard URLs
+# is not available. We can skip this step if DNS is in place.
+cat << EOF | sudo tee -a /etc/hosts
+
+$ingress_controller_ip keystone.${namespace}
+$ingress_controller_ip shipyard-api.${namespace}.svc.cluster.local
+EOF
 
 # Define Color
 NC='\033[0m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
-# Define get_keystone_token function
-get_keystone_token() {
-    # Retrieve Keystone Token
-    echo -e "Retrieving Keystone Token...\n"
-    TOKEN=`sudo docker run -t \
-           -e "OS_AUTH_URL=http://${keystone_ip}:80/v3" \
-           -e "OS_PROJECT_NAME=service" \
-           -e "OS_USER_DOMAIN_NAME=Default" \
-           -e "OS_USERNAME=${shipyard_username}" \
-           -e "OS_PASSWORD=${shipyard_password}" \
-           -e "OS_REGION_NAME=RegionOne" \
-           -e "OS_IDENTITY_API_VERSION=3" \
-           --net=host \
-           docker.io/kolla/ubuntu-source-keystone:3.0.3 \
-           openstack token issue | grep -w 'id' | awk '{print $4}'`
-}
-
-# Retrieve Keystone Token
-get_keystone_token
+# Set up Genesis host with the Shipyard Client
+# This will allow us to use the Shipyard CLI
+git clone --depth=1 https://github.com/att-comdev/shipyard.git
+sudo apt install python3-pip -y
+sudo pip3 install --upgrade pip
+cd shipyard && sudo pip3 install -r requirements.txt
+sudo python3 setup.py install
 
 # Execute deploy_site
 echo -e "Execute deploy_site Dag...\n"
-
-# Save output to tmp file
-curl -sS -D - -d '{"name":"deploy_site"}' \
-              -X POST ${host}:${port}/api/v1.0/actions \
-              -H "X-Auth-Token:${TOKEN}" \
-              -H "content-type:application/json" > /tmp/deploy_site_response.json
-
-# The response will not be in proper json format, we will extract the required
-# json output by deleteing everything before we encounter the first '{'
-sed -i '/{/,$!d' /tmp/deploy_site_response.json
-
-echo -e "Retrieving Action ID...\n"
-action_id=`cat /tmp/deploy_site_response.json | jq -r '.id'`
-
-echo "The Action ID is" ${action_id}
-echo
+shipyard create action deploy_site
 
 # The status or lifecycle phase of an action can be
 #
@@ -78,22 +115,26 @@ echo
 # 4) Failed - The action has encountered an error, and has failed.
 # 5) Paused - The action has been paused by a user.
 # 6) Unknown (*) - Unknown State for corner cases
-# 7) null - It is possible for the script to run for a prolonged period
-#           of time. This can cause the keystone token to expire and we
-#           will end up with `null` response from Shipyard when we query
-#           the status of the task. We will need to retrieve a new token
-#           when that happens.
+# 7) null - We will end up with a `null` response from Shipyard if we
+#           query the status of the task with an expired keystone token.
+#           Note that this should never happen if we use Shipyard CLI as
+#           new token is retrieved each time. Description for state 'null'
+#           is included here for information only.
 #
+# Print current list of actions in Shipyard
+shipyard get actions
+
+# Retrieve the ID of the 'deploy_site' action that is currently being executed
+echo -e "Retrieving Action ID...\n"
+action_id=`shipyard get actions | grep deploy_site | grep -i Processing | awk '{print $2}'`
+
+echo "The Action ID is" ${action_id}
+echo
 
 # Initialize 'action_lifecycle' to 'Pending'
 action_lifecycle="Pending"
 
-# Polling for site_deploy action
-# Define 'deploy_time_out' and default it to 60 loops (based on 90 seconds
-# back off per cycle, i.e. 60 * 90 = 5400 seconds = 1.5 hrs) if value was
-# not provided at run time
-# Note that user will need to define query time in this case
-deploy_timeout=${2:-60}
+# Polling for 'deploy_site' action
 deploy_counter=1
 
 check_timeout_counter() {
@@ -102,49 +143,36 @@ check_timeout_counter() {
     # The default time out is set to 1.5 hrs
     # This value can be changed by setting $2
     if [[ $deploy_counter -eq $deploy_timeout ]]; then
-       echo 'Deploy Site task has timed out.'
-       break
+        echo 'Deploy Site task has timed out.'
+        break
     fi
 }
 
 while true;
 do
-    if [[ $action_lifecycle == "null" ]]; then
-        # Retrieve new keystone token
-        echo -e '\nKeystone Token has expired. Retrieve new Token.\n'
-        get_keystone_token
+    # Get Current State of Action Lifecycle
+    shipyard describe ${action_id} > /tmp/get_action_status
+    action_lifecycle=`cat /tmp/get_action_status | grep Lifecycle | awk '{print $2}'`
+
+    # Print output of Shipyard CLI
+    cat /tmp/get_action_status
+
+    if [[ $action_lifecycle == "Complete" ]]; then
+        echo -e '\nSite Successfully Deployed\n'
+        break
     fi
 
-    if [[ $action_lifecycle == "Complete" ]] || [[ $action_lifecycle == "Failed" ]] || \
-       [[ $action_lifecycle == "Paused" ]] || [[ $action_lifecycle == 'Unknown'* ]]; then
-        # Print final results
-        echo -e '\nFinal State of Deployment\n'
-        cat /tmp/get_action_status.json | jq .
+    # Check Dag state
+    if [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]] || \
+       [[ $action_lifecycle == "Unknown"* ]] || [[ $action_lifecycle == "null" ]]; then
+        echo -e "Dag Execution is in" ${RED}$action_lifecycle${NC} "state\n"
         break
     else
-        # Get Current State of Action Lifecycle
-        # Save output to tmp file
-        curl -sS -D - -X GET ${host}:${port}/api/v1.0/actions/${action_id} \
-                      -H "X-Auth-Token:${TOKEN}" \
-                      -H "content-type:application/json" > /tmp/get_action_status.json
-
-        # The response will not be in proper json format, we will extract the required
-        # json output by deleteing everything before we encounter the first '{'
-        sed -i '/{/,$!d' /tmp/get_action_status.json
-
-        action_lifecycle=`cat /tmp/get_action_status.json | jq -r '.action_lifecycle'`
+        echo -e "Dag Execution is in" ${GREEN}$action_lifecycle${NC} "state\n"
 
         # Back off between each iteration
         echo -e "Back Off for $query_time seconds...\n"
         sleep $query_time
-
-        # Check Dag state
-        if [[ $action_lifecycle == "Failed" ]] || [[ $action_lifecycle == "Paused" ]] || \
-           [[ $action_lifecycle == 'Unknown'* ]]; then
-            echo -e "Dag Execution is in" ${RED}$action_lifecycle${NC} "state\n"
-        else
-            echo -e "Dag Execution is in" ${GREEN}$action_lifecycle${NC} "state\n"
-        fi
 
         # Step counter and check if deployment has timed out
         ((deploy_counter++))
@@ -152,9 +180,8 @@ do
     fi
 done
 
-# Delete the temporary files
-rm /tmp/deploy_site_response.json
-rm /tmp/get_action_status.json
+# Delete the temporary file
+rm /tmp/get_action_status
 
 # Return exit code so that we can use it to determine the final
 # state of the workflow
