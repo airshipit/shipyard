@@ -394,7 +394,7 @@ class DryDockOperator(BaseOperator):
         logging.info(json.loads(validate_site_design))
 
         # Check if site design is valid
-        if json.loads(validate_site_design).get('status') == 'Valid':
+        if json.loads(validate_site_design).get('status') == 'Success':
             logging.info("DryDock Site Design has been successfully validated")
             return 'valid'
         else:
