@@ -147,7 +147,7 @@ SECTIONS = [
             ),
             cfg.IntOpt(
                 'prepare_site_task_timeout',
-                default=120,
+                default=300,
                 help='Time out (in seconds) for prepare_site task'
             ),
             cfg.IntOpt(
