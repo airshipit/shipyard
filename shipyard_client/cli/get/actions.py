@@ -80,6 +80,37 @@ class GetConfigdocs(CliAction):
         return format_utils.raw_format_response_handler(response)
 
 
+class GetConfigdocsStatus(CliAction):
+    """Action to get the configdocs status"""
+
+    def __init__(self, ctx):
+        """Sets parameters."""
+        super().__init__(ctx)
+        self.logger.debug("GetConfigdocsStatus action initialized")
+
+    def invoke(self):
+        """Calls API Client and formats response from API Client"""
+        self.logger.debug("Calling API Client get_configdocs_status")
+        return self.get_api_client().get_configdocs_status()
+
+    # Handle 404 with default error handler for cli.
+    cli_handled_err_resp_codes = [404]
+
+    # Handle 200 responses using the cli_format_response_handler
+    cli_handled_succ_resp_codes = [200]
+
+    def cli_format_response_handler(self, response):
+        """CLI output handler
+
+        :param response: a requests response object
+        :returns: a string representing a CLI appropriate response
+            Handles 200 responses
+        """
+        resp_j = response.json()
+        coll_list = resp_j if resp_j else []
+        return cli_format_common.gen_collection_table(coll_list)
+
+
 class GetRenderedConfigdocs(CliAction):
     """Action to Get Rendered Configdocs"""
 
