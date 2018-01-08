@@ -323,7 +323,7 @@ conf:
       verify_site_query_interval: 10
       verify_site_task_timeout: 60
       prepare_site_query_interval: 10
-      prepare_site_task_timeout: 120
+      prepare_site_task_timeout: 300
       prepare_node_query_interval: 30
       prepare_node_task_timeout: 1800
       deploy_node_query_interval: 30

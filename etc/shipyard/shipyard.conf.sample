@@ -68,7 +68,7 @@
 #prepare_site_query_interval = 10
 
 # Time out (in seconds) for prepare_site task (integer value)
-#prepare_site_task_timeout = 120
+#prepare_site_task_timeout = 300
 
 # Query interval (in seconds) for prepare_node task (integer value)
 #prepare_node_query_interval = 30
