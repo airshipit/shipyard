@@ -532,14 +532,16 @@ Shipyard Buffer.
 ::
 
     shipyard get configdocs
-        <collection>
+        [<collection>]
         [--committed | --buffer]
 
     Example:
         shipyard get configdocs design
 
-<collection>
-  The collection to retrieve for viewing.
+[<collection>]
+  The collection to retrieve for viewing. If no collection is entered, the
+  status of the collections in the buffer and those that are committed will be
+  displayed.
 
 \--committed
   Retrieve the documents that have last been committed for this collection
@@ -549,8 +551,16 @@ Shipyard Buffer.
   prior commit. If no documents have been loaded into the buffer for this
   collection, this will return an empty response (default)
 
-Sample
-^^^^^^
+Samples
+^^^^^^^
+
+::
+
+    $ shipyard get configdocs
+    Collection        Committed       Buffer
+    coll1             present         unmodified
+    coll2             not present      created
+
 
 ::
 
@@ -643,7 +653,7 @@ help
 ~~~~
 Provides topical help for shipyard.
 
-.. note:: 
+.. note::
 
   --help will provide more specific command help.
 

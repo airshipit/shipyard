@@ -97,6 +97,23 @@ All versions of documents rely upon Deckhand for storage. Shipyard uses the
 tagging features of Deckhand of to find the appropriate Committed Documents
 and Shipyard Buffer version.
 
+/v1.0/configdocs
+~~~~~~~~~~~~~~~~
+Represents the site configuration documents' current statuses
+
+GET /v1.0/configdocs
+^^^^^^^^^^^^^^^^^^^^
+Returns a list of collections including their committed and buffer status.
+
+.. note::
+
+   The output type for this request is 'Content-Type: application/json'
+
+Responses
+'''''''''
+200 OK
+  If documents can be retrieved
+
 /v1.0/configdocs/{collection_id}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Represents the site configuration documents
@@ -822,7 +839,7 @@ Example
 '''''''
 .. note::
 
-   Sub_dags can be queried to restrict to only that sub-dag’s steps. e.g. using
+   Sub_dags can be queried to restrict to only that sub-dag’s steps. e.g. using
    this as {workflow_id}:
    deploy_site.preflight.armada_preflight_check__2017-10-09T21:19:03.000000
 
