@@ -15,6 +15,13 @@
 
 set -x
 
+# Note that we will need to execute the deckhand_load_yaml
+# script first before the deploy_site script
+# Check to ensure that the Shipyard CLI has been installed on
+# the Genesis host during the deckhand YAML load phase. Exit
+# script if Shipyard CLI is not installed.
+command -v shipyard >/dev/null 2>&1 || { echo >&2 "Please install Shipyard CLI before executing the script."; exit 1; }
+
 # Define Namespace
 namespace="ucp"
 
@@ -71,37 +78,10 @@ export OS_USERNAME=${OS_USERNAME}
 export OS_PASSWORD=${OS_PASSWORD}
 export OS_AUTH_URL=${OS_AUTH_URL}
 
-# Determine IP address of Ingress Controller
-# Note that the Ingress Controller currently needs to be in the same
-# namespace as the services that it is serving. The current workaround
-# will be to remove the Ingress Controller from OSH and put the UCP one
-# in the 'openstack' namespace. We should ideally have different Ingress
-# Controller for OpenStack and UCP. This logic will be updated at a
-# later date.
-ingress_controller_ip=`sudo kubectl get pods -n openstack -o wide | grep ingress-api | awk '{print $6}'`
-
-# Update /etc/hosts with the IP of the ingress controller
-# Note that these values would need to be set in the case
-# where DNS resolution of the Keystone and Shipyard URLs
-# is not available. We can skip this step if DNS is in place.
-cat << EOF | sudo tee -a /etc/hosts
-
-$ingress_controller_ip keystone.${namespace}
-$ingress_controller_ip shipyard-api.${namespace}.svc.cluster.local
-EOF
-
 # Define Color
 NC='\033[0m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-
-# Set up Genesis host with the Shipyard Client
-# This will allow us to use the Shipyard CLI
-git clone --depth=1 https://github.com/att-comdev/shipyard.git
-sudo apt install python3-pip -y
-sudo pip3 install --upgrade pip
-cd shipyard && sudo pip3 install -r requirements.txt
-sudo python3 setup.py install
 
 # Execute deploy_site
 echo -e "Execute deploy_site Dag...\n"
