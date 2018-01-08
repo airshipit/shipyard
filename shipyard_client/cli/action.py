@@ -167,10 +167,11 @@ class CliAction(AbstractCliAction):
             if self.auth_vars[var] is None:
                 err_txt.append(
                     'Missing the required authorization variable: '
-                    '--os_{}'.format(var))
+                    '--os-{}'.format(var.replace('_', '-')))
         if err_txt:
             for var in self.auth_vars:
                 if (self.auth_vars.get(var) is None and
                         var not in required_auth_vars):
-                    err_txt.append('- Also not set: --os_{}'.format(var))
+                    err_txt.append('- Also not set: --os-{}'.format(
+                        var.replace('_', '-')))
             raise AuthValuesError(diagnostic='\n'.join(err_txt))

@@ -42,9 +42,9 @@ def test_validate_auth_vars_missing_required():
         try:
             action.validate_auth_vars()
         except AuthValuesError as ex:
-            assert 'os_auth_url' in ex.diagnostic
-            assert 'os_username' not in ex.diagnostic
-            assert 'os_password' not in ex.diagnostic
+            assert 'os-auth-url' in ex.diagnostic
+            assert 'os-username' not in ex.diagnostic
+            assert 'os-password' not in ex.diagnostic
             raise
 
 
@@ -63,7 +63,7 @@ def test_validate_auth_vars_missing_required_and_others():
         try:
             action.validate_auth_vars()
         except AuthValuesError as ex:
-            assert 'os_auth_url' in ex.diagnostic
-            assert 'os_username' in ex.diagnostic
-            assert 'os_password' not in ex.diagnostic
+            assert 'os-auth-url' in ex.diagnostic
+            assert 'os-username' in ex.diagnostic
+            assert 'os-password' not in ex.diagnostic
             raise
