@@ -53,7 +53,7 @@ def test_create_action_negative():
 
 
 def test_create_configdocs():
-    """test create configdocs"""
+    """test create configdocs with filename"""
 
     collection = 'design'
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
@@ -63,6 +63,21 @@ def test_create_configdocs():
         runner.invoke(shipyard, [
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--filename=' + filename
+        ])
+    mock_method.assert_called_once_with(ANY, collection, 'append', ANY)
+
+
+def test_create_configdocs_directory():
+    """test create configdocs with directory"""
+
+    collection = 'design'
+    directory = 'shipyard_client/tests/unit/cli/create/sample_yaml'
+    append = 'append'
+    runner = CliRunner()
+    with patch.object(CreateConfigdocs, '__init__') as mock_method:
+        runner.invoke(shipyard, [
+            auth_vars, 'create', 'configdocs', collection, '--' + append,
+            '--directory=' + directory
         ])
     mock_method.assert_called_once_with(ANY, collection, 'append', ANY)
 
