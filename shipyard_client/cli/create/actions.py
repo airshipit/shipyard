@@ -52,12 +52,15 @@ class CreateAction(CliAction):
 class CreateConfigdocs(CliAction):
     """Action to Create Configdocs"""
 
-    def __init__(self, ctx, collection, buffer, data):
+    def __init__(self, ctx, collection, buffer, data, filename):
         """Sets parameters."""
         super().__init__(ctx)
-        self.logger.debug("CreateConfigdocs action initialized with" +
-                          " collection=%s,buffer=%s and data=%s", collection,
-                          buffer, str(data))
+        self.logger.debug("CreateConfigdocs action initialized with "
+                          "collection=%s,buffer=%s, "
+                          "Processed Files=" % (collection, buffer))
+        for file in filename:
+            self.logger.debug(file)
+        self.logger.debug("data=%s" % str(data))
         self.collection = collection
         self.buffer = buffer
         self.data = data

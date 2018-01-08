@@ -225,8 +225,8 @@ Sample
 
 create configdocs
 ~~~~~~~~~~~~~~~~~
-Load documents into the Shipyard Buffer. The use of one or more filename
-or a single directory option must be specified.
+Load documents into the Shipyard Buffer. The use of one or more filenames
+or one or more directory options must be specified.
 
 ::
 
@@ -235,7 +235,7 @@ or a single directory option must be specified.
         [--append | --replace]
         --filename=<filename>    (repeatable)
             |
-        --directory=<directory>
+        --directory=<directory>  (repeatable)
 
     Example:
         shipyard create configdocs design --append --filename=site_design.yaml
@@ -268,9 +268,13 @@ or a single directory option must be specified.
 
 \--directory=<directory>
   A directory containing documents that will be joined and loaded as a
-  collection. Any documents that fail basic validation will reject the
+  collection. (Repeatable) Any documents that fail basic validation will reject the
   whole set. Use of the directory parameter may not be used with the
   filename parameter.
+
+\--recurse
+  Recursively search through all directories for sub-directories that
+  contain yaml files.
 
 Sample
 ^^^^^^
