@@ -60,6 +60,7 @@ ingress_controller_ip=`sudo kubectl get pods -n openstack -o wide | grep ingress
 # where DNS resolution of the Keystone and Shipyard URLs
 # is not available. We can skip this step if DNS is in place.
 cat << EOF | sudo tee -a /etc/hosts
+
 $ingress_controller_ip keystone.${namespace}
 $ingress_controller_ip shipyard-api.${namespace}.svc.cluster.local
 EOF
@@ -71,6 +72,14 @@ sudo apt install python3-pip -y
 sudo pip3 install --upgrade pip
 cd shipyard && sudo pip3 install -r requirements.txt
 sudo python3 setup.py install
+
+# Export Environment Variables
+export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
+export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
+export OS_PROJECT_NAME=${OS_PROJECT_NAME}
+export OS_USERNAME=${OS_USERNAME}
+export OS_PASSWORD=${OS_PASSWORD}
+export OS_AUTH_URL=${OS_AUTH_URL}
 
 # The directory will contain all the .yaml files with Drydock, Promenade,
 # Armada, and Divingbell configurations. It will also contain all the
