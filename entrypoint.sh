@@ -14,10 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Start shipyard application
-exec uwsgi \
-    --http :9000 \
-    --paste config:/etc/shipyard/api-paste.ini \
-    --enable-threads \
-    -L \
-    --pyargv "--config-file /etc/shipyard/shipyard.conf"
+set -ex
+
+CMD="shipyard"
+PORT="9000"
+
+if [ "$1" = 'server' ]; then
+    # Start shipyard application
+    exec uwsgi \
+        --http :${PORT} \
+        --paste config:/etc/shipyard/api-paste.ini \
+        --enable-threads \
+        -L \
+        --pyargv "--config-file /etc/shipyard/shipyard.conf"
+else
+    # Execute shipyard command
+    exec ${CMD} $@
+fi

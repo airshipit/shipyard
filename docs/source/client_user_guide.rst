@@ -171,6 +171,29 @@ response::
    the value that Keystone returns when service lookup is done for the public
    URL for Shipyard.
 
+Running Shipyard CLI with Docker Container
+------------------------------------------
+It is also possible to execute Shipyard CLI using docker container
+
+Note that we will need to pass the relevant environment information as well
+as the Shipyard command that we wish to execute as part of the ``docker run``
+command. In this example we will execute the ``get actions`` command::
+
+  sudo docker run -e 'OS_AUTH_URL=http://keystone-api.ucp.svc.cluster.local:80/v3' \
+  -e 'OS_PASSWORD=password' -e 'OS_PROJECT_DOMAIN_NAME=default' \
+  -e 'OS_PROJECT_NAME=service' -e 'OS_USERNAME=shipyard' \
+  -e 'OS_USER_DOMAIN_NAME=default' -e 'OS_IDENTITY_API_VERSION=3' \
+  --rm --net=host attcomdev/shipyard:latest get actions
+
+The output will resemble the following::
+
+  + CMD=shipyard
+  + PORT=9000
+  + '[' get = server ']'
+  + exec shipyard get actions
+  Name               Action                                   Lifecycle
+  deploy_site        action/01C1Z4HQM8RFG823EQT3EAYE4X        Processing
+
 Use Case: Ingest Site Design
 ----------------------------
 Shipyard serves as the entrypoint for a deployment of the Undercloud Platform
