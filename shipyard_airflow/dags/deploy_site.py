@@ -26,15 +26,8 @@ from drydock_deploy_site import deploy_site_drydock
 from preflight_checks import all_preflight_checks
 from validate_site_design import validate_site_design
 """
-NOTE: We are currently in the process of reviewing and merging patch sets
-from various UCP components that are needed for the 'deploy_site' dag to
-work properly. In order to proceed with integration testing with the CI/CD
-team, there is a need to rename the 'deploy_site.py' dag as 'deploy_site.wip'
-while we sort out, review and merge the outstanding patch sets.
-
-NOTE: We will only include Concurrency_Check, Armada and DryDock workflow here
-for our current testing. Updates will be made to this test dag as we progress
-along with the integration testing and UCP code reviews/merge.
+deploy_site is the top-level orchestration DAG for deploying a site using the
+Undercloud platform.
 """
 
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
