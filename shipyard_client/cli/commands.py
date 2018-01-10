@@ -72,7 +72,6 @@ def shipyard(ctx, context_marker, debug, os_project_domain_name,
     FORMAT: shipyard [--context-marker=<uuid>] [--os_{various}=<value>]
     [--debug/--no-debug] [--output-format=<json,yaml,raw] <subcommands> \n
     """
-
     if not ctx.obj:
         ctx.obj = {}
 

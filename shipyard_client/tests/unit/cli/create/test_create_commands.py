@@ -58,13 +58,15 @@ def test_create_configdocs():
     collection = 'design'
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
     append = 'append'
+    file_list = (filename,)
     runner = CliRunner()
     with patch.object(CreateConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--filename=' + filename
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append', ANY)
+    mock_method.assert_called_once_with(ANY, collection, 'append',
+                                        ANY, file_list)
 
 
 def test_create_configdocs_directory():
@@ -79,7 +81,39 @@ def test_create_configdocs_directory():
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--directory=' + directory
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append', ANY)
+    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
+
+
+def test_create_configdocs_multi_directory():
+    """test create configdocs with multiple directories"""
+
+    collection = 'design'
+    dir1 = 'shipyard_client/tests/unit/cli/create/sample_yaml/'
+    dir2 = 'shipyard_client/tests/unit/cli/create/sample_yaml0/'
+    append = 'append'
+    runner = CliRunner()
+    with patch.object(CreateConfigdocs, '__init__') as mock_method:
+        runner.invoke(shipyard, [
+            auth_vars, 'create', 'configdocs', collection, '--' + append,
+            '--directory=' + dir1, '--directory=' + dir2
+        ])
+    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
+
+
+def test_create_configdocs_multi_directory_recurse():
+    """test create configdocs with multiple directories"""
+
+    collection = 'design'
+    dir1 = 'shipyard_client/tests/unit/cli/create/sample_yaml/'
+    dir2 = 'shipyard_client/tests/unit/cli/create/sample_yaml0/'
+    append = 'append'
+    runner = CliRunner()
+    with patch.object(CreateConfigdocs, '__init__') as mock_method:
+        runner.invoke(shipyard, [
+            auth_vars, 'create', 'configdocs', collection, '--' + append,
+            '--directory=' + dir1, '--directory=' + dir2, '--recurse'
+        ])
+    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
 
 
 def test_create_configdocs_negative():

@@ -105,11 +105,13 @@ def test_create_configdocs(*args):
 
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
     document_data = yaml.dump_all(filename)
+    file_list = (filename,)
 
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
-                                document_data).invoke_and_return_resp()
+                                document_data,
+                                file_list).invoke_and_return_resp()
     assert 'Configuration documents added.'
     assert 'Status: Validations succeeded' in response
     assert 'Reason: Validation' in response
@@ -132,11 +134,13 @@ def test_create_configdocs_201_with_val_fails(*args):
 
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
     document_data = yaml.dump_all(filename)
+    file_list = (filename,)
 
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
-                                document_data).invoke_and_return_resp()
+                                document_data,
+                                file_list).invoke_and_return_resp()
     assert 'Configuration documents added.' in response
     assert 'Status: Validations failed' in response
     assert 'Reason: Validation' in response
@@ -160,11 +164,13 @@ def test_create_configdocs_409(*args):
 
     filename = 'shipyard_client/tests/unit/cli/create/sample_yaml/sample.yaml'
     document_data = yaml.dump_all(filename)
+    file_list = (filename,)
 
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
-                                document_data).invoke_and_return_resp()
+                                document_data,
+                                file_list).invoke_and_return_resp()
     assert 'Error: Invalid collection' in response
     assert 'Reason: Buffermode : append' in response
     assert 'Buffer is either not...' in response

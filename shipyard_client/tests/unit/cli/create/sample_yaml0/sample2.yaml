@@ -1,0 +1,9 @@
+summer:
+  sport                : tennis
+  vacation             : Florida
+  temperature          : 90F
+---
+fall:
+  holiday              : Thanksgiving
+  food                 : pumpkin
+  color                : orange

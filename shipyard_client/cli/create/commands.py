@@ -72,7 +72,8 @@ DESC_CONFIGDOCS = """
 COMMAND: configdocs \n
 DESCRIPTION: Load documents into the Shipyard Buffer. \n
 FORMAT: shipyard create configdocs <collection> [--append | --replace]
-[--filename=<filename> (repeatable) | --directory=<directory] \n
+[--filename=<filename> (repeatable) | --directory=<directory>] (repeatable)
+ --recurse\n
 EXAMPLE: shipyard create configdocs design --append
 --filename=site_design.yaml
 """
@@ -100,18 +101,25 @@ SHORT_DESC_CONFIGDOCS = "Load documents into the Shipyard Buffer."
     '(Repeatable). ')
 @click.option(
     '--directory',
+    multiple=True,
     type=click.Path(exists=True),
     help='A directory containing documents that will be joined and loaded as '
-    'a collection.')
+    'a collection. (Repeatable).')
+@click.option(
+    '--recurse',
+    flag_value=True,
+    help='Recursively search through directories for yaml files.'
+)
 @click.pass_context
-def create_configdocs(ctx, collection, filename, directory, append, replace):
-
+def create_configdocs(ctx, collection, filename, directory, append,
+                      replace, recurse):
     if (append and replace):
         ctx.fail('Either append or replace may be selected but not both')
     if (not filename and not directory) or (filename and directory):
         ctx.fail('Please specify one or more filenames using '
-                 '--filename="<filename>" OR a directory using '
+                 '--filename="<filename>" OR one or more directories using '
                  '--directory="<directory>"')
+
     if append:
         create_buffer = 'append'
     elif replace:
@@ -120,15 +128,23 @@ def create_configdocs(ctx, collection, filename, directory, append, replace):
         create_buffer = None
 
     if directory:
-        filename += tuple(
-            [os.path.join(directory, each) for each in os.listdir(directory)
-             if each.endswith('.yaml')])
-        if filename is None:
-            ctx.fail('The directory does not contain any YAML files. Please '
-                     'enter one or more YAML files or a directory that '
-                     'contains one or more YAML files.')
-    docs = []
+        for dir in directory:
+            if recurse:
+                for path, dirs, files in os.walk(dir):
+                    filename += tuple(
+                        [os.path.join(path, name) for name in files
+                         if name.endswith('.yaml')])
+            else:
+                filename += tuple(
+                    [os.path.join(dir, each) for each in os.listdir(dir)
+                     if each.endswith('.yaml')])
 
+        if filename is None:
+            ctx.fail('The directory does not contain any YAML files.'
+                     'Please enter one or more YAML files or a '
+                     'directory that contains one or more YAML files.')
+
+    docs = []
     for file in filename:
         with open(file, 'r') as stream:
             if file.endswith(".yaml"):
@@ -144,5 +160,5 @@ def create_configdocs(ctx, collection, filename, directory, append, replace):
     data = yaml.safe_dump_all(docs)
 
     click.echo(
-        CreateConfigdocs(ctx, collection, create_buffer, data)
+        CreateConfigdocs(ctx, collection, create_buffer, data, filename)
         .invoke_and_return_resp())
