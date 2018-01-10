@@ -117,11 +117,13 @@ def test_rendered_config_docs(*args):
 def test_commit_configs(*args):
     shipyard_client = get_api_client()
     force_mode = True
-    result = shipyard_client.commit_configdocs(force_mode)
+    dryrun_mode = True
+    result = shipyard_client.commit_configdocs(force_mode, dryrun_mode)
     params = result['params']
     assert result['url'] == '{}/commitconfigdocs'.format(
         shipyard_client.get_endpoint())
     assert params['force'] == force_mode
+    assert params['dryrun'] == dryrun_mode
 
 
 @mock.patch.object(BaseClient, 'post_resp', replace_post_rep)

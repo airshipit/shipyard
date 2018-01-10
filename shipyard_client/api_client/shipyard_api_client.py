@@ -100,13 +100,14 @@ class ShipyardClient(BaseClient):
         )
         return self.get_resp(url, query_params)
 
-    def commit_configdocs(self, force=False):
+    def commit_configdocs(self, force=False, dryrun=False):
         """
         :param force: boolean, True|False
+        :param dryrun: boolean, True|False
         :returns: dictionary, validations from UCP components
         :rtype: Response object
         """
-        query_params = {"force": force}
+        query_params = {"force": force, "dryrun": dryrun}
         url = ApiPaths.COMMIT_CONFIG.value.format(self.get_endpoint())
         return self.post_resp(url, query_params)
 
