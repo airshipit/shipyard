@@ -13,7 +13,7 @@
 # limitations under the License.
 """ Tests for the configdocs_api"""
 import mock
-from mock import patch
+from mock import ANY, patch
 
 import pytest
 
@@ -119,6 +119,25 @@ class TestConfigDocsResource():
 
 
 class TestCommitConfigDocsResource():
+    @mock.patch.object(ApiLock, 'release')
+    @mock.patch.object(ApiLock, 'acquire')
+    def test_on_post(self, mock_acquire, mock_release, api_client):
+        queries = ["", "force=true", "dryrun=true"]
+        ccdr = CommitConfigDocsResource()
+        with patch.object(
+            CommitConfigDocsResource, 'commit_configdocs', return_value={}
+        ) as mock_method:
+            for q in queries:
+                result = api_client.simulate_post(
+                    "/api/v1.0/commitconfigdocs", query_string=q,
+                    headers=common.AUTH_HEADERS)
+                assert result.status_code == 200
+        mock_method.assert_has_calls([
+            mock.call(ANY, False, False),
+            mock.call(ANY, True, False),
+            mock.call(ANY, False, True)
+        ])
+
     def test_commit_configdocs(self):
         """
         Tests the CommitConfigDocsResource method commit_configdocs
@@ -129,7 +148,7 @@ class TestCommitConfigDocsResource():
             helper = ConfigdocsHelper(CTX)
             helper.is_buffer_empty = lambda: False
             helper.get_validations_for_buffer = lambda: {'status': 'Success'}
-            commit_resp = ccdr.commit_configdocs(helper, False)
+            commit_resp = ccdr.commit_configdocs(helper, False, False)
 
         mock_method.assert_called_once_with('committed')
         assert commit_resp['status'] == 'Success'
@@ -145,7 +164,7 @@ class TestCommitConfigDocsResource():
                     'message': 'this is a mock response'
                 }
             )
-            commit_resp = ccdr.commit_configdocs(helper, False)
+            commit_resp = ccdr.commit_configdocs(helper, False, False)
         assert '400' in commit_resp['code']
         assert commit_resp['message'] is not None
         assert commit_resp['status'] == 'Failure'
@@ -160,10 +179,9 @@ class TestCommitConfigDocsResource():
             helper = ConfigdocsHelper(CTX)
             helper.is_buffer_empty = lambda: False
             helper.get_validations_for_buffer = lambda: {'status': 'Failure'}
-            commit_resp = ccdr.commit_configdocs(helper, True)
+            commit_resp = ccdr.commit_configdocs(helper, True, False)
 
         mock_method.assert_called_once_with('committed')
-        print(commit_resp)
         assert '200' in commit_resp['code']
         assert 'FORCED' in commit_resp['message']
         assert commit_resp['status'] == 'Failure'
@@ -178,4 +196,20 @@ class TestCommitConfigDocsResource():
             helper = ConfigdocsHelper(CTX)
             helper.is_buffer_empty = lambda: True
             helper.get_validations_for_buffer = lambda: {'status': 'Success'}
-            ccdr.commit_configdocs(helper, False)
+            ccdr.commit_configdocs(helper, False, False)
+
+    def test_commit_configdocs_dryrun(self):
+        """
+        Tests the CommitConfigDocsResource method commit_configdocs
+        """
+        ccdr = CommitConfigDocsResource()
+        commit_resp = None
+        with patch.object(ConfigdocsHelper, 'tag_buffer') as mock_method:
+            helper = ConfigdocsHelper(CTX)
+            helper.is_buffer_empty = lambda: False
+            helper.get_validations_for_buffer = lambda: {'status': 'Success'}
+            commit_resp = ccdr.commit_configdocs(helper, False, True)
+
+        assert '200' in commit_resp['code']
+        assert commit_resp['message'] == 'DRYRUN'
+        assert commit_resp['status'] == 'Success'

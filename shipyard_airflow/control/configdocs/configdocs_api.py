@@ -144,14 +144,15 @@ class CommitConfigDocsResource(BaseResource):
         Get validations from all UCP components
         Functionality does not exist yet
         """
-        # force query parameter is False unless explicitly true
+        # force and dryrun query parameter is False unless explicitly true
         force = req.get_param_as_bool(name='force') or False
+        dryrun = req.get_param_as_bool(name='dryrun') or False
         helper = ConfigdocsHelper(req.context)
-        validations = self.commit_configdocs(helper, force)
+        validations = self.commit_configdocs(helper, force, dryrun)
         resp.body = self.to_json(validations)
         resp.status = validations.get('code', falcon.HTTP_200)
 
-    def commit_configdocs(self, helper, force):
+    def commit_configdocs(self, helper, force, dryrun):
         """
         Attempts to commit the configdocs
         """
@@ -162,14 +163,22 @@ class CommitConfigDocsResource(BaseResource):
                 status=falcon.HTTP_409,
                 retry=True)
         validations = helper.get_validations_for_buffer()
-        if force or validations.get('status') == 'Success':
-            helper.tag_buffer(configdocs_helper.COMMITTED)
-        if force and validations.get('status') == 'Failure':
-            # override the status in the response
+        if dryrun:
             validations['code'] = falcon.HTTP_200
-            if validations.get('message'):
+            if 'message' in validations:
                 validations['message'] = (
-                    validations['message'] + ' FORCED SUCCESS')
+                    validations['message'] + ' DRYRUN')
             else:
-                validations['message'] = 'FORCED SUCCESS'
+                validations['message'] = 'DRYRUN'
+        else:
+            if force or validations.get('status') == 'Success':
+                helper.tag_buffer(configdocs_helper.COMMITTED)
+            if force and validations.get('status') == 'Failure':
+                # override the status in the response
+                validations['code'] = falcon.HTTP_200
+                if 'message' in validations:
+                    validations['message'] = (
+                        validations['message'] + ' FORCED SUCCESS')
+                else:
+                    validations['message'] = 'FORCED SUCCESS'
         return validations
