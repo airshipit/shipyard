@@ -19,17 +19,19 @@ from shipyard_client.cli import format_utils
 class CommitConfigdocs(CliAction):
     """Actions to Commit Configdocs"""
 
-    def __init__(self, ctx, force):
+    def __init__(self, ctx, force, dryrun):
         """Sets parameters."""
         super().__init__(ctx)
         self.force = force
-        self.logger.debug("CommitConfigdocs action initialized with force=%s",
-                          force)
+        self.dryrun = dryrun
+        self.logger.debug("CommitConfigdocs action initialized with force=%s "
+                          "and dryrun=%s.", force, dryrun)
 
     def invoke(self):
         """Calls API Client and formats response from API Client"""
         self.logger.debug("Calling API Client commit_configdocs.")
-        return self.get_api_client().commit_configdocs(force=self.force)
+        return self.get_api_client().commit_configdocs(force=self.force,
+                                                       dryrun=self.dryrun)
 
     # Handle 400, 409 with default error handler for cli.
     cli_handled_err_resp_codes = [400, 409]
@@ -44,7 +46,11 @@ class CommitConfigdocs(CliAction):
         :returns: a string representing a formatted response
             Handles 200 responses
         """
-        outfmt_string = "Configuration documents committed.\n{}"
+        if self.dryrun:
+            outfmt_string = ("Configuration documents were not committed. "
+                             "Currently in dryrun mode.\n{}")
+        else:
+            outfmt_string = "Configuration documents committed.\n{}"
         return outfmt_string.format(
             format_utils.cli_format_status_handler(response)
         )

@@ -34,7 +34,7 @@ DESC_CONFIGDOCS = """
 COMMAND: configdocs \n
 DESCRIPTION: Attempts to commit the Shipyard Buffer documents, first
 invoking validation by downstream components. \n
-FORMAT: shipyard commit configdocs [--force] \n
+FORMAT: shipyard commit configdocs [--force | --dryrun] \n
 EXAMPLE: shipyard commit configdocs
 """
 
@@ -49,6 +49,13 @@ SHORT_DESC_CONFIGDOCS = ("Attempts to commit the Shipyard Buffer documents, "
     '-f',
     flag_value=True,
     help='Force the commit to occur, even if validations fail.')
+@click.option(
+    '--dryrun',
+    flag_value=True,
+    help='Retrieve validation status for the contents of the buffer without '
+    'committing.')
 @click.pass_context
-def commit_configdocs(ctx, force):
-    click.echo(CommitConfigdocs(ctx, force).invoke_and_return_resp())
+def commit_configdocs(ctx, force, dryrun):
+    if (force and dryrun):
+        ctx.fail('Either force or dryrun may be selected but not both.')
+    click.echo(CommitConfigdocs(ctx, force, dryrun).invoke_and_return_resp())

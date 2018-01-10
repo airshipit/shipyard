@@ -29,7 +29,7 @@ def test_commit_configdocs(*args):
                   body=None,
                   status=200)
     response = CommitConfigdocs(stubs.StubCliContext(),
-                                False).invoke_and_return_resp()
+                                False, False).invoke_and_return_resp()
     assert response == 'Configuration documents committed.\n'
 
 
@@ -48,7 +48,7 @@ def test_commit_configdocs_409(*args):
                   body=api_resp,
                   status=409)
     response = CommitConfigdocs(stubs.StubCliContext(),
-                                False).invoke_and_return_resp()
+                                False, False).invoke_and_return_resp()
     assert 'Error: Conflicts message' in response
     assert 'Configuration documents committed' not in response
     assert 'Reason: Conflicts reason' in response
@@ -69,7 +69,21 @@ def test_commit_configdocs_forced(*args):
                   body=api_resp,
                   status=200)
     response = CommitConfigdocs(stubs.StubCliContext(),
-                                True).invoke_and_return_resp()
+                                True, False).invoke_and_return_resp()
     assert 'Status: Conflicts message forced' in response
     assert 'Configuration documents committed' in response
     assert 'Reason: Conflicts reason' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_commit_configdocs_dryrun(*args):
+    responses.add(responses.POST,
+                  'http://shiptest/commitconfigdocs?force=false',
+                  body=None,
+                  status=200)
+    response = CommitConfigdocs(stubs.StubCliContext(),
+                                False, True).invoke_and_return_resp()
+    assert response == ('Configuration documents were not committed. Currently'
+                        ' in dryrun mode.\n')
