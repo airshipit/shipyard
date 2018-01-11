@@ -114,6 +114,9 @@ downstream components.
 \--force
   Force the commit to occur, even if validations fail.
 
+\--dryrun
+  Retrieve validation status for the contents of the buffer without committing.
+
 Sample
 ^^^^^^
 

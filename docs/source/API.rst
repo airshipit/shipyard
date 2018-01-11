@@ -266,6 +266,11 @@ force=true | **false**
   will still be moved from the Shipyard Buffer to the Committed
   Documents.
 
+dryrun=true | **false**
+  By default, false.  With dryrun=true, the response will contain the
+  validation status for the contents of the buffer.  The Shipyard Buffer will
+  not be committed.
+
 Responses
 '''''''''
 200 OK
