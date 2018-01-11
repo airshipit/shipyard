@@ -290,6 +290,9 @@ database:
     db_root_user: postgres
 
 conf:
+  uwsgi:
+    threads: 1
+    workers: 4
   policy:
     admin_required: role:admin
     workflow_orchestrator:list_actions: rule:admin_required

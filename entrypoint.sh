@@ -17,7 +17,11 @@
 set -ex
 
 CMD="shipyard"
-PORT="9000"
+PORT=${PORT:-9000}
+# Number of uWSGI workers to handle API request
+SHIPYARD_API_WORKERS=${SHIPYARD_API_WORKERS:-"4"}
+#Threads per worker
+SHIPYARD_API_THREADS=${SHIPYARD_API_THREADS:-"1"}
 
 if [ "$1" = 'server' ]; then
     # Start shipyard application
@@ -26,7 +30,9 @@ if [ "$1" = 'server' ]; then
         --paste config:/etc/shipyard/api-paste.ini \
         --enable-threads \
         -L \
-        --pyargv "--config-file /etc/shipyard/shipyard.conf"
+        --pyargv "--config-file /etc/shipyard/shipyard.conf" \
+        --threads $SHIPYARD_API_THREADS \
+        --workers $SHIPYARD_API_WORKERS
 else
     # Execute shipyard command
     exec ${CMD} $@

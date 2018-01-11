@@ -44,6 +44,11 @@ spec:
 {{ tuple $envAll $dependencies $mounts_shipyard_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: shipyard
+          env:
+            - name: 'SHIPYARD_API_WORKERS'
+              value: {{ .Values.conf.uwsgi.workers | quote }}
+            - name: 'SHIPYARD_API_THREADS'
+              value: {{ .Values.conf.uwsgi.threads | quote }}
           image: {{ .Values.images.tags.shipyard }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
