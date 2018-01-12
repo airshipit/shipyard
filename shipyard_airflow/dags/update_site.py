@@ -14,27 +14,29 @@
 from datetime import timedelta
 
 import airflow
-from airflow import DAG
 import failure_handlers
-from preflight_checks import all_preflight_checks
-from drydock_deploy_site import deploy_site_drydock
-from validate_site_design import validate_site_design
-from airflow.operators.subdag_operator import SubDagOperator
+from airflow import DAG
 from airflow.operators import ConcurrencyCheckOperator
-from airflow.operators import DeckhandOperator
-from airflow.operators import PlaceholderOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.subdag_operator import SubDagOperator
+
+from armada_deploy_site import deploy_site_armada
+from deckhand_get_design import get_design_deckhand
+from drydock_deploy_site import deploy_site_drydock
+from preflight_checks import all_preflight_checks
+from validate_site_design import validate_site_design
 """
 update_site is the top-level orchestration DAG for updating a site using the
 Undercloud platform.
 """
 
-PARENT_DAG_NAME = 'update_site'
-DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
+ARMADA_BUILD_DAG_NAME = 'armada_build'
+DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
-VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
+PARENT_DAG_NAME = 'update_site'
+VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 
 default_args = {
     'owner': 'airflow',
@@ -45,7 +47,7 @@ default_args = {
     'email_on_retry': False,
     'provide_context': True,
     'retries': 0,
-    'retry_delay': timedelta(minutes=1),
+    'retry_delay': timedelta(seconds=30),
 }
 
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
@@ -77,7 +79,9 @@ preflight = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-get_design_version = DeckhandOperator(
+get_design_version = SubDagOperator(
+    subdag=get_design_deckhand(
+        PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
     task_id=DECKHAND_GET_DESIGN_VERSION,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
@@ -96,13 +100,10 @@ drydock_build = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-query_node_status = PlaceholderOperator(
-    task_id='deployed_node_status',
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-armada_build = PlaceholderOperator(
-    task_id='armada_build',
+armada_build = SubDagOperator(
+    subdag=deploy_site_armada(
+        PARENT_DAG_NAME, ARMADA_BUILD_DAG_NAME, args=default_args),
+    task_id=ARMADA_BUILD_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
@@ -112,5 +113,4 @@ preflight.set_upstream(concurrency_check)
 get_design_version.set_upstream(preflight)
 validate_site_design.set_upstream(get_design_version)
 drydock_build.set_upstream(validate_site_design)
-query_node_status.set_upstream(drydock_build)
-armada_build.set_upstream(query_node_status)
+armada_build.set_upstream(drydock_build)
