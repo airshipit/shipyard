@@ -128,6 +128,70 @@ def test_cli_format_error_handler_messages_broken():
     assert "- Info: Hello3" in output
 
 
+def test_cli_format_status_handler_messages():
+    """Tests the generic handler for shipyard status response if passed
+    a response with messages in the detail
+    """
+    resp_val = """
+{
+  "apiVersion": "v1.0",
+  "status": "Failure",
+  "metadata": {},
+  "message": "Component Validation Failed",
+  "code": 400,
+  "details": {
+      "errorCount": 4,
+      "messageList": [
+          { "message":"Conflicting something",
+            "error": true,
+            "kind": "ValidationMessage",
+            "name": "val1",
+            "documents": [
+                { "schema": "schema/schema/v1",
+                  "name": "someyaml"
+                }
+            ],
+            "level": "Error",
+            "diagnostic": "Make a doc change"
+          },
+          { "message":"Backwards something",
+            "error": true,
+            "kind": "ValidationMessage",
+            "name": "val2",
+            "documents": [],
+            "level": "Error"
+          },
+          { "message": "Missing stuff",
+            "error": true
+          },
+          { "message":"Broken syntax",
+            "kind": "SimpleMessage",
+            "error": true,
+            "name": null,
+            "diagnostic": null
+          }
+      ]
+  },
+  "kind": "Status",
+  "reason": "Validation"
+}
+"""
+    expected = """Error: Component Validation Failed
+Reason: Validation
+- Error: val1
+        Message: Conflicting something
+        Diagnostic: Make a doc change
+        Document: schema/schema/v1 - someyaml
+- Error: val2
+        Message: Backwards something
+- Error: Missing stuff
+- Error: Broken syntax"""
+    resp = MagicMock()
+    resp.json = MagicMock(return_value=json.loads(resp_val))
+    output = format_utils.cli_format_status_handler(resp, is_error=True)
+    assert output == expected
+
+
 def test_table_factory():
     t = format_utils.table_factory()
     assert t.get_string() == ''

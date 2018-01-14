@@ -54,6 +54,7 @@ def cli_format_status_handler(response, is_error=False):
     """
     formatted = "Error: {}\nReason: {}" if is_error \
         else "Status: {}\nReason: {}"
+    indent = ' ' * 8
     try:
         if response.text:
             resp_j = response.json()
@@ -61,12 +62,32 @@ def cli_format_status_handler(response, is_error=False):
                                     resp_j.get('reason', 'Not specified'))
             if resp_j.get('details'):
                 for message in resp_j.get('details').get('messageList', []):
-                    if message.get('error', False):
-                        resp = resp + '\n- Error: {}'.format(
-                            message.get('message'))
+                    if message.get('kind') == 'ValidationMessage':
+                        resp = resp + '\n- {}: {}'.format(
+                            message.get('level'),
+                            message.get('name')
+                        )
+                        resp = resp + '\n{}Message: {}'.format(
+                            indent,
+                            message.get('message')
+                        )
+                        if message.get('diagnostic'):
+                            resp = resp + '\n{}Diagnostic: {}'.format(
+                                indent, message.get('diagnostic')
+                            )
+                        for doc in message.get('documents', []):
+                            resp = resp + '\n{}Document: {} - {}'.format(
+                                indent,
+                                doc.get('schema'),
+                                doc.get('name')
+                            )
                     else:
-                        resp = resp + '\n- Info: {}'.format(
-                            message.get('message'))
+                        if message.get('error', False):
+                            resp = resp + '\n- Error: {}'.format(
+                                message.get('message'))
+                        else:
+                            resp = resp + '\n- Info: {}'.format(
+                                message.get('message'))
             return resp
         else:
             return ''

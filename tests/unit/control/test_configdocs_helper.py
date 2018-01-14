@@ -546,7 +546,7 @@ def _fake_get_validations_for_component(url, design_reference, response,
 
 def test_get_validations_for_revision():
     """
-    Tets the functionality of the get_validations_for_revision method
+    Tests the functionality of the get_validations_for_revision method
     """
     with patch('shipyard_airflow.control.configdocs.deckhand_client.'
                'DeckhandClient.get_path') as mock_get_path:
@@ -569,6 +569,129 @@ def test_get_validations_for_revision():
             helper.__class__._get_validation_endpoints = hold_ve
             helper.__class__._get_validations_for_component = hold_vfc
     mock_get_path.assert_called_with(DeckhandPaths.RENDERED_REVISION_DOCS)
+
+
+def test_generate_validation_message():
+    """Test for static method to generate a ValidationMessage
+
+    Test for a basic message without a kind set.
+    """
+    message = {
+        'message': 'message',
+        'error': False
+    }
+    expected = {
+        'message': 'message',
+        'error': False,
+        'kind': 'ValidationMessage',
+        'level': 'Info',
+        'documents': [],
+        'diagnostic': None,
+        'name': None,
+        'source': None
+    }
+
+    generated = ConfigdocsHelper._generate_validation_message(message)
+    assert generated == expected
+
+
+def test_generate_validation_message_args():
+    """Test for static method to generate a ValidationMessage
+
+    Test for a SimpleMessage message with some arg defaults
+    """
+    message = {
+        'message': 'message',
+        'error': True,
+        'kind': 'SimpleMessage'
+    }
+    kwargs = {
+        'name': 'namename',
+        'source': 'testing',
+        'message': 'not this',
+        'error': False,
+        'documents': []
+    }
+    expected = {
+        'message': 'message',
+        'error': True,
+        'kind': 'ValidationMessage',
+        'level': 'Error',
+        'source': 'testing',
+        'name': 'namename',
+        'documents': [],
+        'diagnostic': None
+    }
+
+    generated = ConfigdocsHelper._generate_validation_message(message,
+                                                              **kwargs)
+    assert generated == expected
+
+
+def test_generate_validation_message_args_full():
+    """Test for static method to generate a ValidationMessage
+
+    Test for something that is already a validation message.
+    """
+    message = {
+        'message': 'message',
+        'error': False,
+        'kind': 'ValidationMessage',
+        'level': 'Warning',
+        'source': 'testing',
+        'name': 'namename',
+        'documents': []
+    }
+    kwargs = {
+        'message': 'not this',
+        'error': True
+    }
+    expected = {
+        'message': 'message',
+        'error': False,
+        'kind': 'ValidationMessage',
+        'level': 'Warning',
+        'source': 'testing',
+        'name': 'namename',
+        'documents': [],
+        'diagnostic': None
+    }
+
+    generated = ConfigdocsHelper._generate_validation_message(message,
+                                                              **kwargs)
+    assert generated == expected
+
+
+def test_generate_dh_val_message():
+    """Test for static method to generate a ValidationMessage
+
+    Test for something that is already a validation message.
+    """
+    message = {
+        'validation_schema': 'vs',
+        'schema_path': 'sp',
+        'name': 'dn',
+        'schema': 's',
+        'path': 'p',
+        'error_section': 'es',
+        'message': 'm'
+    }
+    expected = {
+        'message': 'm',
+        'error': True,
+        'kind': 'ValidationMessage',
+        'level': 'Error',
+        'source': 'Deckhand',
+        'name': 'dn',
+        'documents': [{'name': 'dn', 'schema': 's'}],
+        'diagnostic': 'Section: es at p (schema vs at sp)',
+    }
+
+    generated = ConfigdocsHelper._generate_dh_val_msg(
+        message,
+        dh_result_name='x'
+    )
+    assert generated == expected
 
 
 FK_VAL_BASE_RESP = FakeResponse(
@@ -635,6 +758,57 @@ def test__get_deckhand_validations():
     helper.deckhand._get_entry_validation_response = (
         lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP)
     assert len(helper._get_deckhand_validations(5)) == 2
+
+
+FK_VAL_ENTRY_RESP_EMPTY = FakeResponse(
+    status_code=200,
+    text="""
+---
+name: promenade-site-validation
+url: https://deckhand/a/url/too/long/for/pep8
+status: failure
+createdAt: 2017-07-16T02:03Z
+expiresAfter: null
+expiresAt: null
+errors: []
+...
+""")
+
+
+def test__get_deckhand_validations_empty_errors():
+    """
+    Tets the functionality of processing a response from deckhand
+    """
+    helper = ConfigdocsHelper(CTX)
+    helper.deckhand._get_base_validation_resp = (
+        lambda revision_id: FK_VAL_BASE_RESP)
+    helper.deckhand._get_subset_validation_response = (
+        lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
+    helper.deckhand._get_entry_validation_response = (
+        lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP_EMPTY)
+    assert len(helper._get_deckhand_validations(5)) == 0
+
+
+FK_VAL_BASE_RESP_EMPTY = FakeResponse(
+    status_code=200,
+    text="""
+---
+count: 0
+next: null
+prev: null
+results: []
+...
+""")
+
+
+def test__get_deckhand_validations_empty_results():
+    """
+    Tets the functionality of processing a response from deckhand
+    """
+    helper = ConfigdocsHelper(CTX)
+    helper.deckhand._get_base_validation_resp = (
+        lambda revision_id: FK_VAL_BASE_RESP_EMPTY)
+    assert len(helper._get_deckhand_validations(5)) == 0
 
 
 def test_tag_buffer():

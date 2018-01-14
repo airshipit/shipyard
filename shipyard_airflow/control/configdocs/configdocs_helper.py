@@ -458,9 +458,11 @@ class ConfigdocsHelper(object):
                 'details': {
                     'messageList': [{
                         'message': unable_str,
+                        'kind': 'SimpleMessage',
                         'error': True
                     }, {
                         'message': str(ex),
+                        'kind': 'SimpleMessage',
                         'error': True
                     }]
                 }
@@ -504,21 +506,20 @@ class ConfigdocsHelper(object):
             else:
                 msg_list = val_response.get('details').get('messageList', [])
             for msg in msg_list:
+                # Count errors, convert message to ValidationMessage
+                default_level = 'Info'
                 if msg.get('error'):
                     error_count = error_count + 1
-                    resp_msgs.append({
-                        'name': th_name,
-                        'message': msg.get('message'),
-                        'error': True
-                    })
-                else:
-                    resp_msgs.append({
-                        'name': th_name,
-                        'message': msg.get('message'),
-                        'error': False
-                    })
+                    default_level = 'Error'
+                val_msg = ConfigdocsHelper._generate_validation_message(
+                    msg,
+                    level=default_level,
+                    source=th_name
+                )
+                resp_msgs.append(val_msg)
         # Deckhand does it differently. Incorporate those validation
-        # failures
+        # failures, this may have to change if we store validations from other
+        # sources in Deckhand.
         dh_validations = self._get_deckhand_validations(revision_id)
         error_count += len(dh_validations)
         resp_msgs.extend(dh_validations)
@@ -527,9 +528,9 @@ class ConfigdocsHelper(object):
             resp_msgs, error_count)
 
     def get_deckhand_validation_status(self, revision_id):
-        """
-        Returns the status object representing the deckhand validation
-        results
+        """Retrieve Deckhand validation status
+
+        Returns the status object representing the deckhand validation results
         """
         dh_validations = self._get_deckhand_validations(revision_id)
         error_count = len(dh_validations)
@@ -545,12 +546,75 @@ class ConfigdocsHelper(object):
             for dh_result in deckhand_val.get('results'):
                 if dh_result.get('errors'):
                     for error in dh_result.get('errors'):
-                        resp_msgs.append({
-                            'name': dh_result.get('name'),
-                            'message': error.get('message'),
-                            'error': True
-                        })
+                        resp_msgs.append(
+                            ConfigdocsHelper._generate_dh_val_msg(
+                                error,
+                                dh_result_name=dh_result.get('name')
+                            )
+                        )
         return resp_msgs
+
+    @staticmethod
+    def _generate_dh_val_msg(msg, dh_result_name):
+        # Maps a deckhand validation response to a ValidationMessage.
+        # Result name is used if the msg doesn't specify a name field.
+        # Deckhand may provide the following fields:
+        # 'validation_schema', 'schema_path', 'name', 'schema', 'path',
+        # 'error_section', 'message'
+        not_spec = 'not specified'
+        if 'diagnostic' not in msg:
+            # format path, error_section, validation_schema, and schema_path
+            # into diagnostic
+            msg['diagnostic'] = 'Section: {} at {} (schema {} at {})'.format(
+                msg.get('error_section', not_spec),
+                msg.get('path', not_spec),
+                msg.get('validation_schema', not_spec),
+                msg.get('schema_path', not_spec)
+            )
+
+        if 'documents' not in msg:
+            msg['documents'] = [{
+                'name': msg.get('name', not_spec),
+                'schema': msg.get('schema', not_spec)
+            }]
+        return ConfigdocsHelper._generate_validation_message(
+            msg,
+            name=dh_result_name,
+            error=True,
+            level='Error',
+            source='Deckhand'
+        )
+
+    @staticmethod
+    def _generate_validation_message(msg, **kwargs):
+        # Special note about kwargs: the values provided via kwargs are used
+        # as defaults, not overrides. Values in the msg will take precedence.
+        #
+        # Using a compatible message, transform it into a ValidationMessage.
+        # By combining it with the default values passed via kwargs. The values
+        # used from kwargs match the fields listed below.
+
+        fields = ['message', 'error', 'name', 'documents', 'level',
+                  'diagnostic', 'source']
+        if 'documents' not in kwargs:
+            kwargs['documents'] = []
+        valmsg = {}
+        for key in fields:
+            valmsg[key] = msg.get(key, kwargs.get(key, None))
+        valmsg['kind'] = 'ValidationMessage'
+        valmsg['level'] = (
+            valmsg.get('level') or ConfigdocsHelper._error_to_level(
+                valmsg.get('error'))
+        )
+        return valmsg
+
+    @staticmethod
+    def _error_to_level(error):
+        """Convert a boolean error field to 'Error' or 'Info' """
+        if error:
+            return 'Error'
+        else:
+            return 'Info'
 
     @staticmethod
     def _format_validations_to_status(val_msgs, error_count):
