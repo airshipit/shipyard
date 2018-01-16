@@ -76,19 +76,6 @@ class ArmadaOperator(BaseOperator):
         # Logs uuid of action performed by the Operator
         logging.info("Armada Operator for action %s", workflow_info['id'])
 
-        # Create Armada Client
-        if self.action == 'create_armada_client':
-            # Retrieve Endpoint Information
-            svc_type = 'armada'
-            context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                           svc_type=svc_type)
-            logging.info("Armada endpoint is %s", context['svc_endpoint'])
-
-            # Set up Armada Client
-            session_client = self.armada_session_client(context)
-
-            return session_client
-
         # Retrieve Deckhand Design Reference
         design_ref = self.get_deckhand_design_ref(context)
 
@@ -118,10 +105,15 @@ class ArmadaOperator(BaseOperator):
 
             return site_design_validity
 
-        # Retrieve armada_client via XCOM so as to perform other tasks
-        armada_client = task_instance.xcom_pull(
-            task_ids='create_armada_client',
-            dag_id=self.main_dag_name + '.' + self.sub_dag_name)
+        # Create Armada Client
+        # Retrieve Endpoint Information
+        svc_type = 'armada'
+        context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
+        logging.info("Armada endpoint is %s", context['svc_endpoint'])
+
+        # Set up Armada Client
+        armada_client = self.armada_session_client(context)
 
         # Retrieve Tiller Information and assign to context 'query'
         context['query'] = self.get_tiller_info(context)

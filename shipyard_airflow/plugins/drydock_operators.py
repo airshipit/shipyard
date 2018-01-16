@@ -88,19 +88,6 @@ class DryDockOperator(BaseOperator):
         # Logs uuid of action performed by the Operator
         logging.info("DryDock Operator for action %s", workflow_info['id'])
 
-        # DrydockClient
-        if self.action == 'create_drydock_client':
-            # Retrieve Endpoint Information
-            svc_type = 'physicalprovisioner'
-            context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                           svc_type=svc_type)
-            logging.info("DryDock endpoint is %s", context['svc_endpoint'])
-
-            # Set up DryDock Client
-            drydock_client = self.drydock_session_client(context)
-
-            return drydock_client
-
         # Retrieve Deckhand Design Reference
         self.design_ref = self.get_deckhand_design_ref(context)
 
@@ -124,10 +111,15 @@ class DryDockOperator(BaseOperator):
 
             return site_design_validity
 
-        # Retrieve drydock_client via XCOM so as to perform other tasks
-        drydock_client = task_instance.xcom_pull(
-            task_ids='create_drydock_client',
-            dag_id=self.main_dag_name + '.' + self.sub_dag_name)
+        # DrydockClient
+        # Retrieve Endpoint Information
+        svc_type = 'physicalprovisioner'
+        context['svc_endpoint'] = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
+        logging.info("DryDock endpoint is %s", context['svc_endpoint'])
+
+        # Set up DryDock Client
+        drydock_client = self.drydock_session_client(context)
 
         # Read shipyard.conf
         config = configparser.ConfigParser()
