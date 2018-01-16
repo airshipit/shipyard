@@ -23,7 +23,7 @@ ENV container docker
 ARG AIRFLOW_HOME=/usr/local/airflow
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.7.5
+ARG KUBECTL_VERSION=1.8.6
 
 RUN set -ex && \
     apt-get -qq update && \
