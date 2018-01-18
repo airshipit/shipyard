@@ -22,15 +22,10 @@ set -x
 # $ ./tools/run_shipyard.sh get actions
 #
 
-# NOTE: The Ingress Controller currently needs to be in the same
-# namespace as the services that it is serving. The current workaround
-# will be to remove the Ingress Controller from OSH and put the UCP one
-# in the 'openstack' namespace. We should ideally have different Ingress
-# Controller for OpenStack and UCP. This logic will be updated at a
-# later date. User can retrieve the IP of the ingress_controller_ip by
-# executing the following command:
+# NOTE: User can retrieve the IP of the ingress_controller_ip by executing
+# the following command:
 #
-# ingress_controller_ip=`sudo kubectl get pods -n openstack -o wide | grep ingress-api | awk '{print $6}'`
+# ingress_controller_ip=`sudo kubectl get pods -n ucp -o wide | grep -v ingress-error-pages | grep -m 1 ingress | awk '{print $6}'`
 #
 
 # NOTE: User should update /etc/hosts with the IP of the ingress
