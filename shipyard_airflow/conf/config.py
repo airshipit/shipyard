@@ -52,11 +52,6 @@ SECTIONS = [
                 'alembic_ini_path',
                 default='/home/shipyard/shipyard',
                 help='The direcotry containing the alembic.ini file'
-            ),
-            cfg.BoolOpt(
-                'upgrade_db',
-                default=True,
-                help='Upgrade the database on startup'
             )
         ]
     ),

@@ -11,30 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Shipyard startup
-
-Sets up the global configurations for the Shipyard service. Hands off
-to the api startup to handle the Falcon specific setup.
-"""
-from oslo_config import cfg
 
 from shipyard_airflow.conf import config
-import shipyard_airflow.control.api as api
-from shipyard_airflow.control import ucp_logging
-from shipyard_airflow import policy
-
-CONF = cfg.CONF
+from shipyard_airflow.db import db
 
 
-def start_shipyard(default_config_files=None):
+def shipyard_upgrade_db(default_config_files=None):
+    """
+    Starts database upgrade
+    """
     # Trigger configuration resolution.
     config.parse_args(args=[], default_config_files=default_config_files)
 
-    ucp_logging.setup_logging(CONF.logging.log_level)
+    db.SHIPYARD_DB.update_db()
 
-    # Setup the RBAC policy enforcer
-    policy.policy_engine = policy.ShipyardPolicy()
-    policy.policy_engine.register_policy()
 
-    # Start the API
-    return api.start_api()
+upgrade_db = shipyard_upgrade_db

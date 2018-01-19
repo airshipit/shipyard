@@ -17,3 +17,5 @@ limitations under the License.
 */}}
 
 set -ex
+
+upgrade_db
