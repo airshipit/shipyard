@@ -29,15 +29,6 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    # Create Armada Client
-    armada_client = ArmadaOperator(
-        task_id='create_armada_client',
-        shipyard_conf=config_path,
-        action='create_armada_client',
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
-
     # Get Tiller Status
     armada_status = ArmadaOperator(
         task_id='armada_status',
@@ -67,7 +58,6 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     # Define dependencies
-    armada_status.set_upstream(armada_client)
     armada_apply.set_upstream(armada_status)
     armada_get_releases.set_upstream(armada_apply)
 

@@ -30,14 +30,6 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    drydock_client = DryDockOperator(
-        task_id='create_drydock_client',
-        shipyard_conf=config_path,
-        action='create_drydock_client',
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
-
     drydock_verify_site = DryDockOperator(
         task_id='verify_site',
         shipyard_conf=config_path,
@@ -71,7 +63,6 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     # Define dependencies
-    drydock_verify_site.set_upstream(drydock_client)
     drydock_prepare_site.set_upstream(drydock_verify_site)
     drydock_prepare_nodes.set_upstream(drydock_prepare_site)
     drydock_deploy_nodes.set_upstream(drydock_prepare_nodes)
