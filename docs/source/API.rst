@@ -245,7 +245,7 @@ Documents. This invokes each of the UCP components to examine the Shipyard
 Buffer version of the configuration documents and aggregate the responses.
 While performing this commit, further POSTing of configdocs, or other commits
 may not be invoked (Shipyard will block those requests with a 409 response). If
-there are any failures to validate, the Shipyard Buffer and Commited Documents
+there are any failures to validate, the Shipyard Buffer and Committed Documents
 will remain unchanged. If successful, the Shipyard Buffer will be cleared, and
 the Committed documents will be updated.
 
@@ -610,7 +610,7 @@ Responses
 /v1.0/actions/{action_id}/steps/{step_id}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Allow for drilldown to step information. The step information includes
-details of the steps excution, successful or not, and enough to
+details of the steps execution, successful or not, and enough to
 facilitate troubleshooting in as easy a fashion as possible.
 
 Entity Structure
@@ -649,7 +649,7 @@ state
 
 task_id
   The name of the task used by the workflow system (and also representing
-  this step name queried in the reqeust.
+  this step name queried in the request.
 
 try_number
   A number of retries taken in the case of failure. Some workflow steps

@@ -24,7 +24,7 @@ Environment Variables
 All commands will utilize the following environment variables to
 determine necessary information for execution, unless otherwise noted.
 
-Openstack Keystone Authorization environment variables
+OpenStack Keystone Authorization environment variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The Shipyard CLI/API Client will check for the presence of appropriate
 environment setup to do authentication on behalf of the user. The openrc
@@ -37,9 +37,9 @@ variables that will be used are as follows:
 -  OS_PASSWORD
 -  OS_AUTH_URL The fully qualified identity endpoint. E.g. http://keystone.ucp.fully.qualified.name:80/v3
 
-Openstack Keystone Authorization environment variables *not* used
+OpenStack Keystone Authorization environment variables *not* used
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These openstack identity variables are not supported by shipyard.
+These OpenStack identity variables are not supported by shipyard.
 
 -  OS_IDENTITY_API_VERSION
      This value will be ignored as Shipyard only supports version 3 at this time
@@ -72,7 +72,7 @@ shown here:
   Enable/disable debugging of this CLI and API client. Defaults to no debug
 
 \--os-<various>=<value>
-  See supported Openstack Keystone Authorization Environment variables above
+  See supported OpenStack Keystone Authorization Environment variables above
   for the list of supported names, converting to a downcase version of the
   environment variable. E.g.: --os-auth-url=http://keystone.ucp:80/v3
   If not specified, the environment variables matching these options will be
@@ -83,10 +83,10 @@ shown here:
   authorize the user's invocation.
 
 \--output-format=<format | raw | cli>
-  Specifies the desired output formating such that:
+  Specifies the desired output formatting such that:
 
   -  format
-       Display the raw ouptut from the invoked Shipyard API in a column
+       Display the raw output from the invoked Shipyard API in a column
        restricted mode.
   -  raw
        Display the result from the invoked Shipyard API as-is, without
@@ -626,7 +626,7 @@ Sample
 get workflows
 ~~~~~~~~~~~~~
 Retrieve workflows that are running or have run in the workflow engine.
-This includes processses that may not have been started as an action
+This includes processes that may not have been started as an action
 (e.g. scheduled tasks).
 
 ::
