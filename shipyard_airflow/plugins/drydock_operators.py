@@ -68,6 +68,8 @@ class DryDockOperator(BaseOperator):
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
+        # Initialize Variable
+        redeploy_server = None
 
         # Placeholder definition
         # TODO: Need to decide how to pass the required value from Shipyard to
@@ -87,6 +89,19 @@ class DryDockOperator(BaseOperator):
 
         # Logs uuid of action performed by the Operator
         logging.info("DryDock Operator for action %s", workflow_info['id'])
+
+        # Retrieve information of the server that we want to redeploy if user
+        # executes the 'redeploy_server' dag
+        # Set node filter to be the server that we want to redeploy
+        if workflow_info['dag_id'] == 'redeploy_server':
+            redeploy_server = workflow_info['parameters'].get('server-name')
+
+            if redeploy_server:
+                logging.info("Server to be redeployed is %s", redeploy_server)
+                self.node_filter = redeploy_server
+            else:
+                raise AirflowException('Unable to retrieve information of '
+                                       'node to be redeployed!')
 
         # Retrieve Deckhand Design Reference
         self.design_ref = self.get_deckhand_design_ref(context)
@@ -188,6 +203,26 @@ class DryDockOperator(BaseOperator):
             # polling interval to 30 seconds.
             check_node_status(1800, 30)
 
+        # Create Task for destroy_node
+        # NOTE: This is a PlaceHolder function. The 'destroy_node'
+        # functionalities in DryDock is being worked on and is not
+        # ready at the moment.
+        elif self.action == 'destroy_node':
+            # Default settings for 'destroy_node' execution is to query
+            # the task every 30 seconds and to time out after 900 seconds
+            query_interval = config.get('drydock',
+                                        'destroy_node_query_interval')
+            task_timeout = config.get('drydock', 'destroy_node_task_timeout')
+
+            logging.info("Destroying node %s from cluster...", redeploy_server)
+            time.sleep(30)
+            logging.info("Successfully deleted node %s", redeploy_server)
+
+            # TODO: Uncomment when the function to destroy/delete node is
+            # ready for consumption in Drydock
+            # self.drydock_action(drydock_client, context, self.action,
+            #                    query_interval, task_timeout)
+
         # Do not perform any action
         else:
             logging.info('No Action to Perform')
@@ -235,7 +270,7 @@ class DryDockOperator(BaseOperator):
 
         # Trigger DryDock to execute task and retrieve task ID
         task_id = self.drydock_perform_task(drydock_client, context,
-                                            action, None)
+                                            action, self.node_filter)
 
         logging.info('Task ID is %s', task_id)
 

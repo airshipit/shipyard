@@ -56,6 +56,7 @@ class DeckhandOperator(BaseOperator):
     def execute(self, context):
         # Initialize Variables
         deckhand_design_version = None
+        redeploy_server = None
 
         # Define task_instance
         task_instance = context['task_instance']
@@ -70,6 +71,17 @@ class DeckhandOperator(BaseOperator):
 
         # Logs uuid of action performed by the Operator
         logging.info("DeckHand Operator for action %s", workflow_info['id'])
+
+        # Retrieve information of the server that we want to redeploy if user
+        # executes the 'redeploy_server' dag
+        if workflow_info['dag_id'] == 'redeploy_server':
+            redeploy_server = workflow_info['parameters'].get('server-name')
+
+            if redeploy_server:
+                logging.info("Server to be redeployed is %s", redeploy_server)
+            else:
+                raise AirflowException('Unable to retrieve information of '
+                                       'node to be redeployed!')
 
         # Retrieve Endpoint Information
         svc_type = 'deckhand'

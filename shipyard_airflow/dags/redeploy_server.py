@@ -14,24 +14,28 @@
 from datetime import timedelta
 
 import airflow
-from airflow import DAG
 import failure_handlers
+from airflow import DAG
+from airflow.operators import ConcurrencyCheckOperator
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.subdag_operator import SubDagOperator
+
+from deckhand_get_design import get_design_deckhand
+from destroy_node import destroy_server
+from drydock_deploy_site import deploy_site_drydock
 from preflight_checks import all_preflight_checks
 from validate_site_design import validate_site_design
-from airflow.operators.subdag_operator import SubDagOperator
-from airflow.operators import ConcurrencyCheckOperator
-from airflow.operators import DeckhandOperator
-from airflow.operators import PlaceholderOperator
-from airflow.operators.python_operator import PythonOperator
 """
 redeploy_server is the top-level orchestration DAG for redeploying a
 server using the Undercloud platform.
 """
 
-PARENT_DAG_NAME = 'redeploy_server'
-DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
+DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
+DESTROY_SERVER_DAG_NAME = 'destroy_server'
+DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
+PARENT_DAG_NAME = 'redeploy_server'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 
 default_args = {
@@ -43,7 +47,7 @@ default_args = {
     'email_on_retry': False,
     'provide_context': True,
     'retries': 0,
-    'retry_delay': timedelta(minutes=1),
+    'retry_delay': timedelta(seconds=30),
 }
 
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
@@ -73,9 +77,11 @@ preflight = SubDagOperator(
         PARENT_DAG_NAME, ALL_PREFLIGHT_CHECKS_DAG_NAME, args=default_args),
     task_id=ALL_PREFLIGHT_CHECKS_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag, )
+    dag=dag)
 
-get_design_version = DeckhandOperator(
+get_design_version = SubDagOperator(
+    subdag=get_design_deckhand(
+        PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
     task_id=DECKHAND_GET_DESIGN_VERSION,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
@@ -87,23 +93,17 @@ validate_site_design = SubDagOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-site_evacuation = PlaceholderOperator(
-    task_id='site_evacuation',
+destroy_server = SubDagOperator(
+    subdag=destroy_server(
+        PARENT_DAG_NAME, DESTROY_SERVER_DAG_NAME, args=default_args),
+    task_id=DESTROY_SERVER_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-drydock_rebuild = PlaceholderOperator(
-    task_id='drydock_rebuild',
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-query_node_status = PlaceholderOperator(
-    task_id='redeployed_node_status',
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-armada_rebuild = PlaceholderOperator(
-    task_id='armada_rebuild',
+drydock_build = SubDagOperator(
+    subdag=deploy_site_drydock(
+        PARENT_DAG_NAME, DRYDOCK_BUILD_DAG_NAME, args=default_args),
+    task_id=DRYDOCK_BUILD_DAG_NAME,
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
@@ -112,7 +112,5 @@ concurrency_check.set_upstream(action_xcom)
 preflight.set_upstream(concurrency_check)
 get_design_version.set_upstream(preflight)
 validate_site_design.set_upstream(get_design_version)
-site_evacuation.set_upstream(validate_site_design)
-drydock_rebuild.set_upstream(site_evacuation)
-query_node_status.set_upstream(drydock_rebuild)
-armada_rebuild.set_upstream(query_node_status)
+destroy_server.set_upstream(validate_site_design)
+drydock_build.set_upstream(destroy_server)
