@@ -44,7 +44,7 @@ SUPPORTED_ACTION_MAPPINGS = {
         'validator': None
     },
     'redeploy_server': {
-        'dag': 'redeploy_sever',
+        'dag': 'redeploy_server',
         # TODO (Bryan Strassner) This should have a validator method
         #                        Needs to be revisited when defined
         'validator': None
