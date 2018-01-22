@@ -15,6 +15,8 @@
 {{- if .Values.manifests.deployment_airflow_worker }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.airflow_server }}
+{{- $serviceAccountName := "airflow-worker" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_worker := .Values.pod.mounts.airflow_worker.airflow_worker }}
 {{- $mounts_airflow_worker_init := .Values.pod.mounts.airflow_worker.init_container }}
 ---
@@ -33,6 +35,7 @@ spec:
         configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
       restartPolicy: Always

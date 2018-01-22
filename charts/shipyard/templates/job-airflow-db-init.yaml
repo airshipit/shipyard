@@ -17,6 +17,8 @@ limitations under the License.
 {{- if .Values.manifests.job_airflow_db_init }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.airflow_db_init }}
+{{- $serviceAccountName := "airflow-db-init" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -28,6 +30,7 @@ spec:
       labels:
 {{ tuple $envAll "airflow" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}

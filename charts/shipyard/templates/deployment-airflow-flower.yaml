@@ -15,6 +15,8 @@
 {{- if .Values.manifests.deployment_airflow_flower }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.airflow_server }}
+{{- $serviceAccountName := "airflow-flower" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_flower := .Values.pod.mounts.airflow_flower.airflow_flower }}
 {{- $mounts_airflow_flower_init := .Values.pod.mounts.airflow_flower.init_container }}
 ---
@@ -33,6 +35,7 @@ spec:
         configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
       restartPolicy: Always

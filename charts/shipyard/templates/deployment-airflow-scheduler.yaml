@@ -15,6 +15,8 @@
 {{- if .Values.manifests.deployment_airflow_scheduler }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.airflow_server }}
+{{- $serviceAccountName := "airflow-scheduler" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_scheduler := .Values.pod.mounts.airflow_scheduler.airflow_scheduler }}
 {{- $mounts_airflow_scheduler_init := .Values.pod.mounts.airflow_scheduler.init_container }}
 ---
@@ -33,6 +35,7 @@ spec:
         configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+      serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
       restartPolicy: Always
