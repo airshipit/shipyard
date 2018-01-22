@@ -58,7 +58,7 @@ def test_get_configdocs_with_passing_collection(*args):
     # verify GetConfigdocs is called when a collection is entered
     with patch.object(GetConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'configdocs', collection])
-    mock_method.assert_called_once_with(ANY, (collection, ), 'buffer')
+    mock_method.assert_called_once_with(ANY, 'design', 'buffer')
 
 
 def test_get_configdocs_without_passing_collection(*args):

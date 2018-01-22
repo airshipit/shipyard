@@ -39,7 +39,7 @@ class ConfigDocsStatusResource(BaseResource):
     def on_get(self, req, resp):
         """Returns a list of the configdocs and their statuses"""
         helper = ConfigdocsHelper(req.context)
-        resp.body = helper.get_configdocs_status()
+        resp.body = self.to_json(helper.get_configdocs_status())
         resp.status = falcon.HTTP_200
 
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Tests for the configdocs_api"""
+import json
 import mock
 from mock import ANY, patch
 
@@ -39,7 +40,7 @@ class TestConfigDocsStatusResource():
         result = api_client.simulate_get(
             "/api/v1.0/configdocs", headers=common.AUTH_HEADERS)
         assert result.status_code == 200
-        assert result.text == common.str_responder()
+        assert result.text == json.dumps(common.str_responder(), default=str)
         assert result.headers[
             'content-type'] == 'application/json; charset=UTF-8'
 

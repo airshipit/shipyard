@@ -65,7 +65,7 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
 
 @get.command(
     name='configdocs', help=DESC_CONFIGDOCS, short_help=SHORT_DESC_CONFIGDOCS)
-@click.argument('collection', nargs=-1, required=False)
+@click.argument('collection', required=False)
 @click.option(
     '--committed',
     '-c',
