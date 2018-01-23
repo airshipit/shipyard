@@ -15,10 +15,41 @@
 {{- if .Values.manifests.deployment_airflow_worker }}
 {{- $envAll := . }}
 {{- $dependencies := .Values.dependencies.airflow_server }}
-{{- $serviceAccountName := "airflow-worker" }}
-{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_worker := .Values.pod.mounts.airflow_worker.airflow_worker }}
 {{- $mounts_airflow_worker_init := .Values.pod.mounts.airflow_worker.init_container }}
+{{- $serviceAccountName := "airflow-worker" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: airflow-worker-runner
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: run-airflow-worker
+subjects:
+  - kind: ServiceAccount
+    name: {{ $serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: airflow-worker-runner
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
