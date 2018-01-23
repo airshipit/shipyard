@@ -38,4 +38,15 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
+    shipyard_retrieve_rendered_doc = DeckhandOperator(
+        task_id='shipyard_retrieve_rendered_doc',
+        shipyard_conf=config_path,
+        action='shipyard_retrieve_rendered_doc',
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
+        dag=dag)
+
+    # Define dependencies
+    shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
+
     return dag

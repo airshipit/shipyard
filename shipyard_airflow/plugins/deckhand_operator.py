@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import configparser
 import logging
 import os
 import requests
@@ -21,7 +22,10 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
+from keystoneauth1.identity import v3 as keystone_v3
+from keystoneauth1 import session as keystone_session
 
+from deckhand.client import deckhand_client
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 
@@ -57,6 +61,7 @@ class DeckhandOperator(BaseOperator):
         # Initialize Variables
         deckhand_design_version = None
         redeploy_server = None
+        revision_id = None
 
         # Define task_instance
         task_instance = context['task_instance']
@@ -100,20 +105,33 @@ class DeckhandOperator(BaseOperator):
             else:
                 raise AirflowException('Failed to retrieve revision ID!')
 
+        # Retrieve revision_id from xcom
+        # Note that in the case of 'deploy_site', the dag_id will
+        # be 'deploy_site.deckhand_get_design_version' for the
+        # 'deckhand_get_design_version' task. We need to extract
+        # the xcom value from it in order to get the value of the
+        # last committed revision ID
+        revision_id = task_instance.xcom_pull(
+            task_ids='deckhand_get_design_version',
+            dag_id=self.main_dag_name + '.deckhand_get_design_version')
+
+        logging.info("Revision ID is %d", revision_id)
+
+        # Retrieve Rendered Document from DeckHand
+        if self.action == 'shipyard_retrieve_rendered_doc':
+            if revision_id:
+                self.retrieve_rendered_doc(context,
+                                           revision_id=revision_id)
+            else:
+                raise AirflowException('Invalid revision ID!')
+
         # Validate Design using DeckHand
         elif self.action == 'deckhand_validate_site_design':
-            # Retrieve revision_id from xcom
-            # Note that in the case of 'deploy_site', the dag_id will
-            # be 'deploy_site.deckhand_get_design_version' for the
-            # 'deckhand_get_design_version' task. We need to extract
-            # the xcom value from it in order to get the value of the
-            # last committed revision ID
-            context['revision_id'] = task_instance.xcom_pull(
-                task_ids='deckhand_get_design_version',
-                dag_id=self.main_dag_name + '.deckhand_get_design_version')
-
-            logging.info("Revision ID is %d", context['revision_id'])
-            self.deckhand_validate_site(context)
+            if revision_id:
+                self.deckhand_validate_site(context,
+                                            revision_id=revision_id)
+            else:
+                raise AirflowException('Invalid revision ID!')
 
         # No action to perform
         else:
@@ -160,14 +178,14 @@ class DeckhandOperator(BaseOperator):
             raise AirflowException("Failed to retrieve committed revision!")
 
     @shipyard_service_token
-    def deckhand_validate_site(self, context):
+    def deckhand_validate_site(self, context, revision_id):
         # Retrieve Keystone Token and assign to X-Auth-Token Header
         x_auth_token = {"X-Auth-Token": context['svc_token']}
 
         # Form Validation Endpoint
         validation_endpoint = os.path.join(context['svc_endpoint'],
                                            'revisions',
-                                           str(context['revision_id']),
+                                           str(revision_id),
                                            'validations')
         logging.info(validation_endpoint)
 
@@ -201,6 +219,45 @@ class DeckhandOperator(BaseOperator):
                          context['revision_id'])
         else:
             raise AirflowException("DeckHand Site Design Validation Failed!")
+
+    def retrieve_rendered_doc(self, context, revision_id):
+
+        # Initialize Variables
+        auth = None
+        keystone_auth = {}
+        rendered_doc = []
+        sess = None
+
+        # Read and parse shiyard.conf
+        config = configparser.ConfigParser()
+        config.read(self.shipyard_conf)
+
+        # Construct Session Argument
+        for attr in ('auth_url', 'password', 'project_domain_name',
+                     'project_name', 'username', 'user_domain_name'):
+            keystone_auth[attr] = config.get('keystone_authtoken', attr)
+
+        # Set up keystone session
+        auth = keystone_v3.Password(**keystone_auth)
+        sess = keystone_session.Session(auth=auth)
+
+        logging.info("Setting up DeckHand Client...")
+
+        # Set up DeckHand Client
+        deckhandclient = deckhand_client.Client(session=sess)
+
+        logging.info("Retrieving Rendered Document...")
+
+        # Retrieve Rendered Document
+        try:
+            rendered_doc = deckhandclient.revisions.documents(revision_id,
+                                                              rendered=True)
+
+            logging.info("Successfully Retrieved Rendered Document")
+            logging.info(rendered_doc)
+
+        except:
+            raise AirflowException("Failed to Retrieve Rendered Document!")
 
 
 class DeckhandOperatorPlugin(AirflowPlugin):

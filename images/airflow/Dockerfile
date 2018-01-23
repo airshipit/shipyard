@@ -66,8 +66,10 @@ RUN pip3 install -r /tmp/requirements.txt
 #    https://github.com/puckel/docker-airflow/issues/77
 RUN pip3 uninstall -y snakebite || true
 
-RUN pip3 install -e git://github.com/att-comdev/drydock.git#egg=drydock_provisioner
+# Install Armada, DeckHand and DryDock Client Libraries
 RUN pip3 install -e git://github.com/att-comdev/armada.git#egg=armada
+RUN pip3 install -e git://github.com/att-comdev/deckhand.git#egg=deckhand
+RUN pip3 install -e git://github.com/att-comdev/drydock.git#egg=drydock_provisioner
 
 # Create airflow user
 RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow
