@@ -171,6 +171,16 @@ SECTIONS = [
                 help='Time out (in seconds) for deploy_node task'
             ),
             cfg.IntOpt(
+                'destroy_node_query_interval',
+                default=30,
+                help='Query interval (in seconds) for destroy_node task'
+            ),
+            cfg.IntOpt(
+                'destroy_node_task_timeout',
+                default=900,
+                help='Time out (in seconds) for destroy_node task'
+            ),
+            cfg.IntOpt(
                 'cluster_join_check_backoff_time',
                 default=120,
                 help='Backoff time (in seconds) before checking cluster join'

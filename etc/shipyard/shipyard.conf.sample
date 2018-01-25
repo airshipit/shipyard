@@ -82,6 +82,12 @@
 # Time out (in seconds) for deploy_node task (integer value)
 #deploy_node_task_timeout = 3600
 
+# Query interval (in seconds) for destroy_node task (integer value)
+#destroy_node_query_interval = 30
+
+# Time out (in seconds) for destroy_node task (integer value)
+#destroy_node_task_timeout = 900
+
 # Backoff time (in seconds) before checking cluster join (integer value)
 #cluster_join_check_backoff_time = 120
 
