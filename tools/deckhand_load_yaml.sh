@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
+set -ex
 
 # We will need to pass the name of the site/collection as well as the
 # path of the directory where the YAMLs are stored when we execute the
@@ -39,12 +39,12 @@ directory=$2
 namespace="ucp"
 
 # Initialize Variables with Default Values
-OS_USER_DOMAIN_NAME="default"
-OS_PROJECT_DOMAIN_NAME="default"
-OS_PROJECT_NAME="service"
-OS_USERNAME="shipyard"
-OS_PASSWORD="password"
-OS_AUTH_URL="http://keystone.${namespace}:80/v3"
+OS_USER_DOMAIN_NAME="${OS_USER_DOMAIN_NAME:-default}"
+OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"
+OS_PROJECT_NAME="${OS_PROJECT_NAME:-service}"
+OS_USERNAME="${OS_USERNAME:-shipyard}"
+OS_PASSWORD="${OS_PASSWORD:-password}"
+OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}:80/v3}"
 
 # Determine IP address of Ingress Controller
 ingress_controller_ip=`sudo kubectl get pods -n ${namespace} -o wide | grep -v ingress-error-pages | grep -m 1 ingress | awk '{print $6}'`
@@ -53,15 +53,41 @@ ingress_controller_ip=`sudo kubectl get pods -n ${namespace} -o wide | grep -v i
 # Note that these values would need to be set in the case
 # where DNS resolution of the Keystone and Shipyard URLs
 # is not available. We can skip this step if DNS is in place.
+delete_etc_hosts_entries() {
+
+    # Delete lines in /etc/hosts that contain reference to the
+    # keystone and shipyard-api pods
+    sudo sed -i '/keystone/d' /etc/hosts
+    sudo sed -i '/shipyard-api/d' /etc/hosts
+}
+
+update_etc_hosts() {
+
 cat << EOF | sudo tee -a /etc/hosts
 
 $ingress_controller_ip keystone.${namespace}
 $ingress_controller_ip shipyard-api.${namespace}.svc.cluster.local
 EOF
+}
+
+if [[ ${ingress_controller_ip} ]]; then
+
+    # Delete any existing entries for the keystone and shipyard-api
+    # pods and replace it with the latest retrieved IP
+    delete_etc_hosts_entries
+    update_etc_hosts
+else
+    echo -e "Unable to retrieve IP of Ingress Controller!"
+    exit 1
+fi
+
+# Clone shipyard repository if it does not exists
+if [[ ! -d shipyard ]]; then
+    git clone --depth=1 https://github.com/att-comdev/shipyard.git
+fi
 
 # Set up Genesis host with the Shipyard Client
 # This will allow us to use the Shipyard CLI
-git clone --depth=1 https://github.com/att-comdev/shipyard.git
 sudo apt install python3-pip -y
 sudo pip3 install --upgrade pip
 cd shipyard && sudo pip3 install -r requirements.txt
@@ -82,8 +108,10 @@ export OS_AUTH_URL=${OS_AUTH_URL}
 # collection, e.g. "site1" into Deckhand (as a bucket in a revision)
 # Note that the name of the collection differs from site to site and is
 # specific to that particular deployment
+# Note that we will also make use of the '--replace' option so that the
+# script can be executed multiple times to replace existing collection
 echo -e "Loading YAMLs as named collection..."
-shipyard create configdocs ${collection} --directory=${directory}
+shipyard create configdocs ${collection} --replace --directory=${directory}
 
 # Following the creation of a configdocs collection in the Shipyard buffer,
 # the configdocs must be committed before Shipyard is able to use them as
