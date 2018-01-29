@@ -1,4 +1,4 @@
-# Copyright 2017 The Openstack-Helm Authors.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -213,10 +213,11 @@ endpoints:
     auth:
       admin:
         username: postgres
-        password: postgres
+        password: password
       user:
         username: shipyard
         password: password
+        database: shipyard
     hosts:
       default: postgresql
     path: /shipyard
@@ -231,10 +232,11 @@ endpoints:
     auth:
       admin:
         username: postgres
-        password: postgres
+        password: password
       user:
         username: airflow
         password: password
+        database: airflow
     hosts:
       default: postgresql
     path: /airflow
@@ -280,14 +282,6 @@ secrets:
   postgresql_airflow_db:
     admin: airflow-db-admin
     user: airflow-db-user
-
-database:
-  postgresql_airflow:
-    db_name: airflow
-    db_root_user: postgres
-  postgresql_shipyard:
-    db_name: shipyard
-    db_root_user: postgres
 
 conf:
   uwsgi:

@@ -1,4 +1,4 @@
-# Copyright 2017 The Openstack-Helm Authors.
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,8 +99,8 @@ spec:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
                 secretKeyRef:
-                    name: {{ .Values.secrets.postgresql_airflow_db.admin }}
-                    key: DB_CONNECTION_AIRFLOW
+                    name: {{ .Values.secrets.postgresql_airflow_db.user }}
+                    key: AIRFLOW_DATABASE_URI
           ports:
             - containerPort: {{ .Values.network.airflow.worker.port }}
           args: ["worker"]

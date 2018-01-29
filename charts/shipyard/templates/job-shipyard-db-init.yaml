@@ -1,5 +1,5 @@
 {{/*
-Copyright 2017 The Openstack-Helm Authors.
+Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,23 +44,43 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy | quote }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_init | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
-            - name: ROOT_DB_CONNECTION
+            - name: SHIPYARD_DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.admin }}
-                  key: DB_CONNECTION_SHIPYARD
+                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
+                  key: SHIPYARD_DATABASE_URI
             - name: SHIPYARD_CONFIG_FILE
               value: /etc/shipyard/shipyard.conf
             - name: DB_NAME
-              value: {{ .Values.database.postgresql_shipyard.db_name }}
-            - name: DB_USER
-              value: {{ .Values.endpoints.postgresql_shipyard_db.auth.user.username }}
-            - name: DB_PASS
-              value: {{ .Values.endpoints.postgresql_shipyard_db.auth.user.password }}
-            - name: ROOT_DB_USER
-              value: {{ .Values.database.postgresql_shipyard.db_root_user }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
+                  key: SHIPYARD_DATABASE_NAME
+            - name: DB_SERVICE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
+                  key: SHIPYARD_DATABASE_USERNAME
+            - name: DB_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
+                  key: SHIPYARD_DATABASE_PASSWORD
+            - name: DB_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.admin }}
+                  key: SHIPYARD_DATABASE_USERNAME
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_shipyard_db.admin }}
+                  key: SHIPYARD_DATABASE_PASSWORD
             - name: AIRFLOW_DB_USER
-              value: {{ .Values.endpoints.postgresql_airflow_db.auth.user.username }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.postgresql_airflow_db.user }}
+                  key: AIRFLOW_DATABASE_USERNAME
           command:
             - /tmp/shipyard-db-init.sh
           volumeMounts:

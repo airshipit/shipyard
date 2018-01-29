@@ -1,7 +1,7 @@
 #!/bin/bash
 
 {{/*
-Copyright 2017 The Openstack-Helm Authors.
+Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ pgsql_superuser_cmd () {
   psql \
   -h $db_fqdn \
   -p $db_port \
-  -U ${ROOT_DB_USER} \
+  -U ${DB_ADMIN_USER} \
   --command="${DB_COMMAND}"
 }
 
@@ -42,8 +42,8 @@ pgsql_superuser_cmd () {
 pgsql_superuser_cmd "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 || pgsql_superuser_cmd "CREATE DATABASE $DB_NAME"
 
 # Create db user
-pgsql_superuser_cmd "SELECT * FROM pg_roles WHERE rolname = '$DB_USER';" | tail -n +3 | head -n -2 | grep -q 1 || \
-    pgsql_superuser_cmd "CREATE ROLE ${DB_USER} LOGIN PASSWORD '$DB_PASS'"
+pgsql_superuser_cmd "SELECT * FROM pg_roles WHERE rolname = '$DB_SERVICE_USER';" | tail -n +3 | head -n -2 | grep -q 1 || \
+    pgsql_superuser_cmd "CREATE ROLE ${DB_SERVICE_USER} LOGIN PASSWORD '$DB_SERVICE_PASSWORD'"
 
 # Grant permissions to user
-pgsql_superuser_cmd "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME to $DB_USER;"
+pgsql_superuser_cmd "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME to $DB_SERVICE_USER;"
