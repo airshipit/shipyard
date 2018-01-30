@@ -25,7 +25,7 @@ from airflow.exceptions import AirflowException
 from keystoneauth1.identity import v3 as keystone_v3
 from keystoneauth1 import session as keystone_session
 
-from deckhand.client import deckhand_client
+from deckhand.client import client as deckhand_client
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 
