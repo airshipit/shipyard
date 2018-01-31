@@ -121,7 +121,7 @@ class DeckhandOperator(BaseOperator):
         if self.action == 'shipyard_retrieve_rendered_doc':
             if revision_id:
                 self.retrieve_rendered_doc(context,
-                                           revision_id=revision_id)
+                                           revision_id)
             else:
                 raise AirflowException('Invalid revision ID!')
 
@@ -129,7 +129,7 @@ class DeckhandOperator(BaseOperator):
         elif self.action == 'deckhand_validate_site_design':
             if revision_id:
                 self.deckhand_validate_site(context,
-                                            revision_id=revision_id)
+                                            revision_id)
             else:
                 raise AirflowException('Invalid revision ID!')
 
@@ -216,7 +216,7 @@ class DeckhandOperator(BaseOperator):
 
         if validation_status:
             logging.info("Revision %d has been successfully validated",
-                         context['revision_id'])
+                         revision_id)
         else:
             raise AirflowException("DeckHand Site Design Validation Failed!")
 
@@ -244,7 +244,12 @@ class DeckhandOperator(BaseOperator):
         logging.info("Setting up DeckHand Client...")
 
         # Set up DeckHand Client
-        deckhandclient = deckhand_client.Client(session=sess)
+        # NOTE: The communication between the Airflow workers and Deckhand
+        # happens via the 'internal' endpoint and not the 'public' endpoint.
+        # Hence we will need to override the 'endpoint_type' from the default
+        # 'public' endpoint to 'internal' endpoint.
+        deckhandclient = deckhand_client.Client(session=sess,
+                                                endpoint_type='internal')
 
         logging.info("Retrieving Rendered Document...")
 

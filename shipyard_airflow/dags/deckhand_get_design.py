@@ -38,15 +38,21 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    shipyard_retrieve_rendered_doc = DeckhandOperator(
-        task_id='shipyard_retrieve_rendered_doc',
-        shipyard_conf=config_path,
-        action='shipyard_retrieve_rendered_doc',
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
+    # TODO: There is a bug in Deckhand client that is preventing
+    # 'shipyard_retrieve_rendered_doc' from working properly. We
+    # are commenting this part of the workflow while we resolve
+    # the issue with the Deckhand client. We will uncomment this
+    # block once the issue with Deckhand is resolved.
+    #
+    # shipyard_retrieve_rendered_doc = DeckhandOperator(
+    #    task_id='shipyard_retrieve_rendered_doc',
+    #    shipyard_conf=config_path,
+    #    action='shipyard_retrieve_rendered_doc',
+    #    main_dag_name=parent_dag_name,
+    #    sub_dag_name=child_dag_name,
+    #    dag=dag)
 
     # Define dependencies
-    shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
+    # shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
 
     return dag
