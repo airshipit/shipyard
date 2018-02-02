@@ -15,23 +15,13 @@
 
 set -ex
 
-# We will need to pass the name of the server that we want to redeploy
-# when we execute the script. It is mandatory to do so and the script
-# will exit with exception if the server name is missing. For instance,
-# we can excute the script in the following manner:
+# We can excute the script in the following manner:
 #
-# $ ./redeploy_server.sh controller01
+# $ ./update_site.sh
 #
-if [[ -z "$1" ]]; then
-    echo -e "Please specify the server name!"
-    exit 1
-fi
-
-# Define Variables
-server=$1
 
 # Source environment variables
 source set_env
 
-# Execute shipyard action for redeploy_server
-bash execute_shipyard_action.sh 'redeploy_server' ${server}
+# Execute shipyard action for update_site
+bash execute_shipyard_action.sh 'update_site'
