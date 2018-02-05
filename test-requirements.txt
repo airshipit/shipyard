@@ -4,7 +4,7 @@ pytest-cov==2.5.1
 mock==2.0.0
 responses==0.8.1
 testfixtures==5.1.1
-apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.8.1
+apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.9.0
 
 # Linting
 flake8==3.3.0
