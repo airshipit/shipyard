@@ -14,16 +14,16 @@
 # limitations under the License.
 
 # Define Variable
-# Note that 'query_time' has a default value of 90 seconds
-# Note that 'max_count' has a default value of 60 loops (based on
+namespace="${namespace:-ucp}"
+
+# Export Environment Variables
+# Note that 'shipyard_query_time' has a default value of 90 seconds
+# Note that 'max_shipyard_count' has a default value of 60 loops (based on
 # 90 seconds back off per cycle, i.e. 60 * 90 = 5400 seconds = 1.5 hr)
 # Note that user can use a different value for each of the variables by
 # exporting the required environment variable prior to running the script
-max_count=${max_count:-60}
-namespace="${namespace:-ucp}"
-query_time=${query_time:-90}
-
-# Export Environment Variables
+export max_shipyard_count=${max_shipyard_count:-60}
+export shipyard_query_time=${shipyard_query_time:-90}
 export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}:80/v3}"
 export OS_PASSWORD="${OS_PASSWORD:-password}"
 export OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"

@@ -22,7 +22,7 @@ check_timeout_counter() {
 
     # Check total elapsed time
     # The default time out is set to 1.5 hr
-    if [[ $counter -ge $max_count ]]; then
+    if [[ $counter -ge $max_shipyard_count ]]; then
         echo 'Worflow Execution Timed Out!'
         break
     fi
@@ -109,8 +109,8 @@ run_action () {
             echo -e "Dag Execution is in" ${GREEN}$action_lifecycle${NC} "state\n"
 
             # Back off between each iteration
-            echo -e "Back Off for $query_time seconds...\n"
-            sleep $query_time
+            echo -e "Back Off for $shipyard_query_time seconds...\n"
+            sleep $shipyard_query_time
 
             # Step counter and check the timeout counter
             ((counter++))
