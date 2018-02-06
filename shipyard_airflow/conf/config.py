@@ -77,7 +77,7 @@ SECTIONS = [
                 help=(
                     'The service type for the service playing the role '
                     'of Shipyard. The specified type is used to perform '
-                    'the service lookup in the Keystone service catalog. '
+                    'the service lookup in the Keystone service catalog.'
                 )
             ),
         ]
@@ -92,7 +92,7 @@ SECTIONS = [
                 help=(
                     'The service type for the service playing the role '
                     'of Deckhand. The specified type is used to perform '
-                    'the service lookup in the Keystone service catalog. '
+                    'the service lookup in the Keystone service catalog.'
                 )
             ),
         ]
@@ -107,7 +107,7 @@ SECTIONS = [
                 help=(
                     'The service type for the service playing the role '
                     'of Armada. The specified type is used to perform '
-                    'the service lookup in the Keystone service catalog. '
+                    'the service lookup in the Keystone service catalog.'
                 )
             ),
         ]
@@ -122,7 +122,7 @@ SECTIONS = [
                 help=(
                     'The service type for the service playing the role '
                     'of Drydock. The specified type is used to perform '
-                    'the service lookup in the Keystone service catalog. '
+                    'the service lookup in the Keystone service catalog.'
                 )
             ),
             cfg.IntOpt(
@@ -179,6 +179,35 @@ SECTIONS = [
                 'cluster_join_check_backoff_time',
                 default=120,
                 help='Backoff time (in seconds) before checking cluster join'
+            ),
+        ]
+    ),
+    ConfigSection(
+        name='requests_config',
+        title='Requests Configuration',
+        options=[
+            cfg.IntOpt(
+                'deckhand_client_connect_timeout',
+                default=5,
+                help='Deckhand client connect timeout (in seconds)'
+            ),
+            cfg.IntOpt(
+                'deckhand_client_read_timeout',
+                default=300,
+                help=(
+                    'Deckhand client timeout (in seconds) for GET, '
+                    'PUT, POST and DELETE request'
+                )
+            ),
+            cfg.IntOpt(
+                'validation_connect_timeout',
+                default=5,
+                help='UCP component validation connect timeout (in seconds)'
+            ),
+            cfg.IntOpt(
+                'validation_read_timeout',
+                default=300,
+                help='UCP component validation timeout (in seconds)'
             ),
         ]
     ),

@@ -437,13 +437,13 @@ class ConfigdocsHelper(object):
                 'content-type': 'application/json'
             }
 
-            # TODO: We will need to make timeout a configurable value as it
-            # will differ from site to site based on the size of the rendered
-            # document
-            # Note that 30 seconds is not sufficient to complete validations.
-            # Hence we are increaing the default timeout to 60 seconds.
             http_resp = requests.post(
-                url, headers=headers, data=design_reference, timeout=(5, 60))
+                url,
+                headers=headers,
+                data=design_reference,
+                timeout=(
+                    CONF.requests_config.validation_connect_timeout,
+                    CONF.requests_config.validation_read_timeout))
             # 400 response is "valid" failure to validate. > 400 is a problem.
             if http_resp.status_code > 400:
                 http_resp.raise_for_status()

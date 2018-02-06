@@ -334,6 +334,11 @@ conf:
       auth_section: keystone_authtoken
       auth_version: v3
       memcache_security_strategy: ENCRYPT
+    requests_config:
+      deckhand_client_connect_timeout: 5
+      deckhand_client_read_timeout: 300
+      validation_connect_timeout: 5
+      validation_read_timeout: 300
   airflow:
     override:
     append:

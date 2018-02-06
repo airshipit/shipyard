@@ -362,11 +362,14 @@ class DeckhandClient(object):
                 headers['content-type'] = 'application/x-yaml'
 
             DeckhandClient._log_request('PUT', url, params)
-            response = requests.put(url,
-                                    params=params,
-                                    headers=headers,
-                                    data=document_data,
-                                    timeout=(5, 30))
+            response = requests.put(
+                url,
+                params=params,
+                headers=headers,
+                data=document_data,
+                timeout=(
+                    CONF.requests_config.deckhand_client_connect_timeout,
+                    CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
@@ -386,10 +389,13 @@ class DeckhandClient(object):
             }
 
             DeckhandClient._log_request('GET', url, params)
-            response = requests.get(url,
-                                    params=params,
-                                    headers=headers,
-                                    timeout=(5, 30))
+            response = requests.get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=(
+                    CONF.requests_config.deckhand_client_connect_timeout,
+                    CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
@@ -411,11 +417,14 @@ class DeckhandClient(object):
                 headers['content-type'] = 'application/x-yaml'
 
             DeckhandClient._log_request('POST', url, params)
-            response = requests.post(url,
-                                     params=params,
-                                     headers=headers,
-                                     data=document_data,
-                                     timeout=(5, 30))
+            response = requests.post(
+                url,
+                params=params,
+                headers=headers,
+                data=document_data,
+                timeout=(
+                    CONF.requests_config.deckhand_client_connect_timeout,
+                    CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
@@ -434,10 +443,13 @@ class DeckhandClient(object):
             }
 
             DeckhandClient._log_request('DELETE', url, params)
-            response = requests.delete(url,
-                                       params=params,
-                                       headers=headers,
-                                       timeout=(5, 30))
+            response = requests.delete(
+                url,
+                params=params,
+                headers=headers,
+                timeout=(
+                    CONF.requests_config.deckhand_client_connect_timeout,
+                    CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
