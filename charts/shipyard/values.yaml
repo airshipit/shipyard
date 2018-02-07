@@ -41,12 +41,14 @@ network:
   shipyard:
     ingress:
       public: true
+      proxy_read_timeout: 600
     port: 9000
     node_port: 31901
     enable_node_port: false
   airflow:
     ingress:
       public: true
+      proxy_read_timeout: 600
     flower:
       name: airflow-flower
       port: 5555

@@ -18,6 +18,7 @@ set -ex
 
 CMD="shipyard"
 PORT=${PORT:-9000}
+HTTP_TIMEOUT=${HTTP_TIMEOUT:-600}
 # Number of uWSGI workers to handle API request
 SHIPYARD_API_WORKERS=${SHIPYARD_API_WORKERS:-"4"}
 #Threads per worker
@@ -32,7 +33,8 @@ if [ "$1" = 'server' ]; then
         -L \
         --pyargv "--config-file /etc/shipyard/shipyard.conf" \
         --threads $SHIPYARD_API_THREADS \
-        --workers $SHIPYARD_API_WORKERS
+        --workers $SHIPYARD_API_WORKERS \
+        --http-timeout ${HTTP_TIMEOUT}
 else
     # Execute shipyard command
     exec ${CMD} $@
