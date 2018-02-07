@@ -189,6 +189,7 @@ endpoints:
     port:
       airflow_web:
         default: 8080
+        public: 80
     path:
      default: /
     scheme:

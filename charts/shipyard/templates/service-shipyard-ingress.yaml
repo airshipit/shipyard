@@ -25,7 +25,7 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 9000
+    port: 80
   selector:
     app: ingress-api
 {{- end }}
