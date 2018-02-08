@@ -26,7 +26,7 @@ from oslo_config import cfg
 import requests
 
 from shipyard_airflow.control.configdocs.deckhand_client import (
-    DeckhandClient, DeckhandPaths, DeckhandRejectedInputError,
+    DeckhandClient, DeckhandError, DeckhandPaths, DeckhandRejectedInputError,
     DeckhandResponseError, DocumentExistsElsewhereError, NoRevisionsExistError)
 from shipyard_airflow.control.service_endpoints import (
     Endpoints, get_endpoint, get_token)
@@ -342,8 +342,15 @@ class ConfigdocsHelper(object):
         if version in (BUFFER, COMMITTED):
             if revision_dict.get(version):
                 revision_id = revision_dict.get(version).get('id')
-                return self.deckhand.get_rendered_docs_from_revision(
-                    revision_id=revision_id)
+                try:
+                    return self.deckhand.get_rendered_docs_from_revision(
+                        revision_id=revision_id)
+                except DeckhandError as de:
+                    raise ApiError(
+                        title='Deckhand indicated an error while rendering',
+                        description=de.response_message,
+                        status=falcon.HTTP_500,
+                        retry=False)
             else:
                 raise ApiError(
                     title='This revision does not exist',
@@ -469,14 +476,10 @@ class ConfigdocsHelper(object):
             }
             exception['exception'] = ex
 
-    def get_validations_for_revision(self, revision_id):
-        """
-        Use the endpoints for each of the UCP components to validate the
-        version indicated. Uses:
-        https://github.com/att-comdev/ucp-integration/blob/master/docs/api-conventions.md#post-v10validatedesign
-        format.
-        """
+    def _get_validations_from_ucp_components(self, revision_id):
+        """Invoke other UCP components to retrieve their validations"""
         resp_msgs = []
+        error_count = 0
 
         validation_threads = ConfigdocsHelper._get_validation_threads(
             ConfigdocsHelper._get_validation_endpoints(), revision_id,
@@ -490,7 +493,6 @@ class ConfigdocsHelper(object):
             validation_thread.get('thread').join()
 
         # check on the response, extract the validations
-        error_count = 0
         for validation_thread in validation_threads:
             th_name = validation_thread.get('name')
             val_response = validation_thread.get('response',
@@ -517,12 +519,43 @@ class ConfigdocsHelper(object):
                     source=th_name
                 )
                 resp_msgs.append(val_msg)
-        # Deckhand does it differently. Incorporate those validation
-        # failures, this may have to change if we store validations from other
-        # sources in Deckhand.
-        dh_validations = self._get_deckhand_validations(revision_id)
+        return (error_count, resp_msgs)
+
+    def get_validations_for_revision(self, revision_id):
+        """Retrieves validations for a revision
+
+        Invokes Deckhand to render the revision, which will either succeed, or
+        fail and return validaiton failures. If there are any failures, the
+        process will not proceed to validate against the other UCP components.
+        Upon success from Deckhand rendering, uses the endpoints for each of
+        the UCP components to validate the version indicated.
+        Responds in the format defined here:
+        https://github.com/att-comdev/ucp-integration/blob/master/docs/api-conventions.md#post-v10validatedesign
+        """
+        resp_msgs = []
+        error_count = 0
+
+        # Capture the messages from trying to render the revision.
+        render_errors = self.deckhand.get_render_errors(revision_id)
+        resp_msgs.extend(render_errors)
+        error_count += len(render_errors)
+        LOG.debug("Deckhand errors from rendering: %s", error_count)
+        # Incorporate stored validation errors from Deckhand (prevalidations)
+        # Note: This may have to change to be later in the code if we store
+        # validations from other sources in Deckhand.
+        dh_validations = self._get_deckhand_validation_errors(revision_id)
         error_count += len(dh_validations)
         resp_msgs.extend(dh_validations)
+        LOG.debug("Deckhand validations: %s", len(dh_validations))
+
+        # Only invoke the other validations if Deckhand has not returned any.
+        if (error_count == 0):
+            (cpnt_ec, cpnt_msgs) = self._get_validations_from_ucp_components(
+                revision_id)
+            resp_msgs.extend(cpnt_msgs)
+            error_count += cpnt_ec
+            LOG.debug("UCP component validations: %s", cpnt_ec)
+
         # return the formatted status response
         return ConfigdocsHelper._format_validations_to_status(
             resp_msgs, error_count)
@@ -537,9 +570,8 @@ class ConfigdocsHelper(object):
         return ConfigdocsHelper._format_validations_to_status(
             dh_validations, error_count)
 
-    def _get_deckhand_validations(self, revision_id):
-        # Returns any validations that deckhand has on hand for this
-        # revision.
+    def _get_deckhand_validation_errors(self, revision_id):
+        # Returns stored validation errors that deckhand has for this revision.
         resp_msgs = []
         deckhand_val = self.deckhand.get_all_revision_validations(revision_id)
         if deckhand_val.get('results'):

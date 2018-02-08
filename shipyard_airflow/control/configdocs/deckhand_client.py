@@ -207,6 +207,31 @@ class DeckhandClient(object):
         self._handle_bad_response(response)
         return response.text
 
+    def get_render_errors(self, revision_id):
+        """Retrieve any error messages from rendering configdocs or []
+
+        Entries in the list returned are {error: ..., message: ...} format.
+        """
+        url = DeckhandClient.get_path(
+            DeckhandPaths.RENDERED_REVISION_DOCS
+        ).format(revision_id)
+
+        errors = []
+
+        LOG.debug("Retrieving rendered docs checking for validation messages")
+        response = self._get_request(url)
+        if response.status_code >= 400:
+            err_resp = yaml.safe_load(response.text)
+            errors = err_resp.get('details', {}).get('messageList', [])
+            if not errors:
+                # default message if none were specified.
+                errors.append({
+                    "error": True,
+                    "message": ("Deckhand has reported an error but did not "
+                                "specify messages. Response: {}".format(
+                                    response.text))})
+        return errors
+
     def get_rendered_docs_from_revision(self, revision_id, bucket_id=None):
         """
         Returns the full set of rendered documents for a revision
@@ -460,18 +485,24 @@ class DeckhandClient(object):
             )
 
 #
+# Exceptions
+#
+
+
+class DeckhandError(Exception):
+    """Base exception for for all exceptions raised by this client"""
+    def __init__(self, response_message=None):
+        super().__init__()
+        self.response_message = response_message
+
+#
 # Deckhand stateful messages wrapped as exceptions
 #
 
 
-class DeckhandStatefulError(Exception):
-    """
-    Base exception for errors that indicate some stateful-based
-    condition in deckhand. Not intended for use directly
-    """
-    def __init__(self, response_message=None):
-        super().__init__()
-        self.response_message = response_message
+class DeckhandStatefulError(DeckhandError):
+    """Base exception for errors for stateful-based conflicts in Deckhand."""
+    pass
 
 
 class NoRevisionsExistError(DeckhandStatefulError):
@@ -495,15 +526,14 @@ class DocumentExistsElsewhereError(DeckhandStatefulError):
 #
 
 
-class DeckhandResponseError(Exception):
+class DeckhandResponseError(DeckhandError):
     """
     Indicates that a response was returned from
     Deckhand that was not expected
     """
     def __init__(self, status_code, response_message=None):
-        super().__init__()
+        super().__init__(response_message)
         self.status_code = status_code
-        self.response_message = response_message
 
 
 class DeckhandRejectedInputError(DeckhandResponseError):
@@ -518,12 +548,10 @@ class DeckhandRejectedInputError(DeckhandResponseError):
 #
 
 
-class DeckhandAccessError(Exception):
+class DeckhandAccessError(DeckhandError):
     """
     Used to indicate that accessing Deckhand has failed.
     This is not the same as a bad response from Deckhand:
     See DeckhandResponseError
     """
-    def __init__(self, response_message=None):
-        super().__init__()
-        self.response_message = response_message
+    pass

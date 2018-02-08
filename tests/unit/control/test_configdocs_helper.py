@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+import mock
 from unittest.mock import patch
 import yaml
 
@@ -23,7 +24,7 @@ from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.configdocs.configdocs_helper import (
     BufferMode, ConfigdocsHelper)
 from shipyard_airflow.control.configdocs.deckhand_client import (
-    DeckhandClient, DeckhandPaths, DeckhandResponseError,
+    DeckhandClient, DeckhandResponseError,
     NoRevisionsExistError)
 from shipyard_airflow.errors import ApiError, AppError
 
@@ -504,18 +505,19 @@ def test_get_collection_docs():
     assert len(yaml_str) == 16
 
 
-def _fake_get_validation_endpoints():
-    val_ep = '{}/validatedesign'
-    return [
-        {
-            'name': 'Drydock',
-            'url': val_ep.format('drydock')
-        },
-        {
-            'name': 'Armada',
-            'url': val_ep.format('armada')
-        },
-    ]
+val_ep = '{}/validatedesign'
+
+
+val_endpoints = [
+    {
+        'name': 'Drydock',
+        'url': val_ep.format('drydock')
+    },
+    {
+        'name': 'Armada',
+        'url': val_ep.format('armada')
+    },
+]
 
 
 def _fake_get_validations_for_component(url, design_reference, response,
@@ -535,40 +537,54 @@ def _fake_get_validations_for_component(url, design_reference, response,
     "errorCount": 2,
     "messageList": [
        { "message" : "broke it 1", "error": true},
-       { "message" : "speeling error", "error": true}
+       { "message" : "speeling error", "error": true},
+       { "message" : "good things", "error": false}
     ]
   },
   "code": 400
 }
-
 """) % url)
 
 
-def test_get_validations_for_revision():
+dh_render_val_list = [{"error": True, "message": "broken!"}]
+
+
+@mock.patch.object(DeckhandClient, 'get_render_errors',
+                   return_value=dh_render_val_list)
+def test_get_validations_for_revision_dh_render(get_endpoint):
     """
     Tests the functionality of the get_validations_for_revision method
     """
-    with patch('shipyard_airflow.control.configdocs.deckhand_client.'
-               'DeckhandClient.get_path') as mock_get_path:
-        mock_get_path.return_value = 'path{}'
-        helper = ConfigdocsHelper(CTX)
-        hold_ve = helper.__class__._get_validation_endpoints
-        hold_vfc = helper.__class__._get_validations_for_component
-        helper.__class__._get_validation_endpoints = (
-            _fake_get_validation_endpoints)
-        helper.__class__._get_validations_for_component = (
-            _fake_get_validations_for_component)
-        helper._get_deckhand_validations = lambda revision_id: []
-        try:
-            val_status = helper.get_validations_for_revision(3)
-            err_count = val_status['details']['errorCount']
-            err_list_count = len(val_status['details']['messageList'])
-            assert err_count == err_list_count
-            assert val_status['details']['errorCount'] == 4
-        finally:
-            helper.__class__._get_validation_endpoints = hold_ve
-            helper.__class__._get_validations_for_component = hold_vfc
-    mock_get_path.assert_called_with(DeckhandPaths.RENDERED_REVISION_DOCS)
+    helper = ConfigdocsHelper(CTX)
+    hold_ve = helper.__class__._get_validation_endpoints
+    helper._get_deckhand_validation_errors = lambda revision_id: []
+    val_status = helper.get_validations_for_revision(3)
+    err_count = val_status['details']['errorCount']
+    err_list_count = len(val_status['details']['messageList'])
+    assert err_count == err_list_count
+    assert val_status['details']['errorCount'] == 1
+    assert val_status['details']['messageList'][0]['message'] == 'broken!'
+
+
+@mock.patch.object(DeckhandClient, 'get_render_errors',
+                   return_value=[])
+@mock.patch.object(DeckhandClient, 'get_path',
+                   return_value='path{}')
+@mock.patch.object(ConfigdocsHelper, '_get_validation_endpoints',
+                   return_value=val_endpoints)
+@mock.patch.object(ConfigdocsHelper, '_get_validations_for_component',
+                   new=_fake_get_validations_for_component)
+def test_get_validations_for_revision(p1, p2, p3):
+    """
+    Tests the functionality of the get_validations_for_revision method
+    """
+    helper = ConfigdocsHelper(CTX)
+    helper._get_deckhand_validation_errors = lambda revision_id: []
+    val_status = helper.get_validations_for_revision(3)
+    err_count = val_status['details']['errorCount']
+    err_list_count = len(val_status['details']['messageList'])
+    assert err_list_count == 6
+    assert val_status['details']['errorCount'] == 4
 
 
 def test_generate_validation_message():
@@ -746,7 +762,7 @@ errors:
 """)
 
 
-def test__get_deckhand_validations():
+def test__get_deckhand_validation_errors():
     """
     Tets the functionality of processing a response from deckhand
     """
@@ -757,7 +773,7 @@ def test__get_deckhand_validations():
         lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
     helper.deckhand._get_entry_validation_response = (
         lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP)
-    assert len(helper._get_deckhand_validations(5)) == 2
+    assert len(helper._get_deckhand_validation_errors(5)) == 2
 
 
 FK_VAL_ENTRY_RESP_EMPTY = FakeResponse(
@@ -786,7 +802,7 @@ def test__get_deckhand_validations_empty_errors():
         lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
     helper.deckhand._get_entry_validation_response = (
         lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP_EMPTY)
-    assert len(helper._get_deckhand_validations(5)) == 0
+    assert len(helper._get_deckhand_validation_errors(5)) == 0
 
 
 FK_VAL_BASE_RESP_EMPTY = FakeResponse(
@@ -801,14 +817,14 @@ results: []
 """)
 
 
-def test__get_deckhand_validations_empty_results():
+def test__get_deckhand_validation_errors_empty_results():
     """
     Tets the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
     helper.deckhand._get_base_validation_resp = (
         lambda revision_id: FK_VAL_BASE_RESP_EMPTY)
-    assert len(helper._get_deckhand_validations(5)) == 0
+    assert len(helper._get_deckhand_validation_errors(5)) == 0
 
 
 def test_tag_buffer():
