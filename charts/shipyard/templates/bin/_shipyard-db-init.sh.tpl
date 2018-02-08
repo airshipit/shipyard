@@ -48,7 +48,7 @@ pgsql_superuser_cmd "SELECT * FROM pg_roles WHERE rolname = '$DB_SERVICE_USER';"
 # Grant permissions to user
 pgsql_superuser_cmd "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME to $DB_SERVICE_USER;"
 
-# Grant permissions to shipyard user
+# Grant permissions to shipyard user to the airflow dataabase tables
 # This will allow shipyard user to query airflow database
-psql -h $db_fqdn -p $db_port -U ${AIRFLOW_DB_USER} \
+psql -h $db_fqdn -p $db_port -U ${DB_ADMIN_USER} -d ${AIRFLOW_DB_NAME} \
 --command="GRANT select, insert, update, delete on all tables in schema public to $DB_SERVICE_USER;"
