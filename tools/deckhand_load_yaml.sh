@@ -33,53 +33,17 @@ if [[ -z "$2" ]]; then
     exit 1
 fi
 
+# NOTE: If user is executing the script from outside the cluster, e.g. from
+# a remote jump server, then he/she will need to ensure that the DNS server
+# is able to resolve the FQDN of the Shipyard and Keystone public URL (both
+# will be pointing to the IP of the Ingress Controller). If the DNS resolution
+# is not available, the user will need to ensure that the /etc/hosts file is
+# properly updated before running the script.
+
 # Define Variables
 collection=$1
 directory=$2
-namespace="ucp"
-
-# Initialize Variables with Default Values
-OS_USER_DOMAIN_NAME="${OS_USER_DOMAIN_NAME:-default}"
-OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"
-OS_PROJECT_NAME="${OS_PROJECT_NAME:-service}"
-OS_USERNAME="${OS_USERNAME:-shipyard}"
-OS_PASSWORD="${OS_PASSWORD:-password}"
-OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}:80/v3}"
-
-# Determine IP address of Ingress Controller
-ingress_controller_ip=`sudo kubectl get pods -n ${namespace} -o wide | grep -v ingress-error-pages | grep -m 1 ingress | awk '{print $6}'`
-
-# Update /etc/hosts with the IP of the ingress controller
-# Note that these values would need to be set in the case
-# where DNS resolution of the Keystone and Shipyard URLs
-# is not available. We can skip this step if DNS is in place.
-delete_etc_hosts_entries() {
-
-    # Delete lines in /etc/hosts that contain reference to the
-    # keystone and shipyard-api pods
-    sudo sed -i '/keystone/d' /etc/hosts
-    sudo sed -i '/shipyard-api/d' /etc/hosts
-}
-
-update_etc_hosts() {
-
-cat << EOF | sudo tee -a /etc/hosts
-
-$ingress_controller_ip keystone.${namespace}
-$ingress_controller_ip shipyard-api.${namespace}.svc.cluster.local
-EOF
-}
-
-if [[ ${ingress_controller_ip} ]]; then
-
-    # Delete any existing entries for the keystone and shipyard-api
-    # pods and replace it with the latest retrieved IP
-    delete_etc_hosts_entries
-    update_etc_hosts
-else
-    echo -e "Unable to retrieve IP of Ingress Controller!"
-    exit 1
-fi
+namespace="${namespace:-ucp}"
 
 # Clone shipyard repository if it does not exists
 if [[ ! -d shipyard ]]; then
@@ -94,12 +58,12 @@ cd shipyard && sudo pip3 install -r requirements.txt
 sudo python3 setup.py install
 
 # Export Environment Variables
-export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
-export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
-export OS_PROJECT_NAME=${OS_PROJECT_NAME}
-export OS_USERNAME=${OS_USERNAME}
-export OS_PASSWORD=${OS_PASSWORD}
-export OS_AUTH_URL=${OS_AUTH_URL}
+export OS_USER_DOMAIN_NAME="${OS_USER_DOMAIN_NAME:-default}"
+export OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"
+export OS_PROJECT_NAME="${OS_PROJECT_NAME:-service}"
+export OS_USERNAME="${OS_USERNAME:-shipyard}"
+export OS_PASSWORD="${OS_PASSWORD:-password}"
+export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.local:80/v3}"
 
 # The directory will contain all the .yaml files with Drydock, Promenade,
 # Armada, and Divingbell configurations. It will also contain all the

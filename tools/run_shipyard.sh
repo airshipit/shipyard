@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
+set -ex
 
 # User can run the script like how they would execute the Shipyard CLI.
 # For instance, to run the 'shipyard get actions' command, user can execute
@@ -22,69 +22,38 @@ set -x
 # $ ./tools/run_shipyard.sh get actions
 #
 
-# NOTE: User can retrieve the IP of the ingress_controller_ip by executing
-# the following command:
-#
-# ingress_controller_ip=`sudo kubectl get pods -n ucp -o wide | grep -v ingress-error-pages | grep -m 1 ingress | awk '{print $6}'`
-#
+# NOTE: If user is executing the script from outside the cluster, e.g. from
+# a remote jump server, then he/she will need to ensure that the DNS server
+# is able to resolve the FQDN of the Shipyard and Keystone public URL (both
+# will be pointing to the IP of the Ingress Controller). If the DNS resolution
+# is not available, the user will need to ensure that the /etc/hosts file is
+# properly updated before running the script.
 
-# NOTE: User should update /etc/hosts with the IP of the ingress
-# controller if DNS resolution of the Keystone and Shipyard URLs
-# is not available. User can execute the following command to update
-# the /etc/hosts file:
+# Define Variables
 #
-# cat << EOF | sudo tee -a /etc/hosts
+# NOTE: User will need to set up the required environment variables
+# before executing this script if they differ from the default values.
 #
-# $ingress_controller_ip keystone.ucp
-# $ingress_controller_ip shipyard-api.ucp.svc.cluster.local
-# EOF
-#
-
-# NOTE: User will need to set up the necessary environment variables
-# before executing this script. For instance, user can set up the
-# environment with the following default values:
-#
-# export SHIPYARD_IMAGE='quay.io/attcomdev/shipyard:latest'
-# export OS_AUTH_URL="http://keystone.ucp:80/v3"
-# export OS_IDENTITY_API_VERSION=3
-# export OS_USERNAME="shipyard"
-# export OS_USER_DOMAIN_NAME="default"
-# export OS_PASSWORD="password"
-# export OS_PROJECT_DOMAIN_NAME="default"
-# export OS_PROJECT_NAME="service"
-#
-# Define OpenStack Environment Variables
-OS_AUTH_URL=`env | grep OS_AUTH_URL`
-OS_IDENTITY_API_VERSION=`env | grep OS_IDENTITY_API_VERSION`
-OS_USERNAME=`env | grep OS_USERNAME`
-OS_USER_DOMAIN_NAME=`env | grep OS_USER_DOMAIN_NAME`
-OS_PASSWORD=`env | grep OS_PASSWORD`
-OS_PROJECT_DOMAIN_NAME=`env | grep OS_PROJECT_DOMAIN_NAME`
-OS_PROJECT_NAME=`env | grep OS_PROJECT_NAME`
-
-# Define shipyard image variable
-# NOTE: We only want the location of the image. Hence we will need
-# to stip off 'SHIPYARD_IMAGE=' from SHIPYARD_IMAGE_ENV_VARIABLE
-SHIPYARD_IMAGE_ENV_VARIABLE=`env | grep SHIPYARD_IMAGE`
-SHIPYARD_IMAGE="${SHIPYARD_IMAGE_ENV_VARIABLE#*=}"
+namespace="${namespace:-ucp}"
+SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/attcomdev/shipyard:latest}"
 
 # Define Base Docker Command
 # NOTE: We will mount the current directory so that any directories
 # would be relative to that
 # NOTE: We will map the host directory to '/home/shipyard/host' on
 # the Shipyard docker container
-read -r -d '' base_docker_command << EOM
+base_docker_command=$(cat << EndOfCommand
 sudo docker run
--e ${OS_AUTH_URL}
--e ${OS_IDENTITY_API_VERSION}
--e ${OS_USERNAME}
--e ${OS_USER_DOMAIN_NAME}
--e ${OS_PASSWORD}
--e ${OS_PROJECT_DOMAIN_NAME}
--e ${OS_PROJECT_NAME}
+-e OS_AUTH_URL=${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.local:80/v3}
+-e OS_USERNAME=${OS_USERNAME:-shipyard}
+-e OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME:-default}
+-e OS_PASSWORD=${OS_PASSWORD:-password}
+-e OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME:-default}
+-e OS_PROJECT_NAME=${OS_PROJECT_NAME:-service}
 --rm --net=host
 -v $(pwd):/home/shipyard/host/
-EOM
+EndOfCommand
+)
 
 # Execute Shipyard CLI
 # We will pass all arguments in and the Shipyard CLI will perform

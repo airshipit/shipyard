@@ -13,6 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTE: If user is executing deploy_site, update_site or redeploy_server
+# workflow from outside the cluster, e.g. from a remote jump server, then
+# he/she will need to ensure that the DNS server is able to resolve the
+# FQDN of the Shipyard and Keystone public URL (both will be pointing to
+# the IP of the Ingress Controller). If the DNS resolution is not available,
+# the user will need to ensure that the /etc/hosts file is properly updated
+# before setting up the environment variables and running the worflow.
+
 # Define Variable
 namespace="${namespace:-ucp}"
 
@@ -24,7 +32,7 @@ namespace="${namespace:-ucp}"
 # exporting the required environment variable prior to running the script
 export max_shipyard_count=${max_shipyard_count:-60}
 export shipyard_query_time=${shipyard_query_time:-90}
-export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}:80/v3}"
+export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.local:80/v3}"
 export OS_PASSWORD="${OS_PASSWORD:-password}"
 export OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"
 export OS_PROJECT_NAME="${OS_PROJECT_NAME:-service}"
