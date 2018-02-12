@@ -89,9 +89,10 @@ class PromenadeOperator(BaseOperator):
 
         # Retrieve Endpoint Information
         svc_type = 'kubernetesprovisioner'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("Promenade endpoint is %s", context['svc_endpoint'])
+        promenade_svc_endpoint = ucp_service_endpoint(self,
+                                                      svc_type=svc_type)
+
+        logging.info("Promenade endpoint is %s", promenade_svc_endpoint)
 
         # Promenade API Call
         # Drain node using Promenade
