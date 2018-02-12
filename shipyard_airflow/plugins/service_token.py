@@ -33,8 +33,8 @@ def shipyard_service_token(func):
             from service_token import shipyard_service_token
 
             @shipyard_service_token
-            def on_get(self, context):
-                svc_token=context['svc_token']
+            def on_get(self, svc_endpoint):
+                logging.info("The token is %s", self.svc_token)
 
                 # Use the token to perform tasks such as setting
                 # up a DrydockSession which requires keystone
