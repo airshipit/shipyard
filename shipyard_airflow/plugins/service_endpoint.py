@@ -27,7 +27,7 @@ def ucp_service_endpoint(self, svc_type):
     int_endpoint = None
 
     # Retrieve Keystone Session
-    sess = ucp_keystone_session(self, svc_type)
+    sess = ucp_keystone_session(self)
 
     # We will allow 1 retry in getting the Keystone Endpoint with a
     # backoff interval of 10 seconds in case there is a temporary

@@ -44,6 +44,7 @@ class ArmadaOperator(BaseOperator):
                  action=None,
                  main_dag_name=None,
                  shipyard_conf=None,
+                 svc_token=None,
                  sub_dag_name=None,
                  workflow_info={},
                  xcom_push=True,
@@ -53,6 +54,7 @@ class ArmadaOperator(BaseOperator):
         self.action = action
         self.main_dag_name = main_dag_name
         self.shipyard_conf = shipyard_conf
+        self.svc_token = svc_token
         self.sub_dag_name = sub_dag_name
         self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
@@ -88,15 +90,16 @@ class ArmadaOperator(BaseOperator):
         # Validate Site Design
         if self.action == 'validate_site_design':
             # Initialize variable
+            armada_svc_endpoint = None
             site_design_validity = 'invalid'
 
             # Retrieve Endpoint Information
             svc_type = 'armada'
-            context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                           svc_type=svc_type)
+            armada_svc_endpoint = ucp_service_endpoint(self,
+                                                       svc_type=svc_type)
 
-            site_design_validity = self.armada_validate_site_design(context,
-                                                                    design_ref)
+            site_design_validity = self.armada_validate_site_design(
+                armada_svc_endpoint, design_ref)
 
             if site_design_validity == 'valid':
                 logging.info("Site Design has been successfully validated")
@@ -108,12 +111,12 @@ class ArmadaOperator(BaseOperator):
         # Create Armada Client
         # Retrieve Endpoint Information
         svc_type = 'armada'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("Armada endpoint is %s", context['svc_endpoint'])
+        armada_svc_endpoint = ucp_service_endpoint(self,
+                                                   svc_type=svc_type)
+        logging.info("Armada endpoint is %s", armada_svc_endpoint)
 
         # Set up Armada Client
-        armada_client = self.armada_session_client(context)
+        armada_client = self.armada_session_client(armada_svc_endpoint)
 
         # Retrieve Tiller Information and assign to context 'query'
         context['query'] = self.get_tiller_info(context)
@@ -135,14 +138,14 @@ class ArmadaOperator(BaseOperator):
             logging.info('No Action to Perform')
 
     @shipyard_service_token
-    def armada_session_client(self, context):
+    def armada_session_client(self, armada_svc_endpoint):
         # Initialize Variables
         armada_url = None
         a_session = None
         a_client = None
 
         # Parse Armada Service Endpoint
-        armada_url = urlparse(context['svc_endpoint'])
+        armada_url = urlparse(armada_svc_endpoint)
 
         # Build a ArmadaSession with credentials and target host
         # information.
@@ -150,7 +153,7 @@ class ArmadaOperator(BaseOperator):
         a_session = session.ArmadaSession(host=armada_url.hostname,
                                           port=armada_url.port,
                                           scheme='http',
-                                          token=context['svc_token'],
+                                          token=self.svc_token,
                                           marker=None)
 
         # Raise Exception if we are not able to get armada session
@@ -234,6 +237,7 @@ class ArmadaOperator(BaseOperator):
     def armada_get_releases(self, context, armada_client):
         # Initialize Variables
         armada_releases = {}
+        deckhand_svc_endpoint = None
 
         # Retrieve Armada Releases after deployment
         logging.info("Retrieving Armada Releases after deployment..")
@@ -249,9 +253,9 @@ class ArmadaOperator(BaseOperator):
 
         # Retrieve DeckHand Endpoint Information
         svc_type = 'deckhand'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
+        deckhand_svc_endpoint = ucp_service_endpoint(self,
+                                                     svc_type=svc_type)
+        logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
         # Retrieve revision_id from xcom
         # Note that in the case of 'deploy_site', the dag_id will
@@ -265,7 +269,7 @@ class ArmadaOperator(BaseOperator):
 
         # Form Design Reference Path that we will use to retrieve
         # the Design YAMLs
-        deckhand_path = "deckhand+" + context['svc_endpoint']
+        deckhand_path = "deckhand+" + deckhand_svc_endpoint
         deckhand_design_ref = os.path.join(deckhand_path,
                                            "revisions",
                                            str(committed_revision_id),
@@ -274,10 +278,10 @@ class ArmadaOperator(BaseOperator):
         return deckhand_design_ref
 
     @shipyard_service_token
-    def armada_validate_site_design(self, context, design_ref):
+    def armada_validate_site_design(self, armada_svc_endpoint, design_ref):
 
         # Form Validation Endpoint
-        validation_endpoint = os.path.join(context['svc_endpoint'],
+        validation_endpoint = os.path.join(armada_svc_endpoint,
                                            'validatedesign')
 
         logging.info("Validation Endpoint is %s", validation_endpoint)
@@ -285,7 +289,7 @@ class ArmadaOperator(BaseOperator):
         # Define Headers and Payload
         headers = {
             'Content-Type': 'application/json',
-            'X-Auth-Token': context['svc_token']
+            'X-Auth-Token': self.svc_token
         }
 
         payload = {

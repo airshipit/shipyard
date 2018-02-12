@@ -39,6 +39,7 @@ class PromenadeOperator(BaseOperator):
                  main_dag_name=None,
                  shipyard_conf=None,
                  sub_dag_name=None,
+                 svc_token=None,
                  workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
@@ -48,6 +49,7 @@ class PromenadeOperator(BaseOperator):
         self.main_dag_name = main_dag_name
         self.shipyard_conf = shipyard_conf
         self.sub_dag_name = sub_dag_name
+        self.svc_token = svc_token
         self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
@@ -94,8 +96,7 @@ class PromenadeOperator(BaseOperator):
         # Promenade API Call
         # Drain node using Promenade
         if self.action == 'promenade_drain_node':
-            node_drained = self.promenade_drain_node(context,
-                                                     redeploy_server)
+            node_drained = self.promenade_drain_node(redeploy_server)
 
             if node_drained:
                 logging.info("Node %s has been successfully drained",
@@ -106,8 +107,7 @@ class PromenadeOperator(BaseOperator):
 
         # Remove labels using Promenade
         elif self.action == 'promenade_remove_labels':
-            labels_removed = self.promenade_drain_node(context,
-                                                       redeploy_server)
+            labels_removed = self.promenade_remove_labels(redeploy_server)
 
             if labels_removed:
                 logging.info("Successfully removed labels on %s",
@@ -118,8 +118,7 @@ class PromenadeOperator(BaseOperator):
 
         # Stops kubelet on node using Promenade
         elif self.action == 'promenade_stop_kubelet':
-            stop_kubelet = self.promenade_stop_kubelet(context,
-                                                       redeploy_server)
+            stop_kubelet = self.promenade_stop_kubelet(redeploy_server)
 
             if stop_kubelet:
                 logging.info("Successfully stopped kubelet on %s",
@@ -130,7 +129,7 @@ class PromenadeOperator(BaseOperator):
 
         # Performs etcd sanity check using Promenade
         elif self.action == 'promenade_check_etcd':
-            check_etcd = self.promenade_check_etcd(context)
+            check_etcd = self.promenade_check_etcd()
 
             if check_etcd:
                 logging.info("The etcd cluster is healthy and ready")
@@ -139,8 +138,7 @@ class PromenadeOperator(BaseOperator):
 
         # Delete node from cluster using Promenade
         elif self.action == 'promenade_delete_node':
-            delete_node = self.promenade_delete_node(context,
-                                                     redeploy_server)
+            delete_node = self.promenade_delete_node(redeploy_server)
 
             if delete_node:
                 logging.info("Succesfully deleted node %s from cluster",
@@ -154,44 +152,48 @@ class PromenadeOperator(BaseOperator):
             logging.info('No Action to Perform')
 
     @shipyard_service_token
-    def promenade_drain_node(self, context, redeploy_server):
+    def promenade_drain_node(self, redeploy_server):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
+        logging.info("The token is %s", self.svc_token)
         logging.info("Draining node...")
+        time.sleep(15)
 
         return True
 
     @shipyard_service_token
-    def promenade_remove_labels(self, context, redeploy_server):
+    def promenade_remove_labels(self, redeploy_server):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         logging.info("Removing labels on node...")
+        time.sleep(15)
 
         return True
 
     @shipyard_service_token
-    def promenade_stop_kubelet(self, context, redeploy_server):
+    def promenade_stop_kubelet(self, redeploy_server):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         logging.info("Stopping kubelet on node...")
+        time.sleep(15)
 
         return True
 
     @shipyard_service_token
-    def promenade_check_etcd(self, context):
+    def promenade_check_etcd(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         logging.info("Performing health check on etcd...")
+        time.sleep(15)
 
         return True
 
     @shipyard_service_token
-    def promenade_delete_node(self, context, redeploy_server):
+    def promenade_delete_node(self, redeploy_server):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         logging.info("Deleting node from cluster...")
-        time.sleep(30)
-        logging.info("Successfully deleted node %s", redeploy_server)
+        time.sleep(15)
 
         return True
 

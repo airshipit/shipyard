@@ -45,6 +45,7 @@ class DeckhandOperator(BaseOperator):
                  main_dag_name=None,
                  shipyard_conf=None,
                  sub_dag_name=None,
+                 svc_token=None,
                  workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
@@ -54,6 +55,7 @@ class DeckhandOperator(BaseOperator):
         self.main_dag_name = main_dag_name
         self.shipyard_conf = shipyard_conf
         self.sub_dag_name = sub_dag_name
+        self.svc_token = svc_token
         self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
@@ -90,9 +92,9 @@ class DeckhandOperator(BaseOperator):
 
         # Retrieve Endpoint Information
         svc_type = 'deckhand'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
+        deckhand_svc_endpoint = ucp_service_endpoint(self,
+                                                     svc_type=svc_type)
+        logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
         # Deckhand API Call
         # Retrieve Design Version from DeckHand
@@ -138,12 +140,12 @@ class DeckhandOperator(BaseOperator):
             logging.info('No Action to Perform')
 
     @shipyard_service_token
-    def deckhand_get_design(self, context):
+    def deckhand_get_design(self, deckhand_svc_endpoint):
         # Retrieve Keystone Token and assign to X-Auth-Token Header
-        x_auth_token = {"X-Auth-Token": context['svc_token']}
+        x_auth_token = {"X-Auth-Token": self.svc_token}
 
         # Form Revision Endpoint
-        revision_endpoint = os.path.join(context['svc_endpoint'],
+        revision_endpoint = os.path.join(deckhand_svc_endpoint,
                                          'revisions')
 
         # Retrieve Revision
@@ -178,12 +180,12 @@ class DeckhandOperator(BaseOperator):
             raise AirflowException("Failed to retrieve committed revision!")
 
     @shipyard_service_token
-    def deckhand_validate_site(self, context, revision_id):
+    def deckhand_validate_site(self, deckhand_svc_endpoint, revision_id):
         # Retrieve Keystone Token and assign to X-Auth-Token Header
-        x_auth_token = {"X-Auth-Token": context['svc_token']}
+        x_auth_token = {"X-Auth-Token": self.svc_token}
 
         # Form Validation Endpoint
-        validation_endpoint = os.path.join(context['svc_endpoint'],
+        validation_endpoint = os.path.join(deckhand_svc_endpoint,
                                            'revisions',
                                            str(revision_id),
                                            'validations')

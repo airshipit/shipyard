@@ -52,6 +52,7 @@ class DryDockOperator(BaseOperator):
                  main_dag_name=None,
                  node_filter=None,
                  shipyard_conf=None,
+                 svc_token=None,
                  sub_dag_name=None,
                  workflow_info={},
                  xcom_push=True,
@@ -63,6 +64,7 @@ class DryDockOperator(BaseOperator):
         self.main_dag_name = main_dag_name
         self.node_filter = node_filter
         self.shipyard_conf = shipyard_conf
+        self.svc_token = svc_token
         self.sub_dag_name = sub_dag_name
         self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
@@ -119,22 +121,23 @@ class DryDockOperator(BaseOperator):
 
             # Retrieve Endpoint Information
             svc_type = 'physicalprovisioner'
-            context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                           svc_type=svc_type)
+            drydock_svc_endpoint = ucp_service_endpoint(self,
+                                                        svc_type=svc_type)
 
-            site_design_validity = self.drydock_validate_design(context)
+            site_design_validity = self.drydock_validate_design(
+                drydock_svc_endpoint)
 
             return site_design_validity
 
         # DrydockClient
         # Retrieve Endpoint Information
         svc_type = 'physicalprovisioner'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("DryDock endpoint is %s", context['svc_endpoint'])
+        drydock_svc_endpoint = ucp_service_endpoint(self,
+                                                    svc_type=svc_type)
+        logging.info("DryDock endpoint is %s", drydock_svc_endpoint)
 
         # Set up DryDock Client
-        drydock_client = self.drydock_session_client(context)
+        drydock_client = self.drydock_session_client(drydock_svc_endpoint)
 
         # Read shipyard.conf
         config = configparser.ConfigParser()
@@ -215,7 +218,7 @@ class DryDockOperator(BaseOperator):
             task_timeout = config.get('drydock', 'destroy_node_task_timeout')
 
             logging.info("Destroying node %s from cluster...", redeploy_server)
-            time.sleep(30)
+            time.sleep(15)
             logging.info("Successfully deleted node %s", redeploy_server)
 
             # TODO: Uncomment when the function to destroy/delete node is
@@ -228,21 +231,21 @@ class DryDockOperator(BaseOperator):
             logging.info('No Action to Perform')
 
     @shipyard_service_token
-    def drydock_session_client(self, context):
+    def drydock_session_client(self, drydock_svc_endpoint):
         # Initialize Variables
         drydock_url = None
         dd_session = None
         dd_client = None
 
         # Parse DryDock Service Endpoint
-        drydock_url = urlparse(context['svc_endpoint'])
+        drydock_url = urlparse(drydock_svc_endpoint)
 
         # Build a DrydockSession with credentials and target host
         # information.
         logging.info("Build DryDock Session")
         dd_session = session.DrydockSession(drydock_url.hostname,
                                             port=drydock_url.port,
-                                            token=context['svc_token'])
+                                            token=self.svc_token)
 
         # Raise Exception if we are not able to get a drydock session
         if dd_session:
@@ -350,10 +353,11 @@ class DryDockOperator(BaseOperator):
                 # Set up new drydock client with new keystone token
                 logging.info("Setting up new drydock session...")
 
-                context['svc_endpoint'] = ucp_service_endpoint(
+                drydock_svc_endpoint = ucp_service_endpoint(
                     self, svc_type='physicalprovisioner')
 
-                new_dd_client = self.drydock_session_client(context)
+                new_dd_client = self.drydock_session_client(
+                    drydock_svc_endpoint)
 
             except errors.ClientForbiddenError as forbidden_error:
                 raise AirflowException(forbidden_error)
@@ -398,9 +402,9 @@ class DryDockOperator(BaseOperator):
 
         # Retrieve DeckHand Endpoint Information
         svc_type = 'deckhand'
-        context['svc_endpoint'] = ucp_service_endpoint(self,
-                                                       svc_type=svc_type)
-        logging.info("Deckhand endpoint is %s", context['svc_endpoint'])
+        deckhand_svc_endpoint = ucp_service_endpoint(self,
+                                                     svc_type=svc_type)
+        logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
         # Retrieve revision_id from xcom
         # Note that in the case of 'deploy_site', the dag_id will
@@ -414,7 +418,7 @@ class DryDockOperator(BaseOperator):
 
         # Form DeckHand Design Reference Path that we will use to retrieve
         # the DryDock YAMLs
-        deckhand_path = "deckhand+" + context['svc_endpoint']
+        deckhand_path = "deckhand+" + deckhand_svc_endpoint
         deckhand_design_ref = os.path.join(deckhand_path,
                                            "revisions",
                                            str(committed_revision_id),
@@ -423,10 +427,10 @@ class DryDockOperator(BaseOperator):
         return deckhand_design_ref
 
     @shipyard_service_token
-    def drydock_validate_design(self, context):
+    def drydock_validate_design(self, drydock_svc_endpoint):
 
         # Form Validation Endpoint
-        validation_endpoint = os.path.join(context['svc_endpoint'],
+        validation_endpoint = os.path.join(drydock_svc_endpoint,
                                            'validatedesign')
 
         logging.info("Validation Endpoint is %s", validation_endpoint)
@@ -434,7 +438,7 @@ class DryDockOperator(BaseOperator):
         # Define Headers and Payload
         headers = {
             'Content-Type': 'application/json',
-            'X-Auth-Token': context['svc_token']
+            'X-Auth-Token': self.svc_token
         }
 
         payload = {

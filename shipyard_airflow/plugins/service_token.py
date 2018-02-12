@@ -23,7 +23,7 @@ from service_session import ucp_keystone_session
 
 def shipyard_service_token(func):
     @wraps(func)
-    def keystone_token_get(self, context, *args):
+    def keystone_token_get(self, *args):
         """This function retrieves Keystone token for UCP Services
 
         :param context: Information on the current workflow
@@ -42,10 +42,9 @@ def shipyard_service_token(func):
         """
         # Initialize variables
         retry = 0
-        token = None
 
         # Retrieve Keystone Session
-        sess = ucp_keystone_session(self, context)
+        sess = ucp_keystone_session(self)
 
         # We will allow 1 retry in getting the Keystone Token with a
         # backoff interval of 10 seconds in case there is a temporary
@@ -54,12 +53,11 @@ def shipyard_service_token(func):
         while retry <= 1:
             # Retrieve Keystone Token
             logging.info("Get Keystone Token")
-            token = sess.get_auth_headers().get('X-Auth-Token')
+            self.svc_token = sess.get_auth_headers().get('X-Auth-Token')
 
             # Retry if we fail to get the keystone token
-            if token:
+            if self.svc_token:
                 logging.info("Successfully Retrieved Keystone Token")
-                context['svc_token'] = token
                 break
             else:
                 logging.info("Unable to get Keystone Token on first attempt")
@@ -68,9 +66,9 @@ def shipyard_service_token(func):
                 retry += 1
 
         # Raise Execptions if we fail to get a proper response
-        if not token:
+        if not self.svc_token:
             raise AirflowException("Unable to get Keystone Token!")
         else:
-            return func(self, context, *args)
+            return func(self, *args)
 
     return keystone_token_get
