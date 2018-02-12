@@ -14,7 +14,11 @@
 
 from airflow.models import DAG
 from airflow.operators import DryDockOperator
-from airflow.operators import PromenadeOperator
+from airflow.operators import PromenadeCheckEtcdOperator
+from airflow.operators import PromenadeClearLabelsOperator
+from airflow.operators import PromenadeDecommissionNodeOperator
+from airflow.operators import PromenadeDrainNodeOperator
+from airflow.operators import PromenadeShutdownKubeletOperator
 
 
 # Location of shiyard.conf
@@ -24,45 +28,44 @@ config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
 
 def destroy_server(parent_dag_name, child_dag_name, args):
-    '''
-    Tear Down Node
-    '''
+    """DAG to tear down node
+
+    The DAG will make use of the promenade and drydock operators
+    to tear down a target node.
+
+    """
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
     # Drain Node
-    promenade_drain_node = PromenadeOperator(
+    promenade_drain_node = PromenadeDrainNodeOperator(
         task_id='promenade_drain_node',
         shipyard_conf=config_path,
-        action='promenade_drain_node',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    # Remove Labels
-    promenade_remove_labels = PromenadeOperator(
-        task_id='promenade_remove_labels',
+    # Clear Labels
+    promenade_clear_labels = PromenadeClearLabelsOperator(
+        task_id='promenade_clear_labels',
         shipyard_conf=config_path,
-        action='promenade_remove_labels',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    # Stop Kubelet
-    promenade_stop_kubelet = PromenadeOperator(
-        task_id='promenade_stop_kubelet',
+    # Shutdown Kubelet
+    promenade_shutdown_kubelet = PromenadeShutdownKubeletOperator(
+        task_id='promenade_shutdown_kubelet',
         shipyard_conf=config_path,
-        action='promenade_stop_kubelet',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
     # ETCD Sanity Check
-    promenade_check_etcd = PromenadeOperator(
+    promenade_check_etcd = PromenadeCheckEtcdOperator(
         task_id='promenade_check_etcd',
         shipyard_conf=config_path,
-        action='promenade_check_etcd',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
@@ -76,20 +79,19 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    # Delete node from cluster using Promenade
-    promenade_delete_node = PromenadeOperator(
-        task_id='promenade_delete_node',
+    # Decommission node from Kubernetes cluster using Promenade
+    promenade_decommission_node = PromenadeDecommissionNodeOperator(
+        task_id='promenade_decommission_node',
         shipyard_conf=config_path,
-        action='promenade_delete_node',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
     # Define dependencies
-    promenade_remove_labels.set_upstream(promenade_drain_node)
-    promenade_stop_kubelet.set_upstream(promenade_remove_labels)
-    promenade_check_etcd.set_upstream(promenade_stop_kubelet)
+    promenade_clear_labels.set_upstream(promenade_drain_node)
+    promenade_shutdown_kubelet.set_upstream(promenade_clear_labels)
+    promenade_check_etcd.set_upstream(promenade_shutdown_kubelet)
     drydock_destroy_node.set_upstream(promenade_check_etcd)
-    promenade_delete_node.set_upstream(drydock_destroy_node)
+    promenade_decommission_node.set_upstream(drydock_destroy_node)
 
     return dag
