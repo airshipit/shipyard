@@ -45,7 +45,7 @@ information to correlate workflows with users and history of workflow
 commands.
 \
 [Deckhand](https://github.com/att-comdev/deckhand) supplies storage
-and mangement of site designs and secrets
+and management of site designs and secrets
 \
 [Drydock](https://github.com/att-comdev/drydock) is orchestrated by
 Shipyard to perform bare metal node provisioning.
