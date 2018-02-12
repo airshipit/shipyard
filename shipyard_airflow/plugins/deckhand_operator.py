@@ -100,7 +100,8 @@ class DeckhandOperator(BaseOperator):
         # Retrieve Design Version from DeckHand
         if self.action == 'deckhand_get_design_version':
             # Retrieve DeckHand Design Version
-            deckhand_design_version = self.deckhand_get_design(context)
+            deckhand_design_version = self.deckhand_get_design(
+                deckhand_svc_endpoint)
 
             if deckhand_design_version:
                 return deckhand_design_version
