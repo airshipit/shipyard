@@ -131,7 +131,7 @@ class DeckhandOperator(BaseOperator):
         # Validate Design using DeckHand
         elif self.action == 'deckhand_validate_site_design':
             if revision_id:
-                self.deckhand_validate_site(context,
+                self.deckhand_validate_site(deckhand_svc_endpoint,
                                             revision_id)
             else:
                 raise AirflowException('Invalid revision ID!')
