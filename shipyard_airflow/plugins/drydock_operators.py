@@ -231,6 +231,11 @@ class DryDockOperator(BaseOperator):
             logging.info('No Action to Perform')
 
     @shipyard_service_token
+    def _auth_gen(self):
+        # Generator method for the Drydock Session to use to get the
+        # auth headers necessary
+        return [('X-Auth-Token', self.svc_token)]
+
     def drydock_session_client(self, drydock_svc_endpoint):
         # Initialize Variables
         drydock_url = None
@@ -245,7 +250,7 @@ class DryDockOperator(BaseOperator):
         logging.info("Build DryDock Session")
         dd_session = session.DrydockSession(drydock_url.hostname,
                                             port=drydock_url.port,
-                                            token=self.svc_token)
+                                            auth_gen=self._auth_gen())
 
         # Raise Exception if we are not able to get a drydock session
         if dd_session:

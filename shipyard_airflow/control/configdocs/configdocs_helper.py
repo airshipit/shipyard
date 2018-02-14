@@ -565,7 +565,7 @@ class ConfigdocsHelper(object):
 
         Returns the status object representing the deckhand validation results
         """
-        dh_validations = self._get_deckhand_validations(revision_id)
+        dh_validations = self._get_deckhand_validation_errors(revision_id)
         error_count = len(dh_validations)
         return ConfigdocsHelper._format_validations_to_status(
             dh_validations, error_count)
