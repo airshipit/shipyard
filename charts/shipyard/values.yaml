@@ -131,6 +131,10 @@ dependencies:
     - service: oslo_messaging
       endpoint: internal
 
+volume_worker:
+  class_name: general
+  size: 5Gi
+
 # typically overriden by environmental
 # values, but should include all endpoints
 # required by this chart
@@ -211,6 +215,18 @@ endpoints:
       default: http
     host_fqdn_override:
       default: null
+  airflow_worker:
+    name: airflow-worker
+    hosts:
+      default: airflow-worker
+      discovery: airflow-worker-discovery
+    host_fqdn_override:
+      default: null
+    path: null
+    scheme: 'http'
+    port:
+      airflow_worker:
+        default: 8793
   postgresql_shipyard_db:
     name: postgresql_shipyard_db
     auth:
@@ -582,7 +598,7 @@ manifests:
   deployment_airflow_scheduler: true
   deployment_shipyard: true
   deployment_airflow_web: true
-  deployment_airflow_worker: true
+  statefulset_airflow_worker: true
   ingress_airflow_api: true
   ingress_shipyard_api: true
   job_shipyard_db_init: true
@@ -600,3 +616,5 @@ manifests:
   service_shipyard: true
   service_shipyard_ingress: true
   service_airflow_web: true
+  service_airflow_worker: true
+  service_discovery_airflow_worker: true
