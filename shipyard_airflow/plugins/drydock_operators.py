@@ -250,7 +250,7 @@ class DryDockOperator(BaseOperator):
         logging.info("Build DryDock Session")
         dd_session = session.DrydockSession(drydock_url.hostname,
                                             port=drydock_url.port,
-                                            auth_gen=self._auth_gen())
+                                            auth_gen=self._auth_gen)
 
         # Raise Exception if we are not able to get a drydock session
         if dd_session:
