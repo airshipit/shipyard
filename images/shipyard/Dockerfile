@@ -12,69 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:16.04
+FROM python:3.5
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV container docker
+ENV PORT 9000
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-RUN set -x && \
-    apt-get -qq update && \
-    apt-get -y install \
-    git \
-    curl \
-    netcat \
-    netbase \
-    python3 \
-    python3-setuptools \
-    python3-pip \
-    python3-dev \
-    python3-dateutil \
-    ca-certificates \
-    gcc \
-    g++ \
-    make \
-    libffi-dev \
-    libssl-dev \
-    libpq-dev \
-    --no-install-recommends \
-    && python3 -m pip install -U pip \
-    && apt-get clean \
-    && rm -rf \
-        /var/lib/apt/lists/* \
-        /tmp/* \
-        /var/tmp/* \
-        /usr/share/man \
-        /usr/share/doc \
-        /usr/share/doc-base
+# Expose port 9000 for application
+EXPOSE $PORT
+
+# Execute entrypoint
+ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
+CMD ["server"]
 
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard
 
-# Clone the shipyard repository
-COPY . /home/shipyard/shipyard
-
-# Set work directory
-# Install dependency requirements and packages
-WORKDIR /home/shipyard/shipyard
-RUN pip3 install -r requirements.txt
-RUN python3 setup.py install
-
 # Copy entrypoint.sh to /home/shipyard
 COPY entrypoint.sh /home/shipyard/entrypoint.sh
-
 # Change permissions
 RUN chown -R shipyard: /home/shipyard \
     && chmod +x /home/shipyard/entrypoint.sh
 
+# Set work directory and install dependencies
+WORKDIR /home/shipyard/shipyard
+COPY requirements.txt /home/shipyard/shipyard
+RUN pip3 install -r requirements.txt
+
+COPY . /home/shipyard/shipyard
+RUN python3 setup.py install
+
 # Set user to shipyard
 USER shipyard
-
-# Expose port 9000 for application
-EXPOSE 9000
-
-# Execute entrypoint
-ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
-
-CMD ["server"]

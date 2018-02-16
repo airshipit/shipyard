@@ -110,3 +110,6 @@ AUTHORS
 /charts/shipyard/charts
 /charts/shipyard/requirements.lock
 .DS_Store
+
+# vscode
+.vscode/
