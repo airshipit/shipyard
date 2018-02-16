@@ -18,7 +18,10 @@ import time
 
 from airflow.exceptions import AirflowException
 
-from service_session import ucp_keystone_session
+try:
+    from service_session import ucp_keystone_session
+except ImportError:
+    from shipyard_airflow.plugins.service_session import ucp_keystone_session
 
 
 def shipyard_service_token(func):

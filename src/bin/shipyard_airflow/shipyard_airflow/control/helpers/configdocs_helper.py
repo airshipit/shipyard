@@ -732,6 +732,10 @@ def _get_validation_endpoints():
             'name': 'Armada',
             'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
         },
+        {
+            'name': 'Promenade',
+            'url': val_ep.format(get_endpoint(Endpoints.PROMENADE))
+        }
     ]
 
 

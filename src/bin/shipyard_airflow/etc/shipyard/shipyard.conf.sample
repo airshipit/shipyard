@@ -294,6 +294,18 @@
 #named_log_levels = keystoneauth:20,keystonemiddleware:20
 
 
+[promenade]
+
+#
+# From shipyard_api
+#
+
+# The service type for the service playing the role of Promenade. The specified
+# type is used to perform the service lookup in the Keystone service catalog.
+# (string value)
+#service_type = kubernetesprovisioner
+
+
 [requests_config]
 
 #

@@ -89,7 +89,7 @@ SECTIONS = [
     ),
     ConfigSection(
         name='shipyard',
-        title='Shipyard connection info',
+        title='Shipyard Connection Info',
         options=[
             cfg.StrOpt(
                 'service_type',
@@ -104,7 +104,7 @@ SECTIONS = [
     ),
     ConfigSection(
         name='deckhand',
-        title='Deckhand connection info',
+        title='Deckhand Connection Info',
         options=[
             cfg.StrOpt(
                 'service_type',
@@ -119,7 +119,7 @@ SECTIONS = [
     ),
     ConfigSection(
         name='armada',
-        title='Armada connection info',
+        title='Armada Connection Info',
         options=[
             cfg.StrOpt(
                 'service_type',
@@ -134,7 +134,7 @@ SECTIONS = [
     ),
     ConfigSection(
         name='drydock',
-        title='Drydock connection info',
+        title='Drydock Connection Info',
         options=[
             cfg.StrOpt(
                 'service_type',
@@ -142,6 +142,21 @@ SECTIONS = [
                 help=(
                     'The service type for the service playing the role '
                     'of Drydock. The specified type is used to perform '
+                    'the service lookup in the Keystone service catalog.'
+                )
+            ),
+        ]
+    ),
+    ConfigSection(
+        name='promenade',
+        title='Promenade Connection Info',
+        options=[
+            cfg.StrOpt(
+                'service_type',
+                default='kubernetesprovisioner',
+                help=(
+                    'The service type for the service playing the role '
+                    'of Promenade. The specified type is used to perform '
                     'the service lookup in the Keystone service catalog.'
                 )
             ),

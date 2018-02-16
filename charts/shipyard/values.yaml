@@ -373,6 +373,8 @@ conf:
       destroy_node_query_interval: 30
       destroy_node_task_timeout: 900
       cluster_join_check_backoff_time: 120
+    promenade:
+      service_type: kubernetesprovisioner
     keystone_authtoken:
       delay_auth_decision: true
       auth_type: password

@@ -16,6 +16,7 @@ from airflow.models import DAG
 from airflow.operators import ArmadaValidateDesignOperator
 from airflow.operators import DeckhandValidateSiteDesignOperator
 from airflow.operators import DrydockValidateDesignOperator
+from airflow.operators import PromenadeValidateSiteDesignOperator
 
 from config_path import config_path
 
@@ -46,6 +47,14 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
 
     armada_validate_docs = ArmadaValidateDesignOperator(
         task_id='armada_validate_site_design',
+        shipyard_conf=config_path,
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
+        retries=3,
+        dag=dag)
+
+    promenade_validate_docs = PromenadeValidateSiteDesignOperator(
+        task_id='promenade_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,

@@ -20,9 +20,20 @@ from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
-from get_k8s_logs import get_pod_logs
-from get_k8s_logs import K8sLoggingException
-from xcom_puller import XcomPuller
+try:
+    from get_k8s_logs import get_pod_logs
+except ImportError:
+    from shipyard_airflow.plugins.get_k8s_logs import get_pod_logs
+
+try:
+    from get_k8s_logs import K8sLoggingException
+except ImportError:
+    from shipyard_airflow.plugins.get_k8s_logs import K8sLoggingException
+
+try:
+    from xcom_puller import XcomPuller
+except ImportError:
+    from shipyard_airflow.plugins.xcom_puller import XcomPuller
 
 LOG = logging.getLogger(__name__)
 

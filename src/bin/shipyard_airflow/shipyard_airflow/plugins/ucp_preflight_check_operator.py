@@ -20,9 +20,20 @@ from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
-from service_endpoint import ucp_service_endpoint
-from xcom_puller import XcomPuller
-from xcom_pusher import XcomPusher
+try:
+    from service_endpoint import ucp_service_endpoint
+except ImportError:
+    from shipyard_airflow.plugins.service_endpoint import ucp_service_endpoint
+
+try:
+    from xcom_puller import XcomPuller
+except ImportError:
+    from shipyard_airflow.plugins.xcom_puller import XcomPuller
+
+try:
+    from xcom_pusher import XcomPusher
+except ImportError:
+    from shipyard_airflow.plugins.xcom_pusher import XcomPusher
 
 LOG = logging.getLogger(__name__)
 

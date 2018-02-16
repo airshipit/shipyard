@@ -39,6 +39,7 @@ class Endpoints(enum.Enum):
     DRYDOCK = 'drydock'
     ARMADA = 'armada'
     DECKHAND = 'deckhand'
+    PROMENADE = 'promenade'
 
 
 def _get_service_type(endpoint):
@@ -57,6 +58,7 @@ def _get_service_type(endpoint):
             Endpoints.DRYDOCK: CONF.drydock.service_type,
             Endpoints.ARMADA: CONF.armada.service_type,
             Endpoints.DECKHAND: CONF.deckhand.service_type,
+            Endpoints.PROMENADE: CONF.promenade.service_type
         }
         return endpoint_values.get(endpoint)
     raise AppError(
