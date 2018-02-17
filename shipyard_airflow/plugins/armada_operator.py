@@ -128,7 +128,13 @@ class ArmadaOperator(BaseOperator):
 
         # Armada Apply
         elif self.action == 'armada_apply':
-            self.armada_apply(context, armada_client, design_ref)
+            # TODO (bryan-strassner) externalize the name of the manifest to
+            #  use this needs to come from a site configuration document for
+            #  consumption by shipyard/airflow. For now. "full-site" is the
+            #  only value that will work.
+            target_manifest = 'full-site'
+            self.armada_apply(context, armada_client, design_ref,
+                              target_manifest)
 
         # Armada Get Releases
         elif self.action == 'armada_get_releases':
@@ -205,13 +211,19 @@ class ArmadaOperator(BaseOperator):
         else:
             raise AirflowException("Please check Tiller!")
 
-    def armada_apply(self, context, armada_client, design_ref):
+    def armada_apply(self, context, armada_client, design_ref,
+                     target_manifest):
+        '''Run Armada Apply
+        '''
         # Initialize Variables
         armada_manifest = None
         armada_ref = design_ref
         armada_post_apply = {}
         override_values = []
         chart_set = []
+        # enhance the context's query entity with target_manifest
+        query = context.get('query', {})
+        query['target_manifest'] = target_manifest
 
         # Execute Armada Apply to install the helm charts in sequence
         logging.info("Armada Apply")
@@ -219,7 +231,7 @@ class ArmadaOperator(BaseOperator):
                                                      manifest_ref=armada_ref,
                                                      values=override_values,
                                                      set=chart_set,
-                                                     query=context['query'])
+                                                     query=query)
 
         # We will expect Armada to return the releases that it is
         # deploying. An empty value for 'install' means that armada
