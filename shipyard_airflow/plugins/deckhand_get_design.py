@@ -55,22 +55,22 @@ class DeckhandGetDesignOperator(DeckhandBaseOperator):
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
-        # Print the number of revisions that is currently available
-        # in DeckHand
-        logging.info("The number of revisions is %s", revisions['count'])
+        # Print info about revisions from DeckHand
+        logging.info("Revisions response: %s", revisions)
+        logging.info("The number of committed revisions is %s",
+                     revisions['count'])
 
-        # Search for the last committed version and save it as xcom
+        # Search for the latest committed version and save it as xcom.
+        # Since the order : desc paramater above, this is index 0 if there
+        # are any results
         revision_list = revisions.get('results', [])
-
         if revision_list:
-            self.committed_ver = revision_list[-1].get('id')
-        else:
-            raise AirflowException("No revision found in Deckhand!")
+            self.committed_ver = revision_list[0].get('id')
+            logging.info("Latest committed revision is %d", self.committed_ver)
 
-        if self.committed_ver:
-            logging.info("Last committed revision is %d", self.committed_ver)
-        else:
-            raise AirflowException("Failed to retrieve committed revision!")
+        # Error if we cannot resolve the committed version to use.
+        if not self.committed_ver:
+            raise AirflowException("No committed revision found in Deckhand!")
 
 
 class DeckhandGetDesignOperatorPlugin(AirflowPlugin):
