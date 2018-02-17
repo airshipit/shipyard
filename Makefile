@@ -17,7 +17,7 @@ IMAGE_PREFIX               ?= attcomdev
 IMAGE_TAG                  ?= latest
 SHIPYARD_IMAGE_NAME        ?= shipyard
 HELM                       ?= helm
-
+LABEL                      ?= commit-id
 # Build all docker images for this project
 .PHONY: images
 images: build_airflow build_shipyard
@@ -56,11 +56,11 @@ run_airflow: clean build_airflow
 
 .PHONY: build_airflow
 build_airflow:
-	docker build -t $(IMAGE_PREFIX)/$(AIRFLOW_IMAGE_NAME):$(IMAGE_TAG) images/airflow/
+	docker build -t $(IMAGE_PREFIX)/$(AIRFLOW_IMAGE_NAME):$(IMAGE_TAG) --label $(LABEL) images/airflow/
 
 .PHONY: build_shipyard
 build_shipyard:
-	docker build -t $(IMAGE_PREFIX)/$(SHIPYARD_IMAGE_NAME):$(IMAGE_TAG) -f images/shipyard/Dockerfile .
+	docker build -t $(IMAGE_PREFIX)/$(SHIPYARD_IMAGE_NAME):$(IMAGE_TAG) --label $(LABEL) -f images/shipyard/Dockerfile .
 
 .PHONY: clean
 clean:
