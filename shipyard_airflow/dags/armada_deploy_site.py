@@ -15,10 +15,7 @@
 from airflow.models import DAG
 from airflow.operators import ArmadaOperator
 
-# Location of shiyard.conf
-# Note that the shipyard.conf file needs to be placed on a volume
-# that can be accessed by the containers
-config_path = '/usr/local/airflow/plugins/shipyard.conf'
+from config_path import config_path
 
 
 def deploy_site_armada(parent_dag_name, child_dag_name, args):

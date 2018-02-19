@@ -17,10 +17,7 @@ from airflow.operators import ArmadaOperator
 from airflow.operators import DeckhandValidateSiteDesignOperator
 from airflow.operators import DryDockOperator
 
-# Location of shiyard.conf
-# Note that the shipyard.conf file needs to be placed on a volume
-# that can be accessed by the containers
-config_path = '/usr/local/airflow/plugins/shipyard.conf'
+from config_path import config_path
 
 
 def validate_site_design(parent_dag_name, child_dag_name, args):

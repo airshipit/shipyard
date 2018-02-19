@@ -33,6 +33,10 @@ class PromenadeClearLabelsOperator(PromenadeBaseOperator):
     def do_execute(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
+
+        # TODO(bryan-strassner) use:
+        #     self.dc['kubernetes_provisioner.clear_labels_timeout']
+
         logging.info("Removing labels on node...")
         time.sleep(5)
 

@@ -32,6 +32,16 @@ SECTIONS = [
                 default='http://localhost:32080/',
                 help='The web server for Airflow'
             ),
+            cfg.IntOpt(
+                'airflow_api_connect_timeout',
+                default=5,
+                help='Seconds to wait to connect to the airflow api'
+            ),
+            cfg.IntOpt(
+                'airflow_api_read_timeout',
+                default=60,
+                help='Seconds to wait for a response from the airflow api'
+            ),
             cfg.StrOpt(
                 'postgresql_db',
                 default=(
@@ -52,7 +62,7 @@ SECTIONS = [
                 'alembic_ini_path',
                 default='/home/shipyard/shipyard',
                 help='The direcotry containing the alembic.ini file'
-            )
+            ),
         ]
     ),
     ConfigSection(
@@ -124,61 +134,6 @@ SECTIONS = [
                     'of Drydock. The specified type is used to perform '
                     'the service lookup in the Keystone service catalog.'
                 )
-            ),
-            cfg.IntOpt(
-                'verify_site_query_interval',
-                default=10,
-                help='Query interval (in seconds) for verify_site task'
-            ),
-            cfg.IntOpt(
-                'verify_site_task_timeout',
-                default=60,
-                help='Time out (in seconds) for verify_site task'
-            ),
-            cfg.IntOpt(
-                'prepare_site_query_interval',
-                default=10,
-                help='Query interval (in seconds) for prepare_site task'
-            ),
-            cfg.IntOpt(
-                'prepare_site_task_timeout',
-                default=300,
-                help='Time out (in seconds) for prepare_site task'
-            ),
-            cfg.IntOpt(
-                'prepare_node_query_interval',
-                default=30,
-                help='Query interval (in seconds) for prepare_node task'
-            ),
-            cfg.IntOpt(
-                'prepare_node_task_timeout',
-                default=1800,
-                help='Time out (in seconds) for prepare_node task'
-            ),
-            cfg.IntOpt(
-                'deploy_node_query_interval',
-                default=30,
-                help='Query interval (in seconds) for deploy_node task'
-            ),
-            cfg.IntOpt(
-                'deploy_node_task_timeout',
-                default=3600,
-                help='Time out (in seconds) for deploy_node task'
-            ),
-            cfg.IntOpt(
-                'destroy_node_query_interval',
-                default=30,
-                help='Query interval (in seconds) for destroy_node task'
-            ),
-            cfg.IntOpt(
-                'destroy_node_task_timeout',
-                default=900,
-                help='Time out (in seconds) for destroy_node task'
-            ),
-            cfg.IntOpt(
-                'cluster_join_check_backoff_time',
-                default=120,
-                help='Backoff time (in seconds) before checking cluster join'
             ),
         ]
     ),

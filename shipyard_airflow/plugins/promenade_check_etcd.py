@@ -33,6 +33,10 @@ class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
     def do_execute(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
+
+        # TODO(bryan-strassner) use:
+        #     self.dc['kubernetes_provisioner.etcd_ready_timeout']
+        #     self.dc['kubernetes_provisioner.remove_etcd_timeout']
         logging.info("Performing health check on etcd...")
         time.sleep(5)
 

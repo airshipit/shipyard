@@ -35,6 +35,11 @@ class PromenadeDrainNodeOperator(PromenadeBaseOperator):
     def do_execute(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
+
+        # TODO(bryan-strassner) use:
+        #     self.dc['kubernetes_provisioner.drain_timeout']
+        #     self.dc['kubernetes_provisioner.drain_grace_period']
+
         logging.info("Draining node...")
         time.sleep(5)
 

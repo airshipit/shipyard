@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,32 +14,21 @@
 from datetime import timedelta
 
 import airflow
-import failure_handlers
 from airflow import DAG
-from airflow.operators import ConcurrencyCheckOperator
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.subdag_operator import SubDagOperator
 
-from armada_deploy_site import deploy_site_armada
-from deckhand_get_design import get_design_deckhand
-from drydock_deploy_site import deploy_site_drydock
-from validate_site_design import validate_site_design
-"""
-update_site is the top-level orchestration DAG for updating a site using the
-Undercloud platform.
+from common_step_factory import CommonStepFactory
+
+"""update_site
+
+The top-level orchestration DAG for updating a site using the Undercloud
+platform.
 
 TODO: We will disable pre-flight checks for now and will revisit it at
       a later date. The pre-flight checks will be more targeted in the
       case of 'update_site' and will include specific checks on things
       like coredns, calico and ceph.
 """
-
-ARMADA_BUILD_DAG_NAME = 'armada_build'
-DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
-DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
-DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
 PARENT_DAG_NAME = 'update_site'
-VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 
 default_args = {
     'owner': 'airflow',
@@ -54,58 +43,26 @@ default_args = {
 }
 
 dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
-"""
-Define push function to store the content of 'action' that is
-defined via 'dag_run' in XCOM so that it can be used by the
-Operators
-"""
 
+step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
+                                 dag=dag,
+                                 default_args=default_args)
 
-def xcom_push(**kwargs):
-    # Pushes action XCom
-    kwargs['ti'].xcom_push(key='action',
-                           value=kwargs['dag_run'].conf['action'])
-
-
-action_xcom = PythonOperator(
-    task_id='action_xcom', dag=dag, python_callable=xcom_push)
-
-concurrency_check = ConcurrencyCheckOperator(
-    task_id=DAG_CONCURRENCY_CHECK_DAG_NAME,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-get_design_version = SubDagOperator(
-    subdag=get_design_deckhand(
-        PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
-    task_id=DECKHAND_GET_DESIGN_VERSION,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-validate_site_design = SubDagOperator(
-    subdag=validate_site_design(
-        PARENT_DAG_NAME, VALIDATE_SITE_DESIGN_DAG_NAME, args=default_args),
-    task_id=VALIDATE_SITE_DESIGN_DAG_NAME,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-drydock_build = SubDagOperator(
-    subdag=deploy_site_drydock(
-        PARENT_DAG_NAME, DRYDOCK_BUILD_DAG_NAME, args=default_args),
-    task_id=DRYDOCK_BUILD_DAG_NAME,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
-armada_build = SubDagOperator(
-    subdag=deploy_site_armada(
-        PARENT_DAG_NAME, ARMADA_BUILD_DAG_NAME, args=default_args),
-    task_id=ARMADA_BUILD_DAG_NAME,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
+action_xcom = step_factory.get_action_xcom()
+concurrency_check = step_factory.get_concurrency_check()
+get_design_version = step_factory.get_get_design_version()
+validate_site_design = step_factory.get_validate_site_design()
+deployment_configuration = step_factory.get_deployment_configuration()
+drydock_build = step_factory.get_drydock_build()
+armada_build = step_factory.get_armada_build()
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
 get_design_version.set_upstream(concurrency_check)
 validate_site_design.set_upstream(get_design_version)
-drydock_build.set_upstream(validate_site_design)
+deployment_configuration.set_upstream(get_design_version)
+drydock_build.set_upstream([
+    validate_site_design,
+    deployment_configuration
+])
 armada_build.set_upstream(drydock_build)

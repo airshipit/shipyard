@@ -16,11 +16,7 @@ from airflow.models import DAG
 from airflow.operators import DeckhandGetDesignOperator
 from airflow.operators import DeckhandRetrieveRenderedDocOperator
 
-
-# Location of shiyard.conf
-# Note that the shipyard.conf file needs to be placed on a volume
-# that can be accessed by the containers
-config_path = '/usr/local/airflow/plugins/shipyard.conf'
+from config_path import config_path
 
 
 def get_design_deckhand(parent_dag_name, child_dag_name, args):

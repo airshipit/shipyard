@@ -23,6 +23,7 @@ from airflow.exceptions import AirflowException
 from deckhand.client import client as deckhand_client
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
+from xcom_puller import XcomPuller
 
 
 class DeckhandBaseOperator(BaseOperator):
@@ -49,7 +50,6 @@ class DeckhandBaseOperator(BaseOperator):
                  svc_session=None,
                  svc_token=None,
                  validation_read_timeout=None,
-                 workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
         """Initialization of DeckhandBaseOperator object.
@@ -66,7 +66,6 @@ class DeckhandBaseOperator(BaseOperator):
         :param svc_session: Keystone Session
         :param svc_token: Keystone Token
         :param validation_read_timeout: Deckhand validation timeout
-        :param workflow_info: Information related to current workflow
         :param xcom_push: xcom usage
 
         """
@@ -84,7 +83,6 @@ class DeckhandBaseOperator(BaseOperator):
         self.svc_session = svc_session
         self.svc_token = svc_token
         self.validation_read_timeout = validation_read_timeout
-        self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
@@ -117,17 +115,13 @@ class DeckhandBaseOperator(BaseOperator):
         # Define task_instance
         task_instance = context['task_instance']
 
-        # Extract information related to current workflow
-        # The workflow_info variable will be a dictionary
-        # that contains information about the workflow such
-        # as action_id, name and other related parameters
-        self.workflow_info = task_instance.xcom_pull(
-            task_ids='action_xcom', key='action',
-            dag_id=self.main_dag_name)
+        # Set up and retrieve values from xcom
+        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.action_info = self.xcom_puller.get_action_info()
 
         # Logs uuid of Shipyard action
         logging.info("Executing Shipyard Action %s",
-                     self.workflow_info['id'])
+                     self.action_info['id'])
 
         # Retrieve Endpoint Information
         self.deckhand_svc_endpoint = ucp_service_endpoint(
@@ -158,9 +152,7 @@ class DeckhandBaseOperator(BaseOperator):
         if self.task_id != 'deckhand_get_design_version':
 
             # Retrieve 'revision_id' from xcom
-            self.revision_id = task_instance.xcom_pull(
-                task_ids='deckhand_get_design_version',
-                dag_id=self.main_dag_name + '.deckhand_get_design_version')
+            self.revision_id = self.xcom_puller.get_design_version()
 
             if self.revision_id:
                 logging.info("Revision ID is %d", self.revision_id)

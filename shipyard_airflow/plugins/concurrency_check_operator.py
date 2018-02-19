@@ -56,9 +56,14 @@ class ConcurrencyCheckOperator(BaseOperator):
     @apply_defaults
     def __init__(self, conflicting_dag_set=None, *args, **kwargs):
         super(ConcurrencyCheckOperator, self).__init__(*args, **kwargs)
-        if conflicting_dag_set is not None:
-            self.conflicting_dag_set = conflicting_dag_set
-        else:
+        self.conflicting_dag_set = conflicting_dag_set
+
+    def execute(self, context):
+        """
+        Run the check to see if this DAG has an concurrency issues with other
+        DAGs. Stop the workflow if there is.
+        """
+        if self.conflicting_dag_set is None:
             self.check_dag_id = self.dag.dag_id
             logging.debug('dag_id is %s', self.check_dag_id)
             if '.' in self.dag.dag_id:
@@ -70,11 +75,6 @@ class ConcurrencyCheckOperator(BaseOperator):
             self.conflicting_dag_set = find_conflicting_dag_set(
                 self.check_dag_id)
 
-    def execute(self, context):
-        """
-        Run the check to see if this DAG has an concurrency issues with other
-        DAGs. Stop the workflow if there is.
-        """
         logging.info('Checking for running of dags: %s',
                      ', '.join(self.conflicting_dag_set))
 
@@ -123,7 +123,7 @@ class ConcurrencyCheckOperator(BaseOperator):
         """
         conflict_string = '{} conflicts with running {}. Aborting run'.format(
             dag_name, conflict)
-        logging.warning(conflict_string)
+        logging.error(conflict_string)
         raise AirflowException(conflict_string)
 
 

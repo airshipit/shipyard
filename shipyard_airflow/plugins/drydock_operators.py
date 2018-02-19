@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import configparser
 import json
 import logging
 import os
@@ -31,20 +30,11 @@ from check_k8s_node_status import check_node_status
 from drydock_provisioner import error as errors
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
+from xcom_puller import XcomPuller
 
 
 class DryDockOperator(BaseOperator):
-    """
-    DryDock Client
-    :param action: Task to perform
-    :param design_ref: A URI reference to the design documents
-    :param main_dag_name: Parent Dag
-    :param node_filter: A filter for narrowing the scope of the task. Valid
-                        fields are 'node_names', 'rack_names', 'node_tags'
-    :param shipyard_conf: Location of shipyard.conf
-    :param sub_dag_name: Child Dag
-    :param workflow_info: Information related to the workflow
-    """
+    """DryDock Client"""
     @apply_defaults
     def __init__(self,
                  action=None,
@@ -54,9 +44,20 @@ class DryDockOperator(BaseOperator):
                  shipyard_conf=None,
                  svc_token=None,
                  sub_dag_name=None,
-                 workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
+        """
+        :param action: Task to perform
+        :param design_ref: A URI reference to the design documents
+        :param main_dag_name: Parent Dag
+        :param node_filter: A filter for narrowing the scope of the task. Valid
+                            fields are 'node_names', 'rack_names', 'node_tags'
+        :param shipyard_conf: Location of shipyard.conf
+        :param sub_dag_name: Child Dag
+
+        The Drydock operator assumes that prior steps have set xcoms for
+        the action and the deployment configuration
+        """
 
         super(DryDockOperator, self).__init__(*args, **kwargs)
         self.action = action
@@ -66,7 +67,6 @@ class DryDockOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.svc_token = svc_token
         self.sub_dag_name = sub_dag_name
-        self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
@@ -81,22 +81,19 @@ class DryDockOperator(BaseOperator):
         # Define task_instance
         task_instance = context['task_instance']
 
-        # Extract information related to current workflow
-        # The workflow_info variable will be a dictionary
-        # that contains information about the workflow such
-        # as action_id, name and other related parameters
-        workflow_info = task_instance.xcom_pull(
-            task_ids='action_xcom', key='action',
-            dag_id=self.main_dag_name)
+        # Set up and retrieve values from xcom
+        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.action_info = self.xcom_puller.get_action_info()
+        self.dc = self.xcom_puller.get_deployment_configuration()
 
         # Logs uuid of action performed by the Operator
-        logging.info("DryDock Operator for action %s", workflow_info['id'])
+        logging.info("DryDock Operator for action %s", self.action_info['id'])
 
         # Retrieve information of the server that we want to redeploy if user
         # executes the 'redeploy_server' dag
         # Set node filter to be the server that we want to redeploy
-        if workflow_info['dag_id'] == 'redeploy_server':
-            redeploy_server = workflow_info['parameters'].get('server-name')
+        if self.action_info['dag_id'] == 'redeploy_server':
+            redeploy_server = self.action_info['parameters'].get('server-name')
 
             if redeploy_server:
                 logging.info("Server to be redeployed is %s", redeploy_server)
@@ -139,83 +136,56 @@ class DryDockOperator(BaseOperator):
         # Set up DryDock Client
         drydock_client = self.drydock_session_client(drydock_svc_endpoint)
 
-        # Read shipyard.conf
-        config = configparser.ConfigParser()
-        config.read(self.shipyard_conf)
-
-        if not config.read(self.shipyard_conf):
-            raise AirflowException("Unable to read content of shipyard.conf")
-
         # Create Task for verify_site
         if self.action == 'verify_site':
-
-            # Default settings for 'verify_site' execution is to query
-            # the task every 10 seconds and to time out after 60 seconds
-            query_interval = config.get('drydock',
-                                        'verify_site_query_interval')
-            task_timeout = config.get('drydock', 'verify_site_task_timeout')
-
+            q_interval = self.dc['physical_provisioner.verify_interval']
+            task_timeout = self.dc['physical_provisioner.verify_timeout']
             self.drydock_action(drydock_client, context, self.action,
-                                query_interval, task_timeout)
+                                q_interval, task_timeout)
 
         # Create Task for prepare_site
         elif self.action == 'prepare_site':
-            # Default settings for 'prepare_site' execution is to query
-            # the task every 10 seconds and to time out after 300 seconds
-            query_interval = config.get('drydock',
-                                        'prepare_site_query_interval')
-            task_timeout = config.get('drydock', 'prepare_site_task_timeout')
-
+            q_interval = self.dc['physical_provisioner.prepare_site_interval']
+            task_timeout = self.dc['physical_provisioner.prepare_site_timeout']
             self.drydock_action(drydock_client, context, self.action,
-                                query_interval, task_timeout)
+                                q_interval, task_timeout)
 
         # Create Task for prepare_node
         elif self.action == 'prepare_nodes':
-            # Default settings for 'prepare_node' execution is to query
-            # the task every 30 seconds and to time out after 1800 seconds
-            query_interval = config.get('drydock',
-                                        'prepare_node_query_interval')
-            task_timeout = config.get('drydock', 'prepare_node_task_timeout')
-
+            q_interval = self.dc['physical_provisioner.prepare_node_interval']
+            task_timeout = self.dc['physical_provisioner.prepare_node_timeout']
             self.drydock_action(drydock_client, context, self.action,
-                                query_interval, task_timeout)
+                                q_interval, task_timeout)
 
         # Create Task for deploy_node
         elif self.action == 'deploy_nodes':
-            # Default settings for 'deploy_node' execution is to query
-            # the task every 30 seconds and to time out after 3600 seconds
-            query_interval = config.get('drydock',
-                                        'deploy_node_query_interval')
-            task_timeout = config.get('drydock', 'deploy_node_task_timeout')
-
+            q_interval = self.dc['physical_provisioner.deploy_interval']
+            task_timeout = self.dc['physical_provisioner.deploy_timeout']
             self.drydock_action(drydock_client, context, self.action,
-                                query_interval, task_timeout)
+                                q_interval, task_timeout)
 
             # Wait for 120 seconds (default value) before checking the cluster
             # join process as it takes time for process to be triggered across
             # all nodes
-            cluster_join_check_backoff_time = config.get(
-                'drydock', 'cluster_join_check_backoff_time')
+            join_wait = self.dc['physical_provisioner.join_wait']
             logging.info("All nodes deployed in MAAS")
             logging.info("Wait for %d seconds before checking node state...",
-                         int(cluster_join_check_backoff_time))
-            time.sleep(int(cluster_join_check_backoff_time))
-
+                         join_wait)
+            time.sleep(join_wait)
             # Check that cluster join process is completed before declaring
-            # deploy_node as 'completed'. Set time out to 30 minutes and set
-            # polling interval to 30 seconds.
-            check_node_status(1800, 30)
+            # deploy_node as 'completed'.
+            node_st_timeout = self.dc['kubernetes.node_status_timeout']
+            node_st_interval = self.dc['kubernetes.node_status_interval']
+            check_node_status(node_st_timeout, node_st_interval)
 
         # Create Task for destroy_node
         # NOTE: This is a PlaceHolder function. The 'destroy_node'
         # functionalities in DryDock is being worked on and is not
         # ready at the moment.
         elif self.action == 'destroy_node':
-            # Default settings for 'destroy_node' execution is to query
-            # the task every 30 seconds and to time out after 900 seconds
-            query_interval = config.get('drydock',
-                                        'destroy_node_query_interval')
-            task_timeout = config.get('drydock', 'destroy_node_task_timeout')
+            # see deployment_configuration_operator.py for defaults
+            q_interval = self.dc['physical_provisioner.destroy_interval']
+            task_timeout = self.dc['physical_provisioner.destroy_timeout']
 
             logging.info("Destroying node %s from cluster...", redeploy_server)
             time.sleep(15)
@@ -224,7 +194,7 @@ class DryDockOperator(BaseOperator):
             # TODO: Uncomment when the function to destroy/delete node is
             # ready for consumption in Drydock
             # self.drydock_action(drydock_client, context, self.action,
-            #                    query_interval, task_timeout)
+            #                    q_interval, task_timeout)
 
         # Do not perform any action
         else:
@@ -403,15 +373,7 @@ class DryDockOperator(BaseOperator):
                                                      svc_type=svc_type)
         logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
-        # Retrieve revision_id from xcom
-        # Note that in the case of 'deploy_site', the dag_id will
-        # be 'deploy_site.deckhand_get_design_version' for the
-        # 'deckhand_get_design_version' task. We need to extract
-        # the xcom value from it in order to get the value of the
-        # last committed revision ID
-        committed_revision_id = context['task_instance'].xcom_pull(
-            task_ids='deckhand_get_design_version',
-            dag_id=self.main_dag_name + '.deckhand_get_design_version')
+        committed_revision_id = self.xcom_puller.get_design_version()
 
         # Form DeckHand Design Reference Path that we will use to retrieve
         # the DryDock YAMLs

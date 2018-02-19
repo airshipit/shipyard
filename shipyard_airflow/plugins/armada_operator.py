@@ -28,6 +28,7 @@ import armada.common.session as session
 from get_k8s_pod_port_ip import get_pod_port_ip
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
+from xcom_puller import XcomPuller
 
 
 class ArmadaOperator(BaseOperator):
@@ -37,6 +38,9 @@ class ArmadaOperator(BaseOperator):
     :param main_dag_name: Parent Dag
     :param shipyard_conf: Location of shipyard.conf
     :param sub_dag_name: Child Dag
+
+    The Drydock operator assumes that prior steps have set xcoms for
+    the action and the deployment configuration
     """
 
     @apply_defaults
@@ -46,7 +50,6 @@ class ArmadaOperator(BaseOperator):
                  shipyard_conf=None,
                  svc_token=None,
                  sub_dag_name=None,
-                 workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
 
@@ -56,7 +59,6 @@ class ArmadaOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.svc_token = svc_token
         self.sub_dag_name = sub_dag_name
-        self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
@@ -67,16 +69,12 @@ class ArmadaOperator(BaseOperator):
         # Define task_instance
         task_instance = context['task_instance']
 
-        # Extract information related to current workflow
-        # The workflow_info variable will be a dictionary
-        # that contains information about the workflow such
-        # as action_id, name and other related parameters
-        workflow_info = task_instance.xcom_pull(
-            task_ids='action_xcom', key='action',
-            dag_id=self.main_dag_name)
+        # Set up and retrieve values from xcom
+        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.action_info = self.xcom_puller.get_action_info()
 
         # Logs uuid of action performed by the Operator
-        logging.info("Armada Operator for action %s", workflow_info['id'])
+        logging.info("Armada Operator for action %s", self.action_info['id'])
 
         # Retrieve Deckhand Design Reference
         design_ref = self.get_deckhand_design_ref(context)
@@ -108,6 +106,10 @@ class ArmadaOperator(BaseOperator):
 
             return site_design_validity
 
+        # Set up target manifest (only if not doing validate)
+        self.dc = self.xcom_puller.get_deployment_configuration()
+        self.target_manifest = self.dc['armada.manifest']
+
         # Create Armada Client
         # Retrieve Endpoint Information
         svc_type = 'armada'
@@ -128,13 +130,8 @@ class ArmadaOperator(BaseOperator):
 
         # Armada Apply
         elif self.action == 'armada_apply':
-            # TODO (bryan-strassner) externalize the name of the manifest to
-            #  use this needs to come from a site configuration document for
-            #  consumption by shipyard/airflow. For now. "full-site" is the
-            #  only value that will work.
-            target_manifest = 'full-site'
             self.armada_apply(context, armada_client, design_ref,
-                              target_manifest)
+                              self.target_manifest)
 
         # Armada Get Releases
         elif self.action == 'armada_get_releases':
@@ -268,14 +265,7 @@ class ArmadaOperator(BaseOperator):
         logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
         # Retrieve revision_id from xcom
-        # Note that in the case of 'deploy_site', the dag_id will
-        # be 'deploy_site.deckhand_get_design_version' for the
-        # 'deckhand_get_design_version' task. We need to extract
-        # the xcom value from it in order to get the value of the
-        # last committed revision ID
-        committed_revision_id = context['task_instance'].xcom_pull(
-            task_ids='deckhand_get_design_version',
-            dag_id=self.main_dag_name + '.deckhand_get_design_version')
+        committed_revision_id = self.xcom_puller.get_design_version()
 
         # Form Design Reference Path that we will use to retrieve
         # the Design YAMLs

@@ -5,6 +5,10 @@ mock==2.0.0
 responses==0.8.1
 testfixtures==5.1.1
 apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.9.0
+git+https://github.com/att-comdev/deckhand.git@master#egg=deckhand
+git+https://github.com/att-comdev/promenade.git@master#egg=promenade
+git+https://github.com/att-comdev/drydock.git@master#egg=drydock
+git+https://github.com/att-comdev/armada.git@master#egg=armada
 
 # Linting
 flake8==3.3.0

@@ -221,8 +221,13 @@ class ActionsResource(BaseResource):
         :param dag_id: the name of the dag to invoke
         :param action: the action structure to invoke the dag with
         """
+        # TODO(bryan-strassner) refactor the mechanics of this method to an
+        #     airflow api client module
+
         # Retrieve URL
         web_server_url = CONF.base.web_server
+        c_timeout = CONF.base.airflow_api_connect_timeout
+        r_timeout = CONF.base.airflow_api_read_timeout
 
         if 'Error' in web_server_url:
             raise ApiError(
@@ -232,7 +237,6 @@ class ActionsResource(BaseResource):
                              'value'),
                 status=falcon.HTTP_503,
                 retry=True, )
-
         else:
             conf_value = {'action': action}
             # "conf" - JSON string that gets pickled into the DagRun's
@@ -242,7 +246,7 @@ class ActionsResource(BaseResource):
                                          dag_id, self.to_json(conf_value)))
 
             try:
-                resp = requests.get(req_url, timeout=(5, 15))
+                resp = requests.get(req_url, timeout=(c_timeout, r_timeout))
                 LOG.info('Response code from Airflow trigger_dag: %s',
                          resp.status_code)
                 # any 4xx/5xx will be HTTPError, which are RequestException
@@ -268,6 +272,8 @@ class ActionsResource(BaseResource):
             return dag_execution_date
 
     def _exhume_date(self, dag_id, log_string):
+        # TODO(bryan-strassner) refactor this to an airflow api client module
+
         # we are unable to use the response time because that
         # does not match the time when the dag was recorded.
         # We have to parse the stdout returned to find the

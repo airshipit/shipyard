@@ -20,11 +20,7 @@ from airflow.operators import PromenadeDecommissionNodeOperator
 from airflow.operators import PromenadeDrainNodeOperator
 from airflow.operators import PromenadeShutdownKubeletOperator
 
-
-# Location of shiyard.conf
-# Note that the shipyard.conf file needs to be placed on a volume
-# that can be accessed by the containers
-config_path = '/usr/local/airflow/plugins/shipyard.conf'
+from config_path import config_path
 
 
 def destroy_server(parent_dag_name, child_dag_name, args):

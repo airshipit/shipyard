@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,36 +13,24 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import K8sHealthCheckOperator
-from airflow.operators import UcpHealthCheckOperator
+from airflow.operators import DeploymentConfigurationOperator
 
 from config_path import config_path
 
 
-def all_preflight_checks(parent_dag_name, child_dag_name, args):
-    '''
-    Pre-Flight Checks Subdag
-    '''
+GET_DEPLOYMENT_CONFIGURATION_NAME = 'get_deployment_configuration'
+
+
+def get_deployment_configuration(parent_dag_name, child_dag_name, args):
+    """DAG to retrieve deployment configuration"""
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    '''
-    The k8s_preflight_check checks that k8s is in a good state
-    for the purposes of the Undercloud Platform to proceed with
-    processing
-    '''
-    k8s = K8sHealthCheckOperator(
-        task_id='k8s_preflight_check',
-        dag=dag)
-
-    '''
-    Check that all UCP components are in good state for the purposes
-    of the Undercloud Platform to proceed with processing
-    '''
-    shipyard = UcpHealthCheckOperator(
-        task_id='ucp_preflight_check',
+    deployment_configuration = DeploymentConfigurationOperator(
+        task_id=GET_DEPLOYMENT_CONFIGURATION_NAME,
         shipyard_conf=config_path,
+        main_dag_name=parent_dag_name,
         dag=dag)
 
     return dag

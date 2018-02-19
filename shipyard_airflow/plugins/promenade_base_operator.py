@@ -21,6 +21,7 @@ from airflow.exceptions import AirflowException
 
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
+from xcom_puller import XcomPuller
 
 
 class PromenadeBaseOperator(BaseOperator):
@@ -30,7 +31,6 @@ class PromenadeBaseOperator(BaseOperator):
     All promenade related workflow operators will use the promenade
     base operator as the parent and inherit attributes and methods
     from this class
-
     """
 
     @apply_defaults
@@ -42,7 +42,6 @@ class PromenadeBaseOperator(BaseOperator):
                  shipyard_conf=None,
                  sub_dag_name=None,
                  svc_token=None,
-                 workflow_info={},
                  xcom_push=True,
                  *args, **kwargs):
         """Initialization of PromenadeBaseOperator object.
@@ -54,9 +53,9 @@ class PromenadeBaseOperator(BaseOperator):
         :param shipyard_conf: Path of shipyard.conf
         :param sub_dag_name: Child Dag
         :param svc_token: Keystone Token
-        :param workflow_info: Information related to current workflow
         :param xcom_push: xcom usage
-
+        The Drydock operator assumes that prior steps have set xcoms for
+        the action and the deployment configuration
         """
 
         super(PromenadeBaseOperator, self).__init__(*args,
@@ -68,11 +67,9 @@ class PromenadeBaseOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.sub_dag_name = sub_dag_name
         self.svc_token = svc_token
-        self.workflow_info = workflow_info
         self.xcom_push_flag = xcom_push
 
     def execute(self, context):
-
         # Execute promenade base function
         self.promenade_base(context)
 
@@ -84,22 +81,18 @@ class PromenadeBaseOperator(BaseOperator):
         # Define task_instance
         task_instance = context['task_instance']
 
-        # Extract information related to current workflow
-        # The workflow_info variable will be a dictionary
-        # that contains information about the workflow such
-        # as action_id, name and other related parameters
-        self.workflow_info = task_instance.xcom_pull(
-            task_ids='action_xcom', key='action',
-            dag_id=self.main_dag_name)
+        # Set up and retrieve values from xcom
+        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.action_info = self.xcom_puller.get_action_info()
+        self.dc = self.xcom_puller.get_deployment_configuration()
 
         # Logs uuid of Shipyard action
-        logging.info("Executing Shipyard Action %s",
-                     self.workflow_info['id'])
+        logging.info("Executing Shipyard Action %s", self.action_info['id'])
 
         # Retrieve information of the server that we want to redeploy
         # if user executes the 'redeploy_server' dag
-        if self.workflow_info['dag_id'] == 'redeploy_server':
-            self.redeploy_server = self.workflow_info['parameters'].get(
+        if self.action_info['dag_id'] == 'redeploy_server':
+            self.redeploy_server = self.action_info['parameters'].get(
                 'server-name')
 
             if self.redeploy_server:
