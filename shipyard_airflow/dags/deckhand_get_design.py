@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DeckhandOperator
+from airflow.operators import DeckhandGetDesignOperator
 
 
 # Location of shiyard.conf
@@ -30,10 +30,9 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    deckhand_design = DeckhandOperator(
+    deckhand_design = DeckhandGetDesignOperator(
         task_id='deckhand_get_design_version',
         shipyard_conf=config_path,
-        action='deckhand_get_design_version',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
@@ -44,10 +43,9 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
     # the issue with the Deckhand client. We will uncomment this
     # block once the issue with Deckhand is resolved.
     #
-    # shipyard_retrieve_rendered_doc = DeckhandOperator(
+    # shipyard_retrieve_rendered_doc = DeckhandValidateSiteDesignOperator(
     #    task_id='shipyard_retrieve_rendered_doc',
     #    shipyard_conf=config_path,
-    #    action='shipyard_retrieve_rendered_doc',
     #    main_dag_name=parent_dag_name,
     #    sub_dag_name=child_dag_name,
     #    dag=dag)

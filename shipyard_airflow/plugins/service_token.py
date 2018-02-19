@@ -44,7 +44,7 @@ def shipyard_service_token(func):
         retry = 0
 
         # Retrieve Keystone Session
-        sess = ucp_keystone_session(self)
+        self.svc_session = ucp_keystone_session(self)
 
         # We will allow 1 retry in getting the Keystone Token with a
         # backoff interval of 10 seconds in case there is a temporary
@@ -53,7 +53,8 @@ def shipyard_service_token(func):
         while retry <= 1:
             # Retrieve Keystone Token
             logging.info("Get Keystone Token")
-            self.svc_token = sess.get_auth_headers().get('X-Auth-Token')
+            self.svc_token = self.svc_session.get_auth_headers().get(
+                'X-Auth-Token')
 
             # Retry if we fail to get the keystone token
             if self.svc_token:

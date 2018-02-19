@@ -14,7 +14,7 @@
 
 from airflow.models import DAG
 from airflow.operators import ArmadaOperator
-from airflow.operators import DeckhandOperator
+from airflow.operators import DeckhandValidateSiteDesignOperator
 from airflow.operators import DryDockOperator
 
 # Location of shiyard.conf
@@ -31,10 +31,9 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    deckhand_validate_docs = DeckhandOperator(
+    deckhand_validate_docs = DeckhandValidateSiteDesignOperator(
         task_id='deckhand_validate_site_design',
         shipyard_conf=config_path,
-        action='deckhand_validate_site_design',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
