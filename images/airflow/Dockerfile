@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,19 @@
 FROM ubuntu:16.04
 
 # Do not prompt user for choices on installation/configuration of packages
+# Set port 8080 for Airflow Web
+# Set port 5555 for Airflow Flower
+# Set port 8793 for Airflow Worker
 ENV DEBIAN_FRONTEND noninteractive
 ENV container docker
+ENV WEB_PORT 8080
+ENV FLOWER_PORT 5555
+ENV WORKER_PORT 8793
+
+# Expose port for applications
+EXPOSE $WEB_PORT
+EXPOSE $FLOWER_PORT
+EXPOSE $WORKER_PORT
 
 # Airflow Home Directory
 ARG AIRFLOW_HOME=/usr/local/airflow
@@ -57,8 +68,6 @@ RUN set -ex && \
         /usr/share/doc-base
 
 # Copy dependency requirements
-# Install DryDock libraries
-# Install Armada libraries
 COPY ./requirements.txt /tmp/
 RUN pip3 install -r /tmp/requirements.txt
 
@@ -79,18 +88,15 @@ RUN curl -L -o /usr/local/bin/kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
-# Copy entrypoint.sh and airflow_start_service.sh
+# Copy entrypoint.sh, airflow_start_service.sh and
+# airflow_logrotate.sh
 COPY script/entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
 COPY script/airflow_start_service.sh ${AIRFLOW_HOME}/airflow_start_service.sh
+COPY script/airflow_logrotate.sh ${AIRFLOW_HOME}/airflow_logrotate.sh
 
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME} \
     && chmod +x ${AIRFLOW_HOME}/entrypoint.sh
-
-# Expose port 8080 for Airflow Web
-# Expose port 5555 for Airflow Flower
-# Expose port 8793 for Airflow Worker
-EXPOSE 8080 5555 8793
 
 # Set work directory
 USER airflow

@@ -135,6 +135,9 @@ volume_worker:
   class_name: general
   size: 5Gi
 
+logrotate:
+  days_before_deletion: 30
+
 # typically overriden by environmental
 # values, but should include all endpoints
 # required by this chart
@@ -547,21 +550,7 @@ pod:
         timeout: 30
   resources:
     enabled: false
-    shipyard_api:
-      limits:
-        memory: "128Mi"
-        cpu: "100m"
-      requests:
-        memory: "128Mi"
-        cpu: "100m"
     airflow:
-      worker:
-        limits:
-          memory: "128Mi"
-          cpu: "100m"
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
       flower:
         limits:
           memory: "128Mi"
@@ -569,7 +558,7 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "100m"
-      web:
+      logrotate:
         limits:
           memory: "128Mi"
           cpu: "100m"
@@ -583,15 +572,29 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "100m"
-    jobs:
-      shipyard_db_sync:
+      web:
         limits:
           memory: "128Mi"
-          cpu: "500m"
+          cpu: "100m"
         requests:
           memory: "128Mi"
-          cpu: "500m"
-      shipyard_db_init:
+          cpu: "100m"
+      worker:
+        limits:
+          memory: "128Mi"
+          cpu: "100m"
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+    shipyard_api:
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+    jobs:
+      airflow_db_init:
         limits:
           memory: "128Mi"
           cpu: "500m"
@@ -605,14 +608,7 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "500m"
-      airflow_db_init:
-        limits:
-          memory: "128Mi"
-          cpu: "500m"
-        requests:
-          memory: "128Mi"
-          cpu: "500m"
-      ks_user:
+      ks_endpoints:
         limits:
           memory: "128Mi"
           cpu: "100m"
@@ -626,14 +622,27 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "100m"
-      ks_endpoints:
+      ks_user:
         limits:
           memory: "128Mi"
           cpu: "100m"
         requests:
           memory: "128Mi"
           cpu: "100m"
-
+      shipyard_db_init:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+        requests:
+          memory: "128Mi"
+          cpu: "500m"
+      shipyard_db_sync:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+        requests:
+          memory: "128Mi"
+          cpu: "500m"
 manifests:
   configmap_shipyard_bin: true
   configmap_shipyard_etc: true

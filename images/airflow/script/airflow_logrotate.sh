@@ -14,13 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [[ ${LOGROTATE_ENABLED} == "enabled" ]]; then
-    # Execute log rotate script for log rotate side car
-    # container
-    CMD="bash /usr/local/airflow/airflow_logrotate.sh"
-else
-    # Execute Airflow Start Service Script
-    CMD="bash /usr/local/airflow/airflow_start_service.sh"
-fi
+set -x
 
-exec $CMD "$@"
+while true; do
+
+    # Delete logs that are more than 30 days old in the directories
+    # under the Airflow log path
+    # Delete empty directories under the Airflow log path
+    find ${LOGROTATE_PATH} \( -type f -name '*.log' -mtime +${DAYS_BEFORE_LOG_DELETION} -o -type d -empty \) -print -delete
+
+    # Sleep for 1 hr between each wait loop
+    sleep 3600
+
+done

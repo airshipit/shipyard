@@ -146,6 +146,34 @@ spec:
 {{- end }}
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
+{{- if .Values.prod_environment }}
+        - name: airflow-logrotate
+          image: {{ .Values.images.tags.airflow }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.airflow.logrotate | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: DAYS_BEFORE_LOG_DELETION
+            value: {{ .Values.logrotate.days_before_deletion | quote }}
+          - name: LOGROTATE_PATH
+            value: {{ .Values.conf.airflow.core.base_log_folder }}
+          - name: LOGROTATE_ENABLED
+            value: "enabled"
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - |-
+                set -ex
+                ps -ef | grep 'sleep 3600' | grep -v 'grep'
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: airflow-logs
+              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
+{{- end }}
       volumes:
         - name: airflow-etc
           configMap:
