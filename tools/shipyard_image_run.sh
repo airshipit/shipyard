@@ -15,9 +15,7 @@
 #
 set -x
 
-IMAGE_PREFIX=$1
-SHIPYARD_IMAGE_NAME=$2
-IMAGE_TAG=$3
+IMAGE=$1
 
 # Collect necessary files and run shipyard image in docker
 mkdir -p build/.tmprun/etc
@@ -26,7 +24,7 @@ cp $PWD/tools/resources/shipyard.conf build/.tmprun/etc
 docker run \
     -v $PWD/build/.tmprun/etc:/etc/shipyard \
     -p 9000:9000 \
-    --name shipyard_test ${IMAGE_PREFIX}/${SHIPYARD_IMAGE_NAME}:${IMAGE_TAG} \
+    --name shipyard_test ${IMAGE} \
     &
 
 sleep 5

@@ -12,15 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AIRFLOW_IMAGE_NAME         ?= airflow
+DOCKER_REGISTRY            ?= quay.io
 IMAGE_PREFIX               ?= attcomdev
 IMAGE_TAG                  ?= latest
-SHIPYARD_IMAGE_NAME        ?= shipyard
 HELM                       ?= helm
 LABEL                      ?= commit-id
-# Build all docker images for this project
+IMAGE_NAME                 := airflow shipyard
+
+IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
+IMAGE_DIR:=images/$(IMAGE_NAME)
+
 .PHONY: images
-images: build_airflow build_shipyard
+#Build all images in the list
+images: $(IMAGE_NAME)
+#Build and run all images in list
+#sudo make images IMAGE_NAME=airflow will Build and Run airflow
+#sudo make images will build and run airflow and shipyard
+$(IMAGE_NAME):
+	@echo
+	@echo "===== Processing [$@] image ====="
+	@make build_$@ IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} IMAGE_DIR=images/$@
+	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} SCRIPT=./tools/$@_image_run.sh
+ 
+# Build all docker images for this project
 
 # Create tgz of the chart
 .PHONY: charts
@@ -41,26 +55,19 @@ dry-run: clean
 .PHONY: docs
 docs: clean build_docs
 
-.PHONY: run_images
-run_images: run_shipyard run_airflow
-
 # Make targets intended for use by the primary targets above.
 
-.PHONY: run_shipyard
-run_shipyard: clean build_shipyard
-	tools/shipyard_image_run.sh $(IMAGE_PREFIX) $(SHIPYARD_IMAGE_NAME) $(IMAGE_TAG)
-
-.PHONY: run_airflow
-run_airflow: clean build_airflow
-	tools/airflow_image_run.sh  $(IMAGE_PREFIX) $(AIRFLOW_IMAGE_NAME) $(IMAGE_TAG)
+.PHONY: run
+run:
+	$(SCRIPT) $(IMAGE)
 
 .PHONY: build_airflow
 build_airflow:
-	docker build -t $(IMAGE_PREFIX)/$(AIRFLOW_IMAGE_NAME):$(IMAGE_TAG) --label $(LABEL) images/airflow/
+	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile $(IMAGE_DIR)
 
 .PHONY: build_shipyard
 build_shipyard:
-	docker build -t $(IMAGE_PREFIX)/$(SHIPYARD_IMAGE_NAME):$(IMAGE_TAG) --label $(LABEL) -f images/shipyard/Dockerfile .
+	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile .
 
 .PHONY: clean
 clean:

@@ -15,13 +15,11 @@
 #
 set -x
 
-IMAGE_PREFIX=$1
-AIRFLOW_IMAGE_NAME=$2
-IMAGE_TAG=$3
 
+IMAGE=$1
 TEST_RESP="$(docker run \
     -p 8080:8080 \
-    --name airflow_test ${IMAGE_PREFIX}/${AIRFLOW_IMAGE_NAME}:${IMAGE_TAG} \
+    --name airflow_test ${IMAGE} \
     quicktest)"
 
 docker stop airflow_test
