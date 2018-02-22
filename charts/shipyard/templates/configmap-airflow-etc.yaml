@@ -18,25 +18,25 @@
 
 # Add endpoint URI lookup for Airflow Web Server
 {{- if empty .Values.conf.airflow.webserver.base_url -}}
-{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.airflow.webserver "base_url" | quote | trunc 0 -}}
+{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | set .Values.conf.airflow.webserver "base_url" | quote | trunc 0 -}}
 {{- end -}}
 
 {{- if empty .Values.conf.airflow.cli.endpoint_url -}}
-{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.airflow.cli "endpoint_url" | quote | trunc 0 -}}
+{{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | set .Values.conf.airflow.cli "endpoint_url" | quote | trunc 0 -}}
 {{- end -}}
 
 # Add endpoint URI lookup for Postgresql DB Connection
 {{- if empty .Values.conf.airflow.core.sql_alchemy_conn -}}
-{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.core "sql_alchemy_conn" | quote | trunc 0 -}}
+{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.core "sql_alchemy_conn" | quote | trunc 0 -}}
+{{- end -}}
+
+{{- if empty .Values.conf.airflow.celery.result_backend -}}
+{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.celery "result_backend" | quote | trunc 0 -}}
 {{- end -}}
 
 # Add endpoint URI lookup for RabbitMQ Connection
 {{- if empty .Values.conf.airflow.celery.broker_url -}}
-{{- tuple "oslo_messaging" "internal" "user" "amqp" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.celery "broker_url" | quote | trunc 0 -}}
-{{- end -}}
-
-{{- if empty .Values.conf.airflow.celery.celery_result_backend -}}
-{{- tuple "oslo_messaging" "internal" "user" "amqp" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup"| set .Values.conf.airflow.celery "celery_result_backend" | quote | trunc 0 -}}
+{{- tuple "oslo_messaging" "internal" "user" "amqp" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.celery "broker_url" | quote | trunc 0 -}}
 {{- end -}}
 
 ---
