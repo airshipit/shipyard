@@ -31,7 +31,11 @@
 {{- end -}}
 
 {{- if empty .Values.conf.airflow.celery.result_backend -}}
-{{- tuple "postgresql_airflow_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.celery "result_backend" | quote | trunc 0 -}}
+{{- tuple "postgresql_airflow_celery_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.celery "result_backend" | quote | trunc 0 -}}
+{{- end -}}
+
+{{- if empty .Values.conf.airflow.celery.celery_result_backend -}}
+{{- tuple "postgresql_airflow_celery_db" "internal" "user" "postgresql" . | include "helm-toolkit.endpoints.authenticated_endpoint_uri_lookup" | set .Values.conf.airflow.celery "celery_result_backend" | quote | trunc 0 -}}
 {{- end -}}
 
 # Add endpoint URI lookup for RabbitMQ Connection

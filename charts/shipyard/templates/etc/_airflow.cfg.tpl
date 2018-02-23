@@ -319,6 +319,7 @@
 # The use of a database is highly recommended
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-result-backend-settings
 {{ if not .celery.result_backend }}#{{ end }}result_backend = {{ .celery.result_backend | default "<None>" }}
+{{ if not .celery.celery_result_backend }}#{{ end }}celery_result_backend = {{ .celery.celery_result_backend | default "<None>" }}
 
 # Celery Flower is a sweet UI for Celery. Airflow has a shortcut to start
 # it `airflow flower`. This defines the IP that Celery Flower runs on

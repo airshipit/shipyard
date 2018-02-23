@@ -265,6 +265,25 @@ endpoints:
         default: 5432
     host_fqdn_override:
       default: null
+  postgresql_airflow_celery_db:
+    name: postgresql_airflow_celery_db
+    auth:
+      admin:
+        username: postgres
+        password: password
+      user:
+        username: airflow
+        password: password
+        database: airflow
+    hosts:
+      default: postgresql
+    path: /airflow
+    scheme: db+postgresql
+    port:
+      postgresql:
+        default: 5432
+    host_fqdn_override:
+      default: null
   oslo_messaging:
     auth:
       user:
