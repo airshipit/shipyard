@@ -14,8 +14,6 @@
 
 {{- $envAll := . }}
 
-{{ include "airflow.conf.airflow_values_skeleton" .Values.conf.airflow | trunc 0 }}
-
 # Add endpoint URI lookup for Airflow Web Server
 {{- if empty .Values.conf.airflow.webserver.base_url -}}
 {{- tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | set .Values.conf.airflow.webserver "base_url" | quote | trunc 0 -}}
@@ -50,14 +48,4 @@ metadata:
   name: airflow-etc
 data:
   airflow.cfg: |+
-{{ if .Values.conf.airflow.override -}}
-{{ .Values.conf.airflow.override | indent 4 }}
-{{- else -}}
-{{- if .Values.conf.airflow.prefix -}}
-{{ .Values.conf.airflow.prefix | indent 4 }}
-{{- end }}
-{{ tuple "etc/_airflow.cfg.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
-{{- end }}
-{{- if .Values.conf.airflow.append -}}
-{{ .Values.conf.airflow.append | indent 4 }}
-{{- end }}
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.airflow | indent 4 }}

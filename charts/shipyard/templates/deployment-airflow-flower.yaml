@@ -59,7 +59,7 @@ spec:
               port: {{ .Values.network.airflow.flower.port }}
           volumeMounts:
             - name: airflow-etc
-              mountPath: {{ .Values.conf.airflow.airflow_config_file }}
+              mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
               readOnly: true
 {{ if $mounts_airflow_flower.volumeMounts }}{{ toYaml $mounts_airflow_flower.volumeMounts | indent 12 }}{{ end }}

@@ -374,11 +374,9 @@ conf:
       deckhand_client_read_timeout: 300
       validation_connect_timeout: 5
       validation_read_timeout: 300
+  airflow_config_file:
+    path: /usr/local/airflow/airflow.cfg
   airflow:
-    override:
-    append:
-    prefix:
-    airflow_config_file: /usr/local/airflow/airflow.cfg
     core:
       airflow_home: /usr/local/airflow
       dags_folder: /usr/local/airflow/dags
@@ -459,7 +457,7 @@ conf:
       smtp_mail_from: airflow@airflow.local
     celery:
       celery_app_name: airflow.executors.celery_executor
-      celeryd_concurrency: 16
+      worker_concurrency: 16
       worker_log_server_port: 8793
       flower_host: 0.0.0.0
       flower_url_prefix:

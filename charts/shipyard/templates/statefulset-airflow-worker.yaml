@@ -120,7 +120,7 @@ spec:
             privileged: true
           volumeMounts:
             - name: airflow-etc
-              mountPath: {{ .Values.conf.airflow.airflow_config_file }}
+              mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
               readOnly: true
 {{- if .Values.prod_environment }}
