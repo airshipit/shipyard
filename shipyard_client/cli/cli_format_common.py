@@ -124,7 +124,8 @@ def gen_action_table(action_list):
     actions = format_utils.table_factory(
         field_names=['Name', 'Action', 'Lifecycle'])
     if action_list:
-        for action in action_list:
+        # sort by id, which is ULID - chronological.
+        for action in sorted(action_list, key=lambda k: k['id']):
             actions.add_row([
                 action.get('name'), 'action/{}'.format(action.get('id')),
                 action.get('action_lifecycle')

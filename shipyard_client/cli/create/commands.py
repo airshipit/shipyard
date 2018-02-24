@@ -139,8 +139,9 @@ def create_configdocs(ctx, collection, filename, directory, append,
                     [os.path.join(dir, each) for each in os.listdir(dir)
                      if each.endswith('.yaml')])
 
-        if filename is None:
-            ctx.fail('The directory does not contain any YAML files.'
+        if not filename:
+            # None or empty list should raise this error
+            ctx.fail('The directory does not contain any YAML files. '
                      'Please enter one or more YAML files or a '
                      'directory that contains one or more YAML files.')
 

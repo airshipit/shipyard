@@ -84,6 +84,22 @@ def test_create_configdocs_directory():
     mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
 
 
+def test_create_configdocs_directory_empty():
+    """test create configdocs with empty directory"""
+
+    collection = 'design'
+    dir1 = 'shipyard_client/tests/unit/cli/create/no_yaml_dir/'
+    runner = CliRunner()
+
+    with patch.object(CreateConfigdocs, 'invoke_and_return_resp') as _method:
+        result = runner.invoke(shipyard, [
+            auth_vars, 'create', 'configdocs', collection,
+            '--directory=' + dir1
+        ])
+    _method.assert_not_called()
+    assert b'directory does not contain any YAML files' in result.output_bytes
+
+
 def test_create_configdocs_multi_directory():
     """test create configdocs with multiple directories"""
 
