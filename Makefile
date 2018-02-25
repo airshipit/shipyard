@@ -33,7 +33,7 @@ $(IMAGE_NAME):
 	@echo "===== Processing [$@] image ====="
 	@make build_$@ IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} IMAGE_DIR=images/$@
 	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} SCRIPT=./tools/$@_image_run.sh
- 
+
 # Build all docker images for this project
 
 # Create tgz of the chart
