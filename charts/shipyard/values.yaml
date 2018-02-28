@@ -388,7 +388,6 @@ conf:
       remote_log_conn_id:
       encrypt_s3_logs: "False"
       logging_level: "INFO"
-      logging_config_class:
       log_format: "[%%(asctime)s] {{%%(filename)s:%%(lineno)d}} %%(levelname)s - %%(message)s"
       simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
       default_timezone: "utc"
@@ -412,7 +411,6 @@ conf:
       security:
       secure_mode: "True"
       unit_test_mode: "False"
-      task_log_reader: "task"
       enable_xcom_pickling: "False"
       killed_task_cleanup_time: 60
     cli:
