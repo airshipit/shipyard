@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,21 +15,19 @@
 # limitations under the License.
 
 cmd=$1
+python3_path=$(which python3)
+airflow_path=$(which airflow)
 
 # Initialize Airflow DB
 if [[ $cmd == 'initdb' ]]; then
-    airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow initdb"
-    eval $airflow_cmd
+    ${python3_path} ${airflow_path} initdb
 # Start the services based on argument from Airflow Helm Chart
 elif [[ $cmd == 'webserver' ]]; then
-    airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow webserver"
-    eval $airflow_cmd
+    ${python3_path} ${airflow_path} webserver
 elif [[ $cmd == 'flower' ]]; then
-    airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow flower"
-    eval $airflow_cmd
+    ${python3_path} ${airflow_path} flower
 elif [[ $cmd == 'worker' ]]; then
-    airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow worker"
-    eval $airflow_cmd
+    ${python3_path} ${airflow_path} worker
 # If command contains the word 'scheduler'
 elif [[ $cmd == *scheduler* ]]; then
     while true; do
@@ -38,22 +36,15 @@ elif [[ $cmd == *scheduler* ]]; then
         # The value '-1' indicates that the airflow scheduler will run
         # continuously.  Any other value will mean that the scheduler will
         # terminate and restart after x seconds.
-        airflow_cmd="/usr/bin/python3 /usr/local/bin/airflow scheduler $2 $3"
-        eval $airflow_cmd
+        ${python3_path} ${airflow_path} scheduler $2 $3
     done
 elif [[ $cmd == 'quicktest' ]]; then
-    test_cmd="/usr/bin/python3 /usr/local/bin/airflow initdb"
-    eval $test_cmd
-    test_cmd2="/usr/bin/python3 /usr/local/bin/airflow webserver -p 8080 &"
-    eval $test_cmd2
-    test_cmd3="airflow run example_bash_operator runme_0 2015-01-01"
-    eval $test_cmd3
-    test_cmd4="airflow backfill example_bash_operator -s 2015-01-01 -e 2015-01-02"
-    eval $test_cmd4
-    test_cmd5="airflow dag_state example_bash_operator 2015-01-01"
-    eval $test_cmd5
+    ${python3_path} ${airflow_path} initdb
+    ${python3_path} ${airflow}_cmd webserver -p 8080 &
+    airflow run example_bash_operator runme_0 2018-01-01
+    airflow backfill example_bash_operator -s 2018-01-01 -e 2018-01-02
+    airflow dag_state example_bash_operator 2018-01-01
 else
      echo "Invalid Command!"
-     exit 0
+     exit 1
 fi
-
