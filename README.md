@@ -35,20 +35,20 @@ control plane established by the UCP:
 
 ## Intgration Points:
 [OpenStack Identity (Keystone)](https://github.com/openstack/keystone)
-provides authentication and support for role based authorization.
+provides authentication and support for role based authorization
 \
 [Apache Airflow](https://airflow.incubator.apache.org/) provides the
-framework and automation of workflows provided by Shipyard.
+framework and automation of workflows provided by Shipyard
 \
 [PostgreSQL](https://www.postgresql.org/) is used to persist
 information to correlate workflows with users and history of workflow
-commands.
+commands
 \
 [Deckhand](https://github.com/att-comdev/deckhand) supplies storage
 and management of site designs and secrets
 \
 [Drydock](https://github.com/att-comdev/drydock) is orchestrated by
-Shipyard to perform bare metal node provisioning.
+Shipyard to perform bare metal node provisioning
 \
 [Promenade](https://github.com/att-comdev/promenade) is indirectly
 orchestrated by Shipyard to configure and join Kubernetes nodes
