@@ -14,6 +14,7 @@
 
 from airflow.models import DAG
 from airflow.operators import DeckhandGetDesignOperator
+from airflow.operators import DeckhandValidateSiteDesignOperator
 
 
 # Location of shiyard.conf
@@ -37,20 +38,14 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    # TODO: There is a bug in Deckhand client that is preventing
-    # 'shipyard_retrieve_rendered_doc' from working properly. We
-    # are commenting this part of the workflow while we resolve
-    # the issue with the Deckhand client. We will uncomment this
-    # block once the issue with Deckhand is resolved.
-    #
-    # shipyard_retrieve_rendered_doc = DeckhandValidateSiteDesignOperator(
-    #    task_id='shipyard_retrieve_rendered_doc',
-    #    shipyard_conf=config_path,
-    #    main_dag_name=parent_dag_name,
-    #    sub_dag_name=child_dag_name,
-    #    dag=dag)
+    shipyard_retrieve_rendered_doc = DeckhandValidateSiteDesignOperator(
+        task_id='shipyard_retrieve_rendered_doc',
+        shipyard_conf=config_path,
+        main_dag_name=parent_dag_name,
+        sub_dag_name=child_dag_name,
+        dag=dag)
 
     # Define dependencies
-    # shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
+    shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
 
     return dag
