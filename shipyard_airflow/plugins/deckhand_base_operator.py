@@ -155,7 +155,7 @@ class DeckhandBaseOperator(BaseOperator):
         # 'deckhand_get_design_version' task. We need to extract
         # the xcom value from it in order to get the value of the
         # last committed revision ID
-        if self.sub_dag_name != 'deckhand_get_design_version':
+        if self.task_id != 'deckhand_get_design_version':
 
             # Retrieve 'revision_id' from xcom
             self.revision_id = task_instance.xcom_pull(

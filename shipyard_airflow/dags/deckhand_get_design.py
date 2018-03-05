@@ -14,7 +14,7 @@
 
 from airflow.models import DAG
 from airflow.operators import DeckhandGetDesignOperator
-from airflow.operators import DeckhandValidateSiteDesignOperator
+from airflow.operators import DeckhandRetrieveRenderedDocOperator
 
 
 # Location of shiyard.conf
@@ -38,7 +38,7 @@ def get_design_deckhand(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    shipyard_retrieve_rendered_doc = DeckhandValidateSiteDesignOperator(
+    shipyard_retrieve_rendered_doc = DeckhandRetrieveRenderedDocOperator(
         task_id='shipyard_retrieve_rendered_doc',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
