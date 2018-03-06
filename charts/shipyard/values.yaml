@@ -641,6 +641,22 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "500m"
+    test:
+      shipyard:
+        limits:
+          memory: "128Mi"
+          cpu: "100m"
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+      airflow:
+        limits:
+          memory: "128Mi"
+          cpu: "100m"
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+
 manifests:
   configmap_shipyard_bin: true
   configmap_shipyard_etc: true
@@ -670,3 +686,5 @@ manifests:
   service_airflow_web: true
   service_airflow_worker: true
   service_discovery_airflow_worker: true
+  test_shipyard_api: true
+  test_airflow_api: true
