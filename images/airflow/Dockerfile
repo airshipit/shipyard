@@ -77,7 +77,7 @@ RUN pip3 uninstall -y snakebite || true
 
 # Install Armada, DeckHand and DryDock Client Libraries
 RUN pip3 install -e git://github.com/att-comdev/armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
-RUN pip3 install -e git://github.com/att-comdev/deckhand.git@86ae1ba9ee9a6a5ad4ff92d17fcd7e57fe1bb5d2#egg=deckhand
+RUN pip3 install -e git://github.com/att-comdev/deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand
 RUN pip3 install -e git://github.com/att-comdev/drydock.git@42aa3c486ee4c495c2377d31481df5ab681f84f2#egg=drydock_provisioner
 
 # Create airflow user
