@@ -234,17 +234,15 @@ class ArmadaOperator(BaseOperator):
                                                      query=query)
 
         # We will expect Armada to return the releases that it is
-        # deploying. An empty value for 'install' means that armada
-        # delploy has failed. Note that if we try and deploy the
-        # same release twice, we will end up with empty response on
-        # our second attempt and that will be treated as a failure
-        # scenario.
+        # deploying. Note that if we try and deploy the same release
+        # twice, we will end up with empty response as nothing has
+        # changed.
         if armada_post_apply['message']['install']:
             logging.info("Armada Apply Successfully Executed")
             logging.info(armada_post_apply)
         else:
+            logging.warning("No new changes/updates were detected")
             logging.info(armada_post_apply)
-            raise AirflowException("Armada Apply Failed!")
 
     def armada_get_releases(self, context, armada_client):
         # Initialize Variables

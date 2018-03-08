@@ -45,7 +45,7 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         action='armada_apply',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
-        retries=10,
+        retries=3,
         dag=dag)
 
     # Get Helm Releases
