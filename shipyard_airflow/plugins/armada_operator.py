@@ -183,8 +183,8 @@ class ArmadaOperator(BaseOperator):
         # Return Armada client for XCOM Usage
         return a_client
 
-    @get_pod_port_ip('tiller')
-    def get_tiller_info(self, context, *args):
+    @get_pod_port_ip('tiller', namespace='kube-system')
+    def get_tiller_info(self, context, *args, **kwargs):
         # Initialize Variable
         query = {}
 
