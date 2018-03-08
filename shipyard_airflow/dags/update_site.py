@@ -23,14 +23,17 @@ from airflow.operators.subdag_operator import SubDagOperator
 from armada_deploy_site import deploy_site_armada
 from deckhand_get_design import get_design_deckhand
 from drydock_deploy_site import deploy_site_drydock
-from preflight_checks import all_preflight_checks
 from validate_site_design import validate_site_design
 """
 update_site is the top-level orchestration DAG for updating a site using the
 Undercloud platform.
+
+TODO: We will disable pre-flight checks for now and will revisit it at
+      a later date. The pre-flight checks will be more targeted in the
+      case of 'update_site' and will include specific checks on things
+      like coredns, calico and ceph.
 """
 
-ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
 ARMADA_BUILD_DAG_NAME = 'armada_build'
 DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 DECKHAND_GET_DESIGN_VERSION = 'deckhand_get_design_version'
@@ -72,13 +75,6 @@ concurrency_check = ConcurrencyCheckOperator(
     on_failure_callback=failure_handlers.step_failure_handler,
     dag=dag)
 
-preflight = SubDagOperator(
-    subdag=all_preflight_checks(
-        PARENT_DAG_NAME, ALL_PREFLIGHT_CHECKS_DAG_NAME, args=default_args),
-    task_id=ALL_PREFLIGHT_CHECKS_DAG_NAME,
-    on_failure_callback=failure_handlers.step_failure_handler,
-    dag=dag)
-
 get_design_version = SubDagOperator(
     subdag=get_design_deckhand(
         PARENT_DAG_NAME, DECKHAND_GET_DESIGN_VERSION, args=default_args),
@@ -109,8 +105,7 @@ armada_build = SubDagOperator(
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
-preflight.set_upstream(concurrency_check)
-get_design_version.set_upstream(preflight)
+get_design_version.set_upstream(concurrency_check)
 validate_site_design.set_upstream(get_design_version)
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
