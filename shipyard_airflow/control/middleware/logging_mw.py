@@ -14,6 +14,7 @@
 """ Module for logging related middleware
 """
 import logging
+import re
 
 from shipyard_airflow.control import ucp_logging
 
@@ -24,6 +25,7 @@ class LoggingMiddleware(object):
     """ Sets values to the request scope, and logs request and
     response information
     """
+    hdr_exclude = re.compile('x-.*', re.IGNORECASE)
 
     def process_request(self, req, resp):
         """ Set up values to be logged across the request
@@ -32,8 +34,7 @@ class LoggingMiddleware(object):
         ucp_logging.set_logvar('external_ctx', req.context.external_marker)
         ucp_logging.set_logvar('user', req.context.user)
         LOG.info("Request %s %s", req.method, req.url)
-        for header, header_value in req.headers.items():
-            LOG.info("Request header %s: %s", header, header_value)
+        self._log_headers(req.headers)
 
     def process_response(self, req, resp, resource, req_succeeded):
         """ Log the response information
@@ -42,3 +43,10 @@ class LoggingMiddleware(object):
         resp.append_header('X-Shipyard-Req', ctx.request_id)
         LOG.info('%s %s - %s', req.method, req.uri, resp.status)
         LOG.debug('Response body:%s', resp.body)
+
+    def _log_headers(self, headers):
+        """ Log request headers, while scrubbing sensitive values
+        """
+        for header, header_value in headers.items():
+            if not LoggingMiddleware.hdr_exclude.match(header):
+                LOG.debug("Header %s: %s", header, header_value)
