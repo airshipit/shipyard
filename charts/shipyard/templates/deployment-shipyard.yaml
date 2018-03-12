@@ -53,10 +53,20 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           ports:
-            - containerPort: {{ .Values.network.shipyard.port }}
+            - containerPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+          livenessProbe:
+            httpGet:
+              path: /api/v1.0/health
+              port: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
           readinessProbe:
-            tcpSocket:
-              port: {{ .Values.network.shipyard.port }}
+            httpGet:
+              scheme: HTTP
+              path: /api/v1.0/health
+              port: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
           volumeMounts:
             - name: etc-shipyard
               mountPath: /etc/shipyard
