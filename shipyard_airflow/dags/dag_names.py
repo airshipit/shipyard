@@ -24,3 +24,6 @@ DESTROY_SERVER_DAG_NAME = 'destroy_server'
 
 # Steps
 ACTION_XCOM = 'action_xcom'
+DECIDE_AIRFLOW_UPGRADE = 'decide_airflow_upgrade'
+UPGRADE_AIRFLOW = 'upgrade_airflow'
+SKIP_UPGRADE_AIRFLOW = 'skip_upgrade_airflow'

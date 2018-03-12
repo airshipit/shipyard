@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ from get_k8s_pod_port_ip import get_pod_port_ip
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 from xcom_puller import XcomPuller
+from xcom_pusher import XcomPusher
 
 
 class ArmadaOperator(BaseOperator):
@@ -39,7 +40,7 @@ class ArmadaOperator(BaseOperator):
     :param shipyard_conf: Location of shipyard.conf
     :param sub_dag_name: Child Dag
 
-    The Drydock operator assumes that prior steps have set xcoms for
+    The Armada operator assumes that prior steps have set xcoms for
     the action and the deployment configuration
     """
 
@@ -218,6 +219,8 @@ class ArmadaOperator(BaseOperator):
         armada_post_apply = {}
         override_values = []
         chart_set = []
+        upgrade_airflow_worker = False
+
         # enhance the context's query entity with target_manifest
         query = context.get('query', {})
         query['target_manifest'] = target_manifest
@@ -230,11 +233,34 @@ class ArmadaOperator(BaseOperator):
                                                      set=chart_set,
                                                      query=query)
 
+        # Search for Shipyard deployment in the list of chart upgrades
+        # NOTE: It is possible for the chart name to take on different
+        # values, e.g. 'aic-ucp-shipyard', 'ucp-shipyard'. Hence we
+        # will search for the word 'shipyard', which should exist as
+        # part of the name of the Shipyard Helm Chart.
+        for i in armada_post_apply['message']['upgrade']:
+            if 'shipyard' in i:
+                upgrade_airflow_worker = True
+                break
+
+        # Create xcom key 'upgrade_airflow_worker'
+        # Value of key will depend on whether an upgrade has been
+        # performed on the Shipyard/Airflow Chart
+        self.xcom_pusher = XcomPusher(context['task_instance'])
+
+        if upgrade_airflow_worker:
+            self.xcom_pusher.xcom_push(key='upgrade_airflow_worker',
+                                       value='true')
+        else:
+            self.xcom_pusher.xcom_push(key='upgrade_airflow_worker',
+                                       value='false')
+
         # We will expect Armada to return the releases that it is
         # deploying. Note that if we try and deploy the same release
         # twice, we will end up with empty response as nothing has
         # changed.
-        if armada_post_apply['message']['install']:
+        if (armada_post_apply['message']['install'] or
+                armada_post_apply['message']['upgrade']):
             logging.info("Armada Apply Successfully Executed")
             logging.info(armada_post_apply)
         else:

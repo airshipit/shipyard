@@ -33,6 +33,7 @@ rules:
       - endpoints
       - pods
     verbs:
+      - delete
       - get
       - list
       - watch
@@ -57,6 +58,14 @@ metadata:
 spec:
   serviceName: {{ tuple "airflow_worker" "discovery" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
   podManagementPolicy: "Parallel"
+  # NOTE: We are using 'OnDelete' strategy instead of 'RollingUpdate'
+  # so that the upgrade of airflow worker will only start after the
+  # completion of the 'update_site' workflow (the worker pods will get
+  # deleted by the workflow at the very end, after everything is completed).
+  # This will ensure availability of airflow worker during update/upgrade
+  # and prevent any disruption to the workflow.
+  updateStrategy:
+    type: OnDelete
   replicas: {{ .Values.pod.replicas.airflow.worker }}
   template:
     metadata:

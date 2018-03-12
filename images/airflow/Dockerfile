@@ -93,10 +93,10 @@ RUN curl -L -o /usr/local/bin/kubectl \
 COPY script/entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
 COPY script/airflow_start_service.sh ${AIRFLOW_HOME}/airflow_start_service.sh
 COPY script/airflow_logrotate.sh ${AIRFLOW_HOME}/airflow_logrotate.sh
+COPY script/upgrade_airflow_worker.sh ${AIRFLOW_HOME}/upgrade_airflow_worker.sh
 
 # Change permissions
-RUN chown -R airflow: ${AIRFLOW_HOME} \
-    && chmod +x ${AIRFLOW_HOME}/entrypoint.sh
+RUN chown -R airflow: ${AIRFLOW_HOME}
 
 # Set work directory
 USER airflow
