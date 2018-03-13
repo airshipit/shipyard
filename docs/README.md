@@ -32,22 +32,11 @@ The goal for Shipyard is to provide a customizable *framework* for operators
 and developers alike. This framework will enable end-users to orchestrate and
 deploy a fully functional container-based Cloud.
 
-
-### Roadmap
-
-The detailed Roadmap can be viewed on the
-[LCOO JIRA](https://openstack-lcoo.atlassian.net/projects/SHIPYARD/issues/)
-
-- Integrate with DeckHand, DryDock/Promenade, Armada
-- Expand funcitionality to provide visibility into and options for operation of
-  a UCP installation
-
 ### Getting Started
 
 This project is under development at the moment. We encourage anyone who is
 interested in Shipyard to review our
 [documentation](http://shipyard.readthedocs.io/en/latest/)
-
 
 ### Bugs
 
