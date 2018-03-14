@@ -87,7 +87,7 @@ class DbAccess:
         executes the supplied query and returns the array of dictionaries of
         the row results
         """
-        LOG.info('Query: %s', query)
+        LOG.debug('Query: %s', query)
         result_dict_list = []
         if query is not None:
             with self.get_engine().connect() as connection:
@@ -95,7 +95,7 @@ class DbAccess:
                 result_dict_list = [dict(row) for row in result_set]
         LOG.info('Result has %s rows', len(result_dict_list))
         for dict_row in result_dict_list:
-            LOG.info('Result: %s', dict_row)
+            LOG.debug('Result: %s', dict_row)
         return result_dict_list
 
     def perform_insert(self, query, **kwargs):

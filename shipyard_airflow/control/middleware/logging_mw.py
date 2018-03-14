@@ -42,7 +42,12 @@ class LoggingMiddleware(object):
         ctx = req.context
         resp.append_header('X-Shipyard-Req', ctx.request_id)
         LOG.info('%s %s - %s', req.method, req.uri, resp.status)
-        LOG.debug('Response body:%s', resp.body)
+        # TODO(bryan-strassner) since response bodies can contain sensitive
+        #     information, only logging error response bodies here. When we
+        #     have response scrubbing or way to categorize responses in the
+        #     future, this may be an appropriate place to utilize it.
+        if self._get_resp_code(resp) >= 400:
+            LOG.debug('Errored Response body: %s', resp.body)
 
     def _log_headers(self, headers):
         """ Log request headers, while scrubbing sensitive values
@@ -50,3 +55,13 @@ class LoggingMiddleware(object):
         for header, header_value in headers.items():
             if not LoggingMiddleware.hdr_exclude.match(header):
                 LOG.debug("Header %s: %s", header, header_value)
+
+    def _get_resp_code(self, resp):
+        # Falcon response object doesn't have a raw status code.
+        # Splits by the first space
+        try:
+            return int(resp.status.split(" ", 1)[0])
+        except ValueError:
+            # if for some reason this Falcon response doesn't have a valid
+            # status, return a high value sentinel
+            return 9999

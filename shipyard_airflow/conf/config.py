@@ -75,6 +75,15 @@ SECTIONS = [
                 help=('The default logging level for the root logger. '
                       'ERROR=40, WARNING=30, INFO=20, DEBUG=10')
             ),
+            cfg.DictOpt(
+                'named_log_levels',
+                default={"keystoneauth": logging.INFO},
+                help=('The logging levels for named loggers. '
+                      'Use standard representations for logging levels: '
+                      'ERROR. WARN, INFO, DEBUG. Configuration file format: '
+                      'named_log_levels = keystoneauth:INFO,othlgr:WARN'
+                      )
+            ),
         ]
     ),
     ConfigSection(
