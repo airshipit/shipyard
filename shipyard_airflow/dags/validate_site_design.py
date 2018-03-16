@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 from airflow.models import DAG
 from airflow.operators import ArmadaOperator
 from airflow.operators import DeckhandValidateSiteDesignOperator
-from airflow.operators import DryDockOperator
+from airflow.operators import DrydockValidateDesignOperator
 
 from config_path import config_path
 
@@ -33,12 +33,12 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
+        retries=3,
         dag=dag)
 
-    drydock_validate_docs = DryDockOperator(
+    drydock_validate_docs = DrydockValidateDesignOperator(
         task_id='drydock_validate_site_design',
         shipyard_conf=config_path,
-        action='validate_site_design',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         retries=3,

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DryDockOperator
+from airflow.operators import DrydockDestroyNodeOperator
 from airflow.operators import PromenadeCheckEtcdOperator
 from airflow.operators import PromenadeClearLabelsOperator
 from airflow.operators import PromenadeDecommissionNodeOperator
@@ -67,10 +67,9 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     # Power down and destroy node using DryDock
-    drydock_destroy_node = DryDockOperator(
+    drydock_destroy_node = DrydockDestroyNodeOperator(
         task_id='destroy_node',
         shipyard_conf=config_path,
-        action='destroy_node',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
