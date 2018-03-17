@@ -130,7 +130,8 @@ def test_cli_format_error_handler_messages_broken():
 
 def test_cli_format_status_handler_messages():
     """Tests the generic handler for shipyard status response if passed
-    a response with messages in the detail
+    a response with messages in the detail. Includes sorting and source
+    information.
     """
     resp_val = """
 {
@@ -142,6 +143,18 @@ def test_cli_format_status_handler_messages():
   "details": {
       "errorCount": 4,
       "messageList": [
+          { "message":"Info something you might want to know",
+            "error": false,
+            "kind": "ValidationMessage",
+            "name": "val0",
+            "documents": [
+                { "schema": "schema/schema/v1",
+                  "name": "someyaml"
+                }
+            ],
+            "level": "Info",
+            "source": "format-o-matic"
+          },
           { "message":"Conflicting something",
             "error": true,
             "kind": "ValidationMessage",
@@ -153,6 +166,10 @@ def test_cli_format_status_handler_messages():
             ],
             "level": "Error",
             "diagnostic": "Make a doc change"
+          },
+          { "message": "Basic info",
+            "error": false,
+            "source": "Armadadock"
           },
           { "message":"Backwards something",
             "error": true,
@@ -185,7 +202,13 @@ Reason: Validation
 - Error: val2
         Message: Backwards something
 - Error: Missing stuff
-- Error: Broken syntax"""
+- Error: Broken syntax
+- Info: val0
+        Message: Info something you might want to know
+        Document: schema/schema/v1 - someyaml
+        Source: format-o-matic
+- Info: Basic info
+        Source: Armadadock"""
     resp = MagicMock()
     resp.json = MagicMock(return_value=json.loads(resp_val))
     output = format_utils.cli_format_status_handler(resp, is_error=True)

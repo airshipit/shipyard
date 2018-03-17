@@ -17,6 +17,8 @@ import yaml
 from prettytable import PrettyTable
 from prettytable.prettytable import PLAIN_COLUMNS
 
+_INDENT = ' ' * 8
+
 
 def cli_format_error_handler(response):
     """Generic handler for standard Shipyard error responses
@@ -54,46 +56,95 @@ def cli_format_status_handler(response, is_error=False):
     """
     formatted = "Error: {}\nReason: {}" if is_error \
         else "Status: {}\nReason: {}"
-    indent = ' ' * 8
     try:
         if response.text:
             resp_j = response.json()
             resp = formatted.format(resp_j.get('message', 'Not specified'),
                                     resp_j.get('reason', 'Not specified'))
             if resp_j.get('details'):
-                for message in resp_j.get('details').get('messageList', []):
+                mlist = resp_j['details'].get('messageList', [])
+                for message in sorted(mlist,
+                                      key=lambda m: _lvl_key(
+                                          m.get('level'),
+                                          m.get('error', False))):
                     if message.get('kind') == 'ValidationMessage':
-                        resp = resp + '\n- {}: {}'.format(
-                            message.get('level'),
-                            message.get('name')
-                        )
-                        resp = resp + '\n{}Message: {}'.format(
-                            indent,
-                            message.get('message')
-                        )
-                        if message.get('diagnostic'):
-                            resp = resp + '\n{}Diagnostic: {}'.format(
-                                indent, message.get('diagnostic')
-                            )
-                        for doc in message.get('documents', []):
-                            resp = resp + '\n{}Document: {} - {}'.format(
-                                indent,
-                                doc.get('schema'),
-                                doc.get('name')
-                            )
+                        resp = resp + _format_validation_message(message)
                     else:
-                        if message.get('error', False):
-                            resp = resp + '\n- Error: {}'.format(
-                                message.get('message'))
-                        else:
-                            resp = resp + '\n- Info: {}'.format(
-                                message.get('message'))
+                        resp = resp + _format_basic_message(message)
+                    if message.get('source'):
+                        resp = resp + "\n{}Source: {}".format(
+                            _INDENT,
+                            message['source']
+                        )
             return resp
         else:
             return ''
     except ValueError:
         return "Error: Unable to decode response. Value: {}".format(
             response.text)
+
+
+# Map of levels by severity. Extra values are included in this map but valid
+# values are defined here:
+# https://github.com/att-comdev/ucp-integration/blob/master/docs/source/api-conventions.rst#validationmessage-message-type
+_LEVEL_KEYS = {
+    0: ['error', 'fatal'],
+    1: ['warn', 'warning'],
+    2: ['info', 'debug'],
+}
+_SENTINEL_LEVEL = "999"
+
+
+def _lvl_key(level_name, error):
+    """Generate a level key value
+
+    Returns a value to support sort order based on lvls dict.
+    The result is that like-level items are sorted together.
+    """
+    if level_name is None:
+        if (error):
+            level_name = 'error'
+        else:
+            level_name = 'info'
+    else:
+        level_name = level_name.lower()
+
+    for key, val_list in _LEVEL_KEYS.items():
+        if level_name in val_list:
+            return '{}{}'.format(key, level_name)
+    return _SENTINEL_LEVEL
+
+
+def _format_validation_message(message):
+    """Formats a ValidationMessage
+
+    Returns a single string with embedded newlines
+    """
+    resp = '\n- {}: {}'.format(message.get('level'), message.get('name'))
+    resp = resp + '\n{}Message: {}'.format(_INDENT, message.get('message'))
+    if message.get('diagnostic'):
+        resp = resp + '\n{}Diagnostic: {}'.format(
+            _INDENT, message.get('diagnostic')
+        )
+    for doc in message.get('documents', []):
+        resp = resp + '\n{}Document: {} - {}'.format(
+            _INDENT,
+            doc.get('schema'),
+            doc.get('name')
+        )
+    return resp
+
+
+def _format_basic_message(message):
+    """Formats a basic message
+
+    Returns a single string with embedded newlines
+    """
+    if message.get('error', False):
+        resp = '\n- Error: {}'.format(message.get('message'))
+    else:
+        resp = '\n- Info: {}'.format(message.get('message'))
+    return resp
 
 
 def raw_format_response_handler(response):
