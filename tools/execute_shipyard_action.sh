@@ -39,6 +39,11 @@ run_action () {
     RED='\033[0;31m'
     GREEN='\033[0;32m'
 
+    # Get the path of the directory where the script is located
+    # Source Base Docker Command
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    cd ${DIR} && source shipyard_docker_base_command.sh
+
     # Execute action
     echo -e "Execute ${action} Dag...\n"
 
@@ -46,9 +51,9 @@ run_action () {
     # to be passed in while redeploy_server requires user to indicate which
     # server to redeploy
     if ! [[ ${server} ]] && [[ ${action} ]]; then
-        shipyard create action ${action}
+        ${base_docker_command} ${SHIPYARD_IMAGE} create action ${action}
     elif [[ ${action} == 'redeploy_server' && ${server} ]]; then
-        shipyard create action redeploy_server --param="server-name=${server}"
+        ${base_docker_command} ${SHIPYARD_IMAGE} create action redeploy_server --param="server-name=${server}"
     else
         echo "Invalid Input!"
         exit 1
@@ -69,18 +74,37 @@ run_action () {
     #           is included here for information only.
     #
     # Print current list of actions in Shipyard
-    shipyard get actions
+    ${base_docker_command} ${SHIPYARD_IMAGE} get actions
 
     # Retrieve the ID of the action that is currently being executed
+    # We will attempt to fetch the action ID for 3 times
     echo -e "Retrieving Action ID...\n"
-    action_id=`shipyard get actions | grep ${action} | grep -i Processing | awk '{print $2}'`
+    action_id=`${base_docker_command} ${SHIPYARD_IMAGE} get actions | grep ${action} | grep -i Processing | awk '{print $2}'`
 
-    if ! [[ ${action_id} ]]; then
-        echo "Unable to Retrieve Action ID!"
-        exit 1
-    else
-        echo "The Action ID is" ${action_id}
-    fi
+    # Initialize variables
+    retrieve_shipyard_action_counter=0
+    retrieve_shipyard_action_limit=2
+
+    while [[ $retrieve_shipyard_action_counter -le ${retrieve_shipyard_action_limit} ]];
+    do
+        if [[ ${action_id} ]]; then
+            echo -e "The Action ID is" ${action_id}
+            break
+
+        elif [[ $retrieve_shipyard_action_counter == ${retrieve_shipyard_action_limit} ]]; then
+            echo -e "Failed to Retrieve Action ID!"
+            exit 1
+
+        else
+            echo -e "Unable to Retrieve Action ID!"
+            echo -e "Retrying in 30 seconds..."
+            sleep 30
+
+            action_id=`${base_docker_command} ${SHIPYARD_IMAGE} get actions | grep ${action} | grep -i Processing | awk '{print $2}'`
+
+            ((retrieve_shipyard_action_counter ++))
+        fi
+    done
 
     # Initialize 'action_lifecycle' to 'Pending'
     action_lifecycle="Pending"
@@ -91,8 +115,8 @@ run_action () {
     while true;
     do
         # Get Current State of Action Lifecycle
-        describe_action=`shipyard describe ${action_id}`
-        action_lifecycle=`echo ${describe_action} | awk '{print $6}'`
+        describe_action=`${base_docker_command} ${SHIPYARD_IMAGE} describe ${action_id}`
+        action_lifecycle=`echo ${describe_action} | awk '{print $29}'`
 
         if [[ $action_lifecycle == "Complete" ]]; then
             echo -e '\nSuccessfully performed' ${action}
@@ -126,13 +150,6 @@ run_action () {
         exit 1
     fi
 }
-
-# Note that we will need to execute the deckhand_load_yaml
-# script first before the deploy_site script
-# Check to ensure that the Shipyard CLI has been installed on
-# the Genesis host during the deckhand YAML load phase. Exit
-# script if Shipyard CLI is not installed.
-command -v shipyard >/dev/null 2>&1 || { echo >&2 "Please install Shipyard CLI before executing the script."; exit 1; }
 
 # Calls 'run_action' function
 run_action "${@}"

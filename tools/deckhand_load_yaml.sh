@@ -43,27 +43,11 @@ fi
 # Define Variables
 collection=$1
 directory=$2
-namespace="${namespace:-ucp}"
 
-# Clone shipyard repository if it does not exists
-if [[ ! -d shipyard ]]; then
-    git clone --depth=1 https://github.com/att-comdev/shipyard.git
-fi
-
-# Set up Genesis host with the Shipyard Client
-# This will allow us to use the Shipyard CLI
-sudo apt install python3-pip -y
-sudo pip3 install --upgrade pip
-cd shipyard && sudo pip3 install -r requirements.txt
-sudo python3 setup.py install
-
-# Export Environment Variables
-export OS_USER_DOMAIN_NAME="${OS_USER_DOMAIN_NAME:-default}"
-export OS_PROJECT_DOMAIN_NAME="${OS_PROJECT_DOMAIN_NAME:-default}"
-export OS_PROJECT_NAME="${OS_PROJECT_NAME:-service}"
-export OS_USERNAME="${OS_USERNAME:-shipyard}"
-export OS_PASSWORD="${OS_PASSWORD:-password}"
-export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.local:80/v3}"
+# Get the path of the directory where the script is located
+# Source Base Docker Command
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${DIR} && source shipyard_docker_base_command.sh
 
 # The directory will contain all the .yaml files with Drydock, Promenade,
 # Armada, and Divingbell configurations. It will also contain all the
@@ -75,7 +59,9 @@ export OS_AUTH_URL="${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.loca
 # Note that we will also make use of the '--replace' option so that the
 # script can be executed multiple times to replace existing collection
 echo -e "Loading YAMLs as named collection..."
-shipyard create configdocs ${collection} --replace --directory=${directory}
+
+${base_docker_command} -v ${directory}:/target ${SHIPYARD_IMAGE} \
+create configdocs ${collection} --replace --directory=/target
 
 # Following the creation of a configdocs collection in the Shipyard buffer,
 # the configdocs must be committed before Shipyard is able to use them as
@@ -84,7 +70,4 @@ shipyard create configdocs ${collection} --replace --directory=${directory}
 # Deckhand when 'commit configdocs' command is executed. Shipyard will
 # only mark the revision as committed if the validations are successful
 echo -e "Committing Configdocs..."
-shipyard commit configdocs
-
-# Exit the script
-exit 0
+${base_docker_command} ${SHIPYARD_IMAGE} commit configdocs

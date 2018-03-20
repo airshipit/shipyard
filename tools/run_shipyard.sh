@@ -29,35 +29,21 @@ set -ex
 # is not available, the user will need to ensure that the /etc/hosts file is
 # properly updated before running the script.
 
-# Define Variables
-#
-# NOTE: User will need to set up the required environment variables
-# before executing this script if they differ from the default values.
-#
-namespace="${namespace:-ucp}"
-SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/attcomdev/shipyard:latest}"
-
-# Define Base Docker Command
-# NOTE: We will mount the current directory so that any directories
-# would be relative to that
-# NOTE: We will map the host directory to '/home/shipyard/host' on
-# the Shipyard docker container
-base_docker_command=$(cat << EndOfCommand
-sudo docker run
--e OS_AUTH_URL=${OS_AUTH_URL:-http://keystone.${namespace}.svc.cluster.local:80/v3}
--e OS_USERNAME=${OS_USERNAME:-shipyard}
--e OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME:-default}
--e OS_PASSWORD=${OS_PASSWORD:-password}
--e OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME:-default}
--e OS_PROJECT_NAME=${OS_PROJECT_NAME:-service}
---rm --net=host
--v $(pwd):/home/shipyard/host/
-EndOfCommand
-)
+# Get the path of the directory where the script is located
+# Source Base Docker Command
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd ${DIR} && source shipyard_docker_base_command.sh
 
 # Execute Shipyard CLI
+#
+# NOTE: We will mount the current directory so that any directories
+# would be relative to that
+#
+# NOTE: We will map the host directory to '/home/shipyard/host' on
+# the Shipyard docker container
+#
 # We will pass all arguments in and the Shipyard CLI will perform
 # the actual validation and execution. Exceptions will also be
 # handled by the Shipyard CLI as this is meant to be a thin wrapper
 # script
-${base_docker_command} ${SHIPYARD_IMAGE} $@
+${base_docker_command} -v $(pwd):/home/shipyard/host ${SHIPYARD_IMAGE} $@
