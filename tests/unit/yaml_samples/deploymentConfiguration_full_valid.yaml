@@ -28,4 +28,8 @@ data:
     remove_etcd_timeout: 1800
     etcd_ready_timeout: 600
   armada:
+    get_releases_timeout: 300
+    get_status_timeout: 300
     manifest: 'full-site'
+    post_apply_timeout: 1800
+    validate_design_timeout: 600

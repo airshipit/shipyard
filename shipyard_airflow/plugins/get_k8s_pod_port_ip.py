@@ -22,26 +22,25 @@ from kubernetes import client, config
 def get_pod_port_ip(*pods, namespace):
     def get_k8s_pod_port_ip(func):
         @wraps(func)
-        def k8s_pod_port_ip_get(self, context, *args, **kwargs):
+        def k8s_pod_port_ip_get(self, pods_ip_port):
             """This function retrieves Kubernetes Pod Port and IP
                information. It can be used to retrieve information of
                single pod deployment and/or statefulsets. For instance,
                it can be used to retrieve the tiller pod IP and port
                information for usage in the Armada Operator.
 
-            :param context: Information on the current workflow
+            :param pods_ip_port: IP and port information of the pods
 
             Example::
 
                 from get_k8s_pod_port_ip import get_pod_port_ip
 
                 @get_pod_port_ip('tiller', namespace='kube-system')
-                def get_pod_info(self, context, *args, **kwargs):
-                    # Get IP and port information of Pods from context
-                    k8s_pods_ip_port = context['pods_ip_port']
+                def get_pod_info(self, pods_ip_port={}):
 
-                    tiller_ip = k8s_pods_ip_port['tiller'].get('ip')
-                    tiller_port = k8s_pods_ip_port['tiller'].get('port')
+                    tiller_ip = pods_ip_port['tiller']['ip']
+                    tiller_port = pods_ip_port['tiller']['port']
+
             """
             # Initialize variable
             k8s_pods = {}
@@ -116,10 +115,7 @@ def get_pod_port_ip(*pods, namespace):
                 if not pod_attr[pod_name]:
                     raise AirflowException("Unable to locate", pod_name)
 
-            # Assign pods IP and ports information to context
-            context['pods_ip_port'] = k8s_pods
-
-            return func(self, context, *args, **kwargs)
+            return func(self, pods_ip_port=k8s_pods)
 
         return k8s_pod_port_ip_get
     return get_k8s_pod_port_ip

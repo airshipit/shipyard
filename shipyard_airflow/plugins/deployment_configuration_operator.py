@@ -64,7 +64,11 @@ class DeploymentConfigurationOperator(BaseOperator):
         "kubernetes_provisioner.clear_labels_timeout": 1800,
         "kubernetes_provisioner.remove_etcd_timeout": 1800,
         "kubernetes_provisioner.etcd_ready_timeout": 600,
-        "armada.manifest": "full-site"
+        "armada.get_releases_timeout": 300,
+        "armada.get_status_timeout": 300,
+        "armada.manifest": "full-site",
+        "armada.post_apply_timeout": 1800,
+        "armada.validate_design_timeout": 600
     }
 
     @apply_defaults

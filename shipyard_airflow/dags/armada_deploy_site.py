@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import ArmadaOperator
+from airflow.operators import ArmadaGetReleasesOperator
+from airflow.operators import ArmadaGetStatusOperator
+from airflow.operators import ArmadaPostApplyOperator
 
 from config_path import config_path
 
@@ -27,35 +29,32 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         default_args=args)
 
     # Get Tiller Status
-    armada_status = ArmadaOperator(
-        task_id='armada_status',
+    armada_get_status = ArmadaGetStatusOperator(
+        task_id='armada_get_status',
         shipyard_conf=config_path,
-        action='armada_status',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
     # Armada Apply
-    armada_apply = ArmadaOperator(
-        task_id='armada_apply',
+    armada_post_apply = ArmadaPostApplyOperator(
+        task_id='armada_post_apply',
         shipyard_conf=config_path,
-        action='armada_apply',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         retries=3,
         dag=dag)
 
     # Get Helm Releases
-    armada_get_releases = ArmadaOperator(
+    armada_get_releases = ArmadaGetReleasesOperator(
         task_id='armada_get_releases',
         shipyard_conf=config_path,
-        action='armada_get_releases',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
 
     # Define dependencies
-    armada_apply.set_upstream(armada_status)
-    armada_get_releases.set_upstream(armada_apply)
+    armada_post_apply.set_upstream(armada_get_status)
+    armada_get_releases.set_upstream(armada_post_apply)
 
     return dag

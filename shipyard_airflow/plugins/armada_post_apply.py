@@ -1,0 +1,130 @@
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import logging
+
+from airflow.exceptions import AirflowException
+from airflow.plugins_manager import AirflowPlugin
+
+from armada_base_operator import ArmadaBaseOperator
+from armada.exceptions import api_exceptions as errors
+
+
+class ArmadaPostApplyOperator(ArmadaBaseOperator):
+
+    """Armada Post Apply Operator
+
+    This operator will trigger armada to apply the manifest and
+    start a site deployment/update/upgrade.
+
+    """
+
+    def do_execute(self):
+
+        # Initialize Variables
+        armada_manifest = None
+        chart_set = []
+        override_values = []
+        upgrade_airflow_worker = False
+
+        # Set up target manifest
+        self.dc = self.xcom_puller.get_deployment_configuration()
+        self.target_manifest = self.dc['armada.manifest']
+
+        # Retrieve Tiller Information
+        self.get_tiller_info(pods_ip_port={})
+
+        # Update query dict with information of target_manifest
+        self.query['target_manifest'] = self.target_manifest
+
+        # Retrieve read timeout
+        timeout = self.dc['armada.post_apply_timeout']
+
+        # Execute Armada Apply to install the helm charts in sequence
+        logging.info("Armada Apply")
+
+        try:
+            armada_post_apply = self.armada_client.post_apply(
+                manifest=armada_manifest,
+                manifest_ref=self.deckhand_design_ref,
+                values=override_values,
+                set=chart_set,
+                query=self.query,
+                timeout=timeout)
+
+        except errors.ClientError as client_error:
+            # Set 'get_attempted_failed_install_upgrade' xcom to 'true'
+            self.xcom_pusher.xcom_push(
+                key='get_attempted_failed_install_upgrade',
+                value='true')
+
+            raise AirflowException(client_error)
+
+        # Retrieve xcom for 'get_attempted_failed_install_upgrade'
+        # NOTE: The key will only be set to 'true' if there was a failed
+        # attempt to upgrade or update the Helm charts. It does not hold
+        # any value by default.
+        if self.xcom_puller.get_attempted_failed_install_upgrade() == 'true':
+            # NOTE: It is possible for Armada to return a HTTP 500 response
+            # even though the Helm charts have been upgraded/updated. The
+            # workflow will treat the 'Armada Apply' task as a failed attempt
+            # in such situation and proceed to schedule and run the task for
+            # a second time (the default is 3 retries). As the relevant Helm
+            # Charts would have already been updated, we will get an empty
+            # list from Armada for that second retry. As a workaround, we will
+            # need to treat such response as a successful upgrade/update.
+            # A long term solution will be in place in the future.
+            if (not armada_post_apply['message']['install'] and
+                    not armada_post_apply['message']['upgrade']):
+                upgrade_airflow_worker = True
+
+        # Search for Shipyard deployment in the list of chart upgrades
+        # NOTE: It is possible for the chart name to take on different
+        # values, e.g. 'aic-ucp-shipyard', 'ucp-shipyard'. Hence we
+        # will search for the word 'shipyard', which should exist as
+        # part of the name of the Shipyard Helm Chart.
+        for i in armada_post_apply['message']['upgrade']:
+            if 'shipyard' in i:
+                upgrade_airflow_worker = True
+                break
+
+        # Create xcom key 'upgrade_airflow_worker'
+        # Value of key will depend on whether an upgrade has been
+        # performed on the Shipyard/Airflow Chart
+        if upgrade_airflow_worker:
+            self.xcom_pusher.xcom_push(key='upgrade_airflow_worker',
+                                       value='true')
+        else:
+            self.xcom_pusher.xcom_push(key='upgrade_airflow_worker',
+                                       value='false')
+
+        # We will expect Armada to return the releases that it is
+        # deploying. Note that if we try and deploy the same release
+        # twice, we will end up with empty response as nothing has
+        # changed.
+        if (armada_post_apply['message']['install'] or
+                armada_post_apply['message']['upgrade']):
+            logging.info("Successfully Executed Armada Apply")
+            logging.info(armada_post_apply)
+        else:
+            logging.warning("No new changes/updates were detected!")
+            logging.info(armada_post_apply)
+
+
+class ArmadaPostApplyOperatorPlugin(AirflowPlugin):
+
+    """Creates ArmadaPostApplyOperator in Airflow."""
+
+    name = 'armada_post_apply_operator'
+    operators = [ArmadaPostApplyOperator]

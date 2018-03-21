@@ -48,8 +48,8 @@ action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()
 preflight = step_factory.get_preflight()
 get_design_version = step_factory.get_get_design_version()
-validate_site_design = step_factory.get_validate_site_design()
 deployment_configuration = step_factory.get_deployment_configuration()
+validate_site_design = step_factory.get_validate_site_design()
 destroy_server = step_factory.get_destroy_server()
 drydock_build = step_factory.get_drydock_build()
 
@@ -57,10 +57,7 @@ drydock_build = step_factory.get_drydock_build()
 concurrency_check.set_upstream(action_xcom)
 preflight.set_upstream(concurrency_check)
 get_design_version.set_upstream(preflight)
-validate_site_design.set_upstream(get_design_version)
 deployment_configuration.set_upstream(get_design_version)
-destroy_server.set_upstream([
-    validate_site_design,
-    deployment_configuration
-])
+validate_site_design.set_upstream(deployment_configuration)
+destroy_server.set_upstream(validate_site_design)
 drydock_build.set_upstream(destroy_server)

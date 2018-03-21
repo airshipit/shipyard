@@ -66,8 +66,16 @@ data:
     armada:
       type: 'object'
       properties:
+        get_releases_timeout:
+          type: 'integer'
+        get_status_timeout:
+          type: 'integer'
         manifest:
           type: 'string'
+        post_apply_timeout:
+          type: 'integer'
+        validate_design_timeout:
+          type: 'integer'
       additionalProperties: false
       required:
         - manifest

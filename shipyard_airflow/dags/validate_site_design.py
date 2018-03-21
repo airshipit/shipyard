@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import ArmadaOperator
+from airflow.operators import ArmadaValidateDesignOperator
 from airflow.operators import DeckhandValidateSiteDesignOperator
 from airflow.operators import DrydockValidateDesignOperator
 
@@ -44,10 +44,9 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         retries=3,
         dag=dag)
 
-    armada_validate_docs = ArmadaOperator(
+    armada_validate_docs = ArmadaValidateDesignOperator(
         task_id='armada_validate_site_design',
         shipyard_conf=config_path,
-        action='validate_site_design',
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         retries=3,
