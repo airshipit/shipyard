@@ -1,7 +1,7 @@
 # Shipyard
 Shipyard is the directed acyclic graph controller for Kubernetes and
 OpenStack control plane life cycle management, and a component of the
-Undercloud Platform (UCP)
+Undercloud Platform (UCP).
 
 Shipyard provides the entrypoint for the following aspects of the
 control plane established by the UCP:
@@ -33,7 +33,11 @@ control plane established by the UCP:
     </dd>
 </dl>
 
-## Intgration Points:
+Find more documentation for Shipyard on
+[Read the Docs](http://shipyard.readthedocs.io/en/latest/)
+
+
+## Integration Points:
 [OpenStack Identity (Keystone)](https://github.com/openstack/keystone)
 provides authentication and support for role based authorization
 \
@@ -55,7 +59,6 @@ orchestrated by Shipyard to configure and join Kubernetes nodes
 \
 [Armada](https://github.com/att-comdev/armada) is orchestrated by
 Shipyard to deploy and test Kubernetes workloads
-
 
 
 ## Getting Started:
