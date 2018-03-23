@@ -346,8 +346,12 @@ class ArmadaOperator(BaseOperator):
         except json.JSONDecodeError as e:
             raise AirflowException(e)
 
+        status = str(json.loads(validate_site_design_dict).get('status',
+                                                               'unspecified'))
         # Check if site design is valid
-        if validate_site_design_dict.get('status') == 'Success':
+        logging.info("Armada Site Design valdation status "
+                     "is: {}".format(status))
+        if status.lower() == 'success':
             return 'valid'
         else:
             return 'invalid'

@@ -54,19 +54,12 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
-        # Assigns Boolean 'False' to validation_status if result
-        # status is 'failure'
-        if (any([v.get('status') == 'failure'
+        if (any([str(v.get('status', 'unspecified')).lower() == 'failure'
                 for v in retrieved_list.get('results', [])])):
-            validation_status = False
+            raise AirflowException("DeckHand Site Design Validation Failed!")
         else:
-            validation_status = True
-
-        if validation_status:
             logging.info("Revision %d has been successfully validated",
                          self.revision_id)
-        else:
-            raise AirflowException("DeckHand Site Design Validation Failed!")
 
 
 class DeckhandValidateSiteDesignOperatorPlugin(AirflowPlugin):

@@ -71,10 +71,13 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         logging.info(json.loads(validate_site_design))
 
         # Check if site design is valid
-        if json.loads(validate_site_design).get('status') == 'Success':
+        status = str(json.loads(validate_site_design).get('status',
+                                                          'unspecified'))
+        if status.lower() == 'success':
             logging.info("DryDock Site Design has been successfully validated")
         else:
-            raise AirflowException("DryDock Site Design Validation Failed!")
+            raise AirflowException("DryDock Site Design Validation Failed "
+                                   "with status: {}!".format(status))
 
 
 class DrydockValidateDesignOperatorPlugin(AirflowPlugin):
