@@ -29,7 +29,7 @@ class DrydockPrepareNodesOperator(DrydockBaseOperator):
     def do_execute(self):
 
         # Trigger DryDock to execute task
-        self.create_task('prepare_site')
+        self.create_task('prepare_nodes')
 
         # Retrieve query interval and timeout
         q_interval = self.dc['physical_provisioner.prepare_node_interval']
