@@ -16,7 +16,7 @@ data:
     destroy_timeout: 900
     join_wait: 120
     prepare_node_interval: 30
-    prepare_node_timeout: 1000
+    prepare_node_timeout: 1800
     prepare_site_interval: 10
     prepare_site_timeout: 300
     verify_interval: 10
@@ -31,5 +31,5 @@ data:
     get_releases_timeout: 300
     get_status_timeout: 300
     manifest: 'full-site'
-    post_apply_timeout: 1800
+    post_apply_timeout: 2700
     validate_design_timeout: 600

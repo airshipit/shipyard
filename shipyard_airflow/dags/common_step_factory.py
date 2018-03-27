@@ -187,7 +187,7 @@ class CommonStepFactory(object):
 
             Defines a function to decide whether to upgrade airflow
             worker. The decision will be based on the xcom value that
-            is retrieved from the 'armada_apply' task
+            is retrieved from the 'armada_post_apply' task
             """
             # DAG ID will be parent + subdag name
             dag_id = self.parent_dag_name + '.' + dn.ARMADA_BUILD_DAG_NAME
@@ -195,7 +195,7 @@ class CommonStepFactory(object):
             # Check if Shipyard/Airflow were upgraded by the workflow
             upgrade_airflow = kwargs['ti'].xcom_pull(
                 key='upgrade_airflow_worker',
-                task_ids='armada_apply',
+                task_ids='armada_post_apply',
                 dag_id=dag_id)
 
             # Go to the branch to upgrade Airflow worker if the Shipyard

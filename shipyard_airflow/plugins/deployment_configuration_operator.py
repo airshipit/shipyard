@@ -52,7 +52,7 @@ class DeploymentConfigurationOperator(BaseOperator):
         "physical_provisioner.destroy_timeout": 900,
         "physical_provisioner.join_wait": 120,
         "physical_provisioner.prepare_node_interval": 30,
-        "physical_provisioner.prepare_node_timeout": 1000,
+        "physical_provisioner.prepare_node_timeout": 1800,
         "physical_provisioner.prepare_site_interval": 10,
         "physical_provisioner.prepare_site_timeout": 300,
         "physical_provisioner.verify_interval": 10,
@@ -67,7 +67,7 @@ class DeploymentConfigurationOperator(BaseOperator):
         "armada.get_releases_timeout": 300,
         "armada.get_status_timeout": 300,
         "armada.manifest": "full-site",
-        "armada.post_apply_timeout": 1800,
+        "armada.post_apply_timeout": 2700,
         "armada.validate_design_timeout": 600
     }
 

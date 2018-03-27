@@ -88,7 +88,7 @@ class XcomPuller(object):
            of Armada Apply"""
         source_task = 'armada_post_apply'
         source_dag = 'armada_build'
-        key = 'attempted_failed_install_upgrade'
+        key = 'get_attempted_failed_install_upgrade'
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)
