@@ -32,7 +32,7 @@ spec:
           value: {{ tuple "airflow_web" "internal" "airflow_web" . | include "helm-toolkit.endpoints.host_and_port_endpoint_uri_lookup" | quote }}
       image: {{ .Values.images.tags.airflow }}
       imagePullPolicy: {{ .Values.images.pull_policy }}
-{{ tuple . .Values.pod.resources.test.airflow | include "helm-toolkit.snippets.kubernetes_resources" | indent 8 }}
+{{ tuple . .Values.pod.resources.test.airflow | include "helm-toolkit.snippets.kubernetes_resources" | indent 6 }}
       command: ["/bin/bash", "-c", "curl -v -X GET --fail ${AIRFLOW_URL}/admin/rest_api/api?api=version; exit $?"]
 ...
 {{- end }}
