@@ -96,6 +96,18 @@ class DrydockBaseOperator(UcpBaseOperator):
         # Logs uuid of action performed by the Operator
         LOG.info("DryDock Operator for action %s", self.action_info['id'])
 
+        # Skip workflow if health checks on Drydock failed and continue-on-fail
+        # option is turned on
+        if self.xcom_puller.get_check_drydock_continue_on_fail():
+            LOG.info("Skipping %s as health checks on Drydock have "
+                     "failed and continue-on-fail option has been "
+                     "turned on", self.__class__.__name__)
+
+            # Set continue processing to False
+            self.continue_processing = False
+
+            return
+
         # Retrieve information of the server that we want to redeploy if user
         # executes the 'redeploy_server' dag
         # Set node filter to be the server that we want to redeploy

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import K8sHealthCheckOperator
 from airflow.operators import UcpHealthCheckOperator
 
 from config_path import config_path
@@ -28,21 +27,13 @@ def all_preflight_checks(parent_dag_name, child_dag_name, args):
         default_args=args)
 
     '''
-    The k8s_preflight_check checks that k8s is in a good state
-    for the purposes of the Undercloud Platform to proceed with
-    processing
-    '''
-    k8s = K8sHealthCheckOperator(
-        task_id='k8s_preflight_check',
-        dag=dag)
-
-    '''
     Check that all UCP components are in good state for the purposes
-    of the Undercloud Platform to proceed with processing
+    of the Undercloud Platform to proceed with processing.
     '''
     shipyard = UcpHealthCheckOperator(
         task_id='ucp_preflight_check',
         shipyard_conf=config_path,
+        main_dag_name=parent_dag_name,
         dag=dag)
 
     return dag

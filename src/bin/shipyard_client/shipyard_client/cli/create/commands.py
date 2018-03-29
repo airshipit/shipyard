@@ -41,6 +41,7 @@ DESC_ACTION = """
     FORMAT: shipyard create action <action command> --param=<parameter>
     (repeatable) [--allow-intermediate-commits] \n
     EXAMPLE: shipyard create action redeploy_server --param="server-name=mcp"
+             shipyard create action update_site --param="continue-on-fail=true"
 """
 
 SHORT_DESC_ACTION = (

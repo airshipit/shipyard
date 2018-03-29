@@ -73,3 +73,12 @@ class XcomPuller(object):
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)
+
+    def get_check_drydock_continue_on_fail(self):
+        """Check if 'drydock_continue_on_fail' key exists"""
+        source_task = 'ucp_preflight_check'
+        source_dag = 'preflight'
+        key = 'drydock_continue_on_fail'
+        return self._get_xcom(source_task=source_task,
+                              dag_id=source_dag,
+                              key=key)

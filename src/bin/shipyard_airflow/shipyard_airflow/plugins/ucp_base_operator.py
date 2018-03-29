@@ -48,6 +48,8 @@ class UcpBaseOperator(BaseOperator):
                  *args, **kwargs):
         """Initialization of UcpBaseOperator object.
 
+        :param continue_processing: A boolean value on whether to continue
+                                    with the workflow. Defaults to True.
         :param main_dag_name: Parent Dag
         :param pod_selector_pattern: A list containing the information on
                                      the patterns of the Pod name and name
@@ -68,6 +70,7 @@ class UcpBaseOperator(BaseOperator):
         """
 
         super(UcpBaseOperator, self).__init__(*args, **kwargs)
+        self.continue_processing = True
         self.main_dag_name = main_dag_name
         self.pod_selector_pattern = pod_selector_pattern or []
         self.shipyard_conf = shipyard_conf
@@ -83,8 +86,9 @@ class UcpBaseOperator(BaseOperator):
         # Execute base function
         self.run_base(context)
 
-        # Exeute child function
-        self.do_execute()
+        if self.continue_processing:
+            # Exeute child function
+            self.do_execute()
 
     def ucp_base(self, context):
 

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import os
 import requests
@@ -22,6 +21,10 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
 from service_endpoint import ucp_service_endpoint
+from xcom_puller import XcomPuller
+from xcom_pusher import XcomPusher
+
+LOG = logging.getLogger(__name__)
 
 
 class UcpHealthCheckOperator(BaseOperator):
@@ -31,12 +34,16 @@ class UcpHealthCheckOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 shipyard_conf,
+                 shipyard_conf=None,
+                 main_dag_name=None,
+                 xcom_push=True,
                  *args,
                  **kwargs):
 
         super(UcpHealthCheckOperator, self).__init__(*args, **kwargs)
         self.shipyard_conf = shipyard_conf
+        self.main_dag_name = main_dag_name
+        self.xcom_push_flag = xcom_push
 
     def execute(self, context):
 
@@ -48,35 +55,64 @@ class UcpHealthCheckOperator(BaseOperator):
             'physicalprovisioner',
             'shipyard']
 
+        # Define task_instance
+        self.task_instance = context['task_instance']
+
+        # Set up and retrieve values from xcom
+        self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
+        self.action_info = self.xcom_puller.get_action_info()
+
+        # Set up xcom_pusher to push values to xcom
+        self.xcom_pusher = XcomPusher(self.task_instance)
+
         # Loop through various UCP Components
-        for i in ucp_components:
+        for component in ucp_components:
 
             # Retrieve Endpoint Information
-            service_endpoint = ucp_service_endpoint(self, svc_type=i)
-            logging.info("%s endpoint is %s", i, service_endpoint)
+            service_endpoint = ucp_service_endpoint(self,
+                                                    svc_type=component)
+            LOG.info("%s endpoint is %s", component, service_endpoint)
 
             # Construct Health Check Endpoint
             healthcheck_endpoint = os.path.join(service_endpoint,
                                                 'health')
 
-            logging.info("%s healthcheck endpoint is %s", i,
-                         healthcheck_endpoint)
+            LOG.info("%s healthcheck endpoint is %s", component,
+                     healthcheck_endpoint)
 
             try:
-                logging.info("Performing Health Check on %s", i)
-
+                LOG.info("Performing Health Check on %s", component)
                 # Set health check timeout to 30 seconds
                 req = requests.get(healthcheck_endpoint, timeout=30)
-            except requests.exceptions.RequestException as e:
-                raise AirflowException(e)
 
-            # UCP Component will return empty response/body to show that
-            # it is healthy
-            if req.status_code == 204:
-                logging.info("%s is alive and healthy", i)
-            else:
-                logging.error(req.text)
-                raise AirflowException("Invalid Response!")
+                # An empty response/body returned by a component means
+                # that it is healthy
+                if req.status_code == 204:
+                    LOG.info("%s is alive and healthy", component)
+
+            except requests.exceptions.RequestException as e:
+                self.log_health_exception(component, e)
+
+    def log_health_exception(self, component, error_messages):
+        """Logs Exceptions for health check
+        """
+        # If Drydock health check fails and continue-on-fail, continue
+        # and create xcom key 'drydock_continue_on_fail'
+        if (component == 'physicalprovisioner' and
+                self.action_info['parameters'].get(
+                    'continue-on-fail').lower() == 'true' and
+                self.action_info['dag_id'] in ['update_site', 'deploy_site']):
+            LOG.warning('Drydock did not pass health check. Continuing '
+                        'as "continue-on-fail" option is enabled.')
+            self.xcom_pusher.xcom_push(key='drydock_continue_on_fail',
+                                       value=True)
+
+        else:
+            LOG.error(error_messages)
+            raise AirflowException("Health check failed for %s component on "
+                                   "dag_id=%s. Details: %s" %
+                                   (component, self.action_info.get('dag_id'),
+                                    error_messages))
 
 
 class UcpHealthCheckPlugin(AirflowPlugin):

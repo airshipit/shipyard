@@ -246,12 +246,17 @@ id of the action invoked so that it can be queried subsequently.
 
     Example:
         shipyard create action redeploy_server --param="server-name=mcp"
+        shipyard create action update_site --param="continue-on-fail=true"
 
 <action_command>
   The action to invoke.
 
 \--param=<parameter>
   A parameter to be provided to the action being invoked. (repeatable)
+  Note that we can pass in different information to the create action
+  workflow, i.e. name of server to be redeployed, whether to continue
+  the workflow if there are failures in Drydock, e.g. failed health
+  checks.
 
 \--allow-intermediate-commits
   Allows continuation of a site action, e.g. update_site even when the
