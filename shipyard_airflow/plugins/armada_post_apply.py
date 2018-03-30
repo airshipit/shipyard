@@ -64,40 +64,35 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
                 timeout=timeout)
 
         except errors.ClientError as client_error:
-            # Set 'get_attempted_failed_install_upgrade' xcom to 'true'
-            self.xcom_pusher.xcom_push(
-                key='get_attempted_failed_install_upgrade',
-                value='true')
-
             raise AirflowException(client_error)
 
-        # Retrieve xcom for 'get_attempted_failed_install_upgrade'
-        # NOTE: The key will only be set to 'true' if there was a failed
-        # attempt to upgrade or update the Helm charts. It does not hold
-        # any value by default.
-        if self.xcom_puller.get_attempted_failed_install_upgrade() == 'true':
-            # NOTE: It is possible for Armada to return a HTTP 500 response
-            # even though the Helm charts have been upgraded/updated. The
-            # workflow will treat the 'Armada Apply' task as a failed attempt
-            # in such situation and proceed to schedule and run the task for
-            # a second time (the default is 3 retries). As the relevant Helm
-            # Charts would have already been updated, we will get an empty
-            # list from Armada for that second retry. As a workaround, we will
-            # need to treat such response as a successful upgrade/update.
-            # A long term solution will be in place in the future.
-            if (not armada_post_apply['message']['install'] and
-                    not armada_post_apply['message']['upgrade']):
-                upgrade_airflow_worker = True
-
-        # Search for Shipyard deployment in the list of chart upgrades
-        # NOTE: It is possible for the chart name to take on different
-        # values, e.g. 'aic-ucp-shipyard', 'ucp-shipyard'. Hence we
-        # will search for the word 'shipyard', which should exist as
-        # part of the name of the Shipyard Helm Chart.
-        for i in armada_post_apply['message']['upgrade']:
-            if 'shipyard' in i:
-                upgrade_airflow_worker = True
-                break
+        # if this is a retry, assume that the airflow worker needs to be
+        # updated at the end of the workflow.
+        # TODO(bryan-strassner) need to persist the decision to restart the
+        #     airflow worker outside of the xcom structure. This is a work-
+        #     around that will restart the worker more often than it
+        #     needs to. Problem with xcom is that it is cleared for the task
+        #     on retry, which means we can't use it as a flag reliably.
+        if self.task_instance.try_number > 1:
+            logging.info(
+                "Airflow Worker will be upgraded because retry may obfuscate "
+                "an upgrade of shipyard/airflow."
+            )
+            upgrade_airflow_worker = True
+        else:
+            # Search for Shipyard deployment in the list of chart upgrades
+            # NOTE: It is possible for the chart name to take on different
+            # values, e.g. 'aic-ucp-shipyard', 'ucp-shipyard'. Hence we
+            # will search for the word 'shipyard', which should exist as
+            # part of the name of the Shipyard Helm Chart.
+            for i in armada_post_apply['message']['upgrade']:
+                if 'shipyard' in i:
+                    logging.info(
+                        "Shipyard was upgraded. Airflow worker must be "
+                        "restarted to reflect any workflow changes."
+                    )
+                    upgrade_airflow_worker = True
+                    break
 
         # Create xcom key 'upgrade_airflow_worker'
         # Value of key will depend on whether an upgrade has been

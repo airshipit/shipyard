@@ -92,15 +92,15 @@ class ArmadaBaseOperator(BaseOperator):
     def armada_base(self, context):
 
         # Define task_instance
-        task_instance = context['task_instance']
+        self.task_instance = context['task_instance']
 
         # Set up and retrieve values from xcom
-        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
         self.action_info = self.xcom_puller.get_action_info()
         self.dc = self.xcom_puller.get_deployment_configuration()
 
         # Set up xcom_pusher to push values to xcom
-        self.xcom_pusher = XcomPusher(context['task_instance'])
+        self.xcom_pusher = XcomPusher(self.task_instance)
 
         # Logs uuid of action performed by the Operator
         logging.info("Armada Operator for action %s", self.action_info['id'])
