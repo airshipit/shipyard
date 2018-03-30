@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,7 +49,29 @@ class K8sHealthCheckOperator(BaseOperator):
                          i.status.phase)
 
             if i.status.phase not in ['Succeeded', 'Running']:
-                raise AirflowException("Kubernetes Health Checks Failed!")
+                # NOTE: Kubelet receives information about the pods
+                # and node from etcd after a restart. It seems that
+                # it is possible for kubelet to set the pod status to
+                # 'MatchNodeSelector' after a hard reboot of the node.
+                # This might happen if the labels in the initial node
+                # info is different from the node info in etcd, which
+                # will in turn cause the pod admission to fail.
+                #
+                # As the system does recover after a hard reboot with
+                # new pods created for various services, there is a need
+                # to ignore the failed pods with 'MatchNodeSelector' status
+                # to avoid false alarms. Hence the approach that we will
+                # be taking in such situation will be to log warning messages
+                # printing the current state of these pods as opposed to
+                # failing the health checks.
+                if (i.status.phase == 'Failed' and
+                        i.status.container_statuses is None and
+                        i.status.reason == 'MatchNodeSelector'):
+                    logging.warning("%s is in %s state with status",
+                                    i.metadata.name, i.status.phase)
+                    logging.warning(i.status)
+                else:
+                    raise AirflowException("Kubernetes Health Checks Failed!")
 
 
 class K8sHealthCheckPlugin(AirflowPlugin):
