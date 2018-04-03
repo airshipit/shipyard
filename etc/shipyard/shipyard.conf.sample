@@ -1,6 +1,19 @@
 [DEFAULT]
 
 
+[airflow]
+
+#
+# From shipyard_airflow
+#
+
+# Airflow worker url scheme (string value)
+#worker_endpoint_scheme = 'http'
+
+# Airflow worker port (integer value)
+#worker_port = 8793
+
+
 [armada]
 
 #
@@ -252,6 +265,12 @@
 #
 # From shipyard_airflow
 #
+
+# Airflow logs retrieval connect timeout (in seconds) (integer value)
+#airflow_log_connect_timeout = 5
+
+# Airflow logs retrieval timeout (in seconds) (integer value)
+#airflow_log_read_timeout = 300
 
 # Deckhand client connect timeout (in seconds) (integer value)
 #deckhand_client_connect_timeout = 5

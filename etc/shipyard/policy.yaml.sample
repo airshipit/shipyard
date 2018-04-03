@@ -17,6 +17,10 @@
 # GET  /api/v1.0/actions/{action_id}/steps/{step_id}
 #"workflow_orchestrator:get_action_step": "rule:admin_required"
 
+# Retreive the logs of an action step by its id
+# GET  /api/v1.0/actions/{action_id}/steps/{step_id}/logs
+#"workflow_orchestrator:get_action_step_logs": "rule:admin_required"
+
 # Retreive an action validation by its id
 # GET  /api/v1.0/actions/{action_id}/validations/{validation_id}
 #"workflow_orchestrator:get_action_validation": "rule:admin_required"

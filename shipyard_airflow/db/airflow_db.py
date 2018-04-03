@@ -35,26 +35,30 @@ class AirflowDbAccess(DbAccess):
 
     SELECT_ALL_DAG_RUNS = sqlalchemy.sql.text('''
     SELECT
+        "id",
         "dag_id",
         "execution_date",
         "state",
         "run_id",
         "external_trigger",
-        "start_date",
-        "end_date"
+        "conf",
+        "end_date",
+        "start_date"
     FROM
         dag_run
     ''')
 
     SELECT_DAG_RUNS_BY_ID = sqlalchemy.sql.text('''
     SELECT
+        "id",
         "dag_id",
         "execution_date",
         "state",
         "run_id",
         "external_trigger",
-        "start_date",
-        "end_date"
+        "conf",
+        "end_date",
+        "start_date"
     FROM
         dag_run
     WHERE
@@ -67,13 +71,15 @@ class AirflowDbAccess(DbAccess):
     # used to merge into this query.
     SELECT_DAG_RUNS_LIKE_ID = sqlalchemy.sql.text('''
     SELECT
+        "id",
         "dag_id",
         "execution_date",
         "state",
         "run_id",
         "external_trigger",
-        "start_date",
-        "end_date"
+        "conf",
+        "end_date",
+        "start_date"
     FROM
         dag_run
     WHERE
@@ -92,8 +98,16 @@ class AirflowDbAccess(DbAccess):
         "duration",
         "state",
         "try_number",
+        "hostname",
+        "unixname",
+        "job_id",
+        "pool",
+        "queue",
+        "priority_weight",
         "operator",
-        "queued_dttm"
+        "queued_dttm",
+        "pid",
+        "max_tries"
     FROM
         task_instance
     ORDER BY
@@ -113,8 +127,16 @@ class AirflowDbAccess(DbAccess):
         "duration",
         "state",
         "try_number",
+        "hostname",
+        "unixname",
+        "job_id",
+        "pool",
+        "queue",
+        "priority_weight",
         "operator",
-        "queued_dttm"
+        "queued_dttm",
+        "pid",
+        "max_tries"
     FROM
         task_instance
     WHERE

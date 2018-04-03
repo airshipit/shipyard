@@ -64,7 +64,7 @@ class ShipyardPolicy(object):
         policy.DocumentedRuleDefault(
             'workflow_orchestrator:get_action',
             RULE_ADMIN_REQUIRED,
-            'Retreive an action by its id',
+            'Retrieve an action by its id',
             [{
                 'path': '/api/v1.0/actions/{action_id}',
                 'method': 'GET'
@@ -73,16 +73,25 @@ class ShipyardPolicy(object):
         policy.DocumentedRuleDefault(
             'workflow_orchestrator:get_action_step',
             RULE_ADMIN_REQUIRED,
-            'Retreive an action step by its id',
+            'Retrieve an action step by its id',
             [{
                 'path': '/api/v1.0/actions/{action_id}/steps/{step_id}',
                 'method': 'GET'
             }]
         ),
         policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_action_step_logs',
+            RULE_ADMIN_REQUIRED,
+            'Retrieve logs of an action step by its id',
+            [{
+                'path': '/api/v1.0/actions/{action_id}/steps/{step_id}/logs',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
             'workflow_orchestrator:get_action_validation',
             RULE_ADMIN_REQUIRED,
-            'Retreive an action validation by its id',
+            'Retrieve an action validation by its id',
             [{
                 'path':
                 '/api/v1.0/actions/{action_id}/validations/{validation_id}',

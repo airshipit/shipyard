@@ -151,6 +151,16 @@ SECTIONS = [
         title='Requests Configuration',
         options=[
             cfg.IntOpt(
+                'airflow_log_connect_timeout',
+                default=5,
+                help='Airflow logs retrieval connect timeout (in seconds)'
+            ),
+            cfg.IntOpt(
+                'airflow_log_read_timeout',
+                default=300,
+                help='Airflow logs retrieval timeout (in seconds)'
+            ),
+            cfg.IntOpt(
                 'deckhand_client_connect_timeout',
                 default=5,
                 help='Deckhand client connect timeout (in seconds)'
@@ -172,6 +182,22 @@ SECTIONS = [
                 'validation_read_timeout',
                 default=300,
                 help='UCP component validation timeout (in seconds)'
+            ),
+        ]
+    ),
+    ConfigSection(
+        name='airflow',
+        title='Airflow connection info',
+        options=[
+            cfg.StrOpt(
+                'worker_endpoint_scheme',
+                default='http',
+                help='Airflow worker url scheme'
+            ),
+            cfg.IntOpt(
+                'worker_port',
+                default=8793,
+                help='Airflow worker port'
             ),
         ]
     ),

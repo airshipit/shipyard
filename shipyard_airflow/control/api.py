@@ -20,6 +20,8 @@ from shipyard_airflow.control.action.actions_control_api import \
 from shipyard_airflow.control.action.actions_id_api import ActionsIdResource
 from shipyard_airflow.control.action.actions_steps_id_api import \
     ActionsStepsResource
+from shipyard_airflow.control.action.actions_steps_id_logs_api import \
+    ActionsStepsLogsResource
 from shipyard_airflow.control.action.actions_validations_id_api import \
     ActionsValidationsResource
 from shipyard_airflow.control.af_monitoring.workflows_api import (
@@ -65,6 +67,8 @@ def start_api():
          ActionsControlResource()),
         ('/actions/{action_id}/steps/{step_id}',
          ActionsStepsResource()),
+        ('/actions/{action_id}/steps/{step_id}/logs',
+         ActionsStepsLogsResource()),
         ('/actions/{action_id}/validations/{validation_id}',
          ActionsValidationsResource()),
         ('/configdocs', ConfigDocsStatusResource()),

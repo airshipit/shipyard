@@ -380,10 +380,15 @@ conf:
       auth_version: v3
       memcache_security_strategy: ENCRYPT
     requests_config:
+      airflow_log_connect_timeout: 5
+      airflow_log_read_timeout: 300
       deckhand_client_connect_timeout: 5
       deckhand_client_read_timeout: 300
       validation_connect_timeout: 5
       validation_read_timeout: 300
+    airflow:
+      worker_endpoint_scheme: 'http'
+      worker_port: 8793
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
   airflow:
