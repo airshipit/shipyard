@@ -1,17 +1,16 @@
-# -*- coding: utf-8 -*-
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import enum
 import json
 
@@ -33,6 +32,7 @@ class ApiPaths(enum.Enum):
     GET_ACTION_DETAIL = _BASE_URL + 'actions/{}'
     GET_VALIDATION_DETAIL = _BASE_URL + 'actions/{}/validationdetails/{}'
     GET_STEP_DETAIL = _BASE_URL + 'actions/{}/steps/{}'
+    GET_STEP_LOG = _BASE_URL + 'actions/{}/steps/{}/logs'
     POST_CONTROL_ACTION = _BASE_URL + 'actions/{}/control/{}'
     GET_WORKFLOWS = _BASE_URL + 'workflows'
     GET_DAG_DETAIL = _BASE_URL + 'workflows/{}'
@@ -176,6 +176,31 @@ class ShipyardClient(BaseClient):
             step_id
         )
         return self.get_resp(url)
+
+    def get_step_log(self, action_id=None, step_id=None, try_number=None):
+        """
+        Retrieve logs for a particular step
+        :param str action_id: Unique action id
+        :param str step_id: step id
+        :param int try_number: The logs that user wants to retrieve. Note that
+                               a workflow can retry multiple times with the
+                               names of the logs as 1.log, 2.log, 3.log, etc.
+                               Logs from the last attempt will be returned if
+                               'try' is not specified.
+        :returns: Logs for the step
+        :rtype: Response object
+        """
+        if try_number:
+            query_params = {'try': try_number}
+        else:
+            query_params = {}
+
+        url = ApiPaths.GET_STEP_LOG.value.format(
+            self.get_endpoint(),
+            action_id,
+            step_id
+        )
+        return self.get_resp(url, query_params)
 
     def post_control_action(self, action_id=None, control_verb=None):
         """

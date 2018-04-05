@@ -219,3 +219,18 @@ def test_get_dag_details(*args):
     result = shipyard_client.get_dag_detail(workflow_id)
     assert result['url'] == '{}/workflows/{}'.format(
         shipyard_client.get_endpoint(), workflow_id)
+
+
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(BaseClient, 'get_endpoint', replace_get_endpoint)
+def test_get_step_log(*args):
+    shipyard_client = get_api_client()
+    action_id = '01C9VVQSCFS7V9QB5GBS3WFVSE'
+    step_id = 'action_xcom'
+    try_number = '2'
+    result = shipyard_client.get_step_log(action_id, step_id, try_number)
+    params = result['params']
+    assert result['url'] == '{}/actions/{}/steps/{}/logs'.format(
+        shipyard_client.get_endpoint(), action_id, step_id)
+    assert params['try'] == try_number

@@ -54,3 +54,11 @@ Supported Commands:
     shipyard commit configdocs
     shipyard create configdocs
     shipyard get configdocs'''
+
+
+def logs():
+    return '''LOGS
+Allows users to query and view logs using Shipyard
+
+Supported Commands:
+    shipyard logs step'''

@@ -23,6 +23,7 @@ from .create import commands as create
 from .describe import commands as describe
 from .get import commands as get
 from .help import commands as help
+from .logs import commands as logs
 from shipyard_client.cli.input_checks import check_control_action, check_id
 
 
@@ -110,6 +111,7 @@ shipyard.add_command(create.create)
 shipyard.add_command(describe.describe)
 shipyard.add_command(get.get)
 shipyard.add_command(help.help)
+shipyard.add_command(logs.logs)
 
 
 # To Invoke Control Commands

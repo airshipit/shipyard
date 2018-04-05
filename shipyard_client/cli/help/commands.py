@@ -16,7 +16,7 @@
 
 import click
 
-from shipyard_client.cli.help.output import default, actions, configdocs
+from shipyard_client.cli.help.output import actions, configdocs, default, logs
 
 
 @click.group()
@@ -44,6 +44,8 @@ def help(ctx, topic=None):
         click.echo(actions())
     elif topic == 'configdocs':
         click.echo(configdocs())
+    elif topic == 'logs':
+        click.echo(logs())
     else:
         ctx.fail("Invalid topic. Run command 'shipyard help' for a list of "
                  " available topics.")
