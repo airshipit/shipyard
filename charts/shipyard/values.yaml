@@ -44,7 +44,11 @@ network:
   shipyard:
     ingress:
       public: true
-      proxy_read_timeout: 600
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/proxy_read_timeout: 600
     port: 9000
     node_port: 31901
     enable_node_port: false
