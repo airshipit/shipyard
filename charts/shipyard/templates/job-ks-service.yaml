@@ -28,7 +28,7 @@ spec:
   template:
     metadata:
       labels:
-{{ tuple $envAll "shipyard" "ks-user" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ tuple $envAll "shipyard" "ks-service" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
