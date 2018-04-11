@@ -653,6 +653,73 @@ Sample
     update_site__2017-11-27T20:45:47.000000        running
 
 
+Logs Commands
+-------------
+
+logs
+~~~~
+
+Retrieves the logs of the supplied namespaced item
+
+::
+
+    shipyard logs
+        <namespaced_item>
+
+    Example:
+        shipyard logs step/01BTG32JW87G0YKA1K29TKNAFX/drydock_validate_site_design
+          Equivalent to:
+        shipyard logs step drydock_validate_site_design --action=01BTG32JW87G0YKA1K29TKNAFX
+
+        shipyard logs step/01BTG32JW87G0YKA1K29TKNAFX/drydock_validate_site_design/2
+          Equivalent to:
+        shipyard logs step drydock_validate_site_design --action=01BTG32JW87G0YKA1K29TKNAFX --try=2
+
+
+logs step
+~~~~~~~~~
+
+Retrieves the logs for a particular workflow step. Note that 'try'
+is an optional parameter.
+
+::
+
+    shipyard logs step
+        <step_id> --action=<action_name> [--try=<try>]
+
+    Example:
+        shipyard logs step drydock_validate_site_design --action=01BTG32JW87G0YKA1K29TKNAFX
+
+        shipyard logs step drydock_validate_site_design --action=01BTG32JW87G0YKA1K29TKNAFX --try=2
+
+Sample
+^^^^^^
+
+
+::
+
+    $ shipyard logs step/01C9VVQSCFS7V9QB5GBS3WFVSE/action_xcom
+    [2018-04-11 07:30:41,945] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
+    [2018-04-11 07:30:41,991] {{models.py:1197}} INFO - Dependencies all met for <TaskInstance: deploy_site.action_xcom 2018-04-11 07:30:37 [queued]>
+    [2018-04-11 07:30:42,001] {{models.py:1197}} INFO - Dependencies all met for <TaskInstance: deploy_site.action_xcom 2018-04-11 07:30:37 [queued]>
+    [2018-04-11 07:30:42,001] {{models.py:1407}} INFO -
+    --------------------------------------------------------------------------------
+    Starting attempt 1 of 1
+    --------------------------------------------------------------------------------
+
+    [2018-04-11 07:30:42,022] {{models.py:1428}} INFO - Executing <Task(PythonOperator): action_xcom> on 2018-04-11 07:30:37
+    [2018-04-11 07:30:42,023] {{base_task_runner.py:115}} INFO - Running: ['bash', '-c', 'airflow run deploy_site action_xcom 2018-04-11T07:30:37 --job_id 2 --raw -sd DAGS_FOLDER/deploy_site.py']
+    [2018-04-11 07:30:42,606] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:42,606] {{driver.py:120}} INFO - Generating grammar tables from /usr/lib/python3.5/lib2to3/Grammar.txt
+    [2018-04-11 07:30:42,635] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:42,634] {{driver.py:120}} INFO - Generating grammar tables from /usr/lib/python3.5/lib2to3/PatternGrammar.txt
+    [2018-04-11 07:30:43,515] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,515] {{configuration.py:206}} WARNING - section/key [celery/celery_ssl_active] not found in config
+    [2018-04-11 07:30:43,516] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,515] {{default_celery.py:41}} WARNING - Celery Executor will run without SSL
+    [2018-04-11 07:30:43,517] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,516] {{__init__.py:45}} INFO - Using executor CeleryExecutor
+    [2018-04-11 07:30:43,822] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,821] {{models.py:189}} INFO - Filling up the DagBag from /usr/local/airflow/dags/deploy_site.py
+    [2018-04-11 07:30:43,892] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
+    [2018-04-11 07:30:43,945] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,944] {{python_operator.py:90}} INFO - Done. Returned value was: None
+    [2018-04-11 07:30:43,992] {{base_task_runner.py:98}} INFO - Subtask:   """)
+
+
 Help Commands
 -------------
 

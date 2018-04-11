@@ -24,6 +24,7 @@ functionality in Shipyard.
 1. Document Staging
 2. Action Handling
 3. Airflow Monitoring
+4. Logs Retrieval
 
 Standards used by the API
 -------------------------
@@ -930,3 +931,71 @@ Example
         }
       ]
     }
+
+
+Logs Retrieval API
+------------------
+This API allows users to query and view logs. Its usuage is currently limited
+to Airflow logs retrieval but it can be extended in the future to retrieve other
+logs. For instance, a possible use case might be to retrieve or ``tail`` the
+Kubernetes logs.
+
+/v1.0/actions/{action_id}/steps/{step_id}/logs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This API allows users to query and view the logs for a particular workflow
+step in Airflow. By default, it will retrieve the logs from the last attempt.
+Note that a workflow step can retry multiple times with the names of the logs
+as 1.log, 2.log, 3.log, etc. A user can specify the try number to view the logs
+for a particular failed attempt, which will be useful during a troubleshooting
+session.
+
+Entity Structure
+^^^^^^^^^^^^^^^^
+Raw text of the logs retrieved from Airflow for that particular workflow step.
+
+GET /v1.0/actions/{action_id}/steps/{step_id}/logs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Queries Airflow and retrieves logs for a particular workflow step.
+
+Query parameters
+''''''''''''''''
+try={int try_number}
+  optional, represents a particular attempt of the workflow step. Default value
+  is set to None.
+
+Responses
+'''''''''
+200 OK
+
+Example
+'''''''
+
+::
+
+    curl -D - \
+        -X GET $URL/api/v1.0/actions/01CASSSZT7CP1F0NKHCAJBCJGR/steps/action_xcom/logs?try=2 \
+        -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    content-type: application/json; charset=UTF-8
+    x-shipyard-req: 49f74418-22b3-4629-8ddb-259bdfccf2fd
+
+    [2018-04-11 07:30:41,945] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
+    [2018-04-11 07:30:41,991] {{models.py:1197}} INFO - Dependencies all met for <TaskInstance: deploy_site.action_xcom 2018-04-11 07:30:37 [queued]>
+    [2018-04-11 07:30:42,001] {{models.py:1197}} INFO - Dependencies all met for <TaskInstance: deploy_site.action_xcom 2018-04-11 07:30:37 [queued]>
+    [2018-04-11 07:30:42,001] {{models.py:1407}} INFO -
+    --------------------------------------------------------------------------------
+    Starting attempt 2 of 2
+    --------------------------------------------------------------------------------
+
+    [2018-04-11 07:30:42,022] {{models.py:1428}} INFO - Executing <Task(PythonOperator): action_xcom> on 2018-04-11 07:30:37
+    [2018-04-11 07:30:42,023] {{base_task_runner.py:115}} INFO - Running: ['bash', '-c', 'airflow run deploy_site action_xcom 2018-04-11T07:30:37 --job_id 2 --raw -sd DAGS_FOLDER/deploy_site.py']
+    [2018-04-11 07:30:42,606] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:42,606] {{driver.py:120}} INFO - Generating grammar tables from /usr/lib/python3.5/lib2to3/Grammar.txt
+    [2018-04-11 07:30:42,635] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:42,634] {{driver.py:120}} INFO - Generating grammar tables from /usr/lib/python3.5/lib2to3/PatternGrammar.txt
+    [2018-04-11 07:30:43,515] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,515] {{configuration.py:206}} WARNING - section/key [celery/celery_ssl_active] not found in config
+    [2018-04-11 07:30:43,516] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,515] {{default_celery.py:41}} WARNING - Celery Executor will run without SSL
+    [2018-04-11 07:30:43,517] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,516] {{__init__.py:45}} INFO - Using executor CeleryExecutor
+    [2018-04-11 07:30:43,822] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,821] {{models.py:189}} INFO - Filling up the DagBag from /usr/local/airflow/dags/deploy_site.py
+    [2018-04-11 07:30:43,892] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
+    [2018-04-11 07:30:43,945] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,944] {{python_operator.py:90}} INFO - Done. Returned value was: None
+    [2018-04-11 07:30:43,992] {{base_task_runner.py:98}} INFO - Subtask:   """)
