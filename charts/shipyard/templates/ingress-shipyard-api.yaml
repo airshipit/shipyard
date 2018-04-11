@@ -15,10 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if .Values.manifests.ingress_shipyard_api }}
-{{- $envAll := . }}
-{{- if .Values.network.shipyard.ingress.public }}
-{{- $ingressOpts := dict "envAll" . "backendService" "shipyard" "backendServiceType" "shipyard" "backendPort" "http" -}}
+{{- if and .Values.manifests.ingress_shipyard_api .Values.network.shipyard.ingress.public }}
+{{- $ingressOpts := dict "envAll" . "backendService" "shipyard" "backendServiceType" "shipyard" "backendPort" "api" -}}
 {{- $ingressOpts | include "helm-toolkit.manifests.ingress" -}}
-{{- end }}
 {{- end }}

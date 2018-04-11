@@ -25,16 +25,16 @@ metadata:
 spec:
   ports:
     {{ if .Values.network.shipyard.enable_node_port }}
-    - name: http
+    - name: api
+      protocol: TCP
       nodePort: {{ .Values.network.shipyard.node_port }}
-      port: {{ .Values.network.shipyard.port }}
-      protocol: TCP
-      targetPort: {{ .Values.network.shipyard.port }}
+      port: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+      targetPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
     {{ else }}
-    - name: http
-      port: {{ .Values.network.shipyard.port }}
+    - name: api
       protocol: TCP
-      targetPort: {{ .Values.network.shipyard.port }}
+      port: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+      targetPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
     {{ end }}
   selector:
 {{ tuple $envAll "shipyard-api" "server" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}

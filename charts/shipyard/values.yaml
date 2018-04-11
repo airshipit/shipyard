@@ -48,8 +48,8 @@ network:
         namespace: "nginx"
         cluster: "nginx-cluster"
       annotations:
-        nginx.ingress.kubernetes.io/proxy_read_timeout: 600
-    port: 9000
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     node_port: 31901
     enable_node_port: false
   airflow:
