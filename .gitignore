@@ -107,6 +107,8 @@ ChangeLog
 AUTHORS
 
 # build/lint artifacts
+*.tgz
+**/*.tgz
 /charts/shipyard/charts
 /charts/shipyard/requirements.lock
 .DS_Store
