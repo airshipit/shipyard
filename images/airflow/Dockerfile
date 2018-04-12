@@ -19,7 +19,6 @@ FROM ubuntu:16.04
 # Set port 8080 for Airflow Web
 # Set port 5555 for Airflow Flower
 # Set port 8793 for Airflow Worker
-ENV DEBIAN_FRONTEND noninteractive
 ENV container docker
 ENV WEB_PORT 8080
 ENV FLOWER_PORT 5555
@@ -30,8 +29,9 @@ EXPOSE $WEB_PORT
 EXPOSE $FLOWER_PORT
 EXPOSE $WORKER_PORT
 
-# Airflow Home Directory
+# Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Kubectl version
 ARG KUBECTL_VERSION=1.8.6

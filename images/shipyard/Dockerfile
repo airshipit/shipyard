@@ -14,11 +14,12 @@
 
 FROM python:3.5
 
-ENV DEBIAN_FRONTEND noninteractive
 ENV container docker
 ENV PORT 9000
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Expose port 9000 for application
 EXPOSE $PORT
