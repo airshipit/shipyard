@@ -39,7 +39,6 @@ def test_add_role():
 def test_add_roles():
     '''test add_roles'''
     ctx = ShipyardRequestContext()
-    print(ctx.roles)
     test_roles = ['Waiter', 'Host', 'Chef']
     ctx.add_roles(test_roles)
     assert ['Chef', 'Host', 'Waiter', 'anyone'] == sorted(ctx.roles)

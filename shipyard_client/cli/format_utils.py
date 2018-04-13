@@ -61,12 +61,21 @@ def cli_format_status_handler(response, is_error=False):
             resp_j = response.json()
             resp = formatted.format(resp_j.get('message', 'Not specified'),
                                     resp_j.get('reason', 'Not specified'))
+            # lvl_counts must have a matching number of values as the
+            # _LEVEL_KEYS below + 1 for sentinel.
+            lvl_counts = [0, 0, 0, 0]
             if resp_j.get('details'):
                 mlist = resp_j['details'].get('messageList', [])
-                for message in sorted(mlist,
-                                      key=lambda m: _lvl_key(
-                                          m.get('level'),
-                                          m.get('error', False))):
+                # Decorate messages with level number and sortkey
+                for message in mlist:
+                    message['lnum'], message['sortkey'] = _lvl_key(
+                        message.get('level'),
+                        message.get('error', False)
+                    )
+                # Sort and formulate the messages
+                for message in sorted(mlist, key=lambda m: m['sortkey']):
+                    lnum = message['lnum']
+                    lvl_counts[lnum] = lvl_counts[lnum] + 1
                     if message.get('kind') == 'ValidationMessage':
                         resp = resp + _format_validation_message(message)
                     else:
@@ -76,6 +85,11 @@ def cli_format_status_handler(response, is_error=False):
                             _INDENT,
                             message['source']
                         )
+                # Append a count summary
+                resp = resp + ("\n\n####  Errors: {},"
+                               " Warnings: {},"
+                               " Infos: {},"
+                               " Other: {}  ####".format(*lvl_counts))
             return resp
         else:
             return ''
@@ -92,14 +106,18 @@ _LEVEL_KEYS = {
     1: ['warn', 'warning'],
     2: ['info', 'debug'],
 }
-_SENTINEL_LEVEL = "999"
+_SENTINEL_SORT_KEY = "3none"
+_SENTINEL_LEVEL = 3
 
 
 def _lvl_key(level_name, error):
-    """Generate a level key value
+    """Generate a level key value and sort key
 
     Returns a value to support sort order based on lvls dict.
     The result is that like-level items are sorted together.
+    The level number provides sameness for levels that are named differently
+    but are the same level for our purposes. The sort key retains the original
+    provided level so that like named items still sort together.
     """
     if level_name is None:
         if (error):
@@ -111,8 +129,8 @@ def _lvl_key(level_name, error):
 
     for key, val_list in _LEVEL_KEYS.items():
         if level_name in val_list:
-            return '{}{}'.format(key, level_name)
-    return _SENTINEL_LEVEL
+            return key, '{}{}'.format(key, level_name)
+    return _SENTINEL_LEVEL, _SENTINEL_SORT_KEY
 
 
 def _format_validation_message(message):

@@ -60,7 +60,6 @@ def test_cli_format_error_handler_no_messages():
     resp = MagicMock()
     resp.json = MagicMock(return_value=json.loads(resp_val))
     output = format_utils.cli_format_error_handler(resp)
-    print(output)
     assert "Error: Unauthenticated" in output
     assert "Reason: Credentials are not established" in output
 
@@ -208,7 +207,74 @@ Reason: Validation
         Document: schema/schema/v1 - someyaml
         Source: format-o-matic
 - Info: Basic info
-        Source: Armadadock"""
+        Source: Armadadock
+
+####  Errors: 4, Warnings: 0, Infos: 2, Other: 0  ####"""
+    resp = MagicMock()
+    resp.json = MagicMock(return_value=json.loads(resp_val))
+    output = format_utils.cli_format_status_handler(resp, is_error=True)
+    assert output == expected
+
+
+def test_cli_format_status_handler_messages_empty():
+    """Tests the generic handler for shipyard status response if passed
+    a response with no message in the detail to ensure the empty case works.
+    """
+    resp_val = """
+{
+  "apiVersion": "v1.0",
+  "status": "Failure",
+  "metadata": {},
+  "message": "Component Validation Failed",
+  "code": 400,
+  "details": {
+      "errorCount": 0,
+      "messageList": []
+  },
+  "kind": "Status",
+  "reason": "Validation"
+}
+"""
+    expected = """Error: Component Validation Failed
+Reason: Validation
+
+####  Errors: 0, Warnings: 0, Infos: 0, Other: 0  ####"""
+    resp = MagicMock()
+    resp.json = MagicMock(return_value=json.loads(resp_val))
+    output = format_utils.cli_format_status_handler(resp, is_error=True)
+    assert output == expected
+
+
+def test_cli_format_status_handler_messages_invalid_levels():
+    """Tests the generic handler for shipyard status response if passed
+    a response with no message in the detail to ensure the empty case works.
+    """
+    resp_val = """
+{
+  "apiVersion": "v1.0",
+  "status": "Failure",
+  "metadata": {},
+  "message": "Component Validation Failed",
+  "code": 400,
+  "details": {
+      "errorCount": 0,
+      "messageList": [
+          { "message": "It is broken",
+            "level": "Broken",
+            "kind": "ValidationMessage"
+          }
+      ]
+  },
+  "kind": "Status",
+  "reason": "Validation"
+}
+"""
+    expected = """Error: Component Validation Failed
+Reason: Validation
+- Broken: None
+        Message: It is broken
+
+####  Errors: 0, Warnings: 0, Infos: 0, Other: 1  ####"""
     resp = MagicMock()
     resp.json = MagicMock(return_value=json.loads(resp_val))
     output = format_utils.cli_format_status_handler(resp, is_error=True)
