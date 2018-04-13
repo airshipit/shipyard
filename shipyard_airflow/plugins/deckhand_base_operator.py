@@ -94,8 +94,8 @@ class DeckhandBaseOperator(BaseOperator):
         self.do_execute()
 
         # Push last committed version to xcom for the
-        # 'deckhand_get_design_version' subdag
-        if self.sub_dag_name == 'deckhand_get_design_version':
+        # 'get_design_version' subdag
+        if self.sub_dag_name == 'get_design_version':
             return self.committed_ver
 
     @shipyard_service_token
@@ -145,7 +145,7 @@ class DeckhandBaseOperator(BaseOperator):
         # 'deckhand_get_design_version'
         #
         # NOTE: In the case of 'deploy_site', the dag_id will
-        # be 'deploy_site.deckhand_get_design_version' for the
+        # be 'deploy_site.get_design_version' for the
         # 'deckhand_get_design_version' task. We need to extract
         # the xcom value from it in order to get the value of the
         # last committed revision ID

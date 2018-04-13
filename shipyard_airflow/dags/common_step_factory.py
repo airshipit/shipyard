@@ -88,7 +88,7 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_get_design_version(self, task_id=dn.DECKHAND_GET_DESIGN_VERSION):
+    def get_get_design_version(self, task_id=dn.GET_DESIGN_VERSION):
         """Generate the get design version step
 
         Retrieves the version of the design to use from deckhand
