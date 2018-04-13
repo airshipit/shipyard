@@ -19,6 +19,7 @@ import re
 from shipyard_airflow.control import ucp_logging
 
 LOG = logging.getLogger(__name__)
+HEALTH_URL = '/health'
 
 
 class LoggingMiddleware(object):
@@ -33,21 +34,32 @@ class LoggingMiddleware(object):
         ucp_logging.set_logvar('req_id', req.context.request_id)
         ucp_logging.set_logvar('external_ctx', req.context.external_marker)
         ucp_logging.set_logvar('user', req.context.user)
-        LOG.info("Request %s %s", req.method, req.url)
-        self._log_headers(req.headers)
+        if not req.url.endswith(HEALTH_URL):
+            # Log requests other than the health check.
+            LOG.info("Request %s %s", req.method, req.url)
+            self._log_headers(req.headers)
 
     def process_response(self, req, resp, resource, req_succeeded):
         """ Log the response information
         """
         ctx = req.context
         resp.append_header('X-Shipyard-Req', ctx.request_id)
-        LOG.info('%s %s - %s', req.method, req.uri, resp.status)
-        # TODO(bryan-strassner) since response bodies can contain sensitive
-        #     information, only logging error response bodies here. When we
-        #     have response scrubbing or way to categorize responses in the
-        #     future, this may be an appropriate place to utilize it.
-        if self._get_resp_code(resp) >= 400:
-            LOG.debug('Errored Response body: %s', resp.body)
+        resp_code = self._get_resp_code(resp)
+
+        if req.url.endswith(HEALTH_URL):
+            # Only log health checks upon failure. This prevents repeated
+            # trivial logging due to constant health checks.
+            if not resp_code == 204:
+                LOG.error('Health check has failed with response status %s',
+                          resp.status)
+        else:
+            LOG.info('%s %s - %s', req.method, req.uri, resp.status)
+            # TODO(bryan-strassner) since response bodies can contain sensitive
+            #     information, only logging error response bodies here. When we
+            #     have response scrubbing or way to categorize responses in the
+            #     future, this may be an appropriate place to utilize it.
+            if resp_code >= 400:
+                LOG.debug('Errored Response body: %s', resp.body)
 
     def _log_headers(self, headers):
         """ Log request headers, while scrubbing sensitive values

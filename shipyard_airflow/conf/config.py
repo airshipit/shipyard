@@ -77,7 +77,8 @@ SECTIONS = [
             ),
             cfg.DictOpt(
                 'named_log_levels',
-                default={"keystoneauth": logging.INFO},
+                default={"keystoneauth": logging.INFO,
+                         "keystonemiddleware": logging.INFO},
                 help=('The logging levels for named loggers. '
                       'Use standard representations for logging levels: '
                       'ERROR. WARN, INFO, DEBUG. Configuration file format: '
