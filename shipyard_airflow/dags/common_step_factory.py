@@ -207,7 +207,7 @@ class CommonStepFactory(object):
 
         return BranchPythonOperator(task_id=task_id,
                                     python_callable=upgrade_airflow_check,
-                                    trigger_rule="all_done",
+                                    trigger_rule="all_success",
                                     dag=self.dag)
 
     def get_upgrade_airflow(self, task_id=dn.UPGRADE_AIRFLOW):
