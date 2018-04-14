@@ -111,7 +111,7 @@ class UcpHealthCheckOperator(BaseOperator):
         # and create xcom key 'drydock_continue_on_fail'
         if (component == 'physicalprovisioner' and
                 self.action_info['parameters'].get(
-                    'continue-on-fail').lower() == 'true' and
+                    'continue-on-fail', 'false').lower() == 'true' and
                 self.action_info['dag_id'] in ['update_site', 'deploy_site']):
             LOG.warning('Drydock did not pass health check. Continuing '
                         'as "continue-on-fail" option is enabled.')

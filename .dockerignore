@@ -44,6 +44,7 @@ cov/*
 **/.tox/
 **/.coverage
 **/.coverage.*
+**/.pytest_cache/
 **/.cache
 nosetests.xml
 coverage.xml
