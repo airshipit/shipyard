@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 
 from check_k8s_node_status import check_node_status
 from drydock_base_operator import DrydockBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DrydockDeployNodesOperator(DrydockBaseOperator):
@@ -47,9 +48,9 @@ class DrydockDeployNodesOperator(DrydockBaseOperator):
         # and wait before checking the state of the cluster join process.
         join_wait = self.dc['physical_provisioner.join_wait']
 
-        logging.info("All nodes deployed in MAAS")
-        logging.info("Wait for %d seconds before checking node state...",
-                     join_wait)
+        LOG.info("All nodes deployed in MAAS")
+        LOG.info("Wait for %d seconds before checking node state...",
+                 join_wait)
 
         time.sleep(join_wait)
 

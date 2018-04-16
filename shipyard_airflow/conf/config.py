@@ -202,6 +202,17 @@ SECTIONS = [
             ),
         ]
     ),
+    ConfigSection(
+        name='k8s_logs',
+        title='Parameters for K8s Pods Logs',
+        options=[
+            cfg.StrOpt(
+                'ucp_namespace',
+                default='ucp',
+                help='Namespace of UCP Pods'
+            ),
+        ]
+    ),
 ]
 
 

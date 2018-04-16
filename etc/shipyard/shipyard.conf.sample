@@ -249,6 +249,16 @@
 #auth_section = <None>
 
 
+[k8s_logs]
+
+#
+# From shipyard_airflow
+#
+
+# The namespace of the UCP Pods (string value)
+#ucp_namespace = ucp
+
+
 [logging]
 
 #

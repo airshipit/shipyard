@@ -389,6 +389,8 @@ conf:
     airflow:
       worker_endpoint_scheme: 'http'
       worker_port: 8793
+    k8s_logs:
+      ucp_namespace: 'ucp'
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
   airflow:

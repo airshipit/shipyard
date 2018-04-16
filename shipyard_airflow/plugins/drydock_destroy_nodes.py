@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
 from airflow.plugins_manager import AirflowPlugin
 
 from drydock_base_operator import DrydockBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DrydockDestroyNodeOperator(DrydockBaseOperator):
@@ -31,17 +32,13 @@ class DrydockDestroyNodeOperator(DrydockBaseOperator):
 
     def do_execute(self):
 
-        # Retrieve query interval and timeout
-        q_interval = self.dc['physical_provisioner.destroy_interval']
-        task_timeout = self.dc['physical_provisioner.destroy_timeout']
-
         # NOTE: This is a PlaceHolder function. The 'destroy_node'
         # functionalities in DryDock is being worked on and is not
         # ready at the moment.
-        logging.info("Destroying node %s from cluster...",
-                     self.redeploy_server)
+        LOG.info("Destroying node %s from cluster...",
+                 self.redeploy_server)
         time.sleep(15)
-        logging.info("Successfully deleted node %s", self.redeploy_server)
+        LOG.info("Successfully deleted node %s", self.redeploy_server)
 
 
 class DrydockDestroyNodeOperatorPlugin(AirflowPlugin):

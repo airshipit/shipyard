@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import logging
 import os
@@ -21,6 +20,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from drydock_base_operator import DrydockBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DrydockValidateDesignOperator(DrydockBaseOperator):
@@ -38,7 +39,7 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         validation_endpoint = os.path.join(self.drydock_svc_endpoint,
                                            'validatedesign')
 
-        logging.info("Validation Endpoint is %s", validation_endpoint)
+        LOG.info("Validation Endpoint is %s", validation_endpoint)
 
         # Define Headers and Payload
         headers = {
@@ -53,7 +54,7 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         }
 
         # Requests DryDock to validate site design
-        logging.info("Waiting for DryDock to validate site design...")
+        LOG.info("Waiting for DryDock to validate site design...")
 
         try:
             design_validate_response = requests.post(validation_endpoint,
@@ -67,15 +68,18 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         validate_site_design = design_validate_response.text
 
         # Print response
-        logging.info("Retrieving DryDock validate site design response...")
-        logging.info(json.loads(validate_site_design))
+        LOG.info("Retrieving DryDock validate site design response...")
+        LOG.info(json.loads(validate_site_design))
 
         # Check if site design is valid
         status = str(json.loads(validate_site_design).get('status',
                                                           'unspecified'))
         if status.lower() == 'success':
-            logging.info("DryDock Site Design has been successfully validated")
+            LOG.info("DryDock Site Design has been successfully validated")
         else:
+            # Dump logs from Drydock pods
+            self.get_k8s_logs()
+
             raise AirflowException("DryDock Site Design Validation Failed "
                                    "with status: {}!".format(status))
 
