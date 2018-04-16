@@ -27,11 +27,12 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - endpoints
       - nodes
       - nodes/proxy
-      - services
-      - endpoints
       - pods
+      - pods/log
+      - services
     verbs:
       - delete
       - get
