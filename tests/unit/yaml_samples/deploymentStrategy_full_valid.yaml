@@ -1,0 +1,75 @@
+---
+schema: shipyard/DeploymentStrategy/v1
+metadata:
+  schema: metadata/Document/v1
+  name: deployment-strategy
+  layeringDefinition:
+      abstract: false
+      layer: global
+  storagePolicy: cleartext
+data:
+  groups:
+    - name: control-nodes
+      critical: true
+      depends_on:
+        - ntp-node
+      selectors:
+        - node_names: []
+          node_labels: []
+          node_tags:
+            - control
+          rack_names:
+            - rack03
+      success_criteria:
+        percent_successful_nodes: 90
+        minimum_successful_nodes: 3
+        maximum_failed_nodes: 1
+    - name: compute-nodes-1
+      critical: false
+      depends_on:
+        - control-nodes
+      selectors:
+        - node_names: []
+          node_labels: []
+          rack_names:
+            - rack01
+          node_tags:
+            - compute
+      success_criteria:
+        percent_successful_nodes: 50
+    - name: compute-nodes-2
+      critical: false
+      depends_on:
+        - control-nodes
+      selectors:
+        - node_names: []
+          node_labels: []
+          rack_names:
+            - rack02
+          node_tags:
+            - compute
+      success_criteria:
+        percent_successful_nodes: 50
+    - name: monitoring-nodes
+      critical: false
+      depends_on: []
+      selectors:
+        - node_names: []
+          node_labels: []
+          node_tags:
+            - monitoring
+          rack_names:
+            - rack03
+            - rack02
+            - rack01
+    - name: ntp-node
+      critical: true
+      depends_on: []
+      selectors:
+        - node_names:
+            - ntp01
+          node_labels: []
+          node_tags: []
+          rack_names: []
+      success_criteria:
+        minimum_successful_nodes: 1

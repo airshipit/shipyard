@@ -1,4 +1,3 @@
-
 ---
 schema: 'deckhand/DataSchema/v1'
 metadata:
@@ -16,8 +15,6 @@ data:
       properties:
         deployment_strategy:
           type: 'string'
-          enum:
-            - 'all-at-once'
         deploy_interval:
           type: 'integer'
         deploy_timeout:
