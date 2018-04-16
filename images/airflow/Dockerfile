@@ -67,33 +67,22 @@ RUN set -ex && \
         /usr/share/doc \
         /usr/share/doc-base
 
-# Copy dependency requirements
-COPY ./requirements.txt /tmp/
-RUN pip3 install -r /tmp/requirements.txt
-
-# Note - removing snakebite (python 2 vs. 3). See:
-#    https://github.com/puckel/docker-airflow/issues/77
-RUN pip3 uninstall -y snakebite || true
-
-# Install Armada, DeckHand and DryDock Client Libraries
-RUN pip3 install -e git://github.com/att-comdev/armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
-RUN pip3 install -e git://github.com/att-comdev/deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand
-RUN pip3 install -e git://github.com/att-comdev/drydock.git@42aa3c486ee4c495c2377d31481df5ab681f84f2#egg=drydock_provisioner
-
-# Create airflow user
-RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow
-
-# Download and install kubectl
-RUN curl -L -o /usr/local/bin/kubectl \
-    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+# Things that change mostly infrequently
+RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
+    && curl -L -o /usr/local/bin/kubectl \
+       https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
-# Copy entrypoint.sh, airflow_start_service.sh and
-# airflow_logrotate.sh
-COPY script/entrypoint.sh ${AIRFLOW_HOME}/entrypoint.sh
-COPY script/airflow_start_service.sh ${AIRFLOW_HOME}/airflow_start_service.sh
-COPY script/airflow_logrotate.sh ${AIRFLOW_HOME}/airflow_logrotate.sh
-COPY script/upgrade_airflow_worker.sh ${AIRFLOW_HOME}/upgrade_airflow_worker.sh
+# Dependency requirements
+# Note - removing snakebite (python 2 vs. 3). See:
+#    https://github.com/puckel/docker-airflow/issues/77
+COPY ./requirements.txt /tmp/
+RUN pip3 install -r /tmp/requirements.txt \
+    && pip3 uninstall -y snakebite || true
+
+# Copy scripts used in the container:
+#   entrypoint.sh, airflow_start_service.sh and airflow_logrotate.sh
+COPY script/*.sh ${AIRFLOW_HOME}/
 
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME}
