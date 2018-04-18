@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 
 from airflow.exceptions import AirflowException
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 
 from armada_base_operator import ArmadaBaseOperator
 from armada.exceptions import api_exceptions as errors
+
+LOG = logging.getLogger(__name__)
 
 
 class ArmadaGetReleasesOperator(ArmadaBaseOperator):
@@ -39,7 +40,7 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
         timeout = self.dc['armada.get_releases_timeout']
 
         # Retrieve Armada Releases after deployment
-        logging.info("Retrieving Helm charts releases after deployment..")
+        LOG.info("Retrieving Helm charts releases after deployment..")
 
         try:
             armada_get_releases = self.armada_client.get_releases(
@@ -50,9 +51,12 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
             raise AirflowException(client_error)
 
         if armada_get_releases:
-            logging.info("Successfully retrieved Helm charts releases")
-            logging.info(armada_get_releases)
+            LOG.info("Successfully retrieved Helm charts releases")
+            LOG.info(armada_get_releases)
         else:
+            # Dump logs from Armada API pods
+            self.get_k8s_logs()
+
             raise AirflowException("Failed to retrieve Helm charts releases!")
 
 

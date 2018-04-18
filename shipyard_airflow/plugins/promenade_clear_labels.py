@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from promenade_base_operator import PromenadeBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class PromenadeClearLabelsOperator(PromenadeBaseOperator):
@@ -37,14 +38,14 @@ class PromenadeClearLabelsOperator(PromenadeBaseOperator):
         # TODO(bryan-strassner) use:
         #     self.dc['kubernetes_provisioner.clear_labels_timeout']
 
-        logging.info("Removing labels on node...")
+        LOG.info("Removing labels on node...")
         time.sleep(5)
 
         labels_removed = True
 
         if labels_removed:
-            logging.info("Successfully removed labels on %s",
-                         self.redeploy_server)
+            LOG.info("Successfully removed labels on %s",
+                     self.redeploy_server)
         else:
             raise AirflowException('Failed to remove labels on %s!',
                                    self.redeploy_server)

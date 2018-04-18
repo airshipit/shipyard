@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from promenade_base_operator import PromenadeBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
@@ -37,13 +38,13 @@ class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
         # TODO(bryan-strassner) use:
         #     self.dc['kubernetes_provisioner.etcd_ready_timeout']
         #     self.dc['kubernetes_provisioner.remove_etcd_timeout']
-        logging.info("Performing health check on etcd...")
+        LOG.info("Performing health check on etcd...")
         time.sleep(5)
 
         check_etcd = True
 
         if check_etcd:
-            logging.info("The etcd cluster is healthy and ready")
+            LOG.info("The etcd cluster is healthy and ready")
         else:
             raise AirflowException('Please check the state of etcd!')
 

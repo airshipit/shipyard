@@ -86,6 +86,11 @@ class UcpBaseOperator(BaseOperator):
         # Exeute child function
         self.do_execute()
 
+        # Push last committed version to xcom for the
+        # 'get_design_version' subdag
+        if self.sub_dag_name == 'get_design_version':
+            return self.committed_ver
+
     def ucp_base(self, context):
 
         LOG.info("Running UCP Base Operator...")
@@ -98,10 +103,10 @@ class UcpBaseOperator(BaseOperator):
         self.ucp_namespace = config.get('k8s_logs', 'ucp_namespace')
 
         # Define task_instance
-        task_instance = context['task_instance']
+        self.task_instance = context['task_instance']
 
         # Set up and retrieve values from xcom
-        self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
+        self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
         self.action_info = self.xcom_puller.get_action_info()
         self.dc = self.xcom_puller.get_deployment_configuration()
 

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from promenade_base_operator import PromenadeBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class PromenadeShutdownKubeletOperator(PromenadeBaseOperator):
@@ -33,14 +34,14 @@ class PromenadeShutdownKubeletOperator(PromenadeBaseOperator):
     def do_execute(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
-        logging.info("Shutting down kubelet on node...")
+        LOG.info("Shutting down kubelet on node...")
         time.sleep(5)
 
         shutdown_kubelet = True
 
         if shutdown_kubelet:
-            logging.info("Successfully shut down kubelet on %s",
-                         self.redeploy_server)
+            LOG.info("Successfully shut down kubelet on %s",
+                     self.redeploy_server)
         else:
             raise AirflowException('Failed to shut down kubelet on %s!',
                                    self.redeploy_server)

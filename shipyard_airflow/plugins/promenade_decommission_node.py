@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from promenade_base_operator import PromenadeBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class PromenadeDecommissionNodeOperator(PromenadeBaseOperator):
@@ -33,14 +34,14 @@ class PromenadeDecommissionNodeOperator(PromenadeBaseOperator):
     def do_execute(self):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
-        logging.info("Decommissioning node from Kubernetes cluster...")
+        LOG.info("Decommissioning node from Kubernetes cluster...")
         time.sleep(5)
 
         decommission_node = True
 
         if decommission_node:
-            logging.info("Succesfully decommissioned node %s",
-                         self.redeploy_server)
+            LOG.info("Succesfully decommissioned node %s",
+                     self.redeploy_server)
         else:
             raise AirflowException('Failed to decommission node %s!',
                                    self.redeploy_server)

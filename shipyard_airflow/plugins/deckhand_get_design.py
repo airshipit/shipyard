@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import os
 import requests
@@ -21,6 +20,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from deckhand_base_operator import DeckhandBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DeckhandGetDesignOperator(DeckhandBaseOperator):
@@ -42,7 +43,7 @@ class DeckhandGetDesignOperator(DeckhandBaseOperator):
                                          'revisions')
 
         # Retrieve Revision
-        logging.info("Retrieving revisions information...")
+        LOG.info("Retrieving revisions information...")
 
         try:
             query_params = {'tag': 'committed', 'sort': 'id', 'order': 'desc'}
@@ -53,12 +54,15 @@ class DeckhandGetDesignOperator(DeckhandBaseOperator):
                 timeout=self.deckhand_client_read_timeout).text)
 
         except requests.exceptions.RequestException as e:
+            # Dump logs from Deckhand pods
+            self.get_k8s_logs()
+
             raise AirflowException(e)
 
         # Print info about revisions from DeckHand
-        logging.info("Revisions response: %s", revisions)
-        logging.info("The number of committed revisions is %s",
-                     revisions['count'])
+        LOG.info("Revisions response: %s", revisions)
+        LOG.info("The number of committed revisions is %s",
+                 revisions['count'])
 
         # Search for the latest committed version and save it as xcom.
         # Since the order : desc paramater above, this is index 0 if there
@@ -66,10 +70,13 @@ class DeckhandGetDesignOperator(DeckhandBaseOperator):
         revision_list = revisions.get('results', [])
         if revision_list:
             self.committed_ver = revision_list[0].get('id')
-            logging.info("Latest committed revision is %d", self.committed_ver)
+            LOG.info("Latest committed revision is %d", self.committed_ver)
 
         # Error if we cannot resolve the committed version to use.
         if not self.committed_ver:
+            # Dump logs from Deckhand pods
+            self.get_k8s_logs()
+
             raise AirflowException("No committed revision found in Deckhand!")
 
 

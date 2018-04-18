@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 
 from airflow.exceptions import AirflowException
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 
 from armada_base_operator import ArmadaBaseOperator
 from armada.exceptions import api_exceptions as errors
+
+LOG = logging.getLogger(__name__)
 
 
 class ArmadaGetStatusOperator(ArmadaBaseOperator):
@@ -51,11 +52,14 @@ class ArmadaGetStatusOperator(ArmadaBaseOperator):
         # Tiller State will return boolean value, i.e. True/False
         # Raise Exception if Tiller is unhealthy
         if armada_get_status['tiller']['state']:
-            logging.info("Tiller is in running state")
-            logging.info("Tiller version is %s",
-                         armada_get_status['tiller']['version'])
+            LOG.info("Tiller is in running state")
+            LOG.info("Tiller version is %s",
+                     armada_get_status['tiller']['version'])
 
         else:
+            # Dump logs from Armada API pods
+            self.get_k8s_logs()
+
             raise AirflowException("Please check Tiller!")
 
 

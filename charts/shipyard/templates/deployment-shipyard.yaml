@@ -24,7 +24,7 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: shipyard
+  name: shipyard-api
 spec:
   replicas: {{ .Values.pod.replicas.shipyard.api }}
 {{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
@@ -44,7 +44,7 @@ spec:
       initContainers:
 {{ tuple $envAll $dependencies $mounts_shipyard_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
-        - name: shipyard
+        - name: shipyard-api
           env:
             - name: 'SHIPYARD_API_WORKERS'
               value: {{ .Values.conf.uwsgi.workers | quote }}

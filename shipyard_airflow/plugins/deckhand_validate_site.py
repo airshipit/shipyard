@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import os
 import requests
@@ -21,6 +20,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from deckhand_base_operator import DeckhandBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
@@ -43,7 +44,7 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
                                            str(self.revision_id),
                                            'validations')
         # Retrieve Validation list
-        logging.info("Retrieving validation list...")
+        LOG.info("Retrieving validation list...")
 
         try:
             retrieved_list = yaml.safe_load(
@@ -52,14 +53,20 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
                              timeout=self.validation_read_timeout).text)
 
         except requests.exceptions.RequestException as e:
+            # Dump logs from Deckhand pods
+            self.get_k8s_logs()
+
             raise AirflowException(e)
 
         if (any([str(v.get('status', 'unspecified')).lower() == 'failure'
                 for v in retrieved_list.get('results', [])])):
+            # Dump logs from Deckhand pods
+            self.get_k8s_logs()
+
             raise AirflowException("DeckHand Site Design Validation Failed!")
         else:
-            logging.info("Revision %d has been successfully validated",
-                         self.revision_id)
+            LOG.info("Revision %d has been successfully validated",
+                     self.revision_id)
 
 
 class DeckhandValidateSiteDesignOperatorPlugin(AirflowPlugin):

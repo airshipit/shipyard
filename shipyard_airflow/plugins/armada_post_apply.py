@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 
 from airflow.exceptions import AirflowException
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 
 from armada_base_operator import ArmadaBaseOperator
 from armada.exceptions import api_exceptions as errors
+
+LOG = logging.getLogger(__name__)
 
 
 class ArmadaPostApplyOperator(ArmadaBaseOperator):
@@ -52,7 +53,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         timeout = self.dc['armada.post_apply_timeout']
 
         # Execute Armada Apply to install the helm charts in sequence
-        logging.info("Armada Apply")
+        LOG.info("Armada Apply")
 
         try:
             armada_post_apply = self.armada_client.post_apply(
@@ -64,6 +65,9 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
                 timeout=timeout)
 
         except errors.ClientError as client_error:
+            # Dump logs from Armada API pods
+            self.get_k8s_logs()
+
             raise AirflowException(client_error)
 
         # if this is a retry, assume that the airflow worker needs to be
@@ -74,7 +78,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         #     needs to. Problem with xcom is that it is cleared for the task
         #     on retry, which means we can't use it as a flag reliably.
         if self.task_instance.try_number > 1:
-            logging.info(
+            LOG.info(
                 "Airflow Worker will be upgraded because retry may obfuscate "
                 "an upgrade of shipyard/airflow."
             )
@@ -87,7 +91,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
             # part of the name of the Shipyard Helm Chart.
             for i in armada_post_apply['message']['upgrade']:
                 if 'shipyard' in i:
-                    logging.info(
+                    LOG.info(
                         "Shipyard was upgraded. Airflow worker must be "
                         "restarted to reflect any workflow changes."
                     )
@@ -110,11 +114,11 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         # changed.
         if (armada_post_apply['message']['install'] or
                 armada_post_apply['message']['upgrade']):
-            logging.info("Successfully Executed Armada Apply")
-            logging.info(armada_post_apply)
+            LOG.info("Successfully Executed Armada Apply")
+            LOG.info(armada_post_apply)
         else:
-            logging.warning("No new changes/updates were detected!")
-            logging.info(armada_post_apply)
+            LOG.warning("No new changes/updates were detected!")
+            LOG.info(armada_post_apply)
 
 
 class ArmadaPostApplyOperatorPlugin(AirflowPlugin):

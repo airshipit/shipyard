@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import time
 
@@ -19,6 +18,8 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from promenade_base_operator import PromenadeBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class PromenadeDrainNodeOperator(PromenadeBaseOperator):
@@ -40,14 +41,14 @@ class PromenadeDrainNodeOperator(PromenadeBaseOperator):
         #     self.dc['kubernetes_provisioner.drain_timeout']
         #     self.dc['kubernetes_provisioner.drain_grace_period']
 
-        logging.info("Draining node...")
+        LOG.info("Draining node...")
         time.sleep(5)
 
         node_drained = True
 
         if node_drained:
-            logging.info("Node %s has been successfully drained",
-                         self.redeploy_server)
+            LOG.info("Node %s has been successfully drained",
+                     self.redeploy_server)
         else:
             raise AirflowException('Failed to drain %s!',
                                    self.redeploy_server)

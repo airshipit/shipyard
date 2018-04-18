@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 
 from airflow.plugins_manager import AirflowPlugin
@@ -19,6 +18,8 @@ from airflow.exceptions import AirflowException
 
 from armada_base_operator import ArmadaBaseOperator
 from armada.exceptions import api_exceptions as errors
+
+LOG = logging.getLogger(__name__)
 
 
 class ArmadaValidateDesignOperator(ArmadaBaseOperator):
@@ -33,7 +34,7 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
     def do_execute(self):
 
         # Requests Armada to validate site design
-        logging.info("Waiting for Armada to validate site design...")
+        LOG.info("Waiting for Armada to validate site design...")
 
         # Retrieve read timeout
         timeout = self.dc['armada.validate_design_timeout']
@@ -45,18 +46,24 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
                 timeout=timeout)
 
         except errors.ClientError as client_error:
+            # Dump logs from Armada API pods
+            self.get_k8s_logs()
+
             raise AirflowException(client_error)
 
         # Print results
-        logging.info("Retrieving Armada validate site design response...")
-        logging.info(post_validate)
+        LOG.info("Retrieving Armada validate site design response...")
+        LOG.info(post_validate)
 
         # Check if site design is valid
         status = str(post_validate.get('status', 'unspecified'))
 
         if status.lower() == 'success':
-            logging.info("Site Design has been successfully validated")
+            LOG.info("Site Design has been successfully validated")
         else:
+            # Dump logs from Armada API pods
+            self.get_k8s_logs()
+
             raise AirflowException("Site Design Validation Failed "
                                    "with status: {}!".format(status))
 

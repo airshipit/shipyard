@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from deckhand_base_operator import DeckhandBaseOperator
+
+LOG = logging.getLogger(__name__)
 
 
 class DeckhandRetrieveRenderedDocOperator(DeckhandBaseOperator):
@@ -30,17 +31,19 @@ class DeckhandRetrieveRenderedDocOperator(DeckhandBaseOperator):
 
     def do_execute(self):
 
-        logging.info("Retrieving Rendered Document...")
+        LOG.info("Retrieving Rendered Document...")
 
         # Retrieve Rendered Document
         try:
-            rendered_doc = self.deckhandclient.revisions.documents(
+            self.deckhandclient.revisions.documents(
                 self.revision_id, rendered=True)
 
-            logging.info("Successfully Retrieved Rendered Document")
-            logging.info(rendered_doc)
+            LOG.info("Successfully Retrieved Rendered Document")
 
         except:
+            # Dump logs from Deckhand pods
+            self.get_k8s_logs()
+
             raise AirflowException("Failed to Retrieve Rendered Document!")
 
 

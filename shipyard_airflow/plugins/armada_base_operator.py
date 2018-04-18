@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import os
 from urllib.parse import urlparse
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
@@ -26,11 +24,13 @@ import armada.common.session as session
 from get_k8s_pod_port_ip import get_pod_port_ip
 from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
-from xcom_puller import XcomPuller
+from ucp_base_operator import UcpBaseOperator
 from xcom_pusher import XcomPusher
 
+LOG = logging.getLogger(__name__)
 
-class ArmadaBaseOperator(BaseOperator):
+
+class ArmadaBaseOperator(UcpBaseOperator):
 
     """Armada Base Operator
 
@@ -44,66 +44,42 @@ class ArmadaBaseOperator(BaseOperator):
     def __init__(self,
                  armada_svc_type='armada',
                  deckhand_svc_type='deckhand',
-                 main_dag_name=None,
                  query={},
-                 shipyard_conf=None,
-                 sub_dag_name=None,
                  svc_session=None,
                  svc_token=None,
-                 xcom_push=True,
                  *args, **kwargs):
         """Initialization of ArmadaBaseOperator object.
 
         :param armada_svc_type: Armada Service Type
         :param deckhand_svc_type: Deckhand Service Type
-        :param main_dag_name: Parent Dag
         :param query: A dictionary containing explicit query string parameters
-        :param shipyard_conf: Location of shipyard.conf
-        :param sub_dag_name: Child Dag
         :param svc_session: Keystone Session
         :param svc_token: Keystone Token
-        :param xcom_push: xcom usage
 
         The Armada operator assumes that prior steps have set xcoms for
         the action and the deployment configuration
 
         """
 
-        super(ArmadaBaseOperator, self).__init__(*args, **kwargs)
+        super(ArmadaBaseOperator,
+              self).__init__(
+                  pod_selector_pattern=[{'pod_pattern': 'armada-api',
+                                         'container': 'armada-api'}],
+                  *args, **kwargs)
         self.armada_svc_type = armada_svc_type
         self.deckhand_svc_type = deckhand_svc_type
-        self.main_dag_name = main_dag_name
         self.query = query
-        self.shipyard_conf = shipyard_conf
-        self.sub_dag_name = sub_dag_name
         self.svc_session = svc_session
         self.svc_token = svc_token
-        self.xcom_push_flag = xcom_push
-
-    def execute(self, context):
-
-        # Execute armada base function
-        self.armada_base(context)
-
-        # Exeute child function
-        self.do_execute()
 
     @shipyard_service_token
-    def armada_base(self, context):
-
-        # Define task_instance
-        self.task_instance = context['task_instance']
-
-        # Set up and retrieve values from xcom
-        self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
-        self.action_info = self.xcom_puller.get_action_info()
-        self.dc = self.xcom_puller.get_deployment_configuration()
+    def run_base(self, context):
 
         # Set up xcom_pusher to push values to xcom
         self.xcom_pusher = XcomPusher(self.task_instance)
 
         # Logs uuid of action performed by the Operator
-        logging.info("Armada Operator for action %s", self.action_info['id'])
+        LOG.info("Armada Operator for action %s", self.action_info['id'])
 
         # Retrieve Endpoint Information
         armada_svc_endpoint = ucp_service_endpoint(
@@ -128,14 +104,14 @@ class ArmadaBaseOperator(BaseOperator):
     @staticmethod
     def _init_armada_client(armada_svc_endpoint, svc_token):
 
-        logging.info("Armada endpoint is %s", armada_svc_endpoint)
+        LOG.info("Armada endpoint is %s", armada_svc_endpoint)
 
         # Parse Armada Service Endpoint
         armada_url = urlparse(armada_svc_endpoint)
 
         # Build a ArmadaSession with credentials and target host
         # information.
-        logging.info("Build Armada Session")
+        LOG.info("Build Armada Session")
         a_session = session.ArmadaSession(host=armada_url.hostname,
                                           port=armada_url.port,
                                           scheme='http',
@@ -144,18 +120,18 @@ class ArmadaBaseOperator(BaseOperator):
 
         # Raise Exception if we are not able to set up the session
         if a_session:
-            logging.info("Successfully Set Up Armada Session")
+            LOG.info("Successfully Set Up Armada Session")
         else:
             raise AirflowException("Failed to set up Armada Session!")
 
         # Use the ArmadaSession to build a ArmadaClient that can
         # be used to make one or more API calls
-        logging.info("Create Armada Client")
+        LOG.info("Create Armada Client")
         _armada_client = client.ArmadaClient(a_session)
 
         # Raise Exception if we are not able to build armada client
         if _armada_client:
-            logging.info("Successfully Set Up Armada client")
+            LOG.info("Successfully Set Up Armada client")
 
             return _armada_client
         else:
@@ -165,7 +141,7 @@ class ArmadaBaseOperator(BaseOperator):
     def _init_deckhand_design_ref(deckhand_svc_endpoint,
                                   committed_revision_id):
 
-        logging.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
+        LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
         # Form DeckHand Design Reference Path
         # This URL will be used to retrieve the Site Design YAMLs
@@ -176,8 +152,8 @@ class ArmadaBaseOperator(BaseOperator):
                                             "rendered-documents")
 
         if _deckhand_design_ref:
-            logging.info("Design YAMLs will be retrieved from %s",
-                         _deckhand_design_ref)
+            LOG.info("Design YAMLs will be retrieved from %s",
+                     _deckhand_design_ref)
 
             return _deckhand_design_ref
         else:
