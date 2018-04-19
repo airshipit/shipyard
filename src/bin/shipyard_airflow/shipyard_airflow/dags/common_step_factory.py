@@ -18,14 +18,15 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
 from armada_deploy_site import deploy_site_armada
-import dag_names as dn
+from dag_deployment_configuration import get_deployment_configuration
+from deckhand_create_tag import create_deckhand_tag
 from deckhand_get_rendered_doc import get_rendered_doc_deckhand
 from destroy_node import destroy_server
 from drydock_deploy_site import deploy_site_drydock
 from failure_handlers import step_failure_handler
-from dag_deployment_configuration import get_deployment_configuration
 from preflight_checks import all_preflight_checks
 from validate_site_design import validate_site_design
+import dag_names as dn
 
 
 class CommonStepFactory(object):
@@ -242,3 +243,23 @@ class CommonStepFactory(object):
                             bash_command=(
                                 "echo 'Airflow Worker Upgrade Not Required'"),
                             dag=self.dag)
+
+    def get_create_action_tag(self, task_id=dn.CREATE_ACTION_TAG):
+        """Generate the create action tag step
+
+        Step is responsible for tagging the revision with either
+        'site-action-success' or 'site-action-failure' depending
+        on the final state of the site action.
+
+        Note that trigger_rule is set to "all_done" so that this
+        step will run even when upstream tasks are in failed state.
+        """
+        return SubDagOperator(
+            subdag=create_deckhand_tag(
+                self.parent_dag_name,
+                task_id,
+                args=self.default_args),
+            task_id=task_id,
+            on_failure_callback=step_failure_handler,
+            trigger_rule="all_done",
+            dag=self.dag)

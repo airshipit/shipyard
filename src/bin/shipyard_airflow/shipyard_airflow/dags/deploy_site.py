@@ -51,6 +51,7 @@ deployment_configuration = step_factory.get_deployment_configuration()
 validate_site_design = step_factory.get_validate_site_design()
 drydock_build = step_factory.get_drydock_build()
 armada_build = step_factory.get_armada_build()
+create_action_tag = step_factory.get_create_action_tag()
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
@@ -60,3 +61,4 @@ deployment_configuration.set_upstream(get_rendered_doc)
 validate_site_design.set_upstream(deployment_configuration)
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
+create_action_tag.set_upstream(armada_build)

@@ -58,6 +58,7 @@ armada_build = step_factory.get_armada_build()
 decide_airflow_upgrade = step_factory.get_decide_airflow_upgrade()
 upgrade_airflow = step_factory.get_upgrade_airflow()
 skip_upgrade_airflow = step_factory.get_skip_upgrade_airflow()
+create_action_tag = step_factory.get_create_action_tag()
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
@@ -67,5 +68,11 @@ validate_site_design.set_upstream(deployment_configuration)
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
 decide_airflow_upgrade.set_upstream(armada_build)
-decide_airflow_upgrade.set_downstream(upgrade_airflow)
-decide_airflow_upgrade.set_downstream(skip_upgrade_airflow)
+decide_airflow_upgrade.set_downstream([
+    upgrade_airflow,
+    skip_upgrade_airflow
+])
+create_action_tag.set_upstream([
+    upgrade_airflow,
+    skip_upgrade_airflow
+])
