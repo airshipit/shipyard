@@ -346,7 +346,7 @@ conf:
     workflow_orchestrator:get_renderedconfigdocs: rule:admin_required
   paste:
     app:shipyard-api:
-      paste.app_factory: shipyard_airflow.shipyard:paste_start_shipyard
+      paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
     pipeline:main:
       pipeline: authtoken shipyard-api
     filter:authtoken:

@@ -1,0 +1,5 @@
+#
+# Requirements for creating documentation only.
+#
+sphinx>=1.6.2
+sphinx_rtd_theme==0.2.4

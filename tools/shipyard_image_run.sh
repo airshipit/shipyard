@@ -31,12 +31,14 @@ sleep 5
 
 RESULT="$(curl -i 'http://127.0.0.1:9000/versions' | tr '\r' '\n' | head -1)"
 
+CLI_RESULT="$(docker run -t --rm --net=host ${IMAGE} help | tr '\r' '\n' | head -1)"
+
 docker stop shipyard_test
 docker rm shipyard_test
 rm -r build/.tmprun
-
 GOOD="HTTP/1.1 200 OK"
-if [[ ${RESULT} == ${GOOD} ]]; then
+CLI_GOOD="THE SHIPYARD COMMAND"
+if [[ ${RESULT} == ${GOOD} && ${CLI_RESULT} == ${CLI_GOOD} ]]; then
     exit 0
 else
     exit 1

@@ -1,0 +1,11 @@
+---
+schema: shipyard/DeploymentStrategy/v1
+metadata:
+  schema: metadata/Document/v1
+  name: deployment-strategy
+  layeringDefinition:
+      abstract: false
+      layer: global
+  storagePolicy: cleartext
+data:
+  groups: []

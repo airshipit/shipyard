@@ -20,8 +20,6 @@ psycopg2==2.7.3.1
 docker-py==1.6.0
 apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.9.0
 python-openstackclient==3.11.0
-sphinx>=1.6.2
-sphinx_rtd_theme==0.2.4
 
 # Dependencies for other UCP components
 git+https://github.com/att-comdev/deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+BUILD_CTX                  ?= src/bin
 DOCKER_REGISTRY            ?= quay.io
 IMAGE_PREFIX               ?= attcomdev
 IMAGE_TAG                  ?= latest
@@ -39,6 +40,7 @@ $(IMAGE_NAME):
 # Create tgz of the chart
 .PHONY: charts
 charts: clean
+	tools/helm_tk.sh $(HELM)
 	$(HELM) dep up charts/shipyard
 	$(HELM) package charts/shipyard
 
@@ -55,6 +57,12 @@ dry-run: clean
 .PHONY: docs
 docs: clean build_docs
 
+
+.PHONY: tests
+tests:
+	cd $(BUILD_CTX)/shipyard_airflow; tox
+	cd $(BUILD_CTX)/shipyard_client; tox
+
 # Make targets intended for use by the primary targets above.
 
 .PHONY: run
@@ -67,15 +75,17 @@ build_airflow:
 
 .PHONY: build_shipyard
 build_shipyard:
-	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile .
+	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
 
 .PHONY: clean
 clean:
-	rm -rf build
+	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
+	cd $(BUILD_CTX)/shipyard_client; rm -rf build
 
 .PHONY: pep8
 pep8:
-	tox -e pep8
+	cd $(BUILD_CTX)/shipyard_airflow; tox -e pep8
+	cd $(BUILD_CTX)/shipyard_client; tox -e pep8
 
 .PHONY: helm_lint
 helm_lint: clean

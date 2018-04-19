@@ -34,18 +34,8 @@ import sphinx_rtd_theme
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
-    'oslo_config.sphinxconfiggen',
-    'oslo_policy.sphinxpolicygen'
+    'sphinx.ext.viewcode'
 ]
-
-# oslo_config.sphinxconfiggen options
-config_generator_config_file = '../../generator/config-generator.conf'
-sample_config_basename = '_static/shipyard'
-
-# oslo_policy.sphinxpolicygen options
-policy_generator_config_file = '../../generator/policy-generator.conf'
-sample_policy_basename = '_static/shipyard'
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = []

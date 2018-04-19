@@ -1,27 +1,30 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
+
+# Unit tests
+src/bin/*/tests/unit/
 
 # C extensions
 *.so
 
 # Distribution / packaging
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
+**/env/
+**/build/
+**/develop-eggs/
+**/dist/
+**/downloads/
+**/eggs/
+**/.eggs/
 lib/
-lib64/
+**/lib64/
 parts/
-sdist/
+**/sdist/
 var/
 wheels/
-*.egg-info/
+**/*.egg-info/
 .installed.cfg
 *.egg
 
@@ -36,12 +39,12 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
+**/htmlcov/
 cov/*
-.tox/
-.coverage
-.coverage.*
-.cache
+**/.tox/
+**/.coverage
+**/.coverage.*
+**/.cache
 nosetests.xml
 coverage.xml
 *.cover
@@ -64,6 +67,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/*/_static/
 
 # PyBuilder
 target/
@@ -95,9 +99,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 
@@ -114,3 +115,5 @@ AUTHORS
 
 # vscode
 .vscode/
+
+!src/lib/

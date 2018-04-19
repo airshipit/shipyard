@@ -11,15 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
-#PasteDeploy Configuration File
-#Used to configure uWSGI middleware pipeline
+import pytest
+import shutil
 
-[app:shipyard-api]
-paste.app_factory = shipyard_airflow.shipyard_api:paste_start_shipyard
 
-[pipeline:main]
-pipeline = authtoken shipyard-api
+@pytest.fixture(scope='module')
+def input_files(tmpdir_factory, request):
+    tmpdir = tmpdir_factory.mktemp('data')
+    samples_dir = os.path.dirname(str(
+        request.fspath)) + "/" + "../yaml_samples"
+    samples = os.listdir(samples_dir)
 
-[filter:authtoken]
-paste.filter_factory = keystonemiddleware.auth_token:filter_factory
+    for f in samples:
+        src_file = samples_dir + "/" + f
+        dst_file = str(tmpdir) + "/" + f
+        shutil.copyfile(src_file, dst_file)
+    return tmpdir

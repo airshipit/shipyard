@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#PasteDeploy Configuration File
-#Used to configure uWSGI middleware pipeline
+# CLI/Client requirements
 
-[app:shipyard-api]
-paste.app_factory = shipyard_airflow.shipyard_api:paste_start_shipyard
-
-[pipeline:main]
-pipeline = authtoken shipyard-api
-
-[filter:authtoken]
-paste.filter_factory = keystonemiddleware.auth_token:filter_factory
+arrow==0.10.0
+click==6.7
+click-default-group==1.2
+keystoneauth1==3.4.0
+requests==2.18.4
+setuptools==39.0.1
+PTable==0.9.2
+pyyaml==3.12

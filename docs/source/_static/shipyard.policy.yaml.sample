@@ -1,0 +1,61 @@
+# Actions requiring admin authority
+#"admin_required": "role:admin"
+
+# List workflow actions invoked by users
+# GET  /api/v1.0/actions
+#"workflow_orchestrator:list_actions": "rule:admin_required"
+
+# Create a workflow action
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:create_action": "rule:admin_required"
+
+# Retrieve an action by its id
+# GET  /api/v1.0/actions/{action_id}
+#"workflow_orchestrator:get_action": "rule:admin_required"
+
+# Retrieve an action step by its id
+# GET  /api/v1.0/actions/{action_id}/steps/{step_id}
+#"workflow_orchestrator:get_action_step": "rule:admin_required"
+
+# Retrieve logs of an action step by its id
+# GET  /api/v1.0/actions/{action_id}/steps/{step_id}/logs
+#"workflow_orchestrator:get_action_step_logs": "rule:admin_required"
+
+# Retrieve an action validation by its id
+# GET  /api/v1.0/actions/{action_id}/validations/{validation_id}
+#"workflow_orchestrator:get_action_validation": "rule:admin_required"
+
+# Send a control to an action
+# POST  /api/v1.0/actions/{action_id}/control/{control_verb}
+#"workflow_orchestrator:invoke_action_control": "rule:admin_required"
+
+# Retrieve the status of the configdocs
+# GET  /api/v1.0/configdocs
+#"workflow_orchestrator:get_configdocs_status": "rule:admin_required"
+
+# Ingest configuration documents for the site design
+# POST  /api/v1.0/configdocs/{collection_id}
+#"workflow_orchestrator:create_configdocs": "rule:admin_required"
+
+# Retrieve a collection of configuration documents
+# GET  /api/v1.0/configdocs/{collection_id}
+#"workflow_orchestrator:get_configdocs": "rule:admin_required"
+
+# Move documents from the Shipyard buffer to the committed documents
+# POST  /api/v1.0/commitconfigdocs
+#"workflow_orchestrator:commit_configdocs": "rule:admin_required"
+
+# Retrieve the configuration documents rendered by Deckhand into a
+# complete design
+# GET  /api/v1.0/renderedconfigdocs
+#"workflow_orchestrator:get_renderedconfigdocs": "rule:admin_required"
+
+# Retrieve the list of workflows (DAGs) that have been invoked in
+# Airflow, whether via Shipyard or scheduled
+# GET  /api/v1.0/workflows
+#"workflow_orchestrator:list_workflows": "rule:admin_required"
+
+# Retrieve the detailed information for a workflow (DAG) from Airflow
+# GET  /api/v1.0/workflows/{id}
+#"workflow_orchestrator:get_workflow": "rule:admin_required"
+
