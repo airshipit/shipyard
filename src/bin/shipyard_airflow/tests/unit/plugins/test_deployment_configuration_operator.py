@@ -18,6 +18,25 @@ import yaml
 import airflow
 from airflow.exceptions import AirflowException
 
+ACTION_INFO = {
+    'committed_rev_id': 2,
+    'dag_id': 'deploy_site',
+    'id': '01CBGWY1GXQVXVCXRJKM9V71AT',
+    'name': 'deploy_site',
+    'parameters': {},
+    'timestamp': '2018-04-20 06:47:43.905047',
+    'user': 'shipyard'}
+
+ACTION_INFO_NO_COMMIT = {
+    'committed_rev_id': None,
+    'dag_id': 'deploy_site',
+    'id': '01CBGWY1GXQVXVCXRJKM9V71AT',
+    'name': 'deploy_site',
+    'parameters': {},
+    'timestamp': '2018-04-20 06:47:43.905047',
+    'user': 'shipyard'}
+
+
 try:
     from deployment_configuration_operator import (
         DeploymentConfigurationOperator
@@ -62,7 +81,7 @@ def test_execute_no_client(p1):
 
 
 @mock.patch.object(airflow.models.TaskInstance, 'xcom_pull',
-                   return_value=99)
+                   return_value=ACTION_INFO)
 def test_get_revision_id(ti):
     """Test that get revision id follows desired exits"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",
@@ -71,11 +90,11 @@ def test_get_revision_id(ti):
     ti = airflow.models.TaskInstance(task=mock.MagicMock(),
                                      execution_date="no")
     rid = dco.get_revision_id(ti)
-    assert rid == 99
+    assert rid == 2
 
 
 @mock.patch.object(airflow.models.TaskInstance, 'xcom_pull',
-                   return_value=None)
+                   return_value=ACTION_INFO_NO_COMMIT)
 def test_get_revision_id_none(ti):
     """Test that get revision id follows desired exits"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",

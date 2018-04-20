@@ -113,24 +113,6 @@ class DeckhandBaseOperator(UcpBaseOperator):
         if not self.deckhandclient:
             raise AirflowException('Failed to set up deckhand client!')
 
-        # Retrieve 'revision_id' from xcom for tasks other than
-        # 'deckhand_get_design_version'
-        #
-        # NOTE: In the case of 'deploy_site', the dag_id will
-        # be 'deploy_site.get_design_version' for the
-        # 'deckhand_get_design_version' task. We need to extract
-        # the xcom value from it in order to get the value of the
-        # last committed revision ID
-        if self.task_id != 'deckhand_get_design_version':
-
-            # Retrieve 'revision_id' from xcom
-            self.revision_id = self.xcom_puller.get_design_version()
-
-            if self.revision_id:
-                LOG.info("Revision ID is %d", self.revision_id)
-            else:
-                raise AirflowException('Failed to retrieve Revision ID!')
-
 
 class DeckhandBaseOperatorPlugin(AirflowPlugin):
 

@@ -50,7 +50,7 @@ step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
 
 action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()
-get_design_version = step_factory.get_get_design_version()
+get_rendered_doc = step_factory.get_get_rendered_doc()
 deployment_configuration = step_factory.get_deployment_configuration()
 validate_site_design = step_factory.get_validate_site_design()
 drydock_build = step_factory.get_drydock_build()
@@ -61,8 +61,8 @@ skip_upgrade_airflow = step_factory.get_skip_upgrade_airflow()
 
 # DAG Wiring
 concurrency_check.set_upstream(action_xcom)
-get_design_version.set_upstream(concurrency_check)
-deployment_configuration.set_upstream(get_design_version)
+get_rendered_doc.set_upstream(concurrency_check)
+deployment_configuration.set_upstream(get_rendered_doc)
 validate_site_design.set_upstream(deployment_configuration)
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)

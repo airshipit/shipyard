@@ -73,12 +73,3 @@ class XcomPuller(object):
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)
-
-    def get_design_version(self):
-        """Retrieve the design version being used for this workflow"""
-        source_task = 'deckhand_get_design_version'
-        source_dag = 'get_design_version'
-        key = None
-        return self._get_xcom(source_task=source_task,
-                              dag_id=source_dag,
-                              key=key)

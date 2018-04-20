@@ -16,7 +16,7 @@
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
 ARMADA_BUILD_DAG_NAME = 'armada_build'
 DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
-GET_DESIGN_VERSION = 'get_design_version'
+GET_RENDERED_DOC = 'get_rendered_doc'
 GET_DEPLOY_CONF_DAG_NAME = 'dag_deployment_configuration'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'

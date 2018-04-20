@@ -93,13 +93,9 @@ class ArmadaBaseOperator(UcpBaseOperator):
         deckhand_svc_endpoint = ucp_service_endpoint(
             self, svc_type=self.deckhand_svc_type)
 
-        # Retrieve last committed revision id
-        committed_revision_id = self.xcom_puller.get_design_version()
-
         # Get deckhand design reference url
         self.deckhand_design_ref = self._init_deckhand_design_ref(
-            deckhand_svc_endpoint,
-            committed_revision_id)
+            deckhand_svc_endpoint)
 
     @staticmethod
     def _init_armada_client(armada_svc_endpoint, svc_token):
@@ -137,9 +133,7 @@ class ArmadaBaseOperator(UcpBaseOperator):
         else:
             raise AirflowException("Failed to set up Armada client!")
 
-    @staticmethod
-    def _init_deckhand_design_ref(deckhand_svc_endpoint,
-                                  committed_revision_id):
+    def _init_deckhand_design_ref(self, deckhand_svc_endpoint):
 
         LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
@@ -148,7 +142,7 @@ class ArmadaBaseOperator(UcpBaseOperator):
         deckhand_path = "deckhand+" + deckhand_svc_endpoint
         _deckhand_design_ref = os.path.join(deckhand_path,
                                             "revisions",
-                                            str(committed_revision_id),
+                                            str(self.revision_id),
                                             "rendered-documents")
 
         if _deckhand_design_ref:

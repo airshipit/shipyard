@@ -86,11 +86,6 @@ class UcpBaseOperator(BaseOperator):
         # Exeute child function
         self.do_execute()
 
-        # Push last committed version to xcom for the
-        # 'get_design_version' subdag
-        if self.sub_dag_name == 'get_design_version':
-            return self.committed_ver
-
     def ucp_base(self, context):
 
         LOG.info("Running UCP Base Operator...")
@@ -109,6 +104,7 @@ class UcpBaseOperator(BaseOperator):
         self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
         self.action_info = self.xcom_puller.get_action_info()
         self.dc = self.xcom_puller.get_deployment_configuration()
+        self.revision_id = self.action_info['committed_rev_id']
 
     def get_k8s_logs(self):
         """Retrieve Kubernetes pod/container logs specified by an opererator

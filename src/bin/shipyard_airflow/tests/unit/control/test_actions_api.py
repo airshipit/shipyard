@@ -11,18 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
-
-import json
-import os
 from datetime import datetime
-import mock
+from falcon import testing
 from mock import patch
 from oslo_config import cfg
-import pytest
-
 import falcon
-from falcon import testing
+import json
+import logging
+import mock
+import os
+import pytest
 import responses
 
 from shipyard_airflow.control.action import actions_api
@@ -35,6 +33,7 @@ DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
 DATE_TWO_STR = DATE_TWO.strftime('%Y-%m-%dT%H:%M:%S')
+DESIGN_VERSION = 1
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -299,6 +298,7 @@ def test_create_action():
     action_resource.invoke_airflow_dag = airflow_stub
     action_resource.insert_action = insert_action_stub
     action_resource.audit_control_command_db = audit_control_command_db
+    action_resource.get_committed_design_version = lambda: DESIGN_VERSION
 
     # with invalid input. fail.
     try:
@@ -326,6 +326,7 @@ def test_create_action():
         assert len(action['id']) == 26
         assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
         assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
     except ApiError:
         assert False, 'Should not raise an ApiError'
 
@@ -338,6 +339,7 @@ def test_create_action():
         assert len(action['id']) == 26
         assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
         assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
     except ApiError:
         assert False, 'Should not raise an ApiError'
 

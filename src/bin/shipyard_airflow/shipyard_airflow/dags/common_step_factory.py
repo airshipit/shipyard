@@ -19,7 +19,7 @@ from airflow.operators.subdag_operator import SubDagOperator
 
 from armada_deploy_site import deploy_site_armada
 import dag_names as dn
-from deckhand_get_design import get_design_deckhand
+from deckhand_get_rendered_doc import get_rendered_doc_deckhand
 from destroy_node import destroy_server
 from drydock_deploy_site import deploy_site_drydock
 from failure_handlers import step_failure_handler
@@ -88,13 +88,14 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_get_design_version(self, task_id=dn.GET_DESIGN_VERSION):
-        """Generate the get design version step
+    def get_get_rendered_doc(self, task_id=dn.GET_RENDERED_DOC):
+        """Generate the get deckhand rendered doc step
 
-        Retrieves the version of the design to use from deckhand
+        Check that we are able to render the docs before proceeding
+        further with the workflow
         """
         return SubDagOperator(
-            subdag=get_design_deckhand(
+            subdag=get_rendered_doc_deckhand(
                 self.parent_dag_name,
                 task_id,
                 args=self.default_args),

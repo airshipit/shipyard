@@ -25,6 +25,8 @@ from shipyard_airflow import policy
 from shipyard_airflow.control.action.action_helper import (determine_lifecycle,
                                                            format_action_steps)
 from shipyard_airflow.control.base import BaseResource
+from shipyard_airflow.control.configdocs.configdocs_helper import (
+    ConfigdocsHelper)
 from shipyard_airflow.control.json_schemas import ACTION
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
@@ -96,6 +98,10 @@ class ActionsResource(BaseResource):
 
         dag = SUPPORTED_ACTION_MAPPINGS.get(action['name'])['dag']
         action['dag_id'] = dag
+
+        # Retrieve last committed design revision
+        self.configdocs_helper = ConfigdocsHelper(context)
+        action['committed_rev_id'] = self.get_committed_design_version()
 
         # populate action parameters if they are not set
         if 'parameters' not in action:
@@ -315,3 +321,21 @@ class ActionsResource(BaseResource):
                     }],
                     retry=True,
                 )
+
+    def get_committed_design_version(self):
+
+        LOG.info("Checking for committed revision in Deckhand...")
+        committed_rev_id = self.configdocs_helper._get_committed_rev_id()
+
+        if committed_rev_id:
+            LOG.info("The committed revision in Deckhand is %d",
+                     committed_rev_id)
+
+            return committed_rev_id
+
+        else:
+            raise ApiError(
+                title='Unable to locate any committed revision in Deckhand',
+                description='No committed version found in Deckhand',
+                status=falcon.HTTP_404,
+                retry=False)

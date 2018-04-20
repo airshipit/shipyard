@@ -153,15 +153,12 @@ class DrydockBaseOperator(UcpBaseOperator):
 
         LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
 
-        # Retrieve last committed revision id
-        committed_revision_id = self.xcom_puller.get_design_version()
-
         # Form DeckHand Design Reference Path
         # This URL will be used to retrieve the Site Design YAMLs
         deckhand_path = "deckhand+" + deckhand_svc_endpoint
         self.deckhand_design_ref = os.path.join(deckhand_path,
                                                 "revisions",
-                                                str(committed_revision_id),
+                                                str(self.revision_id),
                                                 "rendered-documents")
         if self.deckhand_design_ref:
             LOG.info("Design YAMLs will be retrieved from %s",

@@ -13,35 +13,24 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DeckhandGetDesignOperator
 from airflow.operators import DeckhandRetrieveRenderedDocOperator
 
 from config_path import config_path
 
 
-def get_design_deckhand(parent_dag_name, child_dag_name, args):
+def get_rendered_doc_deckhand(parent_dag_name, child_dag_name, args):
     '''
-    Get Deckhand Design Version
+    Get rendered documents from Deckhand for the committed revision ID.
     '''
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    deckhand_design = DeckhandGetDesignOperator(
-        task_id='deckhand_get_design_version',
+    deckhand_retrieve_rendered_doc = DeckhandRetrieveRenderedDocOperator(
+        task_id='deckhand_retrieve_rendered_doc',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
         dag=dag)
-
-    shipyard_retrieve_rendered_doc = DeckhandRetrieveRenderedDocOperator(
-        task_id='shipyard_retrieve_rendered_doc',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
-
-    # Define dependencies
-    shipyard_retrieve_rendered_doc.set_upstream(deckhand_design)
 
     return dag

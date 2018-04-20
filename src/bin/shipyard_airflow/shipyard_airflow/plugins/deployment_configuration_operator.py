@@ -103,9 +103,13 @@ class DeploymentConfigurationOperator(BaseOperator):
         if task_instance:
             LOG.debug("task_instance found, extracting design version")
             # Set the revision_id to the revision on the xcom
-            revision_id = task_instance.xcom_pull(
-                task_ids='deckhand_get_design_version',
-                dag_id=self.main_dag_name + '.get_design_version')
+            action_info = task_instance.xcom_pull(
+                task_ids='action_xcom',
+                dag_id=self.main_dag_name,
+                key='action')
+
+            revision_id = action_info['committed_rev_id']
+
             if revision_id:
                 LOG.info("Revision is set to: %s for deployment configuration",
                          revision_id)
