@@ -21,6 +21,7 @@ falcon==1.2.0
 jsonschema==2.6.0
 keystoneauth1==3.4.0
 keystonemiddleware==4.21.0
+networkx==2.1
 oslo.config==5.2.0
 oslo.policy==1.33.1
 PasteDeploy==1.5.2

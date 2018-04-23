@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+#
+"""Common Modules
 
-import pytest
-import shutil
+The various packages in this common package should each be stand-alone
+modules having no dependencies on prior logic running in Shipyard (e.g.
+Setup of configuration files, Shipyard/Airflow database access, etc...). It is
+ok if these modules use imports found in requirements.txt
 
-
-@pytest.fixture(scope='module')
-def input_files(tmpdir_factory, request):
-    tmpdir = tmpdir_factory.mktemp('data')
-    samples_dir = os.path.dirname(str(
-        request.fspath)) + "/" + "../yaml_samples"
-    samples = os.listdir(samples_dir)
-
-    for f in samples:
-        src_file = samples_dir + "/" + f
-        dst_file = str(tmpdir) + "/" + f
-        shutil.copyfile(src_file, dst_file)
-    return tmpdir
+These modules are intended to be safe for reuse outside of the context of
+the Shipyard_Airflow/Api service as well as within.
+"""
