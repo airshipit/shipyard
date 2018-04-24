@@ -45,9 +45,11 @@ def test_create_action(*args):
                   'http://shiptest/actions',
                   body=resp_body,
                   status=201)
-    response = CreateAction(stubs.StubCliContext(),
-                            action_name='deploy_site',
-                            param=None).invoke_and_return_resp()
+    response = CreateAction(
+        stubs.StubCliContext(),
+        action_name='deploy_site',
+        param=None,
+        allow_intermediate_commits=False).invoke_and_return_resp()
     assert 'Name' in response
     assert 'Action' in response
     assert 'Lifecycle' in response
@@ -64,9 +66,11 @@ def test_create_action_400(*args):
                   body=stubs.gen_err_resp(message='Error_400',
                                           reason='bad action'),
                   status=400)
-    response = CreateAction(stubs.StubCliContext(),
-                            action_name='deploy_dogs',
-                            param=None).invoke_and_return_resp()
+    response = CreateAction(
+        stubs.StubCliContext(),
+        action_name='deploy_dogs',
+        param=None,
+        allow_intermediate_commits=False).invoke_and_return_resp()
     assert 'Error_400' in response
     assert 'bad action' in response
     assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' not in response
@@ -81,9 +85,11 @@ def test_create_action_409(*args):
                   body=stubs.gen_err_resp(message='Error_409',
                                           reason='bad validations'),
                   status=409)
-    response = CreateAction(stubs.StubCliContext(),
-                            action_name='deploy_site',
-                            param=None).invoke_and_return_resp()
+    response = CreateAction(
+        stubs.StubCliContext(),
+        action_name='deploy_site',
+        param=None,
+        allow_intermediate_commits=False).invoke_and_return_resp()
     assert 'Error_409' in response
     assert 'bad validations' in response
     assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' not in response

@@ -17,19 +17,24 @@ from shipyard_client.cli import format_utils
 class CreateAction(CliAction):
     """Action to Create Action"""
 
-    def __init__(self, ctx, action_name, param):
+    def __init__(self, ctx, action_name, param, allow_intermediate_commits):
         """Sets parameters."""
         super().__init__(ctx)
-        self.logger.debug("CreateAction action initialized with action command"
-                          "%s and parameters %s", action_name, param)
+        self.logger.debug(
+            "CreateAction action initialized with action command "
+            "%s, parameters %s and allow-intermediate-commits=%s",
+            action_name, param, allow_intermediate_commits)
         self.action_name = action_name
         self.param = param
+        self.allow_intermediate_commits = allow_intermediate_commits
 
     def invoke(self):
         """Returns the response from API Client"""
         self.logger.debug("Calling API Client post_actions.")
-        return self.get_api_client().post_actions(name=self.action_name,
-                                                  parameters=self.param)
+        return self.get_api_client().post_actions(
+            name=self.action_name,
+            parameters=self.param,
+            allow_intermediate_commits=self.allow_intermediate_commits)
 
     # Handle 400, 409 with default error handler for cli.
     cli_handled_err_resp_codes = [400, 409]

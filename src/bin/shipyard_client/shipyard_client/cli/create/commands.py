@@ -39,7 +39,7 @@ DESC_ACTION = """
     DESCRIPTION: Invokes the specified workflow through Shipyard. Returns the
     id of the action invoked so that it can be queried subsequently. \n
     FORMAT: shipyard create action <action command> --param=<parameter>
-    (repeatable) \n
+    (repeatable) [--allow-intermediate-commits] \n
     EXAMPLE: shipyard create action redeploy_server --param="server-name=mcp"
 """
 
@@ -55,8 +55,14 @@ SHORT_DESC_ACTION = (
     '--param',
     multiple=True,
     help="A parameter to be provided to the action being invoked.(Repeatable)")
+@click.option(
+    '--allow-intermediate-commits',
+    'allow_intermediate_commits',
+    flag_value=True,
+    help="Allow site action to go through even though there are prior commits "
+    "that have not been used as part of a site action.")
 @click.pass_context
-def create_action(ctx, action_name, param):
+def create_action(ctx, action_name, param, allow_intermediate_commits=False):
     check_action_command(ctx, action_name)
 
     if not param and action_name is 'redeploy_server':
@@ -65,7 +71,10 @@ def create_action(ctx, action_name, param):
     else:
         param = check_reformat_parameter(ctx, param)
         click.echo(
-            CreateAction(ctx, action_name, param).invoke_and_return_resp())
+            CreateAction(ctx,
+                         action_name,
+                         param,
+                         allow_intermediate_commits).invoke_and_return_resp())
 
 
 DESC_CONFIGDOCS = """

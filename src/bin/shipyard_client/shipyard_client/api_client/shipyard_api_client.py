@@ -122,20 +122,26 @@ class ShipyardClient(BaseClient):
         )
         return self.get_resp(url)
 
-    def post_actions(self, name=None, parameters=None):
+    def post_actions(self, name=None, parameters=None,
+                     allow_intermediate_commits=False):
         """
         Creates an action in the system. This will cause some action to start.
         :param str name: name of supported action to invoke
         :param dict parameters: parameters to use for trigger invocation
+        :param allow_intermediate_commits: boolean, True|False
         :returns: action entity created successfully
         :rtype: Response object
         """
+        query_params = (
+            {"allow-intermediate-commits": allow_intermediate_commits})
         action_data = {"name": name, "parameters": parameters}
         url = ApiPaths.POST_GET_ACTIONS.value.format(
             self.get_endpoint()
         )
-        return self.post_resp(
-            url, data=json.dumps(action_data), content_type='application/json')
+        return self.post_resp(url=url,
+                              query_params=query_params,
+                              data=json.dumps(action_data),
+                              content_type='application/json')
 
     def get_action_detail(self, action_id=None):
         """

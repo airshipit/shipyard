@@ -421,6 +421,17 @@ a DAG invocation), perform any checks to validate the preconditions to run the
 DAG, and trigger the invocation of the DAG. The DAG will run asynchronously in
 airflow.
 
+Query Parameters
+''''''''''''''''
+allow-intermediate-commits=true | **false**
+  By default, false. User will not be able to continue with a site action,
+  e.g. update_site if the current committed revision of documents has other
+  prior commits that have not been used as part of a site action. With
+  allow-intermediate-commits=true, it allows user to override the default
+  behavior and continue with the site action. This may be the case when the
+  user is aware of the existence of such commits and/or when such commits are
+  intended.
+
 Responses
 '''''''''
 201 Created

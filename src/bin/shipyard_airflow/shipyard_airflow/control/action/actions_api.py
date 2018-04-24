@@ -74,15 +74,24 @@ class ActionsResource(BaseResource):
         """
         Accept an action into shipyard
         """
+        # The 'allow-intermediate-commits' query parameter is set to False
+        # unless explicitly set to True
+        allow_intermediate_commits = (
+            req.get_param_as_bool(name='allow-intermediate-commits'))
+
         input_action = self.req_json(req, validate_json_schema=ACTION)
-        action = self.create_action(action=input_action, context=req.context)
+        action = self.create_action(
+            action=input_action,
+            context=req.context,
+            allow_intermediate_commits=allow_intermediate_commits)
+
         LOG.info("Id %s generated for action %s", action['id'], action['name'])
         # respond with the action and location for checking status
         resp.status = falcon.HTTP_201
         resp.body = self.to_json(action)
         resp.location = '/api/v1.0/actions/{}'.format(action['id'])
 
-    def create_action(self, action, context):
+    def create_action(self, action, context, allow_intermediate_commits=False):
         # use uuid assigned for this request as the id of the action.
         action['id'] = ulid.ulid()
         # the invoking user
@@ -99,9 +108,14 @@ class ActionsResource(BaseResource):
         dag = SUPPORTED_ACTION_MAPPINGS.get(action['name'])['dag']
         action['dag_id'] = dag
 
-        # Retrieve last committed design revision
+        # Set up configdocs_helper
         self.configdocs_helper = ConfigdocsHelper(context)
+
+        # Retrieve last committed design revision
         action['committed_rev_id'] = self.get_committed_design_version()
+
+        # Check for intermediate commit
+        self.check_intermediate_commit_revision(allow_intermediate_commits)
 
         # populate action parameters if they are not set
         if 'parameters' not in action:
@@ -339,3 +353,25 @@ class ActionsResource(BaseResource):
                 description='No committed version found in Deckhand',
                 status=falcon.HTTP_404,
                 retry=False)
+
+    def check_intermediate_commit_revision(self,
+                                           allow_intermediate_commits=False):
+
+        LOG.info("Checking for intermediate committed revision in Deckhand...")
+        intermediate_commits = (
+            self.configdocs_helper.check_intermediate_commit())
+
+        if intermediate_commits and not allow_intermediate_commits:
+
+            raise ApiError(
+                title='Intermediate Commit Detected',
+                description=(
+                    'The current committed revision of documents has '
+                    'other prior commits that have not been used as '
+                    'part of a site action, e.g. update_site. If you '
+                    'are aware and these other commits are intended, '
+                    'please rerun this action with the option '
+                    '`allow-intermediate-commits=True`'),
+                status=falcon.HTTP_409,
+                retry=False
+            )

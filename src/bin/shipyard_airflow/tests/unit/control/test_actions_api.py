@@ -39,6 +39,10 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
+def CHECK_INTERMEDIATE_COMMIT(allow_intermediate_commits):
+    return False
+
+
 def create_req(ctx, body):
     '''creates a falcon request'''
     env = testing.create_environ(
@@ -261,7 +265,9 @@ def test_on_post(mock_info, mock_create_action, mock_authorize):
     mock_authorize.assert_called_once_with(
         'workflow_orchestrator:create_action', context)
     mock_create_action.assert_called_once_with(
-        action=json.loads(json_body.decode('utf-8')), context=context)
+        action=json.loads(json_body.decode('utf-8')),
+        context=context,
+        allow_intermediate_commits=None)
     mock_info.assert_called_with("Id %s generated for action %s", 'test_id',
                                  'test_name')
     assert resp.status == '201 Created'
@@ -299,6 +305,8 @@ def test_create_action():
     action_resource.insert_action = insert_action_stub
     action_resource.audit_control_command_db = audit_control_command_db
     action_resource.get_committed_design_version = lambda: DESIGN_VERSION
+    action_resource.check_intermediate_commit_revision = (
+        CHECK_INTERMEDIATE_COMMIT)
 
     # with invalid input. fail.
     try:
@@ -307,7 +315,8 @@ def test_create_action():
                     'parameters': {
                         'a': 'aaa'
                     }},
-            context=context)
+            context=context,
+            allow_intermediate_commits=False)
         assert False, 'Should throw an ApiError'
     except ApiError:
         # expected
@@ -320,7 +329,8 @@ def test_create_action():
                     'parameters': {
                         'a': 'aaa'
                     }},
-            context=context)
+            context=context,
+            allow_intermediate_commits=False)
         assert action['timestamp']
         assert action['id']
         assert len(action['id']) == 26
@@ -333,7 +343,9 @@ def test_create_action():
     # with valid input and no parameters
     try:
         action = action_resource.create_action(
-            action={'name': 'deploy_site'}, context=context)
+            action={'name': 'deploy_site'},
+            context=context,
+            allow_intermediate_commits=False)
         assert action['timestamp']
         assert action['id']
         assert len(action['id']) == 26

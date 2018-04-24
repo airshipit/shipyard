@@ -35,7 +35,7 @@ def test_create_action():
         runner.invoke(shipyard,
                       [auth_vars, 'create', 'action', action_name, param])
     mock_method.assert_called_once_with(ANY, action_name,
-                                        {'"server-name': 'mcp"'})
+                                        {'"server-name': 'mcp"'}, False)
 
 
 def test_create_action_negative():

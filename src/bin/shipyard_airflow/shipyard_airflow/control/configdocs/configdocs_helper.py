@@ -720,3 +720,45 @@ class ConfigdocsHelper(object):
         # reset the revision dict so it regenerates.
         self.revision_dict = None
         return self._get_buffer_rev_id()
+
+    def check_intermediate_commit(self):
+
+        # Initialize variable
+        list_of_committed_rev = []
+
+        try:
+            # Get the list of all revisions present in Deckhand
+            all_revisions = self.deckhand.get_revision_list()
+
+        except NoRevisionsExistError:
+            # the values of None/None/None/0 are fine
+            pass
+
+        except DeckhandResponseError as drex:
+            raise AppError(
+                title='Unable to retrieve revisions',
+                description=(
+                    'Deckhand has responded unexpectedly: {}:{}'.format(
+                        drex.status_code, drex.response_message)),
+                status=falcon.HTTP_500,
+                retry=False)
+
+        if all_revisions:
+            # Get the list of 'committed' revisions
+            for revision in all_revisions:
+                if 'committed' in revision['tags']:
+                    list_of_committed_rev.append(revision)
+
+            # This is really applicable for scenarios where multiple
+            # configdocs commits and site actions were performed. Hence
+            # we should expect at least 2 'committed' revisions to be
+            # present in deckhand.
+            #
+            # We will check the second last most recent committed revision
+            # to see if a site-action has been executed on it
+            if len(list_of_committed_rev) > 1:
+                if (('site-action-success' and 'site-action-failure') not in
+                        list_of_committed_rev[-2]['tags']):
+                    return True
+
+        return False

@@ -107,6 +107,7 @@ downstream components.
 
     shipyard commit configdocs
         [--force]
+        [--dryrun]
 
     Example:
         shipyard commit configdocs
@@ -122,7 +123,42 @@ Sample
 
 ::
 
-    TBD
+    $ shipyard commit configdocs
+    Configuration documents committed.
+    Status: Validations succeeded
+    Reason: Validation
+    - Info: DD1001
+            Message: Rational Boot Storage: Validation successful.
+            Source: Drydock
+    - Info: DD2002
+            Message: IP Locality Check: Validation successful.
+            Source: Drydock
+    - Info: DD2003
+            Message: MTU Rationality: Validation successful.
+            Source: Drydock
+    - Info: DD2004
+            Message: Network Trunking Rationalty: Validation successful.
+            Source: Drydock
+    - Info: DD2005
+            Message: Duplicated IP Check: Validation successful.
+            Source: Drydock
+    - Info: DD3001
+            Message: Platform Selection: Validation successful.
+            Source: Drydock
+    - Info: DD1006
+            Message: Network Bond Rationality: Validation successful.
+            Source: Drydock
+    - Info: DD2002
+            Message: Storage Partitioning: Validation successful.
+            Source: Drydock
+    - Info: DD2003
+            Message: Storage Sizing: Validation successful.
+            Source: Drydock
+    - Info: DD1007
+            Message: Allowed Network Check: Validation successful.
+            Source: Drydock
+
+    ####  Errors: 0, Warnings: 0, Infos: 10, Other: 0  ####
 
 Control commands
 ----------------
@@ -206,6 +242,7 @@ id of the action invoked so that it can be queried subsequently.
     shipyard create action
         <action_command>
         --param=<parameter>    (repeatable)
+        [--allow-intermediate-commits]
 
     Example:
         shipyard create action redeploy_server --param="server-name=mcp"
@@ -215,6 +252,11 @@ id of the action invoked so that it can be queried subsequently.
 
 \--param=<parameter>
   A parameter to be provided to the action being invoked. (repeatable)
+
+\--allow-intermediate-commits
+  Allows continuation of a site action, e.g. update_site even when the
+  current committed revision of documents has other prior commits that
+  have not been used as part of a site action.
 
 Sample
 ^^^^^^
