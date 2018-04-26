@@ -19,8 +19,8 @@ CREATE_ACTION_TAG = 'create_action_tag'
 DAG_CONCURRENCY_CHECK_DAG_NAME = 'dag_concurrency_check'
 DESTROY_SERVER_DAG_NAME = 'destroy_server'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
-GET_DESIGN_VERSION = 'get_design_version'
 GET_DEPLOY_CONF_DAG_NAME = 'dag_deployment_configuration'
+GET_RENDERED_DOC = 'get_rendered_doc'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
 
 # Steps
