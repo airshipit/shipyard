@@ -116,7 +116,7 @@ run_action () {
     do
         # Get Current State of Action Lifecycle
         describe_action=`${base_docker_command} ${SHIPYARD_IMAGE} describe ${action_id}`
-        action_lifecycle=`echo ${describe_action} | awk '{print $29}'`
+        action_lifecycle=`echo ${describe_action} | awk '{print $8}'`
 
         if [[ $action_lifecycle == "Complete" ]]; then
             echo -e '\nSuccessfully performed' ${action}
