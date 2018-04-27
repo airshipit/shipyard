@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-"""Common Modules
+"""Errors raised by the document validators"""
 
-The various packages in this common package should each be stand-alone
-modules having no dependencies on prior logic running in Shipyard (e.g.
-Setup of configuration files, Shipyard/Airflow database access, etc...). It is
-ok if these modules use imports found in requirements.txt
 
-These modules are intended to be safe for reuse outside of the context of
-the Shipyard_Airflow/Api service as well as within.
-"""
+class DeckhandClientRequiredError(Exception):
+    """Signals that a Deckhand client was required but was not provided"""
+
+
+class DocumentLookupError(Exception):
+    """Signals that an error occurred while looking up a document"""
+    pass
+
+
+class DocumentNotFoundError(Exception):
+    """Signals that a document that was expected to be found was not found"""
+    pass

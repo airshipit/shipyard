@@ -16,7 +16,7 @@ from oslo_config import cfg
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.af_monitoring.workflow_helper import (
+from shipyard_airflow.control.helpers.workflow_helper import (
     WorkflowHelper
 )
 from shipyard_airflow.errors import ApiError

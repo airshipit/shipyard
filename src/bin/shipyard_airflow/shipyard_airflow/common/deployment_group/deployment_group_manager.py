@@ -231,7 +231,7 @@ def _generate_group_graph(groups):
                 LOG.debug("%s has parent %s", group.name, parent)
                 graph.add_edge(parent, group.name)
         else:
-            LOG.debug("%s is not dependent upon any other groups")
+            LOG.debug("%s is not dependent upon any other groups", group.name)
 
     _detect_cycles(graph)
     return graph
@@ -258,5 +258,5 @@ def _detect_cycles(graph):
             involved_nodes.update(dep)
         raise DeploymentGroupCycleError(
             "The following are involved in a circular dependency:"
-            " %s", ", ".join(involved_nodes)
+            " {}".format(", ".join(involved_nodes))
         )

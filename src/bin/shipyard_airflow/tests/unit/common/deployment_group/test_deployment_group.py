@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@ import pytest
 import yaml
 
 from shipyard_airflow.common.deployment_group.deployment_group import (
-    DeploymentGroup, Stage
+    DeploymentGroup, Stage, check_label_format
 )
 from shipyard_airflow.common.deployment_group.errors import (
-    DeploymentGroupStageError, InvalidDeploymentGroupError,
-    InvalidDeploymentGroupNodeLookupError
+    DeploymentGroupLabelFormatError, DeploymentGroupStageError,
+    InvalidDeploymentGroupError, InvalidDeploymentGroupNodeLookupError
 )
 
 from .node_lookup_stubs import node_lookup
@@ -170,6 +170,10 @@ class TestDeploymentGroup:
         dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_MULTI_SELECTOR),
                              node_lookup)
         assert set(dg.full_nodes) == {'node7', 'node8', 'node9', 'node11'}
+        assert dg.selectors[0].get_node_labels_as_dict() == {}
+        assert dg.selectors[1].get_node_labels_as_dict() == {
+            'label1': 'label1'
+        }
 
     def test_basic_class_missing_req(self):
         with pytest.raises(InvalidDeploymentGroupError):
@@ -221,23 +225,23 @@ class TestDeploymentGroup:
     def test_selector_excludes_all(self):
         dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_EXCLUDES_ALL),
                              node_lookup)
-        assert dg.full_nodes == []
+        assert len(dg.full_nodes) == 0
 
     def test_handle_none_node_lookup(self):
         dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
                              crummy_node_lookup)
-        assert dg.full_nodes == []
+        assert len(dg.full_nodes) == 0
 
     def test_handle_broken_node_lookup(self):
         with pytest.raises(InvalidDeploymentGroupNodeLookupError) as err:
-            dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
-                                 broken_node_lookup_1)
-        assert str(err).endswith("iterable")
+            DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
+                            broken_node_lookup_1)
+        assert str(err).endswith("is not an iterable")
 
         with pytest.raises(InvalidDeploymentGroupNodeLookupError) as err:
-            dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
-                                 broken_node_lookup_2)
-        assert str(err).endswith("but not all strings")
+            DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
+                            broken_node_lookup_2)
+        assert str(err).endswith("is not all strings")
 
     def test_set_stage(self):
         dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_ALL_SELECTOR),
@@ -266,3 +270,31 @@ class TestStage:
         with pytest.raises(DeploymentGroupStageError) as de:
             Stage.previous_stage('Chickens and Turkeys')
         assert str(de).endswith("Chickens and Turkeys is not a valid stage")
+
+
+class TestCheckLabelFormat:
+    def test_check_label_format(self):
+        with pytest.raises(DeploymentGroupLabelFormatError) as dglfe:
+            check_label_format("thisthat")
+        assert "thisthat is formatted incorrectly. One" in str(dglfe.value)
+
+        with pytest.raises(DeploymentGroupLabelFormatError) as dglfe:
+            check_label_format("")
+        assert " is formatted incorrectly. One" in str(dglfe.value)
+
+        with pytest.raises(DeploymentGroupLabelFormatError) as dglfe:
+            check_label_format(":::")
+        assert "::: is formatted incorrectly. One" in str(dglfe.value)
+
+        with pytest.raises(DeploymentGroupLabelFormatError) as dglfe:
+            check_label_format("this:that:another")
+        assert ("this:that:another is formatted incorrectly. "
+                "One") in str(dglfe.value)
+
+        with pytest.raises(DeploymentGroupLabelFormatError) as dglfe:
+            check_label_format("this:    ")
+        assert "this:     is formatted incorrectly. The" in str(dglfe.value)
+
+        # no exceptions - these are good
+        check_label_format("this:that")
+        check_label_format(" this : that ")

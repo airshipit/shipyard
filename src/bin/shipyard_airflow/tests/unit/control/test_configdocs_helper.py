@@ -20,10 +20,10 @@ import pytest
 
 from .fake_response import FakeResponse
 from shipyard_airflow.control.base import ShipyardRequestContext
-from shipyard_airflow.control.configdocs import configdocs_helper
-from shipyard_airflow.control.configdocs.configdocs_helper import (
+from shipyard_airflow.control.helpers import configdocs_helper
+from shipyard_airflow.control.helpers.configdocs_helper import (
     BufferMode, ConfigdocsHelper)
-from shipyard_airflow.control.configdocs.deckhand_client import (
+from shipyard_airflow.control.helpers.deckhand_client import (
     DeckhandClient, DeckhandResponseError,
     NoRevisionsExistError)
 from shipyard_airflow.errors import ApiError, AppError
@@ -563,12 +563,12 @@ dh_render_val_list = [{"error": True, "message": "broken!"}]
 
 @mock.patch.object(DeckhandClient, 'get_render_errors',
                    return_value=dh_render_val_list)
-def test_get_validations_for_revision_dh_render(get_endpoint):
+def test_get_validations_for_revision_dh_render(dh_client):
     """
     Tests the functionality of the get_validations_for_revision method
     """
     helper = ConfigdocsHelper(CTX)
-    hold_ve = helper.__class__._get_validation_endpoints
+    hold_ve = configdocs_helper._get_validation_endpoints
     helper._get_deckhand_validation_errors = lambda revision_id: []
     val_status = helper.get_validations_for_revision(3)
     err_count = val_status['details']['errorCount']
@@ -582,16 +582,21 @@ def test_get_validations_for_revision_dh_render(get_endpoint):
                    return_value=[])
 @mock.patch.object(DeckhandClient, 'get_path',
                    return_value='path{}')
-@mock.patch.object(ConfigdocsHelper, '_get_validation_endpoints',
-                   return_value=val_endpoints)
-@mock.patch.object(ConfigdocsHelper, '_get_validations_for_component',
-                   new=_fake_get_validations_for_component)
-def test_get_validations_for_revision(p1, p2, p3):
+@mock.patch('shipyard_airflow.control.helpers.configdocs_helper'
+            '._get_validation_endpoints',
+            return_value=val_endpoints)
+@mock.patch('shipyard_airflow.control.helpers.configdocs_helper'
+            '._get_validations_for_component',
+            new=_fake_get_validations_for_component)
+@mock.patch.object(ConfigdocsHelper, '_get_deckhand_validation_errors',
+                   return_value=[])
+@mock.patch.object(ConfigdocsHelper, '_get_shipyard_validations',
+                   return_value=[])
+def test_get_validations_for_revision(*args):
     """
     Tests the functionality of the get_validations_for_revision method
     """
     helper = ConfigdocsHelper(CTX)
-    helper._get_deckhand_validation_errors = lambda revision_id: []
     val_status = helper.get_validations_for_revision(3)
     err_count = val_status['details']['errorCount']
     err_list_count = len(val_status['details']['messageList'])
@@ -619,7 +624,7 @@ def test_generate_validation_message():
         'source': None
     }
 
-    generated = ConfigdocsHelper._generate_validation_message(message)
+    generated = configdocs_helper._generate_validation_message(message)
     assert generated == expected
 
 
@@ -651,8 +656,8 @@ def test_generate_validation_message_args():
         'diagnostic': None
     }
 
-    generated = ConfigdocsHelper._generate_validation_message(message,
-                                                              **kwargs)
+    generated = configdocs_helper._generate_validation_message(message,
+                                                               **kwargs)
     assert generated == expected
 
 
@@ -685,8 +690,8 @@ def test_generate_validation_message_args_full():
         'diagnostic': None
     }
 
-    generated = ConfigdocsHelper._generate_validation_message(message,
-                                                              **kwargs)
+    generated = configdocs_helper._generate_validation_message(message,
+                                                               **kwargs)
     assert generated == expected
 
 
@@ -715,7 +720,7 @@ def test_generate_dh_val_message():
         'diagnostic': 'Section: es at p (schema vs at sp)',
     }
 
-    generated = ConfigdocsHelper._generate_dh_val_msg(
+    generated = configdocs_helper._generate_dh_val_msg(
         message,
         dh_result_name='x'
     )

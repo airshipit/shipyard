@@ -17,16 +17,37 @@
 Encapsulates classes and functions that provide core deployment group
 functionality used during baremetal provisioning.
 """
-import collections
 from enum import Enum
 import logging
 import operator
 
+from .errors import DeploymentGroupLabelFormatError
 from .errors import DeploymentGroupStageError
 from .errors import InvalidDeploymentGroupError
 from .errors import InvalidDeploymentGroupNodeLookupError
 
 LOG = logging.getLogger(__name__)
+
+
+def check_label_format(label_string):
+    """Validates that a label_string is in key:value format.
+
+    Raises DeploymentGroupLabelFormatError if the value is not compliant.
+    """
+    split = label_string.split(":")
+    if not len(split) == 2:
+        raise DeploymentGroupLabelFormatError(
+            "Label {} is formatted incorrectly. One : (colon) character is "
+            "required, and the label must be in key:value format".format(
+                label_string)
+        )
+    for v in split:
+        if v.strip() == "":
+            raise DeploymentGroupLabelFormatError(
+                "Label {} is formatted incorrectly. The values on either side "
+                "of the colon character must not be empty.".format(
+                    label_string)
+            )
 
 
 class Stage(Enum):
@@ -83,11 +104,18 @@ class GroupNodeSelector:
         self.node_tags = selector_dict.get('node_tags', [])
         self.rack_names = selector_dict.get('rack_names', [])
 
+        for label in self.node_labels:
+            check_label_format(label)
+
         # A selector is an "all_selector" if there are no criteria specified.
         self.all_selector = not any([self.node_names, self.node_labels,
                                      self.node_tags, self.rack_names])
         if self.all_selector:
             LOG.debug("Selector values select all available nodes")
+
+    def get_node_labels_as_dict(self):
+        return {label.split(':')[0].strip(): label.split(':')[1].strip()
+                for label in self.node_labels}
 
 
 class SuccessCriteria:
@@ -180,7 +208,8 @@ class DeploymentGroup:
     :param group_dict: dictionary representing a group
     :param node_lookup: an injected function that will perform node lookup for
         a group. Function must accept an iterable of GroupNodeSelector and
-        return a string list of node names
+        return a string iterable of node names (or empty iterable if there are
+        no node names)
 
     Example group_dict::
 
@@ -280,18 +309,20 @@ class DeploymentGroup:
         not useful as the results are stored in self.full_nodes
         """
         LOG.debug("Beginning lookup of nodes for group %s", self.name)
-        node_list = self.node_lookup(self.selectors)
-        if node_list is None:
-            node_list = []
-        if not isinstance(node_list, collections.Sequence):
+        nodes = self.node_lookup(self.selectors)
+        if nodes is None:
+            nodes = []
+        try:
+            node_list = list(nodes)
+        except TypeError:
             raise InvalidDeploymentGroupNodeLookupError(
                 "The node lookup function supplied to the DeploymentGroup "
-                "does not return a valid result of an iterable"
+                "is not an iterable"
             )
         if not all(isinstance(node, str) for node in node_list):
             raise InvalidDeploymentGroupNodeLookupError(
                 "The node lookup function supplied to the DeploymentGroup "
-                "has returned an iterable, but not all strings"
+                "is not all strings"
             )
         LOG.info("Group %s selectors have resolved to nodes: %s",
                  self.name, ", ".join(node_list))

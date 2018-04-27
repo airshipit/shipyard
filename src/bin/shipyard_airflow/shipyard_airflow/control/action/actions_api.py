@@ -22,11 +22,14 @@ from oslo_config import cfg
 import ulid
 
 from shipyard_airflow import policy
-from shipyard_airflow.control.action.action_helper import (determine_lifecycle,
-                                                           format_action_steps)
+from shipyard_airflow.control.helpers.action_helper import (
+    determine_lifecycle,
+    format_action_steps
+)
+from shipyard_airflow.control.action import action_validators
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.configdocs import configdocs_helper
-from shipyard_airflow.control.configdocs.configdocs_helper import (
+from shipyard_airflow.control.helpers import configdocs_helper
+from shipyard_airflow.control.helpers.configdocs_helper import (
     ConfigdocsHelper)
 from shipyard_airflow.control.json_schemas import ACTION
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
@@ -35,24 +38,23 @@ from shipyard_airflow.errors import ApiError
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
-# Mappings of actions to dags
-SUPPORTED_ACTION_MAPPINGS = {
-    # action : dag, validation
-    'deploy_site': {
-        'dag': 'deploy_site',
-        'validator': None
-    },
-    'update_site': {
-        'dag': 'update_site',
-        'validator': None
-    },
-    'redeploy_server': {
-        'dag': 'redeploy_server',
-        # TODO (Bryan Strassner) This should have a validator method
-        #                        Needs to be revisited when defined
-        'validator': None
+
+def _action_mappings():
+    # Return dictionary mapping actions to their dags and validators
+    return {
+        'deploy_site': {
+            'dag': 'deploy_site',
+            'validators': [action_validators.validate_site_action]
+        },
+        'update_site': {
+            'dag': 'update_site',
+            'validators': [action_validators.validate_site_action]
+        },
+        'redeploy_server': {
+            'dag': 'redeploy_server',
+            'validators': []
+        }
     }
-}
 
 
 # /api/v1.0/actions
@@ -93,6 +95,7 @@ class ActionsResource(BaseResource):
         resp.location = '/api/v1.0/actions/{}'.format(action['id'])
 
     def create_action(self, action, context, allow_intermediate_commits=False):
+        action_mappings = _action_mappings()
         # use uuid assigned for this request as the id of the action.
         action['id'] = ulid.ulid()
         # the invoking user
@@ -101,12 +104,12 @@ class ActionsResource(BaseResource):
         action['timestamp'] = str(datetime.utcnow())
         # validate that action is supported.
         LOG.info("Attempting action: %s", action['name'])
-        if action['name'] not in SUPPORTED_ACTION_MAPPINGS:
+        if action['name'] not in action_mappings:
             raise ApiError(
                 title='Unable to start action',
                 description='Unsupported Action: {}'.format(action['name']))
 
-        dag = SUPPORTED_ACTION_MAPPINGS.get(action['name'])['dag']
+        dag = action_mappings.get(action['name'])['dag']
         action['dag_id'] = dag
 
         # Set up configdocs_helper
@@ -121,9 +124,9 @@ class ActionsResource(BaseResource):
         # populate action parameters if they are not set
         if 'parameters' not in action:
             action['parameters'] = {}
+
         # validate if there is any validation to do
-        validator = SUPPORTED_ACTION_MAPPINGS.get(action['name'])['validator']
-        if validator is not None:
+        for validator in action_mappings.get(action['name'])['validators']:
             # validators will raise ApiError if they are not validated.
             validator(action)
 

@@ -216,20 +216,7 @@ class TestDeploymentGroupManager:
 
     def test_get_group_failures_for_stage(self):
         dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
-        dgm._all_nodes = {
-            'node1': Stage.DEPLOYED,
-            'node2': Stage.DEPLOYED,
-            'node3': Stage.DEPLOYED,
-            'node4': Stage.DEPLOYED,
-            'node5': Stage.DEPLOYED,
-            'node6': Stage.DEPLOYED,
-            'node7': Stage.DEPLOYED,
-            'node8': Stage.DEPLOYED,
-            'node9': Stage.DEPLOYED,
-            'node10': Stage.DEPLOYED,
-            'node11': Stage.DEPLOYED,
-            'node12': Stage.DEPLOYED,
-        }
+        dgm._all_nodes = {'node%d' % x: Stage.DEPLOYED for x in range(1, 13)}
 
         for group_name in dgm._all_groups:
             assert not dgm.get_group_failures_for_stage(group_name,
@@ -237,20 +224,7 @@ class TestDeploymentGroupManager:
             assert not dgm.get_group_failures_for_stage(group_name,
                                                         Stage.PREPARED)
 
-        dgm._all_nodes = {
-            'node1': Stage.PREPARED,
-            'node2': Stage.PREPARED,
-            'node3': Stage.PREPARED,
-            'node4': Stage.PREPARED,
-            'node5': Stage.PREPARED,
-            'node6': Stage.PREPARED,
-            'node7': Stage.PREPARED,
-            'node8': Stage.PREPARED,
-            'node9': Stage.PREPARED,
-            'node10': Stage.PREPARED,
-            'node11': Stage.PREPARED,
-            'node12': Stage.PREPARED,
-        }
+        dgm._all_nodes = {'node%d' % x: Stage.PREPARED for x in range(1, 13)}
 
         for group_name in dgm._all_groups:
             assert not dgm.get_group_failures_for_stage(group_name,

@@ -19,8 +19,8 @@ import requests
 from oslo_config import cfg
 
 from shipyard_airflow import policy
-from shipyard_airflow.control.action.action_helper import ActionsHelper
 from shipyard_airflow.control.base import BaseResource
+from shipyard_airflow.control.helpers.action_helper import ActionsHelper
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)

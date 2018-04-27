@@ -69,7 +69,7 @@ def test_execute_exception():
 
 @mock.patch.object(DeploymentConfigurationOperator, 'get_revision_id',
                    return_value=99)
-def test_execute_no_client(p1):
+def test_execute_no_client(*args):
     # no keystone authtoken present in configuration
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
@@ -127,7 +127,7 @@ def get_m_client(data):
 
 @mock.patch.object(DeckhandClientFactory, 'get_client',
                    return_value=get_m_client('abcdefg'))
-def test_get_doc_mock_deckhand(p1):
+def test_get_doc_mock_deckhand(*args):
     """Get doc should return a document"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
@@ -139,7 +139,7 @@ def test_get_doc_mock_deckhand(p1):
 
 @mock.patch.object(DeckhandClientFactory, 'get_client',
                    return_value=get_m_client(None))
-def test_get_doc_mock_deckhand_invalid(p1):
+def test_get_doc_mock_deckhand_invalid(*args):
     """Get doc should return a document"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",

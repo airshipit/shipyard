@@ -18,10 +18,10 @@ import falcon
 from oslo_config import cfg
 
 from shipyard_airflow import policy
-from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.api_lock import (api_lock, ApiLockType)
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.configdocs.configdocs_helper import (
+from shipyard_airflow.control.helpers import configdocs_helper
+from shipyard_airflow.control.helpers.configdocs_helper import (
     ConfigdocsHelper)
 from shipyard_airflow.errors import ApiError
 
@@ -201,7 +201,9 @@ class CommitConfigDocsResource(BaseResource):
                 description='There are no documents in the buffer to commit',
                 status=falcon.HTTP_409,
                 retry=True)
-        validations = helper.get_validations_for_buffer()
+        validations = helper.get_validations_for_revision(
+            helper.get_revision_id(configdocs_helper.BUFFER)
+        )
         if dryrun:
             validations['code'] = falcon.HTTP_200
             if 'message' in validations:

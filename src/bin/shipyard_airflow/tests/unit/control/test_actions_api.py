@@ -26,6 +26,9 @@ import responses
 from shipyard_airflow.control.action import actions_api
 from shipyard_airflow.control.action.actions_api import ActionsResource
 from shipyard_airflow.control.base import ShipyardRequestContext
+from shipyard_airflow.control.helpers.configdocs_helper import (
+    ConfigdocsHelper
+)
 from shipyard_airflow.errors import ApiError
 from shipyard_airflow.policy import ShipyardPolicy
 
@@ -309,51 +312,93 @@ def test_create_action():
         CHECK_INTERMEDIATE_COMMIT)
 
     # with invalid input. fail.
-    try:
-        action = action_resource.create_action(
-            action={'name': 'broken',
-                    'parameters': {
-                        'a': 'aaa'
-                    }},
-            context=context,
-            allow_intermediate_commits=False)
-        assert False, 'Should throw an ApiError'
-    except ApiError:
-        # expected
-        pass
+    with mock.patch('shipyard_airflow.control.action.action_validators'
+                    '.validate_site_action') as validator:
+        try:
+            action = action_resource.create_action(
+                action={'name': 'broken',
+                        'parameters': {
+                            'a': 'aaa'
+                        }},
+                context=context,
+                allow_intermediate_commits=False)
+            assert False, 'Should throw an ApiError'
+        except ApiError:
+            # expected
+            pass
+    assert not validator.called
 
     # with valid input and some parameters
-    try:
-        action = action_resource.create_action(
-            action={'name': 'deploy_site',
-                    'parameters': {
-                        'a': 'aaa'
-                    }},
-            context=context,
-            allow_intermediate_commits=False)
-        assert action['timestamp']
-        assert action['id']
-        assert len(action['id']) == 26
-        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
-        assert action['dag_status'] == 'SCHEDULED'
-        assert action['committed_rev_id'] == 1
-    except ApiError:
-        assert False, 'Should not raise an ApiError'
+    with mock.patch('shipyard_airflow.control.action.action_validators'
+                    '.validate_site_action') as validator:
+        try:
+            action = action_resource.create_action(
+                action={'name': 'deploy_site',
+                        'parameters': {
+                            'a': 'aaa'
+                        }},
+                context=context,
+                allow_intermediate_commits=False)
+            assert action['timestamp']
+            assert action['id']
+            assert len(action['id']) == 26
+            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+            assert action['dag_status'] == 'SCHEDULED'
+            assert action['committed_rev_id'] == 1
+        except ApiError:
+            assert False, 'Should not raise an ApiError'
+    validator.assert_called_once_with(action)
 
     # with valid input and no parameters
-    try:
-        action = action_resource.create_action(
-            action={'name': 'deploy_site'},
-            context=context,
-            allow_intermediate_commits=False)
-        assert action['timestamp']
-        assert action['id']
-        assert len(action['id']) == 26
-        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
-        assert action['dag_status'] == 'SCHEDULED'
-        assert action['committed_rev_id'] == 1
-    except ApiError:
-        assert False, 'Should not raise an ApiError'
+    with mock.patch('shipyard_airflow.control.action.action_validators'
+                    '.validate_site_action') as validator:
+        try:
+            action = action_resource.create_action(
+                action={'name': 'deploy_site'},
+                context=context,
+                allow_intermediate_commits=False)
+            assert action['timestamp']
+            assert action['id']
+            assert len(action['id']) == 26
+            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+            assert action['dag_status'] == 'SCHEDULED'
+            assert action['committed_rev_id'] == 1
+        except ApiError:
+            assert False, 'Should not raise an ApiError'
+    validator.assert_called_once_with(action)
+
+
+def test_create_action_validator_error():
+    action_resource = ActionsResource()
+    action_resource.get_all_actions_db = actions_db
+    action_resource.get_all_dag_runs_db = dag_runs_db
+    action_resource.get_all_tasks_db = tasks_db
+    action_resource.invoke_airflow_dag = airflow_stub
+    action_resource.insert_action = insert_action_stub
+    action_resource.audit_control_command_db = audit_control_command_db
+    action_resource.get_committed_design_version = lambda: DESIGN_VERSION
+    action_resource.check_intermediate_commit_revision = (
+        CHECK_INTERMEDIATE_COMMIT)
+
+    # with valid input and some parameters
+    with mock.patch('shipyard_airflow.control.action.action_validators'
+                    '.validate_site_action',
+                    side_effect=ApiError(title='bad')):
+        with pytest.raises(ApiError) as apie:
+            action = action_resource.create_action(
+                action={'name': 'deploy_site',
+                        'parameters': {
+                            'a': 'aaa'
+                        }},
+                context=context,
+                allow_intermediate_commits=False)
+            assert action['timestamp']
+            assert action['id']
+            assert len(action['id']) == 26
+            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+            assert action['dag_status'] == 'SCHEDULED'
+            assert action['committed_rev_id'] == 1
+        assert apie.value.title == 'bad'
 
 
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.'
@@ -484,3 +529,23 @@ def test_exhume_date():
     assert (
         'Airflow has not responded with parseable output. Shipyard is unable '
         'to determine run timestamp') in str(expected_exc)
+
+
+@mock.patch.object(ConfigdocsHelper, 'get_revision_id', return_value=7)
+def test_get_committed_design_version(*args):
+    act_resource = ActionsResource()
+    act_resource.configdocs_helper = ConfigdocsHelper(ShipyardRequestContext())
+    assert act_resource.get_committed_design_version() == 7
+
+
+@mock.patch.object(ConfigdocsHelper, 'get_revision_id', return_value=None)
+def test_get_committed_design_version_missing(*args):
+    with pytest.raises(ApiError) as apie:
+        act_resource = ActionsResource()
+        act_resource.configdocs_helper = ConfigdocsHelper(
+            ShipyardRequestContext()
+        )
+        act_resource.get_committed_design_version()
+    assert apie.value.status == falcon.HTTP_404
+    assert apie.value.title == ('Unable to locate any committed revision in '
+                                'Deckhand')

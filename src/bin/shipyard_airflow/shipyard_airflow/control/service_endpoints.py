@@ -104,6 +104,11 @@ def get_token():
     return _get_ks_session().get_auth_headers().get('X-Auth-Token')
 
 
+def get_session():
+    """Return the Keystone Session for Shipyard"""
+    return _get_ks_session()
+
+
 def _get_ks_session():
     # Establishes a keystone session
     keystone_auth = {}

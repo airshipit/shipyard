@@ -1,4 +1,4 @@
-# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ def node_lookup(selectors):
                 nl_list.append(get_nodes(_RACK_NAMES, selector.rack_names))
         nodes = set.intersection(*nl_list)
         nodes_full.extend(nodes)
-    return nodes_full
+    return set(nodes_full)
 
 
 def crummy_node_lookup(selectors):
@@ -76,8 +76,8 @@ def crummy_node_lookup(selectors):
 
 
 def broken_node_lookup_1(selectors):
-    """Doesn't return a list"""
-    return {"this": "that"}
+    """Doesn't return an iterable """
+    return True
 
 
 def broken_node_lookup_2(selectors):

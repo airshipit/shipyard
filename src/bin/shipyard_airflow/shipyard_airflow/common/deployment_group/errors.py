@@ -22,11 +22,20 @@ class InvalidDeploymentGroupError(Exception):
     pass
 
 
-class InvalidDeploymentGroupNodeLookupError(InvalidDeploymentGroupError):
+class InvalidDeploymentGroupNodeLookupError(Exception):
     """InvalidDeploymentGroupNodeLookupError
 
     Indicates that there is a problem with the node lookup function
     provided to the deployment group
+    """
+    pass
+
+
+class DeploymentGroupLabelFormatError(Exception):
+    """DeploymentGroupLabelFormatError
+
+    Indicates that a value that is intended to be a label is not formatted
+    correctly
     """
     pass
 

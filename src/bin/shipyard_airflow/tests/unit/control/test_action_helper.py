@@ -13,7 +13,7 @@
 # limitations under the License.
 """ Tests for the action_helper.py module """
 
-from shipyard_airflow.control.action import action_helper
+from shipyard_airflow.control.helpers import action_helper
 
 
 def test_determine_lifecycle():

@@ -17,7 +17,6 @@ Deckhand, providing a representation of a buffer and a committed
 bucket for Shipyard
 """
 import enum
-import json
 import logging
 import threading
 
@@ -25,11 +24,18 @@ import falcon
 from oslo_config import cfg
 import requests
 
-from shipyard_airflow.control.configdocs.deckhand_client import (
-    DeckhandClient, DeckhandError, DeckhandPaths, DeckhandRejectedInputError,
+from shipyard_airflow.common.document_validators.document_validator_manager \
+    import DocumentValidationManager
+from shipyard_airflow.control import service_clients
+from shipyard_airflow.control.helpers.design_reference_helper import \
+    DesignRefHelper
+from shipyard_airflow.control.helpers.deckhand_client import (
+    DeckhandClient, DeckhandError, DeckhandRejectedInputError,
     DeckhandResponseError, DocumentExistsElsewhereError, NoRevisionsExistError)
 from shipyard_airflow.control.service_endpoints import (
     Endpoints, get_endpoint, get_token)
+from shipyard_airflow.control.validators.validate_deployment_configuration \
+    import ValidateDeploymentConfiguration
 from shipyard_airflow.errors import ApiError, AppError
 
 CONF = cfg.CONF
@@ -468,132 +474,14 @@ class ConfigdocsHelper(object):
                 status=falcon.HTTP_404,
                 retry=False)
 
-    def get_validations_for_buffer(self):
-        """
-        Convenience method to do validations for buffer version.
-        """
-        buffer_rev_id = self.get_revision_id(BUFFER)
-        if buffer_rev_id:
-            return self.get_validations_for_revision(buffer_rev_id)
-        raise AppError(
-            title='Unable to start validation of buffer',
-            description=('Buffer revision id could not be determined from'
-                         'Deckhand'),
-            status=falcon.HTTP_500,
-            retry=False)
-
-    @staticmethod
-    def _get_design_reference(revision_id):
-        # Constructs the design reference as json for use by other components
-        design_reference = {
-            "rel": "design",
-            "href": "deckhand+{}".format(
-                DeckhandClient.get_path(DeckhandPaths.RENDERED_REVISION_DOCS)
-                .format(revision_id)),
-            "type": "application/x-yaml"
-        }
-        return json.dumps(design_reference)
-
-    @staticmethod
-    def _get_validation_endpoints():
-        # returns the list of validation endpoint supported
-        val_ep = '{}/validatedesign'
-        return [
-            {
-                'name': 'Drydock',
-                'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))
-            },
-            {
-                'name': 'Armada',
-                'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
-            },
-        ]
-
-    @staticmethod
-    def _get_validation_threads(validation_endpoints, revision_id, ctx):
-        # create a list of validation threads from the endpoints
-        validation_threads = []
-        for endpoint in validation_endpoints:
-            # create a holder for things we need back from the threads
-            response = {'response': None}
-            exception = {'exception': None}
-            design_ref = ConfigdocsHelper._get_design_reference(revision_id)
-            validation_threads.append({
-                'thread':
-                threading.Thread(
-                    target=ConfigdocsHelper._get_validations_for_component,
-                    kwargs={
-                        'url': endpoint['url'],
-                        'design_reference': design_ref,
-                        'response': response,
-                        'exception': exception,
-                        'context_marker': ctx.external_marker,
-                        'thread_name': endpoint['name'],
-                        'log_extra': {
-                            'req_id': ctx.request_id,
-                            'external_ctx': ctx.external_marker,
-                            'user': ctx.user
-                        }
-                    }),
-                'name': endpoint['name'],
-                'url': endpoint['url'],
-                'response': response,
-                'exception': exception
-            })
-        return validation_threads
-
-    @staticmethod
-    def _get_validations_for_component(url, design_reference, response,
-                                       exception, context_marker, thread_name,
-                                       **kwargs):
-        # Invoke the POST for validation
-        try:
-            headers = {
-                'X-Context-Marker': context_marker,
-                'X-Auth-Token': get_token(),
-                'content-type': 'application/json'
-            }
-
-            http_resp = requests.post(
-                url,
-                headers=headers,
-                data=design_reference,
-                timeout=(
-                    CONF.requests_config.validation_connect_timeout,
-                    CONF.requests_config.validation_read_timeout))
-            # 400 response is "valid" failure to validate. > 400 is a problem.
-            if http_resp.status_code > 400:
-                http_resp.raise_for_status()
-            response_dict = http_resp.json()
-            response['response'] = response_dict
-        except Exception as ex:
-            # catch anything exceptional as a failure to run validations
-            unable_str = '{} unable to validate configdocs'.format(thread_name)
-            LOG.error("%s. Exception follows.", unable_str)
-            LOG.error(str(ex))
-            response['response'] = {
-                'details': {
-                    'messageList': [{
-                        'message': unable_str,
-                        'kind': 'SimpleMessage',
-                        'error': True
-                    }, {
-                        'message': str(ex),
-                        'kind': 'SimpleMessage',
-                        'error': True
-                    }]
-                }
-            }
-            exception['exception'] = ex
-
     def _get_validations_from_ucp_components(self, revision_id):
         """Invoke other UCP components to retrieve their validations"""
         resp_msgs = []
         error_count = 0
+        design_ref = DesignRefHelper().get_design_reference(revision_id)
 
-        validation_threads = ConfigdocsHelper._get_validation_threads(
-            ConfigdocsHelper._get_validation_endpoints(), revision_id,
-            self.ctx)
+        validation_threads = _get_validation_threads(
+            _get_validation_endpoints(), self.ctx, design_ref)
         # trigger each validation in parallel
         for validation_thread in validation_threads:
             if validation_thread.get('thread'):
@@ -623,10 +511,8 @@ class ConfigdocsHelper(object):
                 if msg.get('error'):
                     error_count = error_count + 1
                     default_level = 'Error'
-                val_msg = ConfigdocsHelper._generate_validation_message(
-                    msg,
-                    level=default_level,
-                    source=th_name
+                val_msg = _generate_validation_message(
+                    msg, level=default_level, source=th_name
                 )
                 resp_msgs.append(val_msg)
         return (error_count, resp_msgs)
@@ -660,6 +546,13 @@ class ConfigdocsHelper(object):
 
         # Only invoke the other validations if Deckhand has not returned any.
         if (error_count == 0):
+            # Start with Shipyard's own validations
+            results = self._get_shipyard_validations(revision_id)
+            err_results = [r for r in results if r['error']]
+            error_count += len(err_results)
+            resp_msgs.extend(results)
+
+            # And then the other ucp components
             (cpnt_ec, cpnt_msgs) = self._get_validations_from_ucp_components(
                 revision_id)
             resp_msgs.extend(cpnt_msgs)
@@ -667,8 +560,27 @@ class ConfigdocsHelper(object):
             LOG.debug("UCP component validations: %s", cpnt_ec)
 
         # return the formatted status response
-        return ConfigdocsHelper._format_validations_to_status(
-            resp_msgs, error_count)
+        return _format_validations_to_status(resp_msgs, error_count)
+
+    def _get_shipyard_validations(self, revision_id):
+        # Run Shipyard's own validations
+        try:
+            sy_val_mgr = DocumentValidationManager(
+                service_clients.deckhand_client(),
+                revision_id,
+                [(ValidateDeploymentConfiguration, 'deployment-configuration')]
+            )
+            return sy_val_mgr.validate()
+        except Exception as ex:
+            # Don't let any exceptions here prevent subsequent processing,
+            # but make sure we register an error to prevent success.
+            return [_generate_validation_message({
+                "error": True,
+                "message": ("Shipyard has encountered an unexpected error "
+                            "while processing document validations"),
+                "name": "DocumentValidationProcessingError",
+                "diagnostic": str(ex),
+            })]
 
     def get_deckhand_validation_status(self, revision_id):
         """Retrieve Deckhand validation status
@@ -677,8 +589,7 @@ class ConfigdocsHelper(object):
         """
         dh_validations = self._get_deckhand_validation_errors(revision_id)
         error_count = len(dh_validations)
-        return ConfigdocsHelper._format_validations_to_status(
-            dh_validations, error_count)
+        return _format_validations_to_status(dh_validations, error_count)
 
     def _get_deckhand_validation_errors(self, revision_id):
         # Returns stored validation errors that deckhand has for this revision.
@@ -689,101 +600,11 @@ class ConfigdocsHelper(object):
                 if dh_result.get('errors'):
                     for error in dh_result.get('errors'):
                         resp_msgs.append(
-                            ConfigdocsHelper._generate_dh_val_msg(
-                                error,
-                                dh_result_name=dh_result.get('name')
+                            _generate_dh_val_msg(
+                                error, dh_result_name=dh_result.get('name')
                             )
                         )
         return resp_msgs
-
-    @staticmethod
-    def _generate_dh_val_msg(msg, dh_result_name):
-        # Maps a deckhand validation response to a ValidationMessage.
-        # Result name is used if the msg doesn't specify a name field.
-        # Deckhand may provide the following fields:
-        # 'validation_schema', 'schema_path', 'name', 'schema', 'path',
-        # 'error_section', 'message'
-        not_spec = 'not specified'
-        if 'diagnostic' not in msg:
-            # format path, error_section, validation_schema, and schema_path
-            # into diagnostic
-            msg['diagnostic'] = 'Section: {} at {} (schema {} at {})'.format(
-                msg.get('error_section', not_spec),
-                msg.get('path', not_spec),
-                msg.get('validation_schema', not_spec),
-                msg.get('schema_path', not_spec)
-            )
-
-        if 'documents' not in msg:
-            msg['documents'] = [{
-                'name': msg.get('name', not_spec),
-                'schema': msg.get('schema', not_spec)
-            }]
-        return ConfigdocsHelper._generate_validation_message(
-            msg,
-            name=dh_result_name,
-            error=True,
-            level='Error',
-            source='Deckhand'
-        )
-
-    @staticmethod
-    def _generate_validation_message(msg, **kwargs):
-        # Special note about kwargs: the values provided via kwargs are used
-        # as defaults, not overrides. Values in the msg will take precedence.
-        #
-        # Using a compatible message, transform it into a ValidationMessage.
-        # By combining it with the default values passed via kwargs. The values
-        # used from kwargs match the fields listed below.
-
-        fields = ['message', 'error', 'name', 'documents', 'level',
-                  'diagnostic', 'source']
-        if 'documents' not in kwargs:
-            kwargs['documents'] = []
-        valmsg = {}
-        for key in fields:
-            valmsg[key] = msg.get(key, kwargs.get(key, None))
-        valmsg['kind'] = 'ValidationMessage'
-        valmsg['level'] = (
-            valmsg.get('level') or ConfigdocsHelper._error_to_level(
-                valmsg.get('error'))
-        )
-        return valmsg
-
-    @staticmethod
-    def _error_to_level(error):
-        """Convert a boolean error field to 'Error' or 'Info' """
-        if error:
-            return 'Error'
-        else:
-            return 'Info'
-
-    @staticmethod
-    def _format_validations_to_status(val_msgs, error_count):
-        # Using a list of validation messages and an error count,
-        # formulates and returns a status response dict
-
-        status = 'Success'
-        message = 'Validations succeeded'
-        code = falcon.HTTP_200
-        if error_count > 0:
-            status = 'Failure'
-            message = 'Validations failed'
-            code = falcon.HTTP_400
-
-        return {
-            "kind": "Status",
-            "apiVersion": "v1.0",
-            "metadata": {},
-            "status": status,
-            "message": message,
-            "reason": "Validation",
-            "details": {
-                "errorCount": error_count,
-                "messageList": val_msgs,
-            },
-            "code": code
-        }
 
     def tag_buffer(self, tag):
         """
@@ -872,3 +693,183 @@ class ConfigdocsHelper(object):
                     return True
 
         return False
+
+
+def _get_validation_endpoints():
+    # returns the list of validation endpoint supported
+    val_ep = '{}/validatedesign'
+    return [
+        {
+            'name': 'Drydock',
+            'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))
+        },
+        {
+            'name': 'Armada',
+            'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
+        },
+    ]
+
+
+def _get_validation_threads(validation_endpoints, ctx, design_ref):
+    # create a list of validation threads from the endpoints
+    validation_threads = []
+    for endpoint in validation_endpoints:
+        # create a holder for things we need back from the threads
+        response = {'response': None}
+        exception = {'exception': None}
+        validation_threads.append({
+            'thread':
+            threading.Thread(
+                target=_get_validations_for_component,
+                kwargs={
+                    'url': endpoint['url'],
+                    'design_reference': design_ref,
+                    'response': response,
+                    'exception': exception,
+                    'context_marker': ctx.external_marker,
+                    'thread_name': endpoint['name'],
+                    'log_extra': {
+                        'req_id': ctx.request_id,
+                        'external_ctx': ctx.external_marker,
+                        'user': ctx.user
+                    }
+                }),
+            'name': endpoint['name'],
+            'url': endpoint['url'],
+            'response': response,
+            'exception': exception
+        })
+    return validation_threads
+
+
+def _get_validations_for_component(url, design_reference, response,
+                                   exception, context_marker, thread_name,
+                                   **kwargs):
+    # Invoke the POST for validation
+    try:
+        headers = {
+            'X-Context-Marker': context_marker,
+            'X-Auth-Token': get_token(),
+            'content-type': 'application/json'
+        }
+
+        http_resp = requests.post(
+            url,
+            headers=headers,
+            data=design_reference,
+            timeout=(
+                CONF.requests_config.validation_connect_timeout,
+                CONF.requests_config.validation_read_timeout))
+        # 400 response is "valid" failure to validate. > 400 is a problem.
+        if http_resp.status_code > 400:
+            http_resp.raise_for_status()
+        response_dict = http_resp.json()
+        response['response'] = response_dict
+    except Exception as ex:
+        # catch anything exceptional as a failure to run validations
+        unable_str = '{} unable to validate configdocs'.format(thread_name)
+        LOG.error("%s. Exception follows.", unable_str)
+        LOG.error(str(ex))
+        response['response'] = {
+            'details': {
+                'messageList': [{
+                    'message': unable_str,
+                    'kind': 'SimpleMessage',
+                    'error': True
+                }, {
+                    'message': str(ex),
+                    'kind': 'SimpleMessage',
+                    'error': True
+                }]
+            }
+        }
+        exception['exception'] = ex
+
+
+def _generate_dh_val_msg(msg, dh_result_name):
+    # Maps a deckhand validation response to a ValidationMessage.
+    # Result name is used if the msg doesn't specify a name field.
+    # Deckhand may provide the following fields:
+    # 'validation_schema', 'schema_path', 'name', 'schema', 'path',
+    # 'error_section', 'message'
+    not_spec = 'not specified'
+    if 'diagnostic' not in msg:
+        # format path, error_section, validation_schema, and schema_path
+        # into diagnostic
+        msg['diagnostic'] = 'Section: {} at {} (schema {} at {})'.format(
+            msg.get('error_section', not_spec),
+            msg.get('path', not_spec),
+            msg.get('validation_schema', not_spec),
+            msg.get('schema_path', not_spec)
+        )
+
+    if 'documents' not in msg:
+        msg['documents'] = [{
+            'name': msg.get('name', not_spec),
+            'schema': msg.get('schema', not_spec)
+        }]
+    return _generate_validation_message(
+        msg,
+        name=dh_result_name,
+        error=True,
+        level='Error',
+        source='Deckhand'
+    )
+
+
+def _generate_validation_message(msg, **kwargs):
+    # Special note about kwargs: the values provided via kwargs are used
+    # as defaults, not overrides. Values in the msg will take precedence.
+    #
+    # Using a compatible message, transform it into a ValidationMessage.
+    # By combining it with the default values passed via kwargs. The values
+    # used from kwargs match the fields listed below.
+
+    fields = ['message', 'error', 'name', 'documents', 'level', 'diagnostic',
+              'source']
+    if 'documents' not in kwargs:
+        kwargs['documents'] = []
+    valmsg = {}
+    for key in fields:
+        valmsg[key] = msg.get(key, kwargs.get(key, None))
+    valmsg['kind'] = 'ValidationMessage'
+    valmsg['level'] = (
+        valmsg.get('level') or _error_to_level(
+            valmsg.get('error'))
+    )
+    return valmsg
+
+
+def _error_to_level(error):
+    """Convert a boolean error field to 'Error' or 'Info' """
+    if error:
+        return 'Error'
+    else:
+        return 'Info'
+
+
+def _format_validations_to_status(val_msgs, error_count):
+    # Using a list of validation messages and an error count,
+    # formulates and returns a status response dict
+
+    status = 'Success'
+    message = 'Validations succeeded'
+    code = falcon.HTTP_200
+    if error_count > 0:
+        status = 'Failure'
+        message = 'Validations failed'
+        code = falcon.HTTP_400
+
+    return {
+        "kind": "Status",
+        "apiVersion": "v1.0",
+        "metadata": {},
+        "status": status,
+        "message": message,
+        "reason": "Validation",
+        "details": {
+            "errorCount": error_count,
+            "messageList": val_msgs,
+        },
+        "code": code
+    }

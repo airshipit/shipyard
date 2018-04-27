@@ -14,7 +14,7 @@
 from mock import patch
 import pytest
 
-from shipyard_airflow.control.af_monitoring.workflow_helper import (
+from shipyard_airflow.control.helpers.workflow_helper import (
     WorkflowHelper)
 from shipyard_airflow.control.af_monitoring.workflows_api import (
     WorkflowResource, WorkflowIdResource)

@@ -15,7 +15,7 @@ from datetime import datetime
 
 import arrow
 
-from shipyard_airflow.control.af_monitoring.workflow_helper import (
+from shipyard_airflow.control.helpers.workflow_helper import (
     WorkflowHelper
 )
 

@@ -138,7 +138,7 @@ class TestActionsStepsLogsEndpoint():
                                          headers=common.AUTH_HEADERS)
         assert result.status_code == 200
 
-    @patch('shipyard_airflow.control.action.action_helper.ActionsHelper',
+    @patch('shipyard_airflow.control.helpers.action_helper.ActionsHelper',
            autospec=True)
     def test_generate_log_endpoint(self, mock_actions_helper):
         """Tests log endpoint generation"""
