@@ -83,8 +83,8 @@ Document Staging API
 --------------------
 Shipyard will serve as the entrypoint for documents (designs, secrets,
 configurations, etc...) into a site. Documents are posted to Shipyard in
-collections, rather than individually. At any point in time, there will be two
-represented versions of documents in a site that are accessible via this API:
+collections, rather than individually. At any point in time, there will
+be several versions of documents in a site that are accessible via this API:
 
 - The "Committed Documents" version, which represents the last version of
   documents that were successfully commited with a commit_configdocs action.
@@ -93,10 +93,16 @@ represented versions of documents in a site that are accessible via this API:
   that only one set of documents maybe posted to the buffer at a time by
   default. (This behavior can be overridden by query parameters issued by the
   user of Shipyard)
+- The "Last Site Action" version represents the version of documents associated
+  with the last successful or failed site action. Site actions include 'deploy_site'
+  and 'update_site'.
+- The "Successful Site Action" version represents the version of documents
+  associated with the last successful site action. Site actions include 'deploy_site'
+  and 'update_site'.
 
 All versions of documents rely upon Deckhand for storage. Shipyard uses the
-tagging features of Deckhand of to find the appropriate Committed Documents
-and Shipyard Buffer version.
+tagging features of Deckhand to find the appropriate Committed Documents,
+Last Site Action, Successful Site Action and Shipyard Buffer version.
 
 /v1.0/configdocs
 ~~~~~~~~~~~~~~~~
@@ -188,7 +194,7 @@ Returns the source documents for a collection of documents
 
 Query Parameters
 ''''''''''''''''
-version=committed | **buffer**
+version=committed | last_site_action | successful_site_action | **buffer**
   Return the documents for the version specified - buffer by default.
 
 Responses
@@ -224,7 +230,7 @@ Returns the full set of configdocs in their rendered form.
 
 Query Parameters
 ''''''''''''''''
-version=committed|**buffer**
+version=committed | last_site_action | successful_site_action | **buffer**
   Return the documents for the version specified - buffer by default.
 
 Responses

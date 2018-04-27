@@ -320,7 +320,7 @@ def test_get_configdocs_status():
 
 def test__get_revision_dict_no_commit():
     """
-    Tests the processing of revision dict response from dechand
+    Tests the processing of revision dict response from deckhand
     with a buffer version, but no committed revision
     """
     helper = ConfigdocsHelper(CTX)
@@ -357,7 +357,7 @@ def test__get_revision_dict_no_commit():
 
 def test__get_revision_dict_empty():
     """
-    Tests the processing of revision dict response from dechand
+    Tests the processing of revision dict response from deckhand
     where the response is an empty list
     """
     helper = ConfigdocsHelper(CTX)
@@ -375,7 +375,7 @@ def test__get_revision_dict_empty():
 
 def test__get_revision_dict_commit_no_buff():
     """
-    Tests the processing of revision dict response from dechand
+    Tests the processing of revision dict response from deckhand
     with a committed and no buffer revision
     """
     helper = ConfigdocsHelper(CTX)
@@ -412,7 +412,7 @@ def test__get_revision_dict_commit_no_buff():
 
 def test__get_revision_dict_commit_and_buff():
     """
-    Tests the processing of revision dict response from dechand
+    Tests the processing of revision dict response from deckhand
     with a committed and a buffer revision
     """
     helper = ConfigdocsHelper(CTX)
@@ -850,3 +850,37 @@ def test_add_collection():
         assert helper.add_collection('mop', 'yaml:yaml') == 5
 
     mock_method.assert_called_once_with('mop', 'yaml:yaml')
+
+
+def test_get_revision_dict_last_site_action_and_successful_site_action():
+    """
+    Tests the processing of revision dict response from deckhand
+    for last_site_action and successful_site_action revision
+    """
+    helper = ConfigdocsHelper(CTX)
+    helper.deckhand.get_revision_list = lambda: yaml.load("""
+---
+  - id: 1
+    url: https://deckhand/api/v1.0/revisions/1
+    createdAt: 2018-04-30T21:23Z
+    buckets: [mop]
+    tags: [committed, site-action-success]
+    validationPolicies:
+      site-deploy-validation:
+        status: succeeded
+  - id: 2
+    url: https://deckhand/api/v1.0/revisions/2
+    createdAt: 2018-04-30T23:35Z
+    buckets: [flop, mop]
+    tags: [committed, site-action-failure]
+    validationPolicies:
+      site-deploy-validation:
+        status: succeeded
+...
+""")
+    rev_dict = helper._get_revision_dict()
+    successful_site_action = rev_dict.get(
+        configdocs_helper.SUCCESSFUL_SITE_ACTION)
+    last_site_action = rev_dict.get(configdocs_helper.LAST_SITE_ACTION)
+    assert successful_site_action.get('id') == 1
+    assert last_site_action.get('id') == 2

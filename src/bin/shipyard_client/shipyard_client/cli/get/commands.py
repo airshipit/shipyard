@@ -52,10 +52,11 @@ def get_actions(ctx):
 
 
 DESC_CONFIGDOCS = """
-COMMAND: configdocs \n
+COMMAND: configdocs
 DESCRIPTION: Retrieve documents loaded into Shipyard, either committed or
-from the Shipyard Buffer. \n
-FORMAT: shipyard get configdocs <collection> [--committed | --buffer] \n
+from the Shipyard Buffer.
+FORMAT: shipyard get configdocs <collection>
+[--committed | --buffer | --last-site-action | --successful-site-action]
 EXAMPLE: shipyard get configdocs design
 """
 
@@ -76,35 +77,42 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
     '--buffer',
     '-b',
     flag_value='buffer',
-    help='Retrive the documents that have been loaded into Shipyard since the '
-    'prior commit. If no documents have been loaded into the buffer for this '
-    'collection, this will return an empty response (default)')
+    help='Retrieve the documents that have been loaded into Shipyard since '
+    'the prior commit. If no documents have been loaded into the buffer for '
+    'this collection, this will return an empty response (default)')
+@click.option(
+    '--last-site-action',
+    '-l',
+    flag_value='last_site_action',
+    help='Holds the revision information for the most recent site action')
+@click.option(
+    '--successful-site-action',
+    '-s',
+    flag_value='successful_site_action',
+    help='Holds the revision information for the most recent successfully '
+    'executed site action.')
 @click.pass_context
-def get_configdocs(ctx, collection, buffer, committed):
+def get_configdocs(ctx, collection, buffer, committed, last_site_action,
+                   successful_site_action):
     if collection:
-        if buffer and committed:
-            ctx.fail(
-                'You must choose whether to retrive the committed OR from the '
-                'Shipyard Buffer with --committed or --buffer. ')
-
-        if committed:
-            version = 'committed'
-
-        else:
-            version = 'buffer'
+        # Get version
+        version = get_version(ctx, buffer, committed, last_site_action,
+                              successful_site_action)
 
         click.echo(
             GetConfigdocs(ctx, collection, version).invoke_and_return_resp())
+
     else:
         click.echo(GetConfigdocsStatus(ctx).invoke_and_return_resp())
 
 
 DESC_RENDEREDCONFIGDOCS = """
-COMMAND: renderedconfigdocs \n
+COMMAND: renderedconfigdocs
 DESCRIPTION: Retrieve the rendered version of documents loaded into
 Shipyard. Rendered documents are the "final" version of the documents after
-applying Deckhand layering and substitution. \n
-FORMAT: shipyard get renderedconfigdocs [--committed | --buffer] \n
+applying Deckhand layering and substitution.
+FORMAT: shipyard get renderedconfigdocs
+[--committed | --buffer | --last-site-action | --successful-site-action]
 EXAMPLE: shipyard get renderedconfigdocs
 """
 
@@ -130,19 +138,23 @@ SHORT_DESC_RENDEREDCONFIGDOCS = (
     flag_value='buffer',
     help='Retrieve the documents that have been loaded into Shipyard since the'
     ' prior commit. (default)')
+@click.option(
+    '--last-site-action',
+    '-l',
+    flag_value='last_site_action',
+    help='Holds the revision information for the most recent site action')
+@click.option(
+    '--successful-site-action',
+    '-s',
+    flag_value='successful_site_action',
+    help='Holds the revision information for the most recent successfully '
+    'executed site action.')
 @click.pass_context
-def get_renderedconfigdocs(ctx, buffer, committed):
-
-    if buffer and committed:
-        ctx.fail(
-            'You must choose whether to retrive the committed documents OR the'
-            ' docutments in the Shipyard Buffer with --committed or --buffer.')
-
-    if committed:
-        version = 'committed'
-
-    else:
-        version = 'buffer'
+def get_renderedconfigdocs(ctx, buffer, committed, last_site_action,
+                           successful_site_action):
+    # Get version
+    version = get_version(ctx, buffer, committed, last_site_action,
+                          successful_site_action)
 
     click.echo(GetRenderedConfigdocs(ctx, version).invoke_and_return_resp())
 
@@ -169,3 +181,37 @@ SHORT_DESC_WORKFLOWS = "Lists the workflows from airflow."
 def get_workflows(ctx, since):
 
     click.echo(GetWorkflows(ctx, since).invoke_and_return_resp())
+
+
+def get_version(ctx, buffer, committed, last_site_action,
+                successful_site_action):
+
+    # Check number of optional site parameters
+    # User can only query with 1 of these options
+    optional_site_parameters = []
+
+    if buffer:
+        optional_site_parameters.append('buffer')
+    if committed:
+        optional_site_parameters.append('committed')
+    if last_site_action:
+        optional_site_parameters.append('last_site_action')
+    if successful_site_action:
+        optional_site_parameters.append('successful_site_action')
+
+    if len(optional_site_parameters) > 1:
+        ctx.fail(
+            'You may only choose one of the following options:\n'
+            '--buffer for the documents in the Shipyard buffer\n'
+            '--committed for the last committed revision of the documents\n'
+            '--last-site-action for the documents associated with the last '
+            'successful or failed site action\n'
+            '--successful-site-action for the documents associated with the '
+            'last successful site action\n'
+            'Site actions include deploy_site and update_site.')
+
+    elif len(optional_site_parameters) == 1:
+        return optional_site_parameters[0]
+
+    else:
+        return 'buffer'

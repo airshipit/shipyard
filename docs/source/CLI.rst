@@ -575,14 +575,16 @@ Sample
 get configdocs
 ~~~~~~~~~~~~~~
 
-Retrieve documents loaded into Shipyard, either committed or from the
-Shipyard Buffer.
+Retrieve documents loaded into Shipyard. The possible options include last
+committed, last site action, last successful site action and retrieval from
+the Shipyard Buffer. Site actions include deploy_site and update_site. Note
+that we can only select one of the options for each CLI call.
 
 ::
 
     shipyard get configdocs
         [<collection>]
-        [--committed | --buffer]
+        [--committed | --last-site-action | --successful-site-action | --buffer]
 
     Example:
         shipyard get configdocs design
@@ -594,6 +596,14 @@ Shipyard Buffer.
 
 \--committed
   Retrieve the documents that have last been committed for this collection
+
+\--last-site-action
+  Retrieve the documents associated with the last successful or failed site
+  action for this collection
+
+\--successful-site-action
+  Retrieve the documents associated with the last successful site action
+  for this collection
 
 \--buffer
   Retrive the documents that have been loaded into Shipyard since the
@@ -608,7 +618,7 @@ Samples
     $ shipyard get configdocs
     Collection        Committed       Buffer
     coll1             present         unmodified
-    coll2             not present      created
+    coll2             not present     created
 
 
 ::
@@ -635,13 +645,19 @@ applying Deckhand layering and substitution.
 ::
 
     shipyard get renderedconfigdocs
-        [--committed | --buffer]
+        [--committed | --last-site-action | --successful-site-action | --buffer]
 
     Example:
         shipyard get renderedconfigdocs
 
 \--committed
   Retrieve the documents that have last been committed.
+
+\--last-site-action
+  Retrieve the documents associated with the last successful or failed site action.
+
+\--successful-site-action
+  Retrieve the documents associated with the last successful site action.
 
 \--buffer
   Retrieve the documents that have been loaded into Shipyard since the

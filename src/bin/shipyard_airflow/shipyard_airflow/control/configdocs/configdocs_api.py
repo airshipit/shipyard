@@ -26,7 +26,10 @@ from shipyard_airflow.control.configdocs.configdocs_helper import (
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
-VERSION_VALUES = ['buffer', 'committed']
+VERSION_VALUES = ['buffer',
+                  'committed',
+                  'last_site_action',
+                  'successful_site_action']
 
 
 class ConfigDocsStatusResource(BaseResource):
@@ -113,7 +116,8 @@ class ConfigDocsResource(BaseResource):
     def get_collection(self, helper, collection_id, version='buffer'):
         """
         Attempts to retrieve the specified collection of documents
-        either from the buffer or committed version, as specified
+        either from the buffer, committed version, last site action
+        or successful site action, as specified
         """
         return helper.get_collection_docs(version, collection_id)
 

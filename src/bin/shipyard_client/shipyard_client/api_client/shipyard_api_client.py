@@ -71,7 +71,8 @@ class ShipyardClient(BaseClient):
         Get the collection of documents from deckhand specified by
         collection id
         :param collection_id: String, bucket_id in deckhand
-        :param version: String, committed|buffer
+        :param version: String, buffer|committed|last_site_action|
+                                successful_site_action
         :rtype: Response object
         """
         query_params = {"version": version}
@@ -90,7 +91,8 @@ class ShipyardClient(BaseClient):
 
     def get_rendereddocs(self, version='buffer'):
         """
-        :param str version: committed|buffer
+        :param str version: committed|buffer|last_site_action|
+                            successful_site_action
         :returns: full set of configdocs in their rendered form.
         :rtype: Response object
         """

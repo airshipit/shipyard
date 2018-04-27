@@ -25,7 +25,10 @@ from shipyard_airflow.control.configdocs.configdocs_helper import \
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
-VERSION_VALUES = ['buffer', 'committed']
+VERSION_VALUES = ['buffer',
+                  'committed',
+                  'last_site_action',
+                  'successful_site_action']
 
 
 class RenderedConfigDocsResource(BaseResource):

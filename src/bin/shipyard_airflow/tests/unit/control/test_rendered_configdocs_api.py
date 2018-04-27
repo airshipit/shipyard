@@ -25,7 +25,7 @@ from shipyard_airflow.errors import ApiError
 CTX = ShipyardRequestContext()
 
 
-def test__validate_version_parameter():
+def test_validate_version_parameter():
     """
     test of the version parameter validation
     """
@@ -53,3 +53,35 @@ def test_get_rendered_configdocs():
         rcdr.get_rendered_configdocs(helper, version='buffer')
 
     mock_method.assert_called_once_with('buffer')
+
+
+def test_get_rendered_last_site_action_configdocs():
+    """
+    Tests the RenderedConfigDocsResource method get_rendered_configdocs
+    for last_site_action tag
+    """
+    rcdr = RenderedConfigDocsResource()
+
+    with patch.object(
+        ConfigdocsHelper, 'get_rendered_configdocs'
+    ) as mock_method:
+        helper = ConfigdocsHelper(CTX)
+        rcdr.get_rendered_configdocs(helper, version='last_site_action')
+
+    mock_method.assert_called_once_with('last_site_action')
+
+
+def test_get_rendered_successful_site_action_configdocs():
+    """
+    Tests the RenderedConfigDocsResource method get_rendered_configdocs
+    for successful_site_action tag
+    """
+    rcdr = RenderedConfigDocsResource()
+
+    with patch.object(
+        ConfigdocsHelper, 'get_rendered_configdocs'
+    ) as mock_method:
+        helper = ConfigdocsHelper(CTX)
+        rcdr.get_rendered_configdocs(helper, version='successful_site_action')
+
+    mock_method.assert_called_once_with('successful_site_action')

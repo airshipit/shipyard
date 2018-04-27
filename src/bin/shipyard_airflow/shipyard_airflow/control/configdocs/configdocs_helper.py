@@ -35,12 +35,16 @@ from shipyard_airflow.errors import ApiError, AppError
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
-# keys for the revision dict, and consistency of strings for committed
-# and buffer.
-COMMITTED = 'committed'
+# keys for the revision dict, and consistency of strings for committed,
+# buffer, site-action-success and site-action-failure.
 BUFFER = 'buffer'
+COMMITTED = 'committed'
+LAST_SITE_ACTION = 'last_site_action'
 LATEST = 'latest'
 REVISION_COUNT = 'count'
+SITE_ACTION_SUCCESS = 'site-action-success'
+SITE_ACTION_FAILURE = 'site-action-failure'
+SUCCESSFUL_SITE_ACTION = 'successful_site_action'
 
 # string for rollback_commit consistency
 ROLLBACK_COMMIT = 'rollback_commit'
@@ -96,7 +100,7 @@ class ConfigdocsHelper(object):
 
     def is_buffer_empty(self):
         """ Check if the buffer is empty. """
-        return self._get_buffer_revision() is None
+        return self._get_revision(BUFFER) is None
 
     def is_collection_in_buffer(self, collection_id):
         """
@@ -107,12 +111,12 @@ class ConfigdocsHelper(object):
 
         # If there is no committed revision, then it's 0.
         # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self._get_committed_rev_id() or 0
+        old_revision_id = self._get_revision_id(COMMITTED) or 0
 
         try:
             diff = self.deckhand.get_diff(
                 old_revision_id=old_revision_id,
-                new_revision_id=self._get_buffer_rev_id())
+                new_revision_id=self._get_revision_id(BUFFER))
             # the collection is in the buffer if it's not unmodified
             return diff.get(collection_id, 'unmodified') != 'unmodified'
 
@@ -142,7 +146,7 @@ class ConfigdocsHelper(object):
         # replace the buffer with last commit.
         elif buffermode == BufferMode.REPLACE:
             committed_rev_id = None
-            committed_rev = self._get_committed_revision()
+            committed_rev = self._get_revision(COMMITTED)
             if committed_rev:
                 committed_rev_id = committed_rev['id']
             if committed_rev_id is None:
@@ -165,8 +169,8 @@ class ConfigdocsHelper(object):
 
         # If there is no committed revision, then it's 0.
         # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self._get_committed_rev_id() or 0
-        new_revision_id = self._get_buffer_rev_id() or old_revision_id
+        old_revision_id = self._get_revision_id(COMMITTED) or 0
+        new_revision_id = self._get_revision_id(BUFFER) or old_revision_id
 
         try:
             diff = self.deckhand.get_diff(
@@ -209,12 +213,17 @@ class ConfigdocsHelper(object):
     def _get_revision_dict(self):
         """
         Returns a dictionary with values representing the revisions in
-        Deckhand that Shipyard cares about - committed, buffer,
-        and latest, as well as a count of revisions
+        Deckhand that Shipyard cares about - committed, buffer, latest,
+        last_site_action and successful_site_action, as well as a count
+        of revisions.
         Committed and buffer are revisions associated with the
         shipyard tags. If either of those are not present in deckhand,
         returns None for the value.
         Latest holds the revision information for the newest revision.
+        Last site action holds the revision information for the most
+        recent site action
+        Successful site action holds the revision information for the
+        most recent successfully executed site action.
         """
         # return the cached instance version of the revision dict.
         if self.revision_dict is not None:
@@ -222,28 +231,49 @@ class ConfigdocsHelper(object):
         # or generate one for the cache
         committed_revision = None
         buffer_revision = None
+        last_site_action = None
         latest_revision = None
         revision_count = 0
+        successful_site_action = None
         try:
             revisions = self.deckhand.get_revision_list()
             revision_count = len(revisions)
             if revisions:
+                # Retrieve latest revision
                 latest_revision = revisions[-1]
+
+                # Get required revision
                 for revision in reversed(revisions):
                     tags = revision.get('tags', [])
-                    if COMMITTED in tags or ROLLBACK_COMMIT in tags:
+
+                    if (committed_revision is None and (
+                            COMMITTED in tags or
+                            ROLLBACK_COMMIT in tags)):
                         committed_revision = revision
-                        break
                     else:
                         # there are buffer revisions, only grab it on
                         # the first pass through
                         # if the first revision is committed, or if there
                         # are no revsisions, buffer revsision stays None
-                        if buffer_revision is None:
+                        if (committed_revision is None and
+                                buffer_revision is None):
                             buffer_revision = revision
+
+                    # Get the revision of the last successful site action
+                    if (successful_site_action is None and
+                            SITE_ACTION_SUCCESS in tags):
+                        successful_site_action = revision
+
+                    # Get the revision of the last site action
+                    if (last_site_action is None and (
+                            SITE_ACTION_SUCCESS in tags or
+                            SITE_ACTION_FAILURE in tags)):
+                        last_site_action = revision
+
         except NoRevisionsExistError:
             # the values of None/None/None/0 are fine
             pass
+
         except DeckhandResponseError as drex:
             raise AppError(
                 title='Unable to retrieve revisions',
@@ -253,50 +283,32 @@ class ConfigdocsHelper(object):
                 status=falcon.HTTP_500,
                 retry=False)
         self.revision_dict = {
-            COMMITTED: committed_revision,
             BUFFER: buffer_revision,
+            COMMITTED: committed_revision,
+            LAST_SITE_ACTION: last_site_action,
             LATEST: latest_revision,
-            REVISION_COUNT: revision_count
+            REVISION_COUNT: revision_count,
+            SUCCESSFUL_SITE_ACTION: successful_site_action
         }
         return self.revision_dict
 
-    def _get_buffer_revision(self):
-        # convenience helper to drill down to Buffer revision
-        return self._get_revision_dict().get(BUFFER)
+    def _get_revision(self, target_revision):
+        # Helper to drill down to the target revision
+        return self._get_revision_dict().get(target_revision)
 
-    def _get_buffer_rev_id(self):
-        # convenience helper to drill down to Buffer revision id
-        buf_rev = self._get_revision_dict().get(BUFFER)
-        return buf_rev['id'] if buf_rev else None
-
-    def _get_latest_revision(self):
-        # convenience helper to drill down to latest revision
-        return self._get_revision_dict().get(LATEST)
-
-    def _get_latest_rev_id(self):
-        # convenience helper to drill down to latest revision id
-        latest_rev = self._get_revision_dict().get(LATEST)
-        return latest_rev['id'] if latest_rev else None
-
-    def _get_committed_revision(self):
-        # convenience helper to drill down to committed revision
-        return self._get_revision_dict().get(COMMITTED)
-
-    def _get_committed_rev_id(self):
-        # convenience helper to drill down to committed revision id
-        committed_rev = self._get_revision_dict().get(COMMITTED)
-        return committed_rev['id'] if committed_rev else None
+    def _get_revision_id(self, target_revision):
+        rev = self._get_revision_dict().get(target_revision)
+        return rev['id'] if rev else None
 
     def get_collection_docs(self, version, collection_id):
         """
         Returns the requested collection of docs based on the version
-        specifier. Since the default is the buffer, only return
-        committed if explicitly stated. No need to further check the
-        parameter for validity here.
+        specifier. The default is set as buffer.
         """
         LOG.info('Retrieving collection %s from %s', collection_id, version)
-        if version == COMMITTED:
-            return self._get_committed_docs(collection_id)
+        if version in [COMMITTED, LAST_SITE_ACTION, SUCCESSFUL_SITE_ACTION]:
+            return self._get_target_docs(collection_id, version)
+
         return self._get_doc_from_buffer(collection_id)
 
     def _get_doc_from_buffer(self, collection_id):
@@ -311,7 +323,7 @@ class ConfigdocsHelper(object):
         if self.is_collection_in_buffer(collection_id):
             # prior check for collection in buffer means the buffer
             # revision exists
-            buffer_id = self._get_buffer_rev_id()
+            buffer_id = self._get_revision_id(BUFFER)
             return self.deckhand.get_docs_from_revision(
                 revision_id=buffer_id, bucket_id=collection_id)
         raise ApiError(
@@ -321,51 +333,66 @@ class ConfigdocsHelper(object):
             status=falcon.HTTP_404,
             retry=False)
 
-    def _get_committed_docs(self, collection_id):
+    def _get_target_docs(self, collection_id, target_rev):
         """
-        Returns the collection if it exists as committed.
+        Returns the collection if it exists as committed, last_site_action
+        or successful_site_action.
         """
-        committed_id = self._get_committed_rev_id()
-        if committed_id:
+        revision_id = self._get_revision_id(target_rev)
+
+        if revision_id:
             return self.deckhand.get_docs_from_revision(
-                revision_id=committed_id, bucket_id=collection_id)
-        # if there is no committed...
+                revision_id=revision_id, bucket_id=collection_id)
+
         raise ApiError(
             title='No documents to retrieve',
-            description='There is no committed version of this collection',
+            description=('No collection {} for revision '
+                         '{}'.format(collection_id, target_rev)),
             status=falcon.HTTP_404,
             retry=False)
 
     def get_rendered_configdocs(self, version=BUFFER):
         """
         Returns the rendered configuration documents for the specified
-        revision (by name BUFFER, COMMITTED)
+        revision (by name BUFFER, COMMITTED, LAST_SITE_ACTION,
+        SUCCESSFUL_SITE_ACTION)
         """
         revision_dict = self._get_revision_dict()
-        if version in (BUFFER, COMMITTED):
-            if revision_dict.get(version):
-                revision_id = revision_dict.get(version).get('id')
-                try:
-                    return self.deckhand.get_rendered_docs_from_revision(
-                        revision_id=revision_id)
-                except DeckhandError as de:
-                    raise ApiError(
-                        title='Deckhand indicated an error while rendering',
-                        description=de.response_message,
-                        status=falcon.HTTP_500,
-                        retry=False)
-            else:
+
+        # Raise Exceptions if we received unexpected version
+        if version not in [BUFFER, COMMITTED, LAST_SITE_ACTION,
+                           SUCCESSFUL_SITE_ACTION]:
+            raise ApiError(
+                title='Invalid version',
+                description='{} is not a valid version'.format(version),
+                status=falcon.HTTP_400,
+                retry=False)
+
+        if revision_dict.get(version):
+            revision_id = revision_dict.get(version).get('id')
+
+            try:
+                return self.deckhand.get_rendered_docs_from_revision(
+                    revision_id=revision_id)
+            except DeckhandError as de:
                 raise ApiError(
-                    title='This revision does not exist',
-                    description='{} version does not exist'.format(version),
-                    status=falcon.HTTP_404,
+                    title='Deckhand indicated an error while rendering',
+                    description=de.response_message,
+                    status=falcon.HTTP_500,
                     retry=False)
+
+        else:
+            raise ApiError(
+                title='This revision does not exist',
+                description='{} version does not exist'.format(version),
+                status=falcon.HTTP_404,
+                retry=False)
 
     def get_validations_for_buffer(self):
         """
         Convenience method to do validations for buffer version.
         """
-        buffer_rev_id = self._get_buffer_rev_id()
+        buffer_rev_id = self._get_revision_id(BUFFER)
         if buffer_rev_id:
             return self.get_validations_for_revision(buffer_rev_id)
         raise AppError(
@@ -682,7 +709,7 @@ class ConfigdocsHelper(object):
         """
         Convenience method to tag the buffer version.
         """
-        buffer_rev_id = self._get_buffer_rev_id()
+        buffer_rev_id = self._get_revision_id(BUFFER)
         if buffer_rev_id is None:
             raise AppError(
                 title='Unable to tag buffer as {}'.format(tag),
@@ -722,7 +749,7 @@ class ConfigdocsHelper(object):
                 description=drie.response_message)
         # reset the revision dict so it regenerates.
         self.revision_dict = None
-        return self._get_buffer_rev_id()
+        return self._get_revision_id(BUFFER)
 
     def check_intermediate_commit(self):
 
