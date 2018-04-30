@@ -79,9 +79,12 @@ class ConfigdocsHelper(object):
         self.revision_dict = None
 
     @staticmethod
-    def get_buffer_mode(buffermode_string):
-        """
-        Checks the buffer mode for valid values.
+    def get_buffer_mode(buffermode_string=None):
+        """Checks the buffer mode for valid values.
+
+        :param buffermode_string: the string matching a valid buffer mode
+        Returns Buffermode.REJECTONTENTS value if the input is not specified
+        or is an invalid value.
         """
         if buffermode_string:
             try:

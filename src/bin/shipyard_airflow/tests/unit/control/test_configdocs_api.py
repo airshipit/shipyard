@@ -49,9 +49,20 @@ class TestConfigDocsResource():
     @patch.object(ConfigDocsResource, 'post_collection', common.str_responder)
     @mock.patch.object(ApiLock, 'release')
     @mock.patch.object(ApiLock, 'acquire')
-    def test_on_post(self, mock_acquire, mock_release, api_client):
+    def test_on_post_empty(self, mock_acquire, mock_release, api_client):
         result = api_client.simulate_post(
             "/api/v1.0/configdocs/coll1", headers=common.AUTH_HEADERS)
+        assert result.status_code == 400
+        assert 'Content-Length specified is 0 or not set' in result.text
+
+    @patch.object(ConfigDocsResource, 'post_collection', common.str_responder)
+    @mock.patch.object(ApiLock, 'release')
+    @mock.patch.object(ApiLock, 'acquire')
+    def test_on_post(self, mock_acquire, mock_release, api_client):
+        headers = {'Content-Length': '1'}
+        headers.update(common.AUTH_HEADERS)
+        result = api_client.simulate_post(
+            "/api/v1.0/configdocs/coll1", headers=headers, body='A')
         assert result.status_code == 201
 
     @patch.object(ConfigDocsResource, 'get_collection', common.str_responder)
@@ -86,6 +97,8 @@ class TestConfigDocsResource():
 
         mock_method.assert_called_once_with('buffer', 'apples')
 
+    @patch.object(ConfigdocsHelper, 'is_collection_in_buffer',
+                  lambda x, y: True)
     def test_post_collection(self):
         """
         Tests the post collection method of the ConfigdocsResource
@@ -106,17 +119,53 @@ class TestConfigDocsResource():
 
         mock_method.assert_called_once_with(collection_id, document_data)
 
-        with pytest.raises(ApiError):
+    @patch.object(ConfigdocsHelper, 'is_collection_in_buffer',
+                  lambda x, y: True)
+    @patch.object(ConfigdocsHelper, 'is_buffer_valid_for_bucket',
+                  lambda x, y, z: False)
+    def test_post_collection_not_valid_for_buffer(self):
+        """
+        Tests the post collection method of the ConfigdocsResource
+        """
+        helper = None
+        collection_id = 'trees'
+        document_data = 'lots of info'
+        with pytest.raises(ApiError) as apie:
             cdr = ConfigDocsResource()
             helper = ConfigdocsHelper(CTX)
             # not valid for bucket
-            helper.is_buffer_valid_for_bucket = lambda a, b: False
             helper.get_deckhand_validation_status = (
                 lambda a: ConfigdocsHelper._format_validations_to_status([], 0)
             )
             cdr.post_collection(helper=helper,
                                 collection_id=collection_id,
                                 document_data=document_data)
+        assert apie.value.status == '409 Conflict'
+
+    @patch.object(ConfigdocsHelper, 'is_collection_in_buffer',
+                  lambda x, y: False)
+    @patch.object(ConfigdocsHelper, 'is_buffer_valid_for_bucket',
+                  lambda x, y, z: True)
+    def test_post_collection_not_added(self):
+        """
+        Tests the post collection method of the ConfigdocsResource
+        """
+        helper = None
+        collection_id = 'trees'
+        document_data = 'lots of info'
+        with patch.object(ConfigdocsHelper, 'add_collection') as mock_method:
+            cdr = ConfigDocsResource()
+            helper = ConfigdocsHelper(CTX)
+            helper.get_deckhand_validation_status = (
+                lambda a: ConfigdocsHelper._format_validations_to_status([], 0)
+            )
+            with pytest.raises(ApiError) as apie:
+                cdr.post_collection(helper=helper,
+                                    collection_id=collection_id,
+                                    document_data=document_data)
+
+            assert apie.value.status == '400 Bad Request'
+        mock_method.assert_called_once_with(collection_id, document_data)
 
 
 class TestCommitConfigDocsResource():
@@ -124,7 +173,6 @@ class TestCommitConfigDocsResource():
     @mock.patch.object(ApiLock, 'acquire')
     def test_on_post(self, mock_acquire, mock_release, api_client):
         queries = ["", "force=true", "dryrun=true"]
-        ccdr = CommitConfigDocsResource()
         with patch.object(
             CommitConfigDocsResource, 'commit_configdocs', return_value={}
         ) as mock_method:

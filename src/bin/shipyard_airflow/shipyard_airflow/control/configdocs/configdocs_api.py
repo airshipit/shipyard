@@ -22,7 +22,7 @@ from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.api_lock import (api_lock, ApiLockType)
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.configdocs.configdocs_helper import (
-    BufferMode, ConfigdocsHelper)
+    ConfigdocsHelper)
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
@@ -55,13 +55,33 @@ class ConfigDocsResource(BaseResource):
         """
         Ingests a collection of documents
         """
-        document_data = req.stream.read(req.content_length or 0)
+        content_length = req.content_length or 0
+        if (content_length == 0):
+            raise ApiError(
+                title=('Content-Length is a required header'),
+                description='Content Length is 0 or not specified',
+                status=falcon.HTTP_400,
+                error_list=[{
+                    'message': (
+                        'The Content-Length specified is 0 or not set. Check '
+                        'that a valid payload is included with this request '
+                        'and that your client is properly including a '
+                        'Content-Length header. Note that a newline character '
+                        'in a prior header can trigger subsequent headers to '
+                        'be ignored and trigger this failure.')
+                }],
+                retry=False, )
+        document_data = req.stream.read(content_length)
+
+        buffer_mode = req.get_param('buffermode')
+
         helper = ConfigdocsHelper(req.context)
         validations = self.post_collection(
             helper=helper,
             collection_id=collection_id,
             document_data=document_data,
-            buffer_mode_param=req.params.get('buffermode'))
+            buffer_mode_param=buffer_mode)
+
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
         resp.body = self.to_json(validations)
         resp.status = falcon.HTTP_201
@@ -105,15 +125,28 @@ class ConfigDocsResource(BaseResource):
         """
         Ingest the collection after checking preconditions
         """
-        if buffer_mode_param is None:
-            buffer_mode = BufferMode.REJECTONCONTENTS
-        else:
-            buffer_mode = ConfigdocsHelper.get_buffer_mode(buffer_mode_param)
+        buffer_mode = ConfigdocsHelper.get_buffer_mode(buffer_mode_param)
 
         if helper.is_buffer_valid_for_bucket(collection_id, buffer_mode):
             buffer_revision = helper.add_collection(collection_id,
                                                     document_data)
-            return helper.get_deckhand_validation_status(buffer_revision)
+            if helper.is_collection_in_buffer(collection_id):
+                return helper.get_deckhand_validation_status(buffer_revision)
+            else:
+                raise ApiError(
+                    title=('Collection {} not added to Shipyard '
+                           'buffer'.format(collection_id)),
+                    description='Collection empty or resulted in no revision',
+                    status=falcon.HTTP_400,
+                    error_list=[{
+                        'message': (
+                            'Empty collections are not supported. After '
+                            'processing, the collection {} added no new '
+                            'revision, and has been rejected as invalid '
+                            'input'.format(collection_id))
+                    }],
+                    retry=False,
+                )
         else:
             raise ApiError(
                 title='Invalid collection specified for buffer',
@@ -125,7 +158,8 @@ class ConfigDocsResource(BaseResource):
                                 'Setting a different buffermode may '
                                 'provide the desired functionality')
                 }],
-                retry=False, )
+                retry=False,
+            )
 
 
 class CommitConfigDocsResource(BaseResource):

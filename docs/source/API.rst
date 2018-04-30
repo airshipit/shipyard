@@ -139,7 +139,7 @@ progress, this POST should be rejected with a 409 error.
 Query Parameters
 ''''''''''''''''
 
--  bufferMode=append|replace\|\ **rejectOnContents**
+-  buffermode=append|replace\|\ **rejectOnContents**
    Indicates how the existing Shipyard Buffer should be handled. By default,
    Shipyard will reject the POST if contents already exist in the Shipyard
    Buffer.
@@ -161,13 +161,21 @@ Responses
   -  The response headers will include a Location indicating the GET
      endpoint to retrieve the configDocs
 
+400 Bad Request
+  When:
+
+  - The request is missing a message body, attempting to create a collection
+    with no contents.
+  - The request has no new/changed contents for the collection.
+  - The request is missing a Content-Length header.
+
 409 Conflict
   A condition in the system is blocking this document ingestion
 
   -  If a commitconfigdocs POST is in progress.
-  -  If any collections exist in the Shipyard Buffer unless bufferMode=replace
-     or bufferMode=append.
-  -  If bufferMode=append, and the collection being posted is already in the
+  -  If any collections exist in the Shipyard Buffer unless buffermode=replace
+     or buffermode=append.
+  -  If buffermode=append, and the collection being posted is already in the
      Shipyard Buffer
 
 GET /v1.0/configdocs/{collection_id}
