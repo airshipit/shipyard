@@ -25,6 +25,7 @@ from shipyard_airflow import policy
 from shipyard_airflow.control.action.action_helper import (determine_lifecycle,
                                                            format_action_steps)
 from shipyard_airflow.control.base import BaseResource
+from shipyard_airflow.control.configdocs import configdocs_helper
 from shipyard_airflow.control.configdocs.configdocs_helper import (
     ConfigdocsHelper)
 from shipyard_airflow.control.json_schemas import ACTION
@@ -339,7 +340,9 @@ class ActionsResource(BaseResource):
     def get_committed_design_version(self):
 
         LOG.info("Checking for committed revision in Deckhand...")
-        committed_rev_id = self.configdocs_helper._get_committed_rev_id()
+        committed_rev_id = self.configdocs_helper.get_revision_id(
+            configdocs_helper.COMMITTED
+        )
 
         if committed_rev_id:
             LOG.info("The committed revision in Deckhand is %d",

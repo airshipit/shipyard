@@ -111,12 +111,12 @@ class ConfigdocsHelper(object):
 
         # If there is no committed revision, then it's 0.
         # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self._get_revision_id(COMMITTED) or 0
+        old_revision_id = self.get_revision_id(COMMITTED) or 0
 
         try:
             diff = self.deckhand.get_diff(
                 old_revision_id=old_revision_id,
-                new_revision_id=self._get_revision_id(BUFFER))
+                new_revision_id=self.get_revision_id(BUFFER))
             # the collection is in the buffer if it's not unmodified
             return diff.get(collection_id, 'unmodified') != 'unmodified'
 
@@ -169,8 +169,8 @@ class ConfigdocsHelper(object):
 
         # If there is no committed revision, then it's 0.
         # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self._get_revision_id(COMMITTED) or 0
-        new_revision_id = self._get_revision_id(BUFFER) or old_revision_id
+        old_revision_id = self.get_revision_id(COMMITTED) or 0
+        new_revision_id = self.get_revision_id(BUFFER) or old_revision_id
 
         try:
             diff = self.deckhand.get_diff(
@@ -296,7 +296,8 @@ class ConfigdocsHelper(object):
         # Helper to drill down to the target revision
         return self._get_revision_dict().get(target_revision)
 
-    def _get_revision_id(self, target_revision):
+    def get_revision_id(self, target_revision):
+        """Get the revision id for the target_revision"""
         rev = self._get_revision_dict().get(target_revision)
         return rev['id'] if rev else None
 
@@ -323,7 +324,7 @@ class ConfigdocsHelper(object):
         if self.is_collection_in_buffer(collection_id):
             # prior check for collection in buffer means the buffer
             # revision exists
-            buffer_id = self._get_revision_id(BUFFER)
+            buffer_id = self.get_revision_id(BUFFER)
             return self.deckhand.get_docs_from_revision(
                 revision_id=buffer_id, bucket_id=collection_id)
         raise ApiError(
@@ -338,7 +339,7 @@ class ConfigdocsHelper(object):
         Returns the collection if it exists as committed, last_site_action
         or successful_site_action.
         """
-        revision_id = self._get_revision_id(target_rev)
+        revision_id = self.get_revision_id(target_rev)
 
         if revision_id:
             return self.deckhand.get_docs_from_revision(
@@ -392,7 +393,7 @@ class ConfigdocsHelper(object):
         """
         Convenience method to do validations for buffer version.
         """
-        buffer_rev_id = self._get_revision_id(BUFFER)
+        buffer_rev_id = self.get_revision_id(BUFFER)
         if buffer_rev_id:
             return self.get_validations_for_revision(buffer_rev_id)
         raise AppError(
@@ -709,7 +710,7 @@ class ConfigdocsHelper(object):
         """
         Convenience method to tag the buffer version.
         """
-        buffer_rev_id = self._get_revision_id(BUFFER)
+        buffer_rev_id = self.get_revision_id(BUFFER)
         if buffer_rev_id is None:
             raise AppError(
                 title='Unable to tag buffer as {}'.format(tag),
@@ -749,7 +750,7 @@ class ConfigdocsHelper(object):
                 description=drie.response_message)
         # reset the revision dict so it regenerates.
         self.revision_dict = None
-        return self._get_revision_id(BUFFER)
+        return self.get_revision_id(BUFFER)
 
     def check_intermediate_commit(self):
 
