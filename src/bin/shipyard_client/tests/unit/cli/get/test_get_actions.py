@@ -143,42 +143,74 @@ def test_get_configdocs_not_found(*args):
 @pytest.mark.parametrize("test_input, expected", [("""
 [
      {
-        "collection_name":"Collection_1",
-         "committed_status": "present",
-         "buffer_status": "unmodified"
+        "collection_name": "Collection_1",
+        "base_status": "present",
+        "new_status": "unmodified",
+        "base_version": "committed",
+        "base_revision": 3,
+        "new_version": "buffer",
+        "new_revision": 5
      },
      {
-        "collection_name":"Collection_2",
-         "committed_status": "present",
-         "buffer_status": "modified"
+        "collection_name": "Collection_2",
+        "base_status": "present",
+        "new_status": "modified",
+        "base_version": "committed",
+        "base_revision": 3,
+        "new_version": "buffer",
+        "new_revision": 5
      },
      {
-        "collection_name":"Collection_3",
-         "committed_status": "not present",
-         "buffer_status": "created"
+        "collection_name": "Collection_3",
+        "base_status": "not present",
+        "new_status": "created",
+        "base_version": "committed",
+        "base_revision": 3,
+        "new_version": "buffer",
+        "new_revision": 5
      },
      {
-        "collection_name":"Collection_A",
-         "committed_status": "present",
-         "buffer_status": "deleted"
+        "collection_name": "Collection_A",
+        "base_status": "present",
+        "new_status": "deleted",
+        "base_version": "committed",
+        "base_revision": 3,
+        "new_version": "buffer",
+        "new_revision": 5
      }
 ]
 """, [{
     "collection_name": "Collection_1",
-    "committed_status": "present",
-    "buffer_status": "unmodified"
+    "base_status": "present",
+    "new_status": "unmodified",
+    "base_version": "committed",
+    "base_revision": 3,
+    "new_version": "buffer",
+    "new_revision": 5
 }, {
     "collection_name": "Collection_2",
-    "committed_status": "present",
-    "buffer_status": "modified"
+    "base_status": "present",
+    "new_status": "modified",
+    "base_version": "committed",
+    "base_revision": 3,
+    "new_version": "buffer",
+    "new_revision": 5
 }, {
     "collection_name": "Collection_3",
-    "committed_status": "not present",
-    "buffer_status": "created"
+    "base_status": "not present",
+    "new_status": "created",
+    "base_version": "committed",
+    "base_revision": 3,
+    "new_version": "buffer",
+    "new_revision": 5
 }, {
     "collection_name": "Collection_A",
-    "committed_status": "present",
-    "buffer_status": "deleted"
+    "base_status": "present",
+    "new_status": "deleted",
+    "base_version": "committed",
+    "base_revision": 3,
+    "new_version": "buffer",
+    "new_revision": 5
 }])])
 def test_get_configdocs_status(test_input, expected, *args):
     responses.add(

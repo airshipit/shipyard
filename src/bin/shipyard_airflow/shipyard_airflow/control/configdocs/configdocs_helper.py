@@ -160,22 +160,93 @@ class ConfigdocsHelper(object):
                 self.deckhand.rollback(committed_rev_id)
             return True
 
-    def get_configdocs_status(self):
+    def get_configdocs_status(self, versions=None):
         """
-        Returns a list of the configdocs, committed or in buffer, and their
-        current committed and buffer statuses
+        :param versions: A list of 2 versions. Defaults to buffer and
+                         commmitted if None.
+
+        Returns a list of the configdocs based on their versions and
+        statuses
         """
         configdocs_status = []
 
-        # If there is no committed revision, then it's 0.
-        # new revision is ok because we just checked for buffer emptiness
-        old_revision_id = self.get_revision_id(COMMITTED) or 0
-        new_revision_id = self.get_revision_id(BUFFER) or old_revision_id
+        # Default ordering
+        def_order = [SUCCESSFUL_SITE_ACTION,
+                     LAST_SITE_ACTION,
+                     COMMITTED,
+                     BUFFER]
+
+        # Defaults to COMMITTED and BUFFER
+        if versions is None:
+            versions = [COMMITTED, BUFFER]
+
+        elif not len(versions) == 2:
+            raise AppError(
+                title='Incorrect number of versions for comparison',
+                description=(
+                    'User must pass in 2 valid versions for comparison'),
+                status=falcon.HTTP_400,
+                retry=False)
+
+        elif versions[0] == versions[1]:
+            raise AppError(
+                title='Versions must be different for comparison',
+                description=(
+                    'Versions must be unique in order to perform comparison'),
+                status=falcon.HTTP_400,
+                retry=False)
+
+        for version in versions:
+            if version not in def_order:
+                raise AppError(
+                    title='Invalid version detected',
+                    description=(
+                        '{} is not a valid version, which include: '
+                        '{}'.format(version, ', '.join(def_order))),
+                    status=falcon.HTTP_400,
+                    retry=False)
+
+        # Higher index in the def_order list will mean that it is a newer
+        # version. We will swap the order and sort the version if need be.
+        if def_order.index(versions[0]) > def_order.index(versions[1]):
+            sorted_versions = list(reversed(versions))
+        else:
+            sorted_versions = versions
+
+        # Get version id
+        old_version_id = self.get_revision_id(sorted_versions[0])
+        new_version_id = self.get_revision_id(sorted_versions[1])
+
+        # Get revision name
+        old_version_name = sorted_versions[0]
+        new_version_name = sorted_versions[1]
+
+        # Check that revision id of LAST_SITE_ACTION and SUCCESSFUL_SITE_ACTION
+        # is not None
+        for name, rev_id in [(old_version_name, old_version_id),
+                             (new_version_name, new_version_id)]:
+            if (name in [LAST_SITE_ACTION, SUCCESSFUL_SITE_ACTION] and
+                    rev_id is None):
+                raise AppError(
+                    title='Version does not exist',
+                    description='{} version does not exist'.format(name),
+                    status=falcon.HTTP_404,
+                    retry=False)
+
+        # Set to 0 if there is no committed version
+        if old_version_name == COMMITTED and old_version_id is None:
+            old_version_id = 0
+            new_version_id = self.get_revision_id(BUFFER) or 0
+
+        # Set new_version_id if None
+        if new_version_id is None:
+            new_version_id = (
+                self.get_revision_id(BUFFER) or old_version_id or 0)
 
         try:
             diff = self.deckhand.get_diff(
-                old_revision_id=old_revision_id,
-                new_revision_id=new_revision_id)
+                old_revision_id=old_version_id,
+                new_revision_id=new_version_id)
 
         except DeckhandResponseError as drex:
             raise AppError(
@@ -188,13 +259,20 @@ class ConfigdocsHelper(object):
 
         for collection_id in diff:
             collection = {"collection_name": collection_id}
+
             if diff[collection_id] in [
                     "unmodified", "modified", "created", "deleted"]:
-                collection['buffer_status'] = diff[collection_id]
+
+                collection['base_version'] = old_version_name
+                collection['base_revision'] = old_version_id
+                collection['new_version'] = new_version_name
+                collection['new_revision'] = new_version_id
+                collection['new_status'] = diff[collection_id]
+
                 if diff[collection_id] == "created":
-                    collection['committed_status'] = 'not present'
+                    collection['base_status'] = 'not present'
                 else:
-                    collection['committed_status'] = 'present'
+                    collection['base_status'] = 'present'
 
             else:
                 raise AppError(
@@ -205,7 +283,8 @@ class ConfigdocsHelper(object):
                         ' only valid collection statuses.',
                         collection_id),
                     status=falcon.HTTP_500,
-                    retry=False, )
+                    retry=False)
+
             configdocs_status.append(collection)
 
         return configdocs_status

@@ -303,16 +303,28 @@ def test_get_configdocs_status():
 
     expected = [{
         "collection_name": 'chum',
-        "committed_status": 'not present',
-        "buffer_status": 'created'
+        "base_version": 'committed',
+        "base_revision": 3,
+        "new_version": 'buffer',
+        "new_revision": 5,
+        "new_status": 'created',
+        "base_status": 'not present'
     }, {
         "collection_name": 'mop',
-        "committed_status": 'present',
-        "buffer_status": 'unmodified'
+        "base_version": 'committed',
+        "base_revision": 3,
+        "new_version": 'buffer',
+        "new_revision": 5,
+        "new_status": 'unmodified',
+        "base_status": 'present'
     }, {
         "collection_name": 'slop',
-        "committed_status": 'present',
-        "buffer_status": 'deleted'
+        "base_version": 'committed',
+        "base_revision": 3,
+        "new_version": 'buffer',
+        "new_revision": 5,
+        "new_status": 'deleted',
+        "base_status": 'present'
     }]
 
     assert expected == sorted(result, key=lambda x: x['collection_name'])

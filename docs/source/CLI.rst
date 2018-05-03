@@ -583,18 +583,30 @@ get configdocs
 Retrieve documents loaded into Shipyard. The possible options include last
 committed, last site action, last successful site action and retrieval from
 the Shipyard Buffer. Site actions include deploy_site and update_site. Note
-that we can only select one of the options for each CLI call.
+that we can only select one of the options when we retrieve the documents
+for a particular collection.
+
+The command will compare the differences between the revisions specified if
+the collection option is not specified. Note that we can only compare between
+2 revisions. The relevant Deckhand revision id will be shown in the output as
+well.
+
+If both collection and revisions are not specified, the output will show the
+differences between the 'committed' and 'buffer' revision (default behavior).
 
 ::
 
     shipyard get configdocs
-        [<collection>]
+        [--collection=<collection>]
         [--committed | --last-site-action | --successful-site-action | --buffer]
 
     Example:
-        shipyard get configdocs design
+        shipyard get configdocs --collection=design
+        shipyard get configdocs --collection=design --last-site-action
+        shipyard get configdocs
+        shipyard get configdocs --committed --last-site-action
 
-[<collection>]
+\--collection=<collection>
   The collection to retrieve for viewing. If no collection is entered, the
   status of the collections in the buffer and those that are committed will be
   displayed.
@@ -621,14 +633,24 @@ Samples
 ::
 
     $ shipyard get configdocs
-    Collection        Committed       Buffer
-    coll1             present         unmodified
-    coll2             not present     created
-
+     Comparing Base: committed (Deckhand revision 2)
+             to New: buffer (Deckhand revision 3)
+    Collection                  Base                  New
+    coll1                       present               unmodified
+    coll2                       not present           created
 
 ::
 
-    $ shipyard get configdocs coll1
+    $ shipyard get configdocs --committed --last-site-action
+     Comparing Base: last_site_action (Deckhand revision 2)
+             to New: committed (Deckhand revision 2)
+    Collection                    Base                    New
+    secrets                       present                 unmodified
+    design                        present                 unmodified
+
+::
+
+    $ shipyard get configdocs --collection=coll1
     data:
       chart_groups: [kubernetes-proxy, container-networking, dns, kubernetes, kubernetes-rbac]
       release_prefix: ucp

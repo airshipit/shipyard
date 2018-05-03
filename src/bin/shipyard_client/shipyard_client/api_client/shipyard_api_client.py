@@ -81,13 +81,15 @@ class ShipyardClient(BaseClient):
             collection_id)
         return self.get_resp(url, query_params)
 
-    def get_configdocs_status(self):
+    def get_configdocs_status(self, versions=None):
         """
         Get the status of the collection of documents from shipyard
         :returns: Response object
+        :param versions: List of versions to compare
         """
+        query_params = {"versions": versions}
         url = ApiPaths.GET_CONFIGDOCS.value.format(self.get_endpoint())
-        return self.get_resp(url)
+        return self.get_resp(url, query_params)
 
     def get_rendereddocs(self, version='buffer'):
         """

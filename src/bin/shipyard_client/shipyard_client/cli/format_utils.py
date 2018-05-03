@@ -218,12 +218,19 @@ def table_factory(field_names=None, rows=None, style=None):
     if rows:
         for row in rows:
             p.add_row(row)
+
     # This alignment only works if columns and rows are set up.
+    # Left alignment is used by default
     p.align = 'l'
+
     return p
 
 
-def table_get_string(table, align='l'):
+def table_get_string(table, title='', vertical_char='|', align='l'):
     """Wrapper to return a prettytable string with the supplied alignment"""
-    table.align = 'l'
-    return table.get_string()
+    table.align = align
+
+    # Title is an empty string by default
+    # vertical_char - Single character string used to draw vertical
+    # lines. Default is '|'.
+    return table.get_string(title=title, vertical_char=vertical_char)

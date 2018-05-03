@@ -72,3 +72,33 @@ def check_reformat_parameter(ctx, param):
             "Invalid parameter or parameter format for " + p +
             ".  Please utilize the format: <parameter name>=<parameter value>")
     return param_dictionary
+
+
+def check_reformat_versions(ctx, buffer, committed, last_site_action,
+                            successful_site_action):
+    """Checks and reformat version"""
+    versions = []
+
+    if buffer:
+        versions.append('buffer')
+    if committed:
+        versions.append('committed')
+    if last_site_action:
+        versions.append('last_site_action')
+    if successful_site_action:
+        versions.append('successful_site_action')
+
+    if len(versions) == 0:
+        return None
+
+    elif len(versions) == 2:
+        return versions
+
+    else:
+        ctx.fail(
+            "Invalid input. User must either\n"
+            "1. Pass in 0 versions, in which case --buffer and --committed "
+            "versions are assumed\n"
+            "2. Pass in 2 valid versions for comparison\n\n"
+            "Valid versions are '--buffer', '--committed', "
+            "'--last-site-action' and '--successful-site-action'")

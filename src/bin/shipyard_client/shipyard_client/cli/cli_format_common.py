@@ -140,22 +140,37 @@ def gen_collection_table(collection_list):
     """Generates a list of collections and their status
 
     Assumes collection_list is a list of dictionares with 'collection_name',
-    'committed_status', and 'buffer_status'
+    'base_status', 'new_status', 'base_version', 'base_revision', 'new_version'
+    and 'new_revision'.
     """
     collections = format_utils.table_factory(
-        field_names=['Collection', 'Committed', 'Buffer'])
+        field_names=['Collection',
+                     'Base',
+                     'New'])
 
     if collection_list:
         for collection in collection_list:
             collections.add_row([
                 collection.get('collection_name'),
-                collection.get('committed_status'),
-                collection.get('buffer_status')
+                collection.get('base_status'),
+                collection.get('new_status')
             ])
+
+        collections_title = (
+            'Comparing Base: {} (Deckhand revision {}) \n\t to New: {} '
+            '(Deckhand revision {})'.format(
+                collection.get('base_version'),
+                collection.get('base_revision'),
+                collection.get('new_version'),
+                collection.get('new_revision')))
+
     else:
         collections.add_row(['None', '', ''])
+        collections_title = ''
 
-    return format_utils.table_get_string(collections)
+    return format_utils.table_get_string(table=collections,
+                                         title=collections_title,
+                                         vertical_char=' ')
 
 
 def gen_workflow_table(workflow_list):

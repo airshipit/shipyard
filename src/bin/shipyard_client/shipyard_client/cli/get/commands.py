@@ -21,6 +21,7 @@ from shipyard_client.cli.get.actions import GetConfigdocs
 from shipyard_client.cli.get.actions import GetConfigdocsStatus
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
 from shipyard_client.cli.get.actions import GetWorkflows
+from shipyard_client.cli.input_checks import check_reformat_versions
 
 
 @click.group()
@@ -53,20 +54,25 @@ def get_actions(ctx):
 
 DESC_CONFIGDOCS = """
 COMMAND: configdocs
-DESCRIPTION: Retrieve documents loaded into Shipyard, either committed or
-from the Shipyard Buffer.
-FORMAT: shipyard get configdocs <collection>
+DESCRIPTION: Retrieve documents loaded into Shipyard, either committed,
+last site action, successful site action or from the Shipyard Buffer.
+Allows comparison between 2 revisions using valid revision tags.
+FORMAT: shipyard get configdocs [--collection=<collection>]
 [--committed | --buffer | --last-site-action | --successful-site-action]
-EXAMPLE: shipyard get configdocs design
+EXAMPLE: shipyard get configdocs --colllection=design
 """
 
 SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
-                         "committed or from the Shipyard Buffer.")
+                         "committed, last site action, successful site action "
+                         "or from the Shipyard Buffer. Allows comparison "
+                         "between 2 revisions using valid revision tags")
 
 
 @get.command(
     name='configdocs', help=DESC_CONFIGDOCS, short_help=SHORT_DESC_CONFIGDOCS)
-@click.argument('collection', required=False)
+@click.option(
+    '--collection',
+    help='A collection of document YAMLs')
 @click.option(
     '--committed',
     '-c',
@@ -96,14 +102,22 @@ def get_configdocs(ctx, collection, buffer, committed, last_site_action,
                    successful_site_action):
     if collection:
         # Get version
-        version = get_version(ctx, buffer, committed, last_site_action,
-                              successful_site_action)
+        _version = get_version(ctx, buffer, committed, last_site_action,
+                               successful_site_action)
 
         click.echo(
-            GetConfigdocs(ctx, collection, version).invoke_and_return_resp())
+            GetConfigdocs(ctx, collection, _version).invoke_and_return_resp())
 
     else:
-        click.echo(GetConfigdocsStatus(ctx).invoke_and_return_resp())
+        compare_versions = check_reformat_versions(ctx,
+                                                   buffer,
+                                                   committed,
+                                                   last_site_action,
+                                                   successful_site_action)
+
+        click.echo(
+            GetConfigdocsStatus(ctx,
+                                compare_versions).invoke_and_return_resp())
 
 
 DESC_RENDEREDCONFIGDOCS = """
@@ -153,10 +167,10 @@ SHORT_DESC_RENDEREDCONFIGDOCS = (
 def get_renderedconfigdocs(ctx, buffer, committed, last_site_action,
                            successful_site_action):
     # Get version
-    version = get_version(ctx, buffer, committed, last_site_action,
-                          successful_site_action)
+    _version = get_version(ctx, buffer, committed, last_site_action,
+                           successful_site_action)
 
-    click.echo(GetRenderedConfigdocs(ctx, version).invoke_and_return_resp())
+    click.echo(GetRenderedConfigdocs(ctx, _version).invoke_and_return_resp())
 
 
 DESC_WORKFLOWS = """

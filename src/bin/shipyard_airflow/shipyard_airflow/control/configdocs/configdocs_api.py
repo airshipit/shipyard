@@ -41,8 +41,9 @@ class ConfigDocsStatusResource(BaseResource):
     @policy.ApiEnforcer('workflow_orchestrator:get_configdocs_status')
     def on_get(self, req, resp):
         """Returns a list of the configdocs and their statuses"""
+        versions = req.params.get('versions') or None
         helper = ConfigdocsHelper(req.context)
-        resp.body = self.to_json(helper.get_configdocs_status())
+        resp.body = self.to_json(helper.get_configdocs_status(versions))
         resp.status = falcon.HTTP_200
 
 

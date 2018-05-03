@@ -110,11 +110,20 @@ Represents the site configuration documents' current statuses
 
 GET /v1.0/configdocs
 ^^^^^^^^^^^^^^^^^^^^
-Returns a list of collections including their committed and buffer status.
+Returns a list of collections including their base and new status.
 
 .. note::
 
    The output type for this request is 'Content-Type: application/json'
+
+Query Parameters
+''''''''''''''''
+- version=committed,buffer (default)
+  Indicates which revisions tags to compare. Comparision can only be done
+  between 2 different revision tags and the default behavior is to compare
+  the revision with the 'committed' tag and the one with the 'buffer' tag.
+  Valid revision tags that can be used for comparison using the API include
+  'buffer', 'committed', 'last_site_action' and 'successful_site_action'.
 
 Responses
 '''''''''

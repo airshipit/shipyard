@@ -83,15 +83,18 @@ class GetConfigdocs(CliAction):
 class GetConfigdocsStatus(CliAction):
     """Action to get the configdocs status"""
 
-    def __init__(self, ctx):
+    def __init__(self, ctx, version=None):
         """Sets parameters."""
         super().__init__(ctx)
-        self.logger.debug("GetConfigdocsStatus action initialized")
+        self.logger.debug("GetConfigdocsStatus action with version %s "
+                          "initialized", version)
+        self.version = version
 
     def invoke(self):
         """Calls API Client and formats response from API Client"""
         self.logger.debug("Calling API Client get_configdocs_status")
-        return self.get_api_client().get_configdocs_status()
+
+        return self.get_api_client().get_configdocs_status(self.version)
 
     # Handle 404 with default error handler for cli.
     cli_handled_err_resp_codes = [404]
