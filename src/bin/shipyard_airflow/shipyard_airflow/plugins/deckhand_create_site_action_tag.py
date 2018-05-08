@@ -22,6 +22,7 @@ from airflow.exceptions import AirflowException
 
 from deckhand_base_operator import DeckhandBaseOperator
 
+FAILED_STATUSES = ('failed', 'upstream_failed')
 LOG = logging.getLogger(__name__)
 
 
@@ -128,10 +129,11 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
             task_result[i] = self.check_task_result(i)
 
         # Check for failed task(s)
-        failed_task = [x for x in task if task_result[x] == 'failed']
+        failed_task = [x for x in task if task_result[x] in FAILED_STATUSES]
 
         if failed_task:
-            LOG.info("Task(s) in the workflow has/have failed: %s",
+            LOG.info("Either upstream tasks or tasks in the "
+                     "workflow have failed: %s",
                      ", ".join(failed_task))
 
             return False
