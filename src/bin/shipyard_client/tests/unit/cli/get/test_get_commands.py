@@ -66,7 +66,7 @@ def test_get_configdocs_without_passing_collection(*args):
     runner = CliRunner()
     with patch.object(GetConfigdocsStatus, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'configdocs'])
-    mock_method.assert_called_once_with(ANY, None)
+    mock_method.assert_called_once_with(ANY, ['committed', 'buffer'])
 
 
 def test_get_configdocs_negative(*args):

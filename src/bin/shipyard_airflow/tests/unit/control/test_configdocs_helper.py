@@ -60,6 +60,9 @@ REV_BUFFER_DICT = {
 
 DIFF_BUFFER_DICT = {'mop': 'unmodified', 'chum': 'created', 'slop': 'deleted'}
 
+ORDERED_VER = ['committed', 'buffer']
+REV_NAME_ID = ('committed', 'buffer', 3, 5)
+
 REV_BUFF_EMPTY_DICT = {
     'committed': {
         'id': 3,
@@ -297,6 +300,8 @@ def test_is_buffer_valid_for_bucket():
 def test_get_configdocs_status():
     helper = ConfigdocsHelper(CTX)
     helper._get_revision_dict = lambda: REV_BUFFER_DICT
+    helper._get_ordered_versions = lambda versions: ORDERED_VER
+    helper._get_versions_name_id = lambda ordered_versions: REV_NAME_ID
     helper.deckhand.get_diff = (
         lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT)
     result = helper.get_configdocs_status()

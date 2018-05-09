@@ -89,7 +89,7 @@ def check_reformat_versions(ctx, buffer, committed, last_site_action,
         versions.append('successful_site_action')
 
     if len(versions) == 0:
-        return None
+        return ['committed', 'buffer']
 
     elif len(versions) == 2:
         return versions
