@@ -82,6 +82,71 @@ class DeploymentGroupManager:
                 return self._all_groups[group]
         return None
 
+    def group_list(self):
+        """Return a list of DeploymentGroup objects in group order"""
+        summary = []
+        for group_nm in self._group_order:
+            group = self._all_groups[group_nm]
+            summary.append(group)
+        return summary
+
+    def critical_groups_failed(self):
+        """Return True if any critical groups have failed"""
+        for group in self._all_groups.values():
+            if group.stage == Stage.FAILED and group.critical:
+                return True
+        return False
+
+    def evaluate_group_succ_criteria(self, group_name, stage):
+        """Checks a group against its success criteria for a stage
+
+        :param group_name: the name of the group to check
+        :param stage: Stage.PREPARED or Stage.DEPLOYED
+        Returns a boolean: True = success, False = failure.
+        """
+        failed_criteria = self.get_group_failures_for_stage(group_name, stage)
+        if failed_criteria:
+            # Logging of criteria has already occurred during checking.
+            self.mark_group_failed(group_name)
+            LOG.info("Group %s has failed to meet its success criteria while "
+                     "trying to move to stage: %s",
+                     group_name, stage)
+            return False
+        elif stage == Stage.DEPLOYED:
+            self.mark_group_deployed(group_name)
+            LOG.info("Group %s has met its success criteria and is "
+                     "successfully deployed (%s)", group_name, stage)
+            return True
+        elif stage == Stage.PREPARED:
+            self.mark_group_prepared(group_name)
+            LOG.info("Group %s has met its success criteria and is "
+                     "now set to stage %s", group_name, stage)
+            return True
+
+    def report_group_summary(self):
+        """Reports the status of all groups handled by this deployment"""
+        LOG.info("=====   Group Summary   =====")
+        for group in self.group_list():
+            LOG.info("  Group %s%s ended with stage: %s",
+                     group.name,
+                     " [Critical]" if group.critical else "",
+                     group.stage)
+        LOG.info("===== End Group Summary =====")
+
+    def report_node_summary(self):
+        """Reports the status of all nodes handled by this deployment"""
+        # Ordered stages
+        stages = [Stage.NOT_STARTED,
+                  Stage.PREPARED,
+                  Stage.DEPLOYED,
+                  Stage.FAILED]
+
+        LOG.info("=====   Node Summary   =====")
+        for stage in stages:
+            nodes = self.get_nodes(stage=stage)
+            LOG.info("  Nodes %s: %s", stage, ", ".join(nodes))
+        LOG.info("===== End Node Summary =====")
+
     #
     # Methods that support setup of the nodes in groups
     #
@@ -163,6 +228,22 @@ class DeploymentGroupManager:
     # Methods for handling nodes
     #
 
+    def fail_unsuccessful_nodes(self, group, successes):
+        """Fail nodes that were not successful in a group's actionable list
+
+        :param group: the group to check
+        :param successes: the list of successful nodes from processing
+
+        This makes an assumption that all actionable nodes should be in a list
+        of successes if they are to be considered successful. If the success
+        list is empty, all the actionable nodes in the group would be
+        considered failed.
+        """
+        # Mark non-successes as failed
+        failed_nodes = set(group.actionable_nodes).difference(set(successes))
+        for node_name in failed_nodes:
+            self.mark_node_failed(node_name)
+
     def mark_node_deployed(self, node_name):
         """Mark a node as deployed"""
         self._set_node_stage(node_name, Stage.DEPLOYED)
@@ -203,7 +284,7 @@ def _update_group_actionable_nodes(group, known_nodes):
               ", ".join(known_nodes))
 
     group_nodes = set(group.full_nodes)
-    group.actionable_nodes = group_nodes.difference(known_nodes)
+    group.actionable_nodes = list(group_nodes.difference(known_nodes))
     LOG.debug("Group %s set actionable_nodes to %s. "
               "Full node list for this group is %s",
               group.name,

@@ -21,9 +21,9 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
 try:
-    from service_endpoint import ucp_service_endpoint
+    import service_endpoint
 except ImportError:
-    from shipyard_airflow.plugins.service_endpoint import ucp_service_endpoint
+    from shipyard_airflow.plugins import service_endpoint
 
 try:
     from xcom_puller import XcomPuller
@@ -55,16 +55,18 @@ class UcpHealthCheckOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.main_dag_name = main_dag_name
         self.xcom_push_flag = xcom_push
+        self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
     def execute(self, context):
 
         # Initialize variable
         ucp_components = [
-            'armada',
-            'deckhand',
-            'kubernetesprovisioner',
-            'physicalprovisioner',
-            'shipyard']
+            service_endpoint.ARMADA,
+            service_endpoint.DECKHAND,
+            service_endpoint.DRYDOCK,
+            service_endpoint.PROMENADE,
+            service_endpoint.SHIPYARD
+        ]
 
         # Define task_instance
         self.task_instance = context['task_instance']
@@ -80,19 +82,16 @@ class UcpHealthCheckOperator(BaseOperator):
         for component in ucp_components:
 
             # Retrieve Endpoint Information
-            service_endpoint = ucp_service_endpoint(self,
-                                                    svc_type=component)
-            LOG.info("%s endpoint is %s", component, service_endpoint)
+            endpoint = self.endpoints.endpoint_by_name(component)
+            LOG.info("%s endpoint is %s", component, endpoint)
 
             # Construct Health Check Endpoint
-            healthcheck_endpoint = os.path.join(service_endpoint,
+            healthcheck_endpoint = os.path.join(endpoint,
                                                 'health')
 
-            LOG.info("%s healthcheck endpoint is %s", component,
-                     healthcheck_endpoint)
-
             try:
-                LOG.info("Performing Health Check on %s", component)
+                LOG.info("Performing Health Check on %s at %s", component,
+                         healthcheck_endpoint)
                 # Set health check timeout to 30 seconds
                 req = requests.get(healthcheck_endpoint, timeout=30)
 
@@ -109,7 +108,7 @@ class UcpHealthCheckOperator(BaseOperator):
         """
         # If Drydock health check fails and continue-on-fail, continue
         # and create xcom key 'drydock_continue_on_fail'
-        if (component == 'physicalprovisioner' and
+        if (component == service_endpoint.DRYDOCK and
                 self.action_info['parameters'].get(
                     'continue-on-fail', 'false').lower() == 'true' and
                 self.action_info['dag_id'] in ['update_site', 'deploy_site']):

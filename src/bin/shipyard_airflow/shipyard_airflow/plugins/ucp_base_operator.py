@@ -14,11 +14,18 @@
 import configparser
 import logging
 import math
+import os
 from datetime import datetime
 
+from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
+
+try:
+    import service_endpoint
+except ImportError:
+    from shipyard_airflow.plugins import service_endpoint
 
 try:
     from get_k8s_logs import get_pod_logs
@@ -34,6 +41,16 @@ try:
     from xcom_puller import XcomPuller
 except ImportError:
     from shipyard_airflow.plugins.xcom_puller import XcomPuller
+
+from shipyard_airflow.common.document_validators.document_validation_utils \
+    import DocumentValidationUtils
+
+try:
+    from deckhand_client_factory import DeckhandClientFactory
+except ImportError:
+    from shipyard_airflow.plugins.deckhand_client_factory import (
+        DeckhandClientFactory
+    )
 
 LOG = logging.getLogger(__name__)
 
@@ -88,6 +105,8 @@ class UcpBaseOperator(BaseOperator):
         self.start_time = datetime.now()
         self.sub_dag_name = sub_dag_name
         self.xcom_push_flag = xcom_push
+        self.doc_utils = _get_document_util(self.shipyard_conf)
+        self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
     def execute(self, context):
 
@@ -120,6 +139,7 @@ class UcpBaseOperator(BaseOperator):
         self.action_info = self.xcom_puller.get_action_info()
         self.dc = self.xcom_puller.get_deployment_configuration()
         self.revision_id = self.action_info['committed_rev_id']
+        self.design_ref = self._deckhand_design_ref()
 
     def get_k8s_logs(self):
         """Retrieve Kubernetes pod/container logs specified by an opererator
@@ -150,10 +170,64 @@ class UcpBaseOperator(BaseOperator):
         else:
             LOG.debug("There are no pod logs specified to retrieve")
 
+    def _deckhand_design_ref(self):
+        """Assemble a deckhand design_ref"""
+        # Retrieve DeckHand Endpoint Information
+        LOG.info("Assembling a design ref using revision: %s",
+                 self.revision_id)
+        deckhand_svc_endpoint = self.endpoints.endpoint_by_name(
+            service_endpoint.DECKHAND
+        )
+        # This URL will be used to retrieve the Site Design YAMLs
+        deckhand_path = "deckhand+{}".format(deckhand_svc_endpoint)
+        design_ref = os.path.join(deckhand_path,
+                                  "revisions",
+                                  str(self.revision_id),
+                                  "rendered-documents")
+        LOG.info("Design Reference is %s", design_ref)
+        return design_ref
+
+    def get_unique_doc(self, schema, name, revision_id=None):
+        """Retrieve a specific document from Deckhand
+
+        :param schema: the schema of the document
+        :param name: the metadata.name of the document
+        :param revision_id: the deckhand revision, or defaults to
+            self.revision_id
+        Wraps the document_validation_utils call to get the same.
+        Returns the sepcified document or raises an Airflow exception.
+        """
+        if revision_id is None:
+            revision_id = self.revision_id
+
+        LOG.info(
+            "Retrieve shipyard/DeploymentConfiguration/v1, "
+            "deployment-configuration from Deckhand"
+        )
+        try:
+            return self.doc_utils.get_unique_doc(revision_id=revision_id,
+                                                 name=name,
+                                                 schema=schema)
+        except Exception as ex:
+            LOG.error("A document was expected to be available: Name: %s, "
+                      "Schema: %s, Deckhand revision: %s, but there was an "
+                      "error attempting to retrieve it. Since this document's "
+                      "contents may be critical to the proper operation of "
+                      "the workflow, this is fatal.", schema, name,
+                      revision_id)
+            LOG.exception(ex)
+            # if the document is not found for ANY reason, the workflow is
+            # broken. Raise an Airflow Exception.
+            raise AirflowException(ex)
+
+
+def _get_document_util(shipyard_conf):
+    """Retrieve an instance of the DocumentValidationUtils"""
+    dh_client = DeckhandClientFactory(shipyard_conf).get_client()
+    return DocumentValidationUtils(dh_client)
+
 
 class UcpBaseOperatorPlugin(AirflowPlugin):
-
     """Creates UcpBaseOperator in Airflow."""
-
     name = 'ucp_base_operator_plugin'
     operators = [UcpBaseOperator]

@@ -14,7 +14,6 @@
 import copy
 import pprint
 import logging
-import os
 import time
 from urllib.parse import urlparse
 
@@ -25,9 +24,35 @@ from airflow.utils.decorators import apply_defaults
 import drydock_provisioner.drydock_client.client as client
 import drydock_provisioner.drydock_client.session as session
 from drydock_provisioner import error as errors
-from service_endpoint import ucp_service_endpoint
-from service_token import shipyard_service_token
-from ucp_base_operator import UcpBaseOperator
+
+try:
+    import service_endpoint
+except ImportError:
+    from shipyard_airflow.plugins import service_endpoint
+try:
+    from service_token import shipyard_service_token
+except ImportError:
+    from shipyard_airflow.plugins.service_token import shipyard_service_token
+
+try:
+    from ucp_base_operator import UcpBaseOperator
+except ImportError:
+    from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
+
+try:
+    from drydock_errors import (
+        DrydockClientUseFailureException,
+        DrydockTaskFailedException,
+        DrydockTaskNotCreatedException,
+        DrydockTaskTimeoutException
+    )
+except ImportError:
+    from shipyard_airflow.plugins.drydock_errors import (
+        DrydockClientUseFailureException,
+        DrydockTaskFailedException,
+        DrydockTaskNotCreatedException,
+        DrydockTaskTimeoutException
+    )
 
 LOG = logging.getLogger(__name__)
 
@@ -44,11 +69,7 @@ class DrydockBaseOperator(UcpBaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 deckhand_design_ref=None,
-                 deckhand_svc_type='deckhand',
                  drydock_client=None,
-                 drydock_svc_endpoint=None,
-                 drydock_svc_type='physicalprovisioner',
                  drydock_task_id=None,
                  node_filter=None,
                  redeploy_server=None,
@@ -57,11 +78,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                  *args, **kwargs):
         """Initialization of DrydockBaseOperator object.
 
-        :param deckhand_design_ref: A URI reference to the design documents
-        :param deckhand_svc_type: Deckhand Service Type
         :param drydockclient: An instance of drydock client
-        :param drydock_svc_endpoint: Drydock Service Endpoint
-        :param drydock_svc_type: Drydock Service Type
         :param drydock_task_id: Drydock Task ID
         :param node_filter: A filter for narrowing the scope of the task.
                             Valid fields are 'node_names', 'rack_names',
@@ -81,11 +98,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                   pod_selector_pattern=[{'pod_pattern': 'drydock-api',
                                          'container': 'drydock-api'}],
                   *args, **kwargs)
-        self.deckhand_design_ref = deckhand_design_ref
-        self.deckhand_svc_type = deckhand_svc_type
         self.drydock_client = drydock_client
-        self.drydock_svc_endpoint = drydock_svc_endpoint
-        self.drydock_svc_type = drydock_svc_type
         self.drydock_task_id = drydock_task_id
         self.node_filter = node_filter
         self.redeploy_server = redeploy_server
@@ -126,8 +139,9 @@ class DrydockBaseOperator(UcpBaseOperator):
                                        % self.__class__.__name__)
 
         # Retrieve Endpoint Information
-        self.drydock_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.drydock_svc_type)
+        self.drydock_svc_endpoint = self.endpoints.endpoint_by_name(
+            service_endpoint.DRYDOCK
+        )
 
         LOG.info("Drydock endpoint is %s", self.drydock_svc_endpoint)
 
@@ -147,7 +161,9 @@ class DrydockBaseOperator(UcpBaseOperator):
         if dd_session:
             LOG.info("Successfully Set Up DryDock Session")
         else:
-            raise AirflowException("Failed to set up Drydock Session!")
+            raise DrydockClientUseFailureException(
+                "Failed to set up Drydock Session!"
+            )
 
         # Use the DrydockSession to build a DrydockClient that can
         # be used to make one or more API calls
@@ -158,26 +174,9 @@ class DrydockBaseOperator(UcpBaseOperator):
         if self.drydock_client:
             LOG.info("Successfully Set Up DryDock client")
         else:
-            raise AirflowException("Failed to set up Drydock Client!")
-
-        # Retrieve DeckHand Endpoint Information
-        deckhand_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.deckhand_svc_type)
-
-        LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
-
-        # Form DeckHand Design Reference Path
-        # This URL will be used to retrieve the Site Design YAMLs
-        deckhand_path = "deckhand+" + deckhand_svc_endpoint
-        self.deckhand_design_ref = os.path.join(deckhand_path,
-                                                "revisions",
-                                                str(self.revision_id),
-                                                "rendered-documents")
-        if self.deckhand_design_ref:
-            LOG.info("Design YAMLs will be retrieved from %s",
-                     self.deckhand_design_ref)
-        else:
-            raise AirflowException("Unable to Retrieve Design Reference!")
+            raise DrydockClientUseFailureException(
+                "Failed to set up Drydock Client!"
+            )
 
     @shipyard_service_token
     def _auth_gen(self):
@@ -196,7 +195,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         try:
             # Create Task
             create_task_response = self.drydock_client.create_task(
-                design_ref=self.deckhand_design_ref,
+                design_ref=self.design_ref,
                 task_action=task_action,
                 node_filter=self.node_filter)
 
@@ -204,7 +203,7 @@ class DrydockBaseOperator(UcpBaseOperator):
             # Dump logs from Drydock pods
             self.get_k8s_logs()
 
-            raise AirflowException(client_error)
+            raise DrydockClientUseFailureException(client_error)
 
         # Retrieve Task ID
         self.drydock_task_id = create_task_response['task_id']
@@ -216,7 +215,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         if self.drydock_task_id:
             return self.drydock_task_id
         else:
-            raise AirflowException("Unable to create task!")
+            raise DrydockTaskNotCreatedException("Unable to create task!")
 
     def query_task(self, interval, time_out):
 
@@ -235,21 +234,16 @@ class DrydockBaseOperator(UcpBaseOperator):
 
             try:
                 # Retrieve current task state
-                task_state = self.drydock_client.get_task(
-                    task_id=self.drydock_task_id)
+                task_state = self.get_task_dict(task_id=self.drydock_task_id)
 
                 task_status = task_state['status']
                 task_result = task_state['result']['status']
 
                 LOG.info("Current status of task id %s is %s",
                          self.drydock_task_id, task_status)
-
-            except errors.ClientError as client_error:
-                # Dump logs from Drydock pods
+            except DrydockClientUseFailureException:
                 self.get_k8s_logs()
-
-                raise AirflowException(client_error)
-
+                raise
             except:
                 # There can be situations where there are intermittent network
                 # issues that prevents us from retrieving the task state. We
@@ -275,6 +269,21 @@ class DrydockBaseOperator(UcpBaseOperator):
         else:
             self.task_failure(True)
 
+    def get_task_dict(self, task_id):
+        """Retrieve task output in its raw dictionary format
+
+        :param task_id: The id of the task to retrieve
+        Raises DrydockClientUseFailureException if the client raises an
+        exception
+        See:
+        http://att-comdev-drydock.readthedocs.io/en/latest/task.html#task-status-schema
+        """
+        try:
+            return self.drydock_client.get_task(task_id=task_id)
+        except errors.ClientError as client_error:
+            # Dump logs from Drydock pods
+            raise DrydockClientUseFailureException(client_error)
+
     def task_failure(self, _task_failure):
         # Dump logs from Drydock pods
         self.get_k8s_logs()
@@ -289,7 +298,7 @@ class DrydockBaseOperator(UcpBaseOperator):
             self.all_task_ids = {t['task_id']: t for t in all_tasks}
 
         except errors.ClientError as client_error:
-            raise AirflowException(client_error)
+            raise DrydockClientUseFailureException(client_error)
 
         # Retrieve the failed parent task and assign it to list
         failed_parent_task = (
@@ -299,7 +308,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         # Since there is only 1 failed parent task, we will print index 0
         # of the list
         if failed_parent_task:
-            LOG.error('%s task has either failed or timed out',
+            LOG.error("%s task has either failed or timed out",
                       failed_parent_task[0]['action'])
 
             LOG.error(pprint.pprint(failed_parent_task[0]))
@@ -312,9 +321,13 @@ class DrydockBaseOperator(UcpBaseOperator):
 
         # Raise Exception to terminate workflow
         if _task_failure:
-            raise AirflowException("Failed to Execute/Complete Task!")
+            raise DrydockTaskFailedException(
+                "Failed to Execute/Complete Task!"
+            )
         else:
-            raise AirflowException("Task Execution Timed Out!")
+            raise DrydockTaskTimeoutException(
+                "Task Execution Timed Out!"
+            )
 
     def check_subtask_failure(self, subtask_id_list):
 
@@ -367,7 +380,9 @@ class DrydockBaseOperator(UcpBaseOperator):
                                  subtask_id)
 
                 else:
-                    raise AirflowException("Unable to retrieve subtask info!")
+                    raise DrydockClientUseFailureException(
+                        "Unable to retrieve subtask info!"
+                    )
 
 
 class DrydockBaseOperatorPlugin(AirflowPlugin):

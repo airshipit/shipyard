@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import os
 from urllib.parse import urlparse
 
 from airflow.exceptions import AirflowException
@@ -22,9 +21,9 @@ from airflow.utils.decorators import apply_defaults
 import armada.common.client as client
 import armada.common.session as session
 from get_k8s_pod_port_ip import get_pod_port_ip
-from service_endpoint import ucp_service_endpoint
 from service_token import shipyard_service_token
 from ucp_base_operator import UcpBaseOperator
+import service_endpoint
 from xcom_pusher import XcomPusher
 
 LOG = logging.getLogger(__name__)
@@ -42,16 +41,12 @@ class ArmadaBaseOperator(UcpBaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 armada_svc_type='armada',
-                 deckhand_svc_type='deckhand',
                  query={},
                  svc_session=None,
                  svc_token=None,
                  *args, **kwargs):
         """Initialization of ArmadaBaseOperator object.
 
-        :param armada_svc_type: Armada Service Type
-        :param deckhand_svc_type: Deckhand Service Type
         :param query: A dictionary containing explicit query string parameters
         :param svc_session: Keystone Session
         :param svc_token: Keystone Token
@@ -66,8 +61,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
                   pod_selector_pattern=[{'pod_pattern': 'armada-api',
                                          'container': 'armada-api'}],
                   *args, **kwargs)
-        self.armada_svc_type = armada_svc_type
-        self.deckhand_svc_type = deckhand_svc_type
         self.query = query
         self.svc_session = svc_session
         self.svc_token = svc_token
@@ -81,21 +74,11 @@ class ArmadaBaseOperator(UcpBaseOperator):
         # Logs uuid of action performed by the Operator
         LOG.info("Armada Operator for action %s", self.action_info['id'])
 
-        # Retrieve Endpoint Information
-        armada_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.armada_svc_type)
-
         # Set up armada client
-        self.armada_client = self._init_armada_client(armada_svc_endpoint,
-                                                      self.svc_token)
-
-        # Retrieve DeckHand Endpoint Information
-        deckhand_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.deckhand_svc_type)
-
-        # Get deckhand design reference url
-        self.deckhand_design_ref = self._init_deckhand_design_ref(
-            deckhand_svc_endpoint)
+        self.armada_client = self._init_armada_client(
+            self.endpoints.endpoint_by_name(service_endpoint.ARMADA),
+            self.svc_token
+        )
 
     @staticmethod
     def _init_armada_client(armada_svc_endpoint, svc_token):
@@ -132,26 +115,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
             return _armada_client
         else:
             raise AirflowException("Failed to set up Armada client!")
-
-    def _init_deckhand_design_ref(self, deckhand_svc_endpoint):
-
-        LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
-
-        # Form DeckHand Design Reference Path
-        # This URL will be used to retrieve the Site Design YAMLs
-        deckhand_path = "deckhand+" + deckhand_svc_endpoint
-        _deckhand_design_ref = os.path.join(deckhand_path,
-                                            "revisions",
-                                            str(self.revision_id),
-                                            "rendered-documents")
-
-        if _deckhand_design_ref:
-            LOG.info("Design YAMLs will be retrieved from %s",
-                     _deckhand_design_ref)
-
-            return _deckhand_design_ref
-        else:
-            raise AirflowException("Unable to Retrieve Design Reference!")
 
     @get_pod_port_ip('tiller', namespace='kube-system')
     def get_tiller_info(self, pods_ip_port={}):

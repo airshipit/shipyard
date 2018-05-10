@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -ex
+set -e
 
 # User can run the script like how they would execute the Shipyard CLI.
 # For instance, to run the 'shipyard get actions' command, user can execute
@@ -33,7 +33,7 @@ set -ex
 # Source Base Docker Command
 DIR="$(realpath $(dirname "${BASH_SOURCE}"))"
 source "${DIR}/shipyard_docker_base_command.sh"
-
+SHIPYARD_HOSTPATH=${SHIPYARD_HOSTPATH:-"/home/shipyard/host"}
 # Execute Shipyard CLI
 #
 # NOTE: We will mount the current directory so that any directories
@@ -46,4 +46,4 @@ source "${DIR}/shipyard_docker_base_command.sh"
 # the actual validation and execution. Exceptions will also be
 # handled by the Shipyard CLI as this is meant to be a thin wrapper
 # script
-${base_docker_command} -v $(pwd):/home/shipyard/host ${SHIPYARD_IMAGE} $@
+${base_docker_command} -v $(pwd):${SHIPYARD_HOSTPATH} ${SHIPYARD_IMAGE} $@

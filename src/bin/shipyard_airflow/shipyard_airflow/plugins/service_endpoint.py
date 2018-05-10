@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import configparser
 import logging
 import time
 
@@ -22,15 +22,24 @@ try:
 except ImportError:
     from shipyard_airflow.plugins.service_session import ucp_keystone_session
 
+# Lookup values for configuration to find the real service type for components
+SHIPYARD = 'shipyard'
+DRYDOCK = 'drydock'
+ARMADA = 'armada'
+DECKHAND = 'deckhand'
+PROMENADE = 'promenade'
 
-def ucp_service_endpoint(self, svc_type):
+LOG = logging.getLogger(__name__)
+
+
+def _ucp_service_endpoint(shipyard_conf, svc_type):
 
     # Initialize variables
     retry = 0
     int_endpoint = None
 
     # Retrieve Keystone Session
-    sess = ucp_keystone_session(self)
+    sess = ucp_keystone_session(shipyard_conf)
 
     # We will allow 1 retry in getting the Keystone Endpoint with a
     # backoff interval of 10 seconds in case there is a temporary
@@ -58,3 +67,26 @@ def ucp_service_endpoint(self, svc_type):
         raise AirflowException("Unable to get Keystone Endpoint!")
     else:
         return int_endpoint
+
+
+class ServiceEndpoints():
+    """Class that serves service endpoints"""
+    def __init__(self, shipyard_conf):
+        self.shipyard_conf = shipyard_conf
+
+        # Read and parse shiyard.conf
+        self.config = configparser.ConfigParser()
+        self.config.read(self.shipyard_conf)
+
+    def endpoint_by_name(self, svc_name):
+        """Return the service endpoint for the named service.
+
+        :param svc_name: name of the service from which the service type will
+            be discovered from the shipyard configuration. Constants in this
+            module provide names that can be used with an expectation that they
+            work with a standard/complete configuration file.
+            E.g.: service_endpoint.DRYDOCK
+        """
+        LOG.info("Looking up service endpoint for: %s", svc_name)
+        svc_type = self.config.get(svc_name, 'service_type')
+        return _ucp_service_endpoint(self.shipyard_conf, svc_type)

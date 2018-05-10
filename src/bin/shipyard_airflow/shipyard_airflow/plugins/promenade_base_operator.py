@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import os
 
 from airflow.utils.decorators import apply_defaults
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 try:
-    from service_endpoint import ucp_service_endpoint
+    import service_endpoint
 except ImportError:
-    from shipyard_airflow.plugins.service_endpoint import ucp_service_endpoint
+    from shipyard_airflow.plugins import service_endpoint
 
 try:
     from service_token import shipyard_service_token
@@ -47,19 +46,11 @@ class PromenadeBaseOperator(UcpBaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 deckhand_design_ref=None,
-                 deckhand_svc_type='deckhand',
-                 promenade_svc_endpoint=None,
-                 promenade_svc_type='kubernetesprovisioner',
                  redeploy_server=None,
                  svc_token=None,
                  *args, **kwargs):
         """Initialization of PromenadeBaseOperator object.
 
-        :param deckhand_design_ref: A URI reference to the design documents
-        :param deckhand_svc_type: Deckhand Service Type
-        :param promenade_svc_endpoint: Promenade Service Endpoint
-        :param promenade_svc_type: Promenade Service Type
         :param redeploy_server: Server to be redeployed
         :param svc_token: Keystone Token
         The Drydock operator assumes that prior steps have set xcoms for
@@ -71,10 +62,6 @@ class PromenadeBaseOperator(UcpBaseOperator):
                   pod_selector_pattern=[{'pod_pattern': 'promenade-api',
                                          'container': 'promenade-api'}],
                   *args, **kwargs)
-        self.deckhand_design_ref = deckhand_design_ref
-        self.deckhand_svc_type = deckhand_svc_type
-        self.promenade_svc_endpoint = promenade_svc_endpoint
-        self.promenade_svc_type = promenade_svc_type
         self.redeploy_server = redeploy_server
         self.svc_token = svc_token
 
@@ -98,30 +85,11 @@ class PromenadeBaseOperator(UcpBaseOperator):
                                        % self.__class__.__name__)
 
         # Retrieve promenade endpoint
-        self.promenade_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.promenade_svc_type)
+        self.promenade_svc_endpoint = self.endpoints.endpoint_by_name(
+            service_endpoint.PROMENADE
+        )
 
         LOG.info("Promenade endpoint is %s", self.promenade_svc_endpoint)
-
-        # Retrieve Deckhand Endpoint Information
-        deckhand_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.deckhand_svc_type)
-
-        LOG.info("Deckhand endpoint is %s", deckhand_svc_endpoint)
-
-        # Form Deckhand Design Reference Path
-        # This URL will be used to retrieve the Site Design YAMLs
-        deckhand_path = "deckhand+" + deckhand_svc_endpoint
-        self.deckhand_design_ref = os.path.join(deckhand_path,
-                                                "revisions",
-                                                str(self.revision_id),
-                                                "rendered-documents")
-        if self.deckhand_design_ref:
-            LOG.info("Design YAMLs will be retrieved from %s",
-                     self.deckhand_design_ref)
-        else:
-            raise AirflowException("Unable to Retrieve Deckhand Revision "
-                                   "%d!" % self.revision_id)
 
 
 class PromenadeBaseOperatorPlugin(AirflowPlugin):

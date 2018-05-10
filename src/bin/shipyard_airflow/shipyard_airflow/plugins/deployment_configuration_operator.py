@@ -45,7 +45,7 @@ class DeploymentConfigurationOperator(BaseOperator):
          cannot be retrieved
     """
     config_keys_defaults = {
-        "physical_provisioner.deployment_strategy": "all-at-once",
+        "physical_provisioner.deployment_strategy": None,
         "physical_provisioner.deploy_interval": 30,
         "physical_provisioner.deploy_timeout": 3600,
         "physical_provisioner.destroy_interval": 30,

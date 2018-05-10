@@ -58,7 +58,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         try:
             armada_post_apply = self.armada_client.post_apply(
                 manifest=armada_manifest,
-                manifest_ref=self.deckhand_design_ref,
+                manifest_ref=self.design_ref,
                 values=override_values,
                 set=chart_set,
                 query=self.query,

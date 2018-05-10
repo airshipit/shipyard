@@ -15,7 +15,6 @@
 import logging
 import time
 
-from airflow.exceptions import AirflowException
 from kubernetes import client, config
 
 
@@ -54,7 +53,7 @@ def check_node_status(time_out, interval):
     # Logs initial state of all nodes in the cluster
     ret_init = v1.list_node(watch=False)
 
-    logging.info("Current state of nodes in Cluster is")
+    logging.info("Current state of nodes in the cluster is")
 
     for i in ret_init.items:
         logging.info("%s\t%s\t%s", i.metadata.name,
@@ -86,7 +85,7 @@ def check_node_status(time_out, interval):
                     cluster_ready = False
 
                     # Print current state of node
-                    logging.info("Node %s is not Ready", j.metadata.name)
+                    logging.info("Node %s is not ready", j.metadata.name)
                     logging.debug("Current status of %s is %s",
                                   j.metadata.name,
                                   j.status.conditions[-1].message)
@@ -96,16 +95,18 @@ def check_node_status(time_out, interval):
 
                     logging.info("Node %s is in Ready state", j.metadata.name)
 
-        # Raise Time Out Exception
+        # If any nodes are not ready and the timeout is reached, stop waiting
         if not cluster_ready and i == end_range:
-            raise AirflowException("Timed Out! One or more Nodes fail to "
-                                   "get into Ready State!")
-
-        # Exit loop if Cluster is in Ready state
-        if cluster_ready:
-            logging.info("All nodes are in Ready state")
+            logging.info("Timed Out! One or more Nodes failed to reach ready "
+                         "state")
+            break
+        elif cluster_ready:
+            # Exit loop if Cluster is in Ready state
+            logging.info("All nodes are in ready state")
             break
         else:
             # Back off and check again in next iteration
             logging.info("Wait for %d seconds...", int(interval))
             time.sleep(int(interval))
+    # Return the nodes that are not ready.
+    return not_ready_node_list

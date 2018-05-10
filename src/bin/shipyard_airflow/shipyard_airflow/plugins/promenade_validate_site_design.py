@@ -54,7 +54,7 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
 
         payload = {
             'rel': "design",
-            'href': self.deckhand_design_ref,
+            'href': self.design_ref,
             'type': "application/x-yaml"
         }
 

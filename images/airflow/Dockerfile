@@ -32,6 +32,7 @@ EXPOSE $WORKER_PORT
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
 ARG DEBIAN_FRONTEND=noninteractive
+ARG ctx_base=src/bin
 
 # Kubectl version
 ARG KUBECTL_VERSION=1.8.6
@@ -76,16 +77,29 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Dependency requirements
 # Note - removing snakebite (python 2 vs. 3). See:
 #    https://github.com/puckel/docker-airflow/issues/77
-COPY ./requirements.txt /tmp/
+COPY images/airflow/requirements.txt /tmp/
 RUN pip3 install -r /tmp/requirements.txt \
     && pip3 uninstall -y snakebite || true
 
 # Copy scripts used in the container:
 #   entrypoint.sh, airflow_start_service.sh and airflow_logrotate.sh
-COPY script/*.sh ${AIRFLOW_HOME}/
+COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
 
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME}
+
+# Shipyard
+#
+# Shipyard provides core functionality used by the airflow plugins/operators
+# Since Shipyard and Airflow are built together as images, this should prevent
+# stale or out-of-date code between these parts.
+# Shipyard requirements, source and installation
+COPY ${ctx_base}/shipyard_airflow/requirements.txt /tmp/api_requirements.txt
+RUN pip3 install -r /tmp/api_requirements.txt
+
+COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
+RUN cd /tmp/shipyard \
+    && python3 setup.py install
 
 # Set work directory
 USER airflow

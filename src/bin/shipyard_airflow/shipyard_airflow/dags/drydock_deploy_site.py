@@ -13,8 +13,7 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DrydockDeployNodesOperator
-from airflow.operators import DrydockPrepareNodesOperator
+from airflow.operators import DrydockNodesOperator
 from airflow.operators import DrydockPrepareSiteOperator
 from airflow.operators import DrydockVerifySiteOperator
 
@@ -43,15 +42,8 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
         sub_dag_name=child_dag_name,
         dag=dag)
 
-    drydock_prepare_nodes = DrydockPrepareNodesOperator(
-        task_id='prepare_nodes',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        dag=dag)
-
-    drydock_deploy_nodes = DrydockDeployNodesOperator(
-        task_id='deploy_nodes',
+    drydock_nodes = DrydockNodesOperator(
+        task_id='prepare_and_deploy_nodes',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
         sub_dag_name=child_dag_name,
@@ -59,7 +51,6 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
 
     # Define dependencies
     drydock_prepare_site.set_upstream(drydock_verify_site)
-    drydock_prepare_nodes.set_upstream(drydock_prepare_site)
-    drydock_deploy_nodes.set_upstream(drydock_prepare_nodes)
+    drydock_nodes.set_upstream(drydock_prepare_site)
 
     return dag

@@ -19,7 +19,7 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from deckhand.client import client as deckhand_client
-from service_endpoint import ucp_service_endpoint
+import service_endpoint
 from service_token import shipyard_service_token
 from ucp_base_operator import UcpBaseOperator
 
@@ -41,8 +41,6 @@ class DeckhandBaseOperator(UcpBaseOperator):
                  committed_ver=None,
                  deckhandclient=None,
                  deckhand_client_read_timeout=None,
-                 deckhand_svc_endpoint=None,
-                 deckhand_svc_type='deckhand',
                  revision_id=None,
                  svc_session=None,
                  svc_token=None,
@@ -53,8 +51,6 @@ class DeckhandBaseOperator(UcpBaseOperator):
         :param committed_ver: Last committed version
         :param deckhandclient: An instance of deckhand client
         :param deckhand_client_read_timeout: Deckhand client connect timeout
-        :param deckhand_svc_endpoint: Deckhand Service Endpoint
-        :param deckhand_svc_type: Deckhand Service Type
         :param revision_id: Target revision for workflow
         :param svc_session: Keystone Session
         :param svc_token: Keystone Token
@@ -70,8 +66,6 @@ class DeckhandBaseOperator(UcpBaseOperator):
         self.committed_ver = committed_ver
         self.deckhandclient = deckhandclient
         self.deckhand_client_read_timeout = deckhand_client_read_timeout
-        self.deckhand_svc_endpoint = deckhand_svc_endpoint
-        self.deckhand_svc_type = deckhand_svc_type
         self.revision_id = revision_id
         self.svc_session = svc_session
         self.svc_token = svc_token
@@ -96,8 +90,9 @@ class DeckhandBaseOperator(UcpBaseOperator):
                  self.action_info['id'])
 
         # Retrieve Endpoint Information
-        self.deckhand_svc_endpoint = ucp_service_endpoint(
-            self, svc_type=self.deckhand_svc_type)
+        self.deckhand_svc_endpoint = self.endpoints.endpoint_by_name(
+            service_endpoint.DECKHAND
+        )
 
         LOG.info("Deckhand endpoint is %s",
                  self.deckhand_svc_endpoint)

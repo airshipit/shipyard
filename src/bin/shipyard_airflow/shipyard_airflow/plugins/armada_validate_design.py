@@ -42,8 +42,7 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
         # Validate Site Design
         try:
             post_validate = self.armada_client.post_validate(
-                manifest=self.deckhand_design_ref,
-                timeout=timeout)
+                manifest=self.design_ref, timeout=timeout)
 
         except errors.ClientError as client_error:
             # Dump logs from Armada API pods

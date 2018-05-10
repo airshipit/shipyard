@@ -29,9 +29,9 @@ import tests.unit.common.deployment_group.test_deployment_group_manager as tdgm
 def get_doc_returner(style, ds_name):
     strategy = MagicMock()
     if style == 'cycle':
-        strategy.data = {"groups": yaml.safe_load(tdgm._CYCLE_GROUPS_YAML)}
+        strategy.data = {"groups": yaml.safe_load(tdgm.CYCLE_GROUPS_YAML)}
     elif style == 'clean':
-        strategy.data = {"groups": yaml.safe_load(tdgm._GROUPS_YAML)}
+        strategy.data = {"groups": yaml.safe_load(tdgm.GROUPS_YAML)}
 
     def doc_returner(revision_id, rendered, **filters):
         if not revision_id == 99:

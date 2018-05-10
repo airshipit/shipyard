@@ -31,7 +31,7 @@ from shipyard_airflow.common.deployment_group.errors import (
 
 from .node_lookup_stubs import node_lookup
 
-_GROUPS_YAML = """
+GROUPS_YAML = """
 - name: control-nodes
   critical: true
   depends_on:
@@ -121,7 +121,7 @@ _GROUPS_YAML = """
     minimum_successful_nodes: 1
 """
 
-_CYCLE_GROUPS_YAML = """
+CYCLE_GROUPS_YAML = """
 - name: group-a
   critical: true
   depends_on:
@@ -148,7 +148,7 @@ _CYCLE_GROUPS_YAML = """
 
 class TestDeploymentGroupManager:
     def test_basic_class(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         assert dgm is not None
         # topological sort doesn't guarantee a specific order.
         assert dgm.get_next_group(Stage.PREPARED).name in ['ntp-node',
@@ -160,7 +160,7 @@ class TestDeploymentGroupManager:
 
     def test_cycle_error(self):
         with pytest.raises(DeploymentGroupCycleError) as ce:
-            DeploymentGroupManager(yaml.safe_load(_CYCLE_GROUPS_YAML),
+            DeploymentGroupManager(yaml.safe_load(CYCLE_GROUPS_YAML),
                                    node_lookup)
         assert 'The following are involved' in str(ce)
         for g in ['group-a', 'group-c', 'group-d']:
@@ -168,11 +168,71 @@ class TestDeploymentGroupManager:
         assert 'group-b' not in str(ce)
 
     def test_no_next_group(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         assert dgm.get_next_group(Stage.DEPLOYED) is None
 
+    def test_group_list(self):
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
+        assert len(dgm.group_list()) == 7
+        group_names = []
+        for group in dgm.group_list():
+            group_names.append(group.name)
+        assert group_names == dgm._group_order
+
+    def test_fail_unsuccessful_nodes(self):
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
+        group = dgm._all_groups.get('control-nodes')
+        dgm.fail_unsuccessful_nodes(group, [])
+        assert not dgm.evaluate_group_succ_criteria('control-nodes',
+                                                    Stage.DEPLOYED)
+        assert group.stage == Stage.FAILED
+
+    def test_reports(self, caplog):
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
+        dgm.mark_node_deployed('node1')
+        dgm.mark_node_prepared('node2')
+        dgm.mark_node_failed('node3')
+        dgm.mark_group_prepared('control-nodes')
+        dgm.mark_group_deployed('control-nodes')
+        dgm.mark_group_prepared('compute-nodes-1')
+        dgm.mark_group_failed('compute-nodes-2')
+        dgm.report_group_summary()
+        assert "=====   Group Summary   =====" in caplog.text
+        assert ("Group ntp-node [Critical] ended with stage: "
+                "Stage.NOT_STARTED") in caplog.text
+        caplog.clear()
+        dgm.report_node_summary()
+        assert "Nodes Stage.PREPARED: node2" in caplog.text
+        assert "Nodes Stage.FAILED: node3" in caplog.text
+        assert "===== End Node Summary =====" in caplog.text
+        assert "It was the best of times" not in caplog.text
+
+    def test_evaluate_group_succ_criteria(self):
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
+        group = dgm._all_groups.get('control-nodes')
+
+        nodes = ["node{}".format(i) for i in range(1, 12)]
+        for node in nodes:
+            dgm.mark_node_prepared(node)
+        dgm.fail_unsuccessful_nodes(group, nodes)
+        assert dgm.evaluate_group_succ_criteria('control-nodes',
+                                                Stage.PREPARED)
+        assert group.stage == Stage.PREPARED
+
+        for node in nodes:
+            dgm.mark_node_deployed(node)
+        assert dgm.evaluate_group_succ_criteria('control-nodes',
+                                                Stage.DEPLOYED)
+        assert group.stage == Stage.DEPLOYED
+
+    def test_critical_groups_failed(self):
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
+        assert not dgm.critical_groups_failed()
+        dgm.mark_group_failed('control-nodes')
+        assert dgm.critical_groups_failed()
+
     def test_ordering_stages_flow_failure(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
 
         group = dgm.get_next_group(Stage.PREPARED)
         if group.name == 'monitoring-nodes':
@@ -198,24 +258,24 @@ class TestDeploymentGroupManager:
     def test_deduplication(self):
         """all-compute-nodes is a duplicate of things it's dependent on, it
         should have no actionable nodes"""
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         acn = dgm._all_groups['all-compute-nodes']
         assert len(acn.actionable_nodes) == 0
         assert len(acn.full_nodes) == 6
 
     def test_bad_group_name_lookup(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         with pytest.raises(UnknownDeploymentGroupError) as udge:
             dgm.mark_group_prepared('Limburger Cheese')
         assert "Group name Limburger Cheese does not refer" in str(udge)
 
     def test_get_group_failures_for_stage_bad_input(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         with pytest.raises(DeploymentGroupStageError):
             dgm.get_group_failures_for_stage('group1', Stage.FAILED)
 
     def test_get_group_failures_for_stage(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         dgm._all_nodes = {'node%d' % x: Stage.DEPLOYED for x in range(1, 13)}
 
         for group_name in dgm._all_groups:
@@ -269,27 +329,27 @@ class TestDeploymentGroupManager:
                                   'actual': 0}
 
     def test_mark_node_deployed(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         dgm.mark_node_deployed('node1')
         assert dgm.get_nodes(Stage.DEPLOYED) == ['node1']
 
     def test_mark_node_prepared(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         dgm.mark_node_prepared('node1')
         assert dgm.get_nodes(Stage.PREPARED) == ['node1']
 
     def test_mark_node_failed(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         dgm.mark_node_failed('node1')
         assert dgm.get_nodes(Stage.FAILED) == ['node1']
 
     def test_mark_node_failed_unknown(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         with pytest.raises(UnknownNodeError):
             dgm.mark_node_failed('not_node')
 
     def test_get_nodes_all(self):
-        dgm = DeploymentGroupManager(yaml.safe_load(_GROUPS_YAML), node_lookup)
+        dgm = DeploymentGroupManager(yaml.safe_load(GROUPS_YAML), node_lookup)
         assert set(dgm.get_nodes()) == set(
             ['node1', 'node2', 'node3', 'node4', 'node5', 'node6', 'node7',
              'node8', 'node9', 'node10', 'node11', 'node12']

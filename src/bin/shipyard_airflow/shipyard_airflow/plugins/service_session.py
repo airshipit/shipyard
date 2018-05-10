@@ -22,11 +22,11 @@ from keystoneauth1.identity import v3 as keystone_v3
 from keystoneauth1 import session as keystone_session
 
 
-def ucp_keystone_session(self):
+def ucp_keystone_session(shipyard_conf):
 
     # Read and parse shiyard.conf
     config = configparser.ConfigParser()
-    config.read(self.shipyard_conf)
+    config.read(shipyard_conf)
 
     # Initialize variables
     retry = 0

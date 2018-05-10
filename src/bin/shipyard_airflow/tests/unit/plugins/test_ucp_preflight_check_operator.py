@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import mock
+import os
+import unittest.mock as mock
+
 import pytest
 from requests.models import Response
 
@@ -22,9 +24,11 @@ from shipyard_airflow.plugins.ucp_preflight_check_operator import (
 ucp_components = [
     'armada',
     'deckhand',
-    'kubernetesprovisioner',
-    'physicalprovisioner',
+    'promenade',
+    'drydock',
     'shipyard']
+
+CONF_FILE = os.path.join(os.path.dirname(__file__), 'test.conf')
 
 
 def test_drydock_health_skip_update_site(caplog):
@@ -44,18 +48,18 @@ def test_drydock_health_skip_update_site(caplog):
         "parameters": {"continue-on-fail": "true"}
     }
 
-    op = UcpHealthCheckOperator(task_id='test')
+    op = UcpHealthCheckOperator(task_id='test', shipyard_conf=CONF_FILE)
     op.action_info = action_info
     op.xcom_pusher = mock.MagicMock()
 
-    op.log_health_exception('physicalprovisioner', req)
+    op.log_health_exception('drydock', req)
     assert expected_log in caplog.text
 
     action_info = {
         "dag_id": "deploy_site",
         "parameters": {"continue-on-fail": "true"}
     }
-    op.log_health_exception('physicalprovisioner', req)
+    op.log_health_exception('drydock', req)
     assert expected_log in caplog.text
 
 
@@ -70,7 +74,7 @@ def test_failure_log_health():
     req = Response()
     req.status_code = None
 
-    op = UcpHealthCheckOperator(task_id='test')
+    op = UcpHealthCheckOperator(task_id='test', shipyard_conf=CONF_FILE)
     op.action_info = action_info
     op.xcom_pusher = mock.MagicMock()
 

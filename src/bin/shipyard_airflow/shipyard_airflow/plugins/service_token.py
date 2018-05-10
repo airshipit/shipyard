@@ -47,7 +47,7 @@ def shipyard_service_token(func):
         retry = 0
 
         # Retrieve Keystone Session
-        self.svc_session = ucp_keystone_session(self)
+        self.svc_session = ucp_keystone_session(self.shipyard_conf)
 
         # We will allow 1 retry in getting the Keystone Token with a
         # backoff interval of 10 seconds in case there is a temporary
