@@ -37,7 +37,7 @@ spec:
       targetPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
     {{ end }}
   selector:
-{{ tuple $envAll "shipyard-api" "server" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
   {{ if .Values.network.shipyard.enable_node_port }}
   type: NodePort
   {{ end }}

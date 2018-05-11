@@ -31,7 +31,7 @@ spec:
   template:
     metadata:
       labels:
-{{ tuple $envAll "shipyard-api" "server" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
       annotations:
         configmap-bin-hash: {{ tuple "configmap-shipyard-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-shipyard-etc.yaml" . | include "helm-toolkit.utils.hash" }}
