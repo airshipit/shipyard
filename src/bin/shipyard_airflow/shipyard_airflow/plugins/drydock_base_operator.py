@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
+import copy
+import pprint
 import logging
 import os
 import time
@@ -282,75 +283,88 @@ class DrydockBaseOperator(UcpBaseOperator):
             all_tasks = self.drydock_client.get_tasks()
 
             # Create a dictionary of tasks records with 'task_id' as key
-            all_task_ids = {t['task_id']: t for t in all_tasks}
+            self.all_task_ids = {t['task_id']: t for t in all_tasks}
 
         except errors.ClientError as client_error:
             raise AirflowException(client_error)
 
         # Retrieve the failed parent task and assign it to list
-        failed_task = (
+        failed_parent_task = (
             [x for x in all_tasks if x['task_id'] == self.drydock_task_id])
 
         # Print detailed information of failed parent task in json output
         # Since there is only 1 failed parent task, we will print index 0
         # of the list
-        if failed_task:
+        if failed_parent_task:
             LOG.error('%s task has either failed or timed out',
-                      failed_task[0]['action'])
+                      failed_parent_task[0]['action'])
 
-            LOG.error(json.dumps(failed_task[0],
-                                 indent=4,
-                                 sort_keys=True))
+            LOG.error(pprint.pprint(failed_parent_task[0]))
 
         # Get the list of subtasks belonging to the failed parent task
-        subtask_id_list = failed_task[0]['subtask_id_list']
+        parent_subtask_id_list = failed_parent_task[0]['subtask_id_list']
 
-        LOG.info("Printing information of failed sub-tasks...")
-
-        # Print detailed information of failed step(s) under each subtask
-        # This will help to provide additional information for troubleshooting
-        # purpose.
-        for subtask_id in subtask_id_list:
-
-            LOG.info("Retrieving details of subtask %s...", subtask_id)
-
-            # Retrieve task information
-            task = all_task_ids.get(subtask_id)
-
-            if task:
-                # Print subtask action and state
-                LOG.info("%s subtask is in %s state",
-                         task['action'],
-                         task['result']['status'])
-
-                # Print list containing steps in failure state
-                if task['result']['failures']:
-                    LOG.error("The following steps have failed:")
-                    LOG.error(task['result']['failures'])
-
-                    message_list = (
-                        task['result']['details']['messageList'] or [])
-
-                    # Print information of failed steps
-                    for message in message_list:
-                        is_error = message['error'] is True
-
-                        if is_error:
-                            LOG.error(json.dumps(message,
-                                                 indent=4,
-                                                 sort_keys=True))
-                else:
-                    LOG.info("No failed step detected for subtask %s",
-                             subtask_id)
-
-            else:
-                raise AirflowException("Unable to retrieve subtask info!")
+        # Check for failed subtasks
+        self.check_subtask_failure(parent_subtask_id_list)
 
         # Raise Exception to terminate workflow
         if _task_failure:
             raise AirflowException("Failed to Execute/Complete Task!")
         else:
             raise AirflowException("Task Execution Timed Out!")
+
+    def check_subtask_failure(self, subtask_id_list):
+
+        LOG.info("Printing information of failed sub-tasks...")
+
+        while subtask_id_list:
+
+            # Copies the current list (a layer)
+            children_subtask_id_list = copy.copy(subtask_id_list)
+
+            # Reset subtask_id_list for each layer
+            # The last layer will be an empty list
+            subtask_id_list = []
+
+            # Print detailed information of failed step(s) under each
+            # subtask. This will help to provide additional information
+            # for troubleshooting purpose.
+            for subtask_id in children_subtask_id_list:
+
+                LOG.info("Retrieving details of subtask %s...", subtask_id)
+
+                # Retrieve task information
+                task = self.all_task_ids.get(subtask_id)
+
+                if task:
+                    # Print subtask action and state
+                    LOG.info("%s subtask is in %s state",
+                             task['action'],
+                             task['result']['status'])
+
+                    # Check for subtasks and extend the list
+                    subtask_id_list.extend(task['subtask_id_list'])
+
+                    # Check if error count is greater than 0
+                    if task['result']['details']['errorCount'] > 0:
+
+                        # Get message list
+                        message_list = (
+                            task['result']['details']['messageList'] or [])
+
+                        # Print information of failed steps
+                        for message in message_list:
+                            is_error = message['error'] is True
+
+                            if is_error:
+                                LOG.error(pprint.pprint(message))
+
+                    else:
+                        LOG.info("No failed step detected for subtask %s",
+                                 subtask_id)
+
+                else:
+                    raise AirflowException("Unable to retrieve subtask info!")
 
 
 class DrydockBaseOperatorPlugin(AirflowPlugin):
