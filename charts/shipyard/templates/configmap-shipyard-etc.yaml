@@ -43,7 +43,7 @@
 {{- tuple "oslo_cache" "internal" "memcache" . | include "helm-toolkit.endpoints.host_and_port_endpoint_uri_lookup" | set .Values.conf.shipyard.keystone_authtoken "memcached_servers" | quote | trunc 0 -}}
 {{- end -}}
 
-{{- $userIdentity := .Values.endpoints.identity.auth.user -}}
+{{- $userIdentity := .Values.endpoints.identity.auth.shipyard -}}
 
 {{- if empty .Values.conf.shipyard.keystone_authtoken.project_name -}}
 {{- set .Values.conf.shipyard.keystone_authtoken "project_name" $userIdentity.project_name | quote | trunc 0 -}}

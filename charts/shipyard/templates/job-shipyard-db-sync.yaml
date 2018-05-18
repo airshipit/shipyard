@@ -17,11 +17,10 @@ limitations under the License.
 
 {{- if .Values.manifests.job_shipyard_db_sync }}
 {{- $envAll := . }}
-{{- $dependencies := .Values.dependencies.shipyard_db_sync }}
 {{- $mounts_shipyard_db_sync := .Values.pod.mounts.shipyard_db_sync.shipyard_db_sync }}
 {{- $mounts_shipyard_db_sync_init := .Values.pod.mounts.shipyard_db_sync.init_container }}
 {{- $serviceAccountName := "shipyard-db-sync" }}
-{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{ tuple $envAll "shipyard_db_sync" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -36,9 +35,9 @@ spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
-        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+        {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       initContainers:
-{{ tuple $envAll $dependencies list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "shipyard_db_sync" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: shipyard-db-sync
           image: {{ .Values.images.tags.shipyard_db_sync }}

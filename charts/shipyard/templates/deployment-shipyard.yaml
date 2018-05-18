@@ -15,11 +15,10 @@
 
 {{- if .Values.manifests.deployment_shipyard }}
 {{- $envAll := . }}
-{{- $dependencies := .Values.dependencies.shipyard }}
 {{- $mounts_shipyard := .Values.pod.mounts.shipyard.shipyard }}
 {{- $mounts_shipyard_init := .Values.pod.mounts.shipyard.init_container }}
 {{- $serviceAccountName := "shipyard" }}
-{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{ tuple $envAll "shipyard" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -38,11 +37,11 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+        {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.shipyard.timeout | default "30" }}
       restartPolicy: Always
       initContainers:
-{{ tuple $envAll $dependencies $mounts_shipyard_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "shipyard" $mounts_shipyard_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: shipyard-api
           env:

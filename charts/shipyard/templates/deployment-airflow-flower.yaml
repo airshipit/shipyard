@@ -15,9 +15,8 @@
 
 {{- if .Values.manifests.deployment_airflow_flower }}
 {{- $envAll := . }}
-{{- $dependencies := .Values.dependencies.airflow_server }}
 {{- $serviceAccountName := "airflow-flower" }}
-{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{ tuple $envAll "airflow_server" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_flower := .Values.pod.mounts.airflow_flower.airflow_flower }}
 {{- $mounts_airflow_flower_init := .Values.pod.mounts.airflow_flower.init_container }}
 ---
@@ -38,11 +37,11 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+        {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       restartPolicy: Always
       terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.airflow.timeout | default "30" }}
       initContainers:
-{{ tuple $envAll $dependencies $mounts_airflow_flower_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "airflow_server" $mounts_airflow_flower_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
         - name: airflow-flower
           image: {{ .Values.images.tags.airflow }}

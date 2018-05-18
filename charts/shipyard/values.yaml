@@ -19,8 +19,9 @@
 prod_environment: true
 
 labels:
-  node_selector_key: ucp-control-plane
-  node_selector_value: enabled
+  job:
+    node_selector_key: ucp-control-plane
+    node_selector_value: enabled
 
 images:
   tags:
@@ -34,7 +35,13 @@ images:
     ks_user: docker.io/openstackhelm/heat:ocata
     ks_service: docker.io/openstackhelm/heat:ocata
     ks_endpoints: docker.io/openstackhelm/heat:ocata
+    image_repo_sync: docker.io/docker:17.07.0
   pull_policy: "IfNotPresent"
+  local_registry:
+    active: false
+    exclude:
+      - dep_check
+      - image_repo_sync
 
 release_group: null
 
@@ -69,72 +76,73 @@ network:
       enable_node_port: false
 
 dependencies:
-  shipyard_db_init:
-    jobs:
-    - airflow-db-init
-    - airflow-db-sync
-    services:
-    - service: postgresql_shipyard_db
-      endpoint: internal
-    - service: airflow_flower
-      endpoint: internal
-    - service: airflow_web
-      endpoint: internal
-  shipyard_db_sync:
-    jobs:
-    - shipyard-db-init
-    services:
-    - service: postgresql_shipyard_db
-      endpoint: internal
-  airflow_db_init:
-    services:
-    - service: postgresql_airflow_db
-      endpoint: internal
-  airflow_db_sync:
-    jobs:
-    - airflow-db-init
-    services:
-    - service: postgresql_airflow_db
-      endpoint: internal
-  ks_user:
-    services:
-    - service: identity
-      endpoint: internal
-  ks_service:
-    services:
-    - service: identity
-      endpoint: internal
-  ks_endpoints:
-    jobs:
-    - shipyard-ks-service
-    services:
-    - service: identity
-      endpoint: internal
-  shipyard:
-    jobs:
-    - shipyard-db-init
-    - shipyard-db-sync
-    - shipyard-ks-endpoints
-    - shipyard-ks-user
-    - shipyard-ks-endpoints
-    services:
-    - service: airflow_flower
-      endpoint: internal
-    - service: airflow_web
-      endpoint: internal
-    - service: identity
-      endpoint: internal
-    - service: postgresql_shipyard_db
-      endpoint: internal
-  airflow_server:
-    jobs:
-    - airflow-db-init
-    - airflow-db-sync
-    services:
-    - service: postgresql_airflow_db
-      endpoint: internal
-    - service: oslo_messaging
-      endpoint: internal
+  static:
+    shipyard_db_init:
+      jobs:
+        - airflow-db-init
+        - airflow-db-sync
+      services:
+        - service: postgresql_shipyard_db
+          endpoint: internal
+        - service: airflow_flower
+          endpoint: internal
+        - service: airflow_web
+          endpoint: internal
+    shipyard_db_sync:
+      jobs:
+        - shipyard-db-init
+      services:
+        - service: postgresql_shipyard_db
+          endpoint: internal
+    airflow_db_init:
+      services:
+        - service: postgresql_airflow_db
+          endpoint: internal
+    airflow_db_sync:
+      jobs:
+        - airflow-db-init
+      services:
+        - service: postgresql_airflow_db
+          endpoint: internal
+    ks_user:
+      services:
+        - service: identity
+          endpoint: internal
+    ks_service:
+      services:
+        - service: identity
+          endpoint: internal
+    ks_endpoints:
+      jobs:
+        - shipyard-ks-service
+      services:
+        - service: identity
+          endpoint: internal
+    shipyard:
+      jobs:
+        - shipyard-db-init
+        - shipyard-db-sync
+        - shipyard-ks-endpoints
+        - shipyard-ks-user
+        - shipyard-ks-endpoints
+      services:
+        - service: airflow_flower
+          endpoint: internal
+        - service: airflow_web
+          endpoint: internal
+        - service: identity
+          endpoint: internal
+        - service: postgresql_shipyard_db
+          endpoint: internal
+    airflow_server:
+      jobs:
+        - airflow-db-init
+        - airflow-db-sync
+      services:
+        - service: postgresql_airflow_db
+          endpoint: internal
+        - service: oslo_messaging
+          endpoint: internal
 
 volume_worker:
   class_name: general
@@ -151,7 +159,7 @@ endpoints:
   identity:
     name: keystone
     auth:
-      user:
+      shipyard:
         region_name: RegionOne
         role: admin
         project_name: service
@@ -318,7 +326,7 @@ endpoints:
 secrets:
   identity:
     admin: shipyard-keystone-admin
-    user: shipyard-keystone-user
+    shipyard: shipyard-keystone-user
   postgresql_shipyard_db:
     admin: shipyard-db-admin
     user: shipyard-db-user

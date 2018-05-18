@@ -48,5 +48,11 @@ git clone --depth 1 https://git.openstack.org/openstack/openstack-helm-infra.git
 cd openstack-helm-infra
 git pull
 helm_serve
+
+if [[ ${HELM} != "helm" ]]
+then
+  export PATH=${PATH}:$(dirname ${HELM})
+fi
+
 make helm-toolkit
 ${HELM} dep up ../../charts/shipyard

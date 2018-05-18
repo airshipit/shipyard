@@ -12,17 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_CTX       ?= src/bin
-DOCKER_REGISTRY ?= quay.io
-IMAGE_PREFIX    ?= airshipit
-IMAGE_TAG       ?= untagged
-HELM            ?= helm
-LABEL           ?= commit-id
-IMAGE_NAME      := airflow shipyard
-PROXY           ?= http://proxy.foo.com:8000
-NO_PROXY        ?= localhost,127.0.0.1,.svc.cluster.local
-USE_PROXY       ?= false
-PUSH_IMAGE      ?= false
+BUILD_DIR                  := $(shell mktemp -d)
+BUILD_CTX                  ?= src/bin
+
+IMAGE_PREFIX               ?= airshipit
+IMAGE_TAG                  ?= untagged
+IMAGE_NAME                 := airflow shipyard
+LABEL                      ?= commit-id
+
+DOCKER_REGISTRY            ?= quay.io
+PUSH_IMAGE                 ?= false
+
+HELM                       := $(BUILD_DIR)/helm
+
+PROXY                      ?= http://proxy.foo.com:8000
+NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
+USE_PROXY                  ?= false
+
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
 IMAGE_DIR:=images/$(IMAGE_NAME)
@@ -43,8 +49,7 @@ $(IMAGE_NAME):
 
 # Create tgz of the chart
 .PHONY: charts
-charts: clean
-	tools/helm_tk.sh $(HELM)
+charts: clean helm-init
 	$(HELM) dep up charts/shipyard
 	$(HELM) package charts/shipyard
 
@@ -54,8 +59,7 @@ lint: pep8 helm_lint build_docs
 
 # Dry run templating of chart
 .PHONY: dry-run
-dry-run: clean
-	tools/helm_tk.sh $(HELM)
+dry-run: clean helm-init
 	$(HELM) template charts/shipyard
 
 .PHONY: docs
@@ -114,6 +118,9 @@ endif
 
 .PHONY: clean
 clean:
+	rm -rf $(BUILD_DIR)/*
+	rm -rf build
+	rm -rf docs/build
 	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
 	cd $(BUILD_CTX)/shipyard_client; rm -rf build
 
@@ -123,9 +130,18 @@ pep8:
 	cd $(BUILD_CTX)/shipyard_client; tox -e pep8
 
 .PHONY: helm_lint
-helm_lint: clean
-	tools/helm_tk.sh $(HELM)
+helm_lint: clean helm-init
 	$(HELM) lint charts/shipyard
+
+# Initialize local helm config
+.PHONY: helm-init
+helm-init: helm-install
+	tools/helm_tk.sh $(HELM)
+
+# Install helm binary
+.PHONY: helm-install
+helm-install:
+	tools/helm_install.sh $(HELM)
 
 .PHONY: build_docs
 build_docs:
