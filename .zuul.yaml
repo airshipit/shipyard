@@ -16,10 +16,9 @@
         - airship-shipyard-linter
         - airship-shipyard-ubuntu:
             voting: false
-            irrelevant-files:
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^releasenotes/.*$
+        - airship-shipyard-tox-py35
+        - airship-shipyard-pep8
+        - airship-shipyard-image
     gate:
       jobs:
         - airship-shipyard-linter
@@ -29,19 +28,24 @@
         #       - ^.*\.rst$
         #       - ^doc/.*$
         #       - ^releasenotes/.*$
+        - airship-shipyard-tox-py35
+        - airship-shipyard-pep8
+        - airship-shipyard-image
 
 - job:
     name: airship-shipyard-linter
+    description: |
+      Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
     nodeset: openstack-helm-single-node
 
 - job:
-    name: airship-shipyard
+    name: airship-shipyard-base
     roles:
       - zuul: openstack/openstack-helm-infra
     vars:
       zuul_osh_infra_relative_path: ../openstack-helm-infra/
-    timeout: 7200
+    timeout: 3600
     pre-run:
       - tools/gate/playbooks/osh-infra-upgrade-host.yaml
       - tools/gate/playbooks/osh-infra-deploy-docker.yaml
@@ -51,8 +55,76 @@
     post-run: tools/gate/playbooks/osh-infra-collect-logs.yaml
     required-projects:
       - openstack/openstack-helm-infra
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
 
 - job:
     name: airship-shipyard-ubuntu
-    parent: airship-shipyard
+    parent: airship-shipyard-base
+    nodeset: openstack-helm-single-node
+
+- job:
+    name: airship-shipyard-tox-base
+    description: |
+      Base job for running airship-shipyard tests. Runs tests
+      against Docker image generated from source code.
+    roles:
+      - zuul: openstack/openstack-helm-infra
+    timeout: 3600
+    pre-run:
+      - tools/gate/playbooks/osh-infra-upgrade-host.yaml
+      - tools/gate/playbooks/osh-infra-deploy-docker.yaml
+    run: tools/gate/playbooks/run-tests.yaml
+    required-projects:
+      - openstack/openstack-helm-infra
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+
+- job:
+    name: airship-shipyard-tox-py35
+    description: |
+      Run tox-based tests for the Airship Shipyard project under
+      cPython version 3.5.
+    parent: airship-shipyard-tox-base
+    nodeset: openstack-helm-single-node
+    vars:
+      tox_envlist: py35
+
+- job:
+    name: airship-shipyard-pep8
+    description: |
+      Run pep8 tests for the Airship Shipyard project under
+      cPython version 3.5.
+    parent: airship-shipyard-tox-base
+    nodeset: openstack-helm-single-node
+    vars:
+      tox_envlist: pep8
+
+- job:
+    name: airship-shipyard-image-base
+    description: |
+      Base job for running airship-shipyard image related jobs.
+    roles:
+      - zuul: openstack/openstack-helm-infra
+    timeout: 3600
+    pre-run:
+      - tools/gate/playbooks/osh-infra-upgrade-host.yaml
+      - tools/gate/playbooks/osh-infra-deploy-docker.yaml
+    run: tools/gate/playbooks/run-image.yaml
+    required-projects:
+      - openstack/openstack-helm-infra
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+
+- job:
+    name: airship-shipyard-image
+    description: |
+      Run shipyard-image build.
+    parent: airship-shipyard-image-base
     nodeset: openstack-helm-single-node

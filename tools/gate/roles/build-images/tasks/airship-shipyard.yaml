@@ -1,0 +1,57 @@
+# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: set zuul_site_mirror_fqdn from env var if not defined
+  when: zuul_site_mirror_fqdn is not defined
+  set_fact:
+    zuul_site_mirror_fqdn: "{{ lookup('env','zuul_site_mirror_fqdn') }}"
+
+# NOTE(portdirect): Until https://github.com/ansible/ansible/issues/21433 is
+# resolved, we build with a shell script to make use of the host network.
+- name: Build Airship-Shipyard Image
+  block:
+    # NOTE(portdirect): We do this to ensure we are feeding the docker build
+    # a clean path to work with.
+    - name: Airship-Shipyard image build path
+      shell: cd "{{ work_dir }}"; pwd
+      register: airship_shipyard_path
+      vars:
+        zuul_airship_shipyard_relative_path: ../airship-shipyard
+        work_dir: "{{ zuul.project.src_dir }}/{{ zuul_airship_shipyard_relative_path | default('') }}"
+
+    - name: Airship-Shipyard image build path
+      shell: |-
+              set -ex;
+              docker build \
+                --network host \
+                --force-rm \
+                --label zuul \
+                -f images/shipyard/Dockerfile \
+                --build-arg ctx_base=src/bin \
+                {% if zuul_site_mirror_fqdn is defined and zuul_site_mirror_fqdn %}
+                --build-arg UBUNTU_URL="http://{{ zuul_site_mirror_fqdn }}/ubuntu/" \
+                --build-arg ALLOW_UNAUTHENTICATED="true" \
+                --build-arg PIP_INDEX_URL="http://{{ zuul_site_mirror_fqdn }}/pypi/simple" \
+                --build-arg PIP_TRUSTED_HOST="{{ zuul_site_mirror_fqdn }}" \
+                {% endif %}
+                .
+      args:
+        chdir: "{{ airship_shipyard_path.stdout }}"
+        executable: /bin/bash
+
+    - name: Register Shipyard Image ID
+      shell: |-
+              set -e;
+              echo $( docker images --filter label=zuul | awk '{print $3}' | head -2 | tail -1 )
+      register: shipyard_image_id
