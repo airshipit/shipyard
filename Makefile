@@ -14,11 +14,14 @@
 
 BUILD_CTX                  ?= src/bin
 DOCKER_REGISTRY            ?= quay.io
-IMAGE_PREFIX               ?= attcomdev
-IMAGE_TAG                  ?= latest
+IMAGE_PREFIX               ?= airshipit
+IMAGE_TAG                  ?= untagged
 HELM                       ?= helm
 LABEL                      ?= commit-id
 IMAGE_NAME                 := airflow shipyard
+PROXY                      ?= http://proxy.foo.com:8080
+USE_PROXY                  ?= false
+PUSH_IMAGE                 ?= false
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
 IMAGE_DIR:=images/$(IMAGE_NAME)
@@ -75,11 +78,25 @@ run:
 
 .PHONY: build_airflow
 build_airflow:
-	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile $(IMAGE_DIR)
+ifeq ($(USE_PROXY), true)
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile $(IMAGE_DIR) --build-arg http_proxy=$(PROXY) --build-arg https_proxy=$(PROXY)
+else
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile $(IMAGE_DIR)
+endif
+ifeq ($(PUSH_IMAGE), true)
+	docker push $(IMAGE)
+endif
 
 .PHONY: build_shipyard
 build_shipyard:
-	docker build -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
+ifeq ($(USE_PROXY), true)
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) . --build-arg http_proxy=$(PROXY) --build-arg https_proxy=$(PROXY)
+else
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
+endif
+ifeq ($(PUSH_IMAGE), true)
+	docker push $(IMAGE)
+endif
 
 .PHONY: clean
 clean:

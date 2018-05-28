@@ -33,6 +33,9 @@
         - airship-shipyard-pep8
         - airship-shipyard-security-bandit
         - airship-shipyard-image
+    post:
+      jobs:
+        - airship-shipyard-docker-build-post
 
 - nodeset:
     name: airship-shipyard-single-node
@@ -130,6 +133,7 @@
       - tools/gate/playbooks/osh-infra-upgrade-host.yaml
       - tools/gate/playbooks/osh-infra-deploy-docker.yaml
     run: tools/gate/playbooks/run-image.yaml
+    nodeset: airship-shipyard-single-node
     required-projects:
       - openstack/openstack-helm-infra
     irrelevant-files:
@@ -142,4 +146,48 @@
     description: |
       Run shipyard-image build.
     parent: airship-shipyard-image-base
-    nodeset: airship-shipyard-single-node
+    vars:
+      publish: false
+      tags:
+        dynamic:
+          patch_set: true
+
+- job:
+    name: airship-shipyard-docker-build-post
+    parent: airship-shipyard-image-base
+    secrets:
+      - airship_shipyard_quay_creds
+    vars:
+      publish: true
+      tags:
+        dynamic:
+          branch: true
+          commit: true
+        static:
+          - latest
+
+- secret:
+    name: airship_shipyard_quay_creds
+    data:
+      username: !encrypted/pkcs1-oaep
+        - k9WFg+z1sgabdmlWRa/6Cc37N2TxmzCGC23nNr/fC5eDf5z73D0XycpbMhvYZ4ZRqXuRD
+          Yl9kTaQ6yRiaUaQfHgqIR+8R5m/IrC+F57tageAiFljs1Yf895vA1TlpE0TCI8jUJs6M7
+          z8f87FkrTZhgVfOI4KNUb+g9EioEs8/sx5WEXt053lm18xhnh7VyDE9DpVtoZ2swqpXTG
+          DPqlWLi2SHBU9PVTmwtz+mRA9BCNPFS4vUL1EQoMir9gqwYrEV3aezNPUeiWqMq7HqaQd
+          ZSGdOmxUTsjPZnrvGP6cAe9fEDAcqB9hoO1EKkLTirGN/9sEpK96vmMyIiTU91fMUCy/L
+          tp94a22CvOPEgL5E59M2HI0IEYLkhN9pjyRm608MoO9kcm7vt6rFstJafDp8Sfh4Klk3v
+          WGkZi4CnILpvpOXEdvG0cXb7HYJroBe1dblaFtS+AZWNYVo/PmA/gZ2DIifEGHsfHJhvp
+          3cpIwBXY2BeP0lAtmHXf0afCP1aGNVlumKBz2zEhxT1hSxbmbjDuv7at/3kyI0KzuJQuU
+          fEDkHzF4U7XPW5FJudxqVew9wWxYap9DwWk5q6LdxI1/JKRyztNiUisk3o+I1LiKGfA0c
+          n+J3riTLmXl03zQXJRFNVdcexuolrtHNV5iTpN5P+/NT2SQXUj9Wmj44W7vz4g=
+      password: !encrypted/pkcs1-oaep
+        - ju6Q/Gr6Zp76tHJdag8Veejn2ovtTKtqXOa6UgCMN8kYdspOE0cUH9e6A80O2Sn3qwqiw
+          Y3cNWJQnK272Gmnm2r0tN8Y39l3G7n3dhbyimO4E/9NfMVeY/+GQEDSrlj+f7oxui99YS
+          gVfdA9L/fx4JCKRkqGOVT/IKMPTSRepcrS+R9o3kMFVtpz38G1CFfdnk2rTdLFVvgus5e
+          UY1Hougf37V/fJXDpf4NrCl//iKrJ0X8eafWkrVJ9H4x+Pni22zN54OjBMcle75fYQqxZ
+          VUFfKCedan9RvL6402NmoEY21WozoMmAPnoFe0I1XIiQecAaPs25snMrDJxX+prd4Lp6m
+          suyFlJcGHfvOaWIUmbBl2+OZwyZfl2LzCwYNR5OPbVZ8CjdJWWQ2e4Q8iRGbKqbA6cqUE
+          TXEnqmzobqfIR1Z9vS96kdAXEUo3MNcxyE600Vfwg0t4MyblYEXZjm+c7H8QCijM8Z8lX
+          580awP/H504kfbqMInMuq2Ac+08b6NPObpHf2Q5hunrkpn6/7GS2fzhmkMPfRriNI5lOr
+          VCl4jWDJDYhtKh29q/ILrtmajHwyCxQjSjNqZKy31iWfinnQDYNFmgzdRxwvoYN3qwU1w
+          eYlzieYFM/znu+LAXaDE17O+25FYe9lk1s96Bm3jhGVARWize+sQSCo/xBor2A=

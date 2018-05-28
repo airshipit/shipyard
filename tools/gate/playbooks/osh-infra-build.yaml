@@ -22,15 +22,3 @@
     - build-helm-packages
   tags:
     - build-helm-packages
-
-- hosts: all
-  vars_files:
-    - vars.yaml
-  vars:
-    work_dir: "{{ zuul.project.src_dir }}/{{ zuul_osh_infra_relative_path | default('') }}"
-  gather_facts: False
-  become: yes
-  roles:
-    - build-images
-  tags:
-    - build-images
