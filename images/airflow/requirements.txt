@@ -23,6 +23,6 @@ python-openstackclient==3.11.0
 kubernetes>=6.0.0
 
 # Dependencies for other UCP components
-git+https://github.com/att-comdev/deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand
+git+https://git.openstack.org/openstack/airship-deckhand@177675e96fffcda9799c68bbce831424c1167020#egg=deckhand
 git+https://github.com/att-comdev/drydock.git@8af92eaf29ca0dd6a129748c132ea7f6593eae83#egg=drydock_provisioner
 git+https://github.com/att-comdev/armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
