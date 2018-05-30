@@ -97,8 +97,7 @@ Setup
 Server Components
 ~~~~~~~~~~~~~~~~~
 Use of the Shipyard client requires that a working installation of the Shipyard
-API is available. This may be accomplished by using the basic-ucp_ setup.
-Detailed instructions are not part of this guide.
+API is available. See :ref:`shipyard_deployment_guide`
 
 Local Environment
 ~~~~~~~~~~~~~~~~~
@@ -153,6 +152,8 @@ response::
    the target Shipyard API/Keystone environment.
 -  The ``shipyard`` and ``password`` values are the insecure values used by
    default if not overridden by the installation of Shipyard.
+-  The dev_minimal manifest deployment from Airship-in-a-bottle referenced in
+   the deployment guide provides a set of credentials that can be used.
 
 ``Configure hosts file, if necessary``::
 
@@ -196,9 +197,9 @@ The output will resemble the following::
 
 Use Case: Ingest Site Design
 ----------------------------
-Shipyard serves as the entrypoint for a deployment of the Undercloud Platform
-(UCP). One can imagine the following activities representing part of the
-lifecycle of a group of servers that the UCP would serve as the control plane:
+Shipyard serves as the entrypoint for a deployment of Airship. One can imagine
+the following activities representing part of the lifecycle of a group of
+servers for which Airship would serve as the control plane:
 
 Definition
   A group of servers making up a ``site`` has been identified. Designs covering
@@ -207,10 +208,10 @@ Definition
 Preparation
   The site is assembled, racking, and wiring is completed, and the hardware is
   readied for operation. The ``Genesis Node`` is preinstalled with an
-  (Ubuntu 16.04) image. The Promenade_ genesis process similar to the
-  basic-ucp_ process is configured on  and then run on the ``Genesis Node``.
+  (Ubuntu 16.04) image. Airship is deployed; See
+  :ref:`shipyard_deployment_guide`
 
-  At this point, the UCP is ready for use. This is the when the Shipyard API
+  At this point, Airship is ready for use. This is the when the Shipyard API
   is available for use.
 
 Load Configuration Documents
@@ -218,7 +219,7 @@ Load Configuration Documents
   with Shipyard, perhaps by using the CLI. The operator loads ``configdocs``
   which are a product of the definition step. These ``configdocs`` are
   declarative set of YAML documents using a format compatible with
-  Deckhand_ and containing information usable by the other UCP components.
+  Deckhand_ and containing information usable by the other Airship components.
 
 The interaction with Shipyard could happen as follows::
 
@@ -252,7 +253,7 @@ of an action::
 
   $ shipyard commit configdocs
 
-During this command, the other UCP components are contacted to validate the
+During this command, the other Airship components are contacted to validate the
 designs in Deckhand.  If the validations are not successful, Shipyard will not
 mark the revision as committed.
 
@@ -270,7 +271,6 @@ mark the revision as committed.
   elements, a secrets collection that contains certificates, and a
   site-specific collection that combines with the other two collections to
   fully define the site.
-
 
 Use Case: Deploy Site
 ---------------------
@@ -314,14 +314,14 @@ action, the operator can query the status and results of the action::
   ...
 
 More information is returned than shown here - for sake of abbreviation. The
-process of maintenance is very similar to the process of deploying a site.
+process of maintenance (update_site) is very similar to the process of
+deploying a site.
 
 
-.. _api-client: https://github.com/att-comdev/shipyard/tree/master/shipyard_client/api_client
-.. _Armada: https://github.com/att-comdev/armada
-.. _basic-ucp: https://github.com/att-comdev/ucp-integration/tree/master/manifests/basic_ucp
-.. _Deckhand: http://deckhand.readthedocs.io/en/latest/
-.. _Divingbell: https://github.com/att-comdev/divingbell
-.. _Drydock: https://github.com/att-comdev/drydock
+.. _api-client: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_client
+.. _Armada: https://git.airshipit.org/cgit/airship-armada
+.. _Deckhand: https://git.airshipit.org/cgit/airship-deckhand
+.. _Divingbell: https://git.airshipit.org/cgit/airship-divingbell
+.. _Drydock: https://git.airshipit.org/cgit/airship-drydock
 .. _Keystone: https://developer.openstack.org/api-ref/identity/index.html
-.. _Promenade: https://github.com/att-comdev/promenade
+.. _Promenade: https://git.airshipit.org/cgit/airship-promenade

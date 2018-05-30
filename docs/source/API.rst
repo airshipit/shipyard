@@ -28,8 +28,7 @@ functionality in Shipyard.
 
 Standards used by the API
 -------------------------
-See `UCP API
-conventions <https://github.com/att-comdev/ucp-integration/blob/master/docs>`__
+See `API Conventions`_
 
 Notes on examples
 -----------------
@@ -258,20 +257,19 @@ Entity Structure
 ^^^^^^^^^^^^^^^^
 The response will be the list of validations from all downstream systems that
 perform validation during the commit process. The structure will match the
-error response object described in the `UCP API
-conventions <https://github.com/att-comdev/ucp-integration/blob/master/docs>`__
-and will be an aggregation of each UCP component’s responses.
+error response object described in the `API Conventions`_ and will be an
+aggregation of each validating component’s responses.
 
 POST /v1.0/commitconfigdocs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Synchronous. Performs the commit of the Shipyard Buffer to the Committed
-Documents. This invokes each of the UCP components to examine the Shipyard
-Buffer version of the configuration documents and aggregate the responses.
-While performing this commit, further POSTing of configdocs, or other commits
-may not be invoked (Shipyard will block those requests with a 409 response). If
-there are any failures to validate, the Shipyard Buffer and Committed Documents
-will remain unchanged. If successful, the Shipyard Buffer will be cleared, and
-the Committed documents will be updated.
+Documents. This invokes each of the validating components to examine the
+Shipyard Buffer version of the configuration documents and aggregate the
+responses. While performing this commit, further POSTing of configdocs, or
+other commits may not be invoked (Shipyard will block those requests with a 409
+response). If there are any failures to validate, the Shipyard Buffer and
+Committed Documents will remain unchanged. If successful, the Shipyard Buffer
+will be cleared, and the Committed documents will be updated.
 
 .. note::
 
@@ -1033,3 +1031,6 @@ Example
     [2018-04-11 07:30:43,892] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
     [2018-04-11 07:30:43,945] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,944] {{python_operator.py:90}} INFO - Done. Returned value was: None
     [2018-04-11 07:30:43,992] {{base_task_runner.py:98}} INFO - Subtask:   """)
+
+
+.. _API Conventions: https://airshipit.readthedocs.io/en/latest/api-conventions.html

@@ -34,12 +34,9 @@ configuration documents. Steps, conceptually:
     Prevents concurrent site modifications by conflicting
     actions/workflows.
 #. Preflight checks
-    Ensures all UCP components are in a responsive state.
-#. Get design version
-    Uses Deckhand to discover the latest committed version of design for
-    the site.
+    Ensures all Airship components are in a responsive state.
 #. Validate design
-    Asks each involved UCP component to validate the design. This ensures
+    Asks each involved Airship component to validate the design. This ensures
     that the previously committed design is valid at the present time.
 #. Drydock build
     Orchestrates the Drydock component to configure hardware and the
@@ -92,12 +89,11 @@ Schemas
 DeploymentConfiguration_ schema - Provides for validation of the
 deployment-configuration documents
 
-Documents
-~~~~~~~~~
-deployment-configuration - Allows for specification of configurable options
-used by the site deployment related workflows, including the timeouts used for
-various steps, and the name of the armada manifest that will be used during the
-deployment/update.
+Deployment Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~
+Allows for specification of configurable options used by the site deployment
+related workflows, including the timeouts used for various steps, and the name
+of the armada manifest that will be used during the deployment/update.
 
 A `sample deployment-configuration`_ shows a completely specified example.
 
@@ -114,8 +110,8 @@ Supported values:
 
   -  deployment_strategy:
 
-    Not currently used, placeholder for specifying how server deployments
-    should be grouped. (e.g. all-at-once, by-rack, by-label)
+    The name of the deployment strategy document to be used. There is a default
+    deployment strategy that is used if this field is not present.
 
   -  deploy_interval:
 
@@ -201,6 +197,20 @@ Supported values:
     The name of the Armada manifest document that the workflow will use during
     site deployment activities. e.g.:'full-site'
 
-.. _DeploymentConfiguration: https://github.com/att-comdev/shipyard/blob/master/shipyard_airflow/schemas/deploymentConfiguration.yaml
-.. _`sample deployment-configuration`: https://github.com/att-comdev/shipyard/blob/master/tests/unit/yaml_samples/deploymentConfiguration_full_valid.yaml
-.. _`Default configuration values`: https://github.com/att-comdev/shipyard/blob/a88a5cf15a81de32707fee49d7a626908a8c8f38/shipyard_airflow/plugins/deployment_configuration_operator.py#L47
+Deployment Strategy
+~~~~~~~~~~~~~~~~~~~
+The deployment strategy document is optionally specified in the Deployment
+Configuration and provides a way to group, sequence, and test the deployments
+of groups of hosts deployed using `Drydock`_. The `deployment strategy design`_
+provides details for the structures and usage of the deployment strategy.
+A `sample deployment-strategy`_ shows one possible strategy, in the context of
+the Shipyard unit testing.
+The `DeploymentStrategy`_ schema is a more formal definition of this document.
+
+.. _`Default configuration values`: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/plugins/deployment_configuration_operator.py
+.. _DeploymentConfiguration: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentConfiguration.yaml
+.. _DeploymentStrategy: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentStrategy.yaml
+.. _`deployment strategy design`: https://airshipit.readthedocs.io/en/latest/blueprints/deployment-grouping-baremetal.html
+.. _Drydock: https://git.airshipit.org/cgit/airship-drydock
+.. _`sample deployment-configuration`: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/tests/unit/yaml_samples/deploymentConfiguration_full_valid.yaml
+.. _`sample deployment-strategy`: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/tests/unit/yaml_samples/deploymentStrategy_full_valid.yaml
