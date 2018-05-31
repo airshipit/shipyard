@@ -57,6 +57,10 @@ dry-run: clean
 .PHONY: docs
 docs: clean build_docs
 
+.PHONY: security
+security:
+	cd $(BUILD_CTX)/shipyard_airflow; tox -e bandit
+	cd $(BUILD_CTX)/shipyard_client; tox -e bandit
 
 .PHONY: tests
 tests:

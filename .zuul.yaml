@@ -18,6 +18,7 @@
             voting: false
         - airship-shipyard-tox-py35
         - airship-shipyard-pep8
+        - airship-shipyard-security-bandit
         - airship-shipyard-image
     gate:
       jobs:
@@ -30,14 +31,21 @@
         #       - ^releasenotes/.*$
         - airship-shipyard-tox-py35
         - airship-shipyard-pep8
+        - airship-shipyard-security-bandit
         - airship-shipyard-image
+
+- nodeset:
+    name: airship-shipyard-single-node
+    nodes:
+      - name: primary
+        label: ubuntu-xenial
 
 - job:
     name: airship-shipyard-linter
     description: |
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
-    nodeset: openstack-helm-single-node
+    nodeset: airship-shipyard-single-node
 
 - job:
     name: airship-shipyard-base
@@ -63,7 +71,7 @@
 - job:
     name: airship-shipyard-ubuntu
     parent: airship-shipyard-base
-    nodeset: openstack-helm-single-node
+    nodeset: airship-shipyard-single-node
 
 - job:
     name: airship-shipyard-tox-base
@@ -90,7 +98,7 @@
       Run tox-based tests for the Airship Shipyard project under
       cPython version 3.5.
     parent: airship-shipyard-tox-base
-    nodeset: openstack-helm-single-node
+    nodeset: airship-shipyard-single-node
     vars:
       tox_envlist: py35
 
@@ -100,9 +108,16 @@
       Run pep8 tests for the Airship Shipyard project under
       cPython version 3.5.
     parent: airship-shipyard-tox-base
-    nodeset: openstack-helm-single-node
+    nodeset: airship-shipyard-single-node
     vars:
       tox_envlist: pep8
+
+- job:
+    name: airship-shipyard-security-bandit
+    description: |
+      Run bandit code scans for the Airship Shipyard project
+    run: tools/gate/playbooks/security-bandit.yaml
+    nodeset: airship-shipyard-single-node
 
 - job:
     name: airship-shipyard-image-base
@@ -127,4 +142,4 @@
     description: |
       Run shipyard-image build.
     parent: airship-shipyard-image-base
-    nodeset: openstack-helm-single-node
+    nodeset: airship-shipyard-single-node
