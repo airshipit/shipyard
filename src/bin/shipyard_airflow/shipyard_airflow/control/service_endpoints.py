@@ -86,7 +86,7 @@ def get_endpoint(endpoint):
             interface='internal',
             service_type=service_type)
     except exc.EndpointNotFound:
-        LOG.error('Could not find a public interface for %s',
+        LOG.error('Could not find an internal interface for %s',
                   endpoint.name)
         raise AppError(
             title='Can not access service endpoint',
@@ -121,7 +121,7 @@ def _get_ks_session():
         raise AppError(
             title='Could not authorize Shipyard against Keystone',
             description=(
-                'Keystone has reqjected the authorization request by Shipyard'
+                'Keystone has rejected the authorization request by Shipyard'
             ),
             status=falcon.HTTP_500,
             retry=False
