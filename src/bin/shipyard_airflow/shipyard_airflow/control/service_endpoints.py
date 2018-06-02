@@ -20,11 +20,10 @@ import enum
 import logging
 
 import falcon
-from keystoneauth1 import session
-from keystoneauth1.identity import v3
-from keystoneauth1.exceptions.auth import AuthorizationFailure
-from keystoneauth1.exceptions.catalog import EndpointNotFound
+from keystoneauth1 import exceptions as exc
+from keystoneauth1 import loading
 from oslo_config import cfg
+
 from shipyard_airflow.errors import AppError
 
 CONF = cfg.CONF
@@ -86,7 +85,7 @@ def get_endpoint(endpoint):
         return _get_ks_session().get_endpoint(
             interface='internal',
             service_type=service_type)
-    except EndpointNotFound:
+    except exc.EndpointNotFound:
         LOG.error('Could not find a public interface for %s',
                   endpoint.name)
         raise AppError(
@@ -113,14 +112,10 @@ def get_session():
 
 def _get_ks_session():
     # Establishes a keystone session
-    keystone_auth = {}
-    for attr in ('auth_url', 'password', 'project_domain_name',
-                 'project_name', 'username', 'user_domain_name'):
-        keystone_auth[attr] = CONF.get('keystone_authtoken').get(attr)
     try:
-        auth = v3.Password(**keystone_auth)
-        return session.Session(auth=auth)
-    except AuthorizationFailure as aferr:
+        return loading.load_session_from_conf_options(
+            CONF, group="keystone_authtoken")
+    except exc.AuthorizationFailure as aferr:
         LOG.error('Could not authorize against keystone: %s',
                   str(aferr))
         raise AppError(
