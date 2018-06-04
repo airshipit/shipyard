@@ -227,9 +227,12 @@ class DrydockBaseOperator(UcpBaseOperator):
         end_range = round(int(time_out) / int(interval))
 
         LOG.info('Task ID is %s', self.drydock_task_id)
+        task_result = None
 
         # Query task status
         for i in range(0, end_range + 1):
+            task_status = None
+
             try:
                 # Retrieve current task state
                 task_state = self.drydock_client.get_task(
