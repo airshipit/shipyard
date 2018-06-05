@@ -22,6 +22,7 @@ import logging
 import falcon
 from keystoneauth1 import exceptions as exc
 from keystoneauth1 import loading
+from keystoneauth1 import session
 from oslo_config import cfg
 
 from shipyard_airflow.errors import AppError
@@ -113,8 +114,8 @@ def get_session():
 def _get_ks_session():
     # Establishes a keystone session
     try:
-        return loading.load_session_from_conf_options(
-            CONF, group="keystone_authtoken")
+        auth = loading.load_auth_from_conf_options(CONF, "keystone_authtoken")
+        return session.Session(auth=auth)
     except exc.AuthorizationFailure as aferr:
         LOG.error('Could not authorize against keystone: %s',
                   str(aferr))

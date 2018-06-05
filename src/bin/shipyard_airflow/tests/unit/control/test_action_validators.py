@@ -139,7 +139,12 @@ class TestActionValidator:
             # any exception is a failure
             assert False
 
-    def test_validate_site_missing_rev(self):
+    @mock.patch("shipyard_airflow.control.service_clients.deckhand_client",
+                return_value=fake_dh_doc_client('clean'), ds_name='defaulted')
+    @mock.patch("shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_node_lookup",
+                return_value=node_lookup)
+    def test_validate_site_missing_rev(self, *args):
         """Test the function that runs the validator class with a
         deployment strategy that has a cycle in the groups
         """

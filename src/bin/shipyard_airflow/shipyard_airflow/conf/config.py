@@ -241,18 +241,17 @@ def register_opts(conf):
                          help=section.help))
         conf.register_opts(section.options, group=section.name)
 
-    conf.register_opts(
-        ks_loading.get_auth_plugin_conf_options('password'),
-        group='keystone_authtoken'
-    )
+    ks_loading.register_auth_conf_options(conf, group='keystone_authtoken')
 
 
 def list_opts():
     """ List the options identified by this configuration
     """
-    return {
+    all_opts = {
         section.name: section.options for section in SECTIONS
     }
+    all_opts['keystone_authtoken'] = ks_loading.get_session_conf_options()
+    return all_opts
 
 
 def parse_args(args=None, usage=None, default_config_files=None):

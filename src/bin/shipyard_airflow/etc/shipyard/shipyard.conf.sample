@@ -277,6 +277,26 @@
 # Config Section from which to load plugin specific options (string value)
 #auth_section = <None>
 
+#
+# From shipyard_api
+#
+
+# PEM encoded Certificate Authority to use when verifying HTTPs connections.
+# (string value)
+#cafile = <None>
+
+# PEM encoded client certificate cert file (string value)
+#certfile = <None>
+
+# PEM encoded client certificate key file (string value)
+#keyfile = <None>
+
+# Verify HTTPS connections. (boolean value)
+#insecure = false
+
+# Timeout value for http requests (integer value)
+#timeout = <None>
+
 
 [logging]
 
