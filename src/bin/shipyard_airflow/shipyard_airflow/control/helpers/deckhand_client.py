@@ -489,7 +489,7 @@ class DeckhandClient(object):
 
 
 class DeckhandError(Exception):
-    """Base exception for for all exceptions raised by this client"""
+    """Base exception for all exceptions raised by this client"""
     def __init__(self, response_message=None):
         super().__init__()
         self.response_message = response_message
