@@ -16,7 +16,7 @@
 import logging
 import re
 
-from shipyard_airflow.control import ucp_logging
+from shipyard_airflow.control.logging import request_logging
 
 LOG = logging.getLogger(__name__)
 HEALTH_URL = '/health'
@@ -31,9 +31,9 @@ class LoggingMiddleware(object):
     def process_request(self, req, resp):
         """ Set up values to be logged across the request
         """
-        ucp_logging.set_logvar('req_id', req.context.request_id)
-        ucp_logging.set_logvar('external_ctx', req.context.external_marker)
-        ucp_logging.set_logvar('user', req.context.user)
+        request_logging.set_logvar('req_id', req.context.request_id)
+        request_logging.set_logvar('external_ctx', req.context.external_marker)
+        request_logging.set_logvar('user', req.context.user)
         if not req.url.endswith(HEALTH_URL):
             # Log requests other than the health check.
             LOG.info("Request %s %s", req.method, req.url)

@@ -27,7 +27,7 @@ ucp_components = [
     'shipyard']
 
 
-def test_drydock_health_skip_update_site():
+def test_drydock_health_skip_update_site(caplog):
     """
     Ensure that an error is not thrown due to Drydock health failing during
     update_site or deploy site
@@ -46,19 +46,17 @@ def test_drydock_health_skip_update_site():
 
     op = UcpHealthCheckOperator(task_id='test')
     op.action_info = action_info
+    op.xcom_pusher = mock.MagicMock()
 
-    with mock.patch('logging.info', autospec=True) as mock_logger:
-        op.log_health('physicalprovisioner', req)
-    mock_logger.assert_called_with(expected_log)
+    op.log_health_exception('physicalprovisioner', req)
+    assert expected_log in caplog.text
 
     action_info = {
         "dag_id": "deploy_site",
         "parameters": {"continue-on-fail": "true"}
     }
-
-    with mock.patch('logging.info', autospec=True) as mock_logger:
-        op.log_health('physicalprovisioner', req)
-    mock_logger.assert_called_with(expected_log)
+    op.log_health_exception('physicalprovisioner', req)
+    assert expected_log in caplog.text
 
 
 def test_failure_log_health():
@@ -74,28 +72,13 @@ def test_failure_log_health():
 
     op = UcpHealthCheckOperator(task_id='test')
     op.action_info = action_info
+    op.xcom_pusher = mock.MagicMock()
 
     for i in ucp_components:
         with pytest.raises(AirflowException) as expected_exc:
-            op.log_health(i, req)
+            op.log_health_exception(i, req)
         assert "Health check failed" in str(expected_exc)
 
 
-def test_success_log_health():
-    """ Ensure 204 gives correct response for all components
-    """
-    action_info = {
-        "dag_id": "deploy_site",
-        "parameters": {"something-else": "true"}
-    }
-
-    req = Response()
-    req.status_code = 204
-
-    op = UcpHealthCheckOperator(task_id='test')
-    op.action_info = action_info
-
-    for i in ucp_components:
-        with mock.patch('logging.info', autospec=True) as mock_logger:
-            op.log_health(i, req)
-        mock_logger.assert_called_with('%s is alive and healthy', i)
+# TODO test that execute works correctly by using Responses framework and
+#     caplog
