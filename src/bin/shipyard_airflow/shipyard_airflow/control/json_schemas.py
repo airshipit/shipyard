@@ -15,7 +15,7 @@
 Contains the json schemas for the REST interface, and provides the functions
 to validate against the schemas.
 see: http://json-schema.org
-see: https://pypi.python.org/pypi/jsonschema
+see: https://pypi.org/project/jsonschema/
 """
 import json
 import logging
