@@ -174,7 +174,7 @@ response::
 
 Running Shipyard CLI with Docker Container
 ------------------------------------------
-It is also possible to execute Shipyard CLI using docker container
+It is also possible to execute Shipyard CLI using a docker container.
 
 Note that we will need to pass the relevant environment information as well
 as the Shipyard command that we wish to execute as part of the ``docker run``
@@ -197,7 +197,7 @@ The output will resemble the following::
 
 Use Case: Ingest Site Design
 ----------------------------
-Shipyard serves as the entrypoint for a deployment of Airship. One can imagine
+Shipyard serves as the entry point for a deployment of Airship. One can imagine
 the following activities representing part of the lifecycle of a group of
 servers for which Airship would serve as the control plane:
 
@@ -211,8 +211,8 @@ Preparation
   (Ubuntu 16.04) image. Airship is deployed; See
   :ref:`shipyard_deployment_guide`
 
-  At this point, Airship is ready for use. This is the when the Shipyard API
-  is available for use.
+  At this point, Airship is ready for use. This is when the Shipyard API is
+  available for use.
 
 Load Configuration Documents
   A user, deployment engineer, or automation -- i.e. the operator interacts
@@ -258,7 +258,7 @@ designs in Deckhand.  If the validations are not successful, Shipyard will not
 mark the revision as committed.
 
 .. important::
-  It is not necessary to load all configuration documents in one step but each
+  It is not necessary to load all configuration documents in one step, but each
   named collection may only exist as a complete set of documents (i.e. must be
   loaded together).
 
