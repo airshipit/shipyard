@@ -154,7 +154,20 @@
 
 - job:
     name: airship-shipyard-docker-build-post
-    parent: airship-shipyard-image-base
+    timeout: 1800
+    roles:
+      - zuul: openstack/openstack-helm-infra
+    pre-run:
+      - tools/gate/playbooks/osh-infra-upgrade-host.yaml
+      - tools/gate/playbooks/osh-infra-deploy-docker.yaml
+    run: tools/gate/playbooks/run-image.yaml
+    nodeset: airship-shipyard-single-node
+    required-projects:
+      - openstack/openstack-helm-infra
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
     secrets:
       - airship_shipyard_quay_creds
     vars:
