@@ -15,12 +15,22 @@
 #
 set -x
 
-
 IMAGE=$1
-TEST_RESP="$(docker run \
-    -p 8080:8080 \
-    --name airflow_test ${IMAGE} \
-    quicktest)"
+USE_PROXY=${USE_PROXY:-false}
+
+if [ "${USE_PROXY}" == "true" ]; then
+    TEST_RESP="$(docker run \
+        -p 8080:8080 \
+        --env HTTP_PROXY="${PROXY}" \
+        --env HTTPS_PROXY="${PROXY}" \
+        --name airflow_test ${IMAGE} \
+        quicktest)"
+else
+    TEST_RESP="$(docker run \
+        -p 8080:8080 \
+        --name airflow_test ${IMAGE} \
+        quicktest)"
+fi
 
 docker stop airflow_test
 docker rm airflow_test

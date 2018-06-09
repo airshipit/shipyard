@@ -16,6 +16,7 @@
 set -x
 
 IMAGE=$1
+USE_PROXY=${USE_PROXY:-false}
 
 # Collect necessary files and run shipyard image in docker
 mkdir -p build/.tmprun/etc
@@ -29,9 +30,13 @@ docker run \
 
 sleep 5
 
-RESULT="$(curl -i 'http://127.0.0.1:9000/versions' | tr '\r' '\n' | head -1)"
+RESULT="$(curl -i 'http://127.0.0.1:9000/versions' --noproxy '*' | tr '\r' '\n' | head -1)"
 
-CLI_RESULT="$(docker run -t --rm --net=host ${IMAGE} help | tr '\r' '\n' | head -1)"
+if [ "${USE_PROXY}" == "true" ]; then
+  CLI_RESULT="$(docker run -t --rm --net=host --env HTTP_PROXY="${PROXY}" --env HTTPS_PROXY="${PROXY}" ${IMAGE} help | tr '\r' '\n' | head -1)"
+else
+  CLI_RESULT="$(docker run -t --rm --net=host ${IMAGE} help | tr '\r' '\n' | head -1)"
+fi
 
 docker stop shipyard_test
 docker rm shipyard_test

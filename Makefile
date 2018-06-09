@@ -74,7 +74,7 @@ tests:
 
 .PHONY: run
 run:
-	$(SCRIPT) $(IMAGE)
+	USE_PROXY=$(USE_PROXY) PROXY=$(PROXY) $(SCRIPT) $(IMAGE)
 
 .PHONY: build_airflow
 build_airflow:
