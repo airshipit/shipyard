@@ -31,8 +31,8 @@ set -ex
 
 # Get the path of the directory where the script is located
 # Source Base Docker Command
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd ${DIR} && source shipyard_docker_base_command.sh
+DIR="$(realpath $(dirname "${BASH_SOURCE}"))"
+source "${DIR}/shipyard_docker_base_command.sh"
 
 # Execute Shipyard CLI
 #
