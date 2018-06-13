@@ -21,21 +21,23 @@ Welcome to Shipyard's documentation!
 Shipyard is a directed acyclic graph controller for Kubernetes and OpenStack
 control plane life-cycle management, and is part of the `Airship`_ platform.
 
-User's Guide
-============
-
-Shipyard Configuration Guide
-----------------------------
-
 .. toctree::
    :maxdepth: 2
 
    sampleconf
-   policy-enforcement
    API
-   API_action_commands
+   API-action-commands
    CLI
-   client_user_guide
-   deployment_guide
+   site-definition-documents
+   client-user-guide
+   deployment-guide
+   policy-enforcement
+
+Building this Documentation
+---------------------------
+
+Use ``make docs`` or ``tox -e docs`` to generate these docs. This will and
+build an html version of this documentation that can be viewed using a browser
+at docs/build/index.html on the local filesystem.
 
 .. _Airship: https://airshipit.org

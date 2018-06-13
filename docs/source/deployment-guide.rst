@@ -38,8 +38,8 @@ This approach sets up an 'All-In-One' Airship environment that allows
 developers to bring up Shipyard and the rest of the Airship components on a
 single Ubuntu Virtual Machine.
 
-The deployment is fully automated and can take a while to complete (it can take
-30 minutes to an hour for a full deployment to complete)
+The deployment is fully automated and can take a while to complete. It can take
+30 minutes to an hour for a full deployment to complete.
 
 Post Deployment
 ---------------
