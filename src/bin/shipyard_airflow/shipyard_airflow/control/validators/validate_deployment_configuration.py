@@ -48,7 +48,7 @@ class ValidateDeploymentConfiguration(DocumentValidator):
                 error=False,
                 level="Info",
                 message=("A deployment strategy document was not specified in "
-                         "the deployment configuration. Beacuse of this, the "
+                         "the deployment configuration. Because of this, the "
                          "strategy used will be all-at-once.")
             ))
             LOG.info("No deployment strategy document specified, "

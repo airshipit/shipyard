@@ -189,7 +189,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         """Execute the Drydock task requested
 
         :param task_name: 'prepare_nodes', 'deploy_nodes'
-        ;param interval: The time between checking status on the task
+        :param interval: The time between checking status on the task
         :param timeout: The total time allowed for the task
 
         Wraps the query_task method in the base class, capturing
