@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_CTX                  ?= src/bin
-DOCKER_REGISTRY            ?= quay.io
-IMAGE_PREFIX               ?= airshipit
-IMAGE_TAG                  ?= untagged
-HELM                       ?= helm
-LABEL                      ?= commit-id
-IMAGE_NAME                 := airflow shipyard
-PROXY                      ?= http://proxy.foo.com:8080
-USE_PROXY                  ?= false
-PUSH_IMAGE                 ?= false
+BUILD_CTX       ?= src/bin
+DOCKER_REGISTRY ?= quay.io
+IMAGE_PREFIX    ?= airshipit
+IMAGE_TAG       ?= untagged
+HELM            ?= helm
+LABEL           ?= commit-id
+IMAGE_NAME      := airflow shipyard
+PROXY           ?= http://proxy.foo.com:8000
+NO_PROXY        ?= localhost,127.0.0.1,.svc.cluster.local
+USE_PROXY       ?= false
+PUSH_IMAGE      ?= false
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
 IMAGE_DIR:=images/$(IMAGE_NAME)
@@ -79,7 +80,14 @@ run:
 .PHONY: build_airflow
 build_airflow:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg http_proxy=$(PROXY) --build-arg https_proxy=$(PROXY) --build-arg ctx_base=$(BUILD_CTX) .
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+		--build-arg http_proxy=$(PROXY) \
+		--build-arg https_proxy=$(PROXY) \
+		--build-arg HTTP_PROXY=$(PROXY) \
+		--build-arg HTTPS_PROXY=$(PROXY) \
+		--build-arg no_proxy=$(NO_PROXY) \
+		--build-arg NO_PROXY=$(NO_PROXY) \
+		--build-arg ctx_base=$(BUILD_CTX) .
 else
 	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
 endif
@@ -90,7 +98,13 @@ endif
 .PHONY: build_shipyard
 build_shipyard:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) . --build-arg http_proxy=$(PROXY) --build-arg https_proxy=$(PROXY)
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) \
+		--build-arg http_proxy=$(PROXY) \
+		--build-arg https_proxy=$(PROXY) \
+		--build-arg HTTP_PROXY=$(PROXY) \
+		--build-arg HTTPS_PROXY=$(PROXY) \
+		--build-arg no_proxy=$(NO_PROXY) \
+		--build-arg NO_PROXY=$(NO_PROXY) .
 else
 	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
 endif
