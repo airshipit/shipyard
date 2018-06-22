@@ -281,7 +281,6 @@ class DrydockBaseOperator(UcpBaseOperator):
         try:
             return self.drydock_client.get_task(task_id=task_id)
         except errors.ClientError as client_error:
-            # Dump logs from Drydock pods
             raise DrydockClientUseFailureException(client_error)
 
     def task_failure(self, _task_failure):

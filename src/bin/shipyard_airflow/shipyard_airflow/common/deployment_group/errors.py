@@ -56,6 +56,15 @@ class DeploymentGroupStageError(Exception):
     pass
 
 
+class DeploymentGroupSuccessProcessingError(Exception):
+    """DeploymentGroupSuccessProcessingError
+
+    Raised when success processing has been provided with an invalid scenario
+    to validate
+    """
+    pass
+
+
 class UnknownDeploymentGroupError(Exception):
     """UnknownDeploymentGroupError
 

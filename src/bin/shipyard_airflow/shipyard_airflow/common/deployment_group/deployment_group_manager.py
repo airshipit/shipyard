@@ -25,6 +25,7 @@ from .deployment_group import DeploymentGroup
 from .deployment_group import Stage
 from .errors import DeploymentGroupCycleError
 from .errors import DeploymentGroupStageError
+from .errors import DeploymentGroupSuccessProcessingError
 from .errors import UnknownDeploymentGroupError
 from .errors import UnknownNodeError
 
@@ -122,6 +123,12 @@ class DeploymentGroupManager:
             LOG.info("Group %s has met its success criteria and is "
                      "now set to stage %s", group_name, stage)
             return True
+        # Any other cases are invalid.
+        raise DeploymentGroupSuccessProcessingError(
+            "Group {} has no failures, but is in an invalid state {}".format(
+                group_name, stage
+            )
+        )
 
     def report_group_summary(self):
         """Reports the status of all groups handled by this deployment"""
