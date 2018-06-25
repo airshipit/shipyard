@@ -47,7 +47,7 @@ Metadata that defines a single API:
     "description": "{string}",              # Description of the API
     "airflow_version": "{string}",          # Version the API was available in to allow people to better determine if the API is available. (to be displayed on the Admin page)
     "http_method": "{string}",              # HTTP method to use when calling the function. (Default: GET) (Optional)
-    "background_mode": {boolean},           # Whether to run the process in the background if its a CLI API (Optional)
+                                            # removed "background_mode": {boolean}
     "arguments": [                          # List of arguments that can be provided to the API
         {
             "name": "{string}",             # Name of the argument
@@ -284,14 +284,8 @@ apis_metadata = [
             {"name": "delete", "description": "Delete a pool", "form_input_type": "text", "required": False}
         ]
     },
-    {
-        "name": "serve_logs",
-        "description": "Serve logs generate by worker",
-        "airflow_version": "0.1 or greater",
-        "http_method": "GET",
-        "background_mode": True,
-        "arguments": []
-    },
+    # removed retrieval of logs from this interface, as it uses a background
+    # mode call, we don't use it, and lets us remove a security vulnerability
     {
         "name": "clear",
         "description": "Clear a set of task instance, as if they never ran",
@@ -540,27 +534,13 @@ class REST_API(BaseView):
         # appending the end_arguments to the very end
         airflow_cmd_split.extend(end_arguments)
 
-        run_api_in_background_mode = "background_mode" in api_metadata and api_metadata["background_mode"]
-
-        # handling the case where the process should be ran in the background
-        if run_api_in_background_mode:
-            # if a log file is provided, then that should be used to dump the output of the call
-            if request.args.get("log-file") is None:
-                airflow_cmd_split.append(">> " + str(airflow_base_log_folder) + "/" + api_metadata["name"] + ".log")
-            # appending a '&' character to run the process in the background
-            airflow_cmd_split.append("&")
-
         # joining all the individual arguments and components into a single string
         airflow_cmd = " ".join(airflow_cmd_split)
 
         logging.info("airflow_cmd array: " + str(airflow_cmd_split))
         logging.info("airflow_cmd: " + str(airflow_cmd))
 
-        # execute the airflow command a certain way if its meant to be ran in the background
-        if run_api_in_background_mode:
-            output = self.execute_cli_command_background_mode(airflow_cmd)
-        else:
-            output = self.execute_cli_command(airflow_cmd_split)
+        output = self.execute_cli_command(airflow_cmd_split)
 
         # if desired, filter out the loading messages to reduce the noise in the output
         if filter_loading_messages_in_cli_response:
@@ -656,15 +636,6 @@ class REST_API(BaseView):
             return REST_API_Response_Util.get_500_error_response(base_response, error_message)
 
         return REST_API_Response_Util.get_200_response(base_response=base_response, output="DAG [{}] is now fresh as a daisy".format(dag_id))
-
-    # Executes the airflow command passed into it in the background so the function isn't tied to the webserver process
-    @staticmethod
-    def execute_cli_command_background_mode(airflow_cmd):
-        logging.info("Executing CLI Command in the Background")
-        exit_code = os.system(airflow_cmd)
-        output = REST_API.get_empty_process_output()
-        output["stdout"] = "exit_code: " + str(exit_code)
-        return output
 
     # General execution of the airflow command passed to it and returns the response
     @staticmethod
