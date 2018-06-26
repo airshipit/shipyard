@@ -13,7 +13,8 @@
 # limitations under the License.
 
 # Docker image to run Airflow on Kubernetes
-FROM ubuntu:16.04
+ARG FROM=ubuntu:16.04
+FROM ${FROM}
 
 # Do not prompt user for choices on installation/configuration of packages
 # Set port 8080 for Airflow Web

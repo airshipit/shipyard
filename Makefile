@@ -29,6 +29,8 @@ PROXY                      ?= http://proxy.foo.com:8000
 NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
 USE_PROXY                  ?= false
 
+PYTHON_BASE_IMAGE          ?= python:3.5
+UBUNTU_BASE_IMAGE          ?= ubuntu:16.04
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
 IMAGE_DIR:=images/$(IMAGE_NAME)
@@ -85,6 +87,7 @@ run:
 build_airflow:
 ifeq ($(USE_PROXY), true)
 	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+		--build-arg FROM=$(UBUNTU_BASE_IMAGE) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
 		--build-arg HTTP_PROXY=$(PROXY) \
@@ -93,7 +96,9 @@ ifeq ($(USE_PROXY), true)
 		--build-arg NO_PROXY=$(NO_PROXY) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+		--build-arg FROM=$(UBUNTU_BASE_IMAGE) \
+		--build-arg ctx_base=$(BUILD_CTX) .
 endif
 ifeq ($(PUSH_IMAGE), true)
 	docker push $(IMAGE)
@@ -102,15 +107,19 @@ endif
 .PHONY: build_shipyard
 build_shipyard:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) \
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+		--build-arg FROM=$(PYTHON_BASE_IMAGE) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
 		--build-arg HTTP_PROXY=$(PROXY) \
 		--build-arg HTTPS_PROXY=$(PROXY) \
 		--build-arg no_proxy=$(NO_PROXY) \
-		--build-arg NO_PROXY=$(NO_PROXY) .
+		--build-arg NO_PROXY=$(NO_PROXY) \
+		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile --build-arg ctx_base=$(BUILD_CTX) .
+	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+		--build-arg FROM=$(PYTHON_BASE_IMAGE) \
+		--build-arg ctx_base=$(BUILD_CTX) .
 endif
 ifeq ($(PUSH_IMAGE), true)
 	docker push $(IMAGE)
