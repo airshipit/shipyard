@@ -30,7 +30,7 @@ python-dateutil==2.6.1
 python-memcached==1.58
 requests==2.18.4
 setuptools==39.0.1
-SQLAlchemy==1.1.13
+SQLAlchemy==1.2.8
 ulid==1.1
 uwsgi==2.0.15
 
