@@ -86,9 +86,11 @@ class ConfigDocsResource(BaseResource):
             document_data=document_data,
             buffer_mode_param=buffer_mode)
 
+        resp.status = falcon.HTTP_201
+        if validations and validations['status'] == 'Success':
+            validations['code'] = resp.status
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
         resp.body = self.to_json(validations)
-        resp.status = falcon.HTTP_201
 
     @policy.ApiEnforcer('workflow_orchestrator:get_configdocs')
     def on_get(self, req, resp, collection_id):
