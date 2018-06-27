@@ -203,6 +203,13 @@ endpoints:
       default: http
     host_fqdn_override:
       default: null
+      # NOTE(bryan-strassner): this chart supports TLS for fqdn over-ridden public
+      # endpoints using the following format:
+      # public:
+      #   host: null
+      #   tls:
+      #     crt: null
+      #     key: null
   airflow_web:
     name: airflow-web
     hosts:
@@ -333,6 +340,10 @@ secrets:
   postgresql_airflow_db:
     admin: airflow-db-admin
     user: airflow-db-user
+  tls:
+    shipyard:
+      shipyard:
+        public: shipyard-tls-public
 
 conf:
   uwsgi:
@@ -700,6 +711,7 @@ manifests:
   job_ks_user: true
   secret_airflow_db: true
   secret_shipyard_db: true
+  secret_ingress_tls: true
   secret_keystone: true
   service_airflow_ingress: true
   service_airflow_flower: true
