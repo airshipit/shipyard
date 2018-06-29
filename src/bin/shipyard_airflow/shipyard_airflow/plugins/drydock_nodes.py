@@ -167,7 +167,8 @@ class DrydockNodesOperator(DrydockBaseOperator):
         # Anything not ready in the timeout needs to be considered a failure
         not_ready_list = check_k8s_node_status.check_node_status(
             self.node_st_timeout,
-            self.node_st_interval
+            self.node_st_interval,
+            expected_nodes=task_result.successes
         )
         for node in not_ready_list:
             # Remove nodes that are not ready from the list of successes, since
