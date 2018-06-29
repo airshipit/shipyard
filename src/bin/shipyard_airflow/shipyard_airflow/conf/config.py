@@ -58,10 +58,38 @@ SECTIONS = [
                 ),
                 help='The database for airflow'
             ),
+            cfg.IntOpt(
+                'pool_size',
+                default=15,
+                help='The SQLalchemy database connection pool size.'
+            ),
+            cfg.BoolOpt(
+                'pool_pre_ping',
+                default=True,
+                help='Should DB connections be validated prior to use.'
+            ),
+            cfg.IntOpt(
+                'pool_timeout',
+                default=30,
+                help=('How long a request for a connection should wait before '
+                      'one becomes available.')
+            ),
+            cfg.IntOpt(
+                'pool_overflow',
+                default=10,
+                help=('How many connections above pool_size are allowed to be '
+                      'open during high usage.')
+            ),
+            cfg.IntOpt(
+                'connection_recycle',
+                default=-1,
+                help=('Time, in seconds, when a connection should be closed '
+                      'and re-established. -1 for no recycling.')
+            ),
             cfg.StrOpt(
                 'alembic_ini_path',
                 default='/home/shipyard/shipyard',
-                help='The direcotry containing the alembic.ini file'
+                help='The directory containing the alembic.ini file'
             ),
         ]
     ),

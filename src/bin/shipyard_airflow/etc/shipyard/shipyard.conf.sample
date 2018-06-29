@@ -47,7 +47,25 @@
 # The database for airflow (string value)
 #postgresql_airflow_db = postgresql+psycopg2://shipyard:changeme@postgresql.ucp:5432/airflow
 
-# The direcotry containing the alembic.ini file (string value)
+# The SQLalchemy database connection pool size. (integer value)
+#pool_size = 15
+
+# Should DB connections be validated prior to use. (boolean value)
+#pool_pre_ping = true
+
+# How long a request for a connection should wait before one becomes available.
+# (integer value)
+#pool_timeout = 30
+
+# How many connections above pool_size are allowed to be open during high
+# usage. (integer value)
+#pool_overflow = 10
+
+# Time, in seconds, when a connection should be closed and re-established. -1
+# for no recycling. (integer value)
+#connection_recycle = -1
+
+# The directory containing the alembic.ini file (string value)
 #alembic_ini_path = /home/shipyard/shipyard
 
 

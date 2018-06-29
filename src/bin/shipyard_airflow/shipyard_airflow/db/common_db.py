@@ -17,10 +17,12 @@ module for reused or baseclass portions of DB access
 
 import logging
 
+from oslo_config import cfg
 import sqlalchemy
 
 from shipyard_airflow.errors import DatabaseError
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -31,6 +33,14 @@ class DbAccess:
 
     def __init__(self):
         self.engine = None
+        # Descendent classes can override these after construciton, but before
+        # invoking get_engine, if there is a need to tailor the values
+        # for that specific database.
+        self.pool_size = CONF.base.pool_size
+        self.max_overflow = CONF.base.pool_overflow
+        self.pool_pre_ping = CONF.base.pool_pre_ping
+        self.pool_recycle = CONF.base.connection_recycle
+        self.pool_timeout = CONF.base.pool_timeout
 
     def get_connection_string(self):
         """
@@ -53,7 +63,19 @@ class DbAccess:
         try:
             connection_string = self.get_connection_string()
             if connection_string is not None and self.engine is None:
-                self.engine = sqlalchemy.create_engine(connection_string)
+                LOG.info('Initializing connection <%s> with pool size: %d, '
+                         'max overflow: %d, pool pre ping: %s, pool '
+                         'recycle: %d, and pool timeout: %d',
+                         connection_string, self.pool_size, self.max_overflow,
+                         self.pool_pre_ping, self.pool_recycle,
+                         self.pool_timeout)
+                self.engine = sqlalchemy.create_engine(
+                    connection_string, pool_size=self.pool_size,
+                    max_overflow=self.max_overflow,
+                    pool_pre_ping=self.pool_pre_ping,
+                    pool_recycle=self.pool_recycle,
+                    pool_timeout=self.pool_timeout
+                )
             if self.engine is None:
                 self._raise_invalid_db_config(
                     connection_string=connection_string
