@@ -176,7 +176,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
                 LOG.info("Node %s failed to join the Kubernetes cluster or was"
                          " not timely enough", node)
                 task_result.successes.remove(node)
-            except ValueError:
+            except (ValueError, KeyError):
                 # This node is not joined, but was not one that we were
                 # looking for either.
                 LOG.info("%s failed to join Kubernetes, but was not in the "
