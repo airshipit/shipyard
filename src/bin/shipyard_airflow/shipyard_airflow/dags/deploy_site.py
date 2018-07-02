@@ -54,11 +54,15 @@ armada_build = step_factory.get_armada_build()
 create_action_tag = step_factory.get_create_action_tag()
 
 # DAG Wiring
-concurrency_check.set_upstream(action_xcom)
-preflight.set_upstream(concurrency_check)
-get_rendered_doc.set_upstream(preflight)
-deployment_configuration.set_upstream(get_rendered_doc)
-validate_site_design.set_upstream(deployment_configuration)
+preflight.set_upstream(action_xcom)
+get_rendered_doc.set_upstream(action_xcom)
+deployment_configuration.set_upstream(action_xcom)
+validate_site_design.set_upstream([
+    preflight,
+    get_rendered_doc,
+    concurrency_check,
+    deployment_configuration
+])
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
 create_action_tag.set_upstream(armada_build)

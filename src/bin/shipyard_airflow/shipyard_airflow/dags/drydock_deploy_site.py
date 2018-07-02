@@ -32,21 +32,18 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
         task_id='verify_site',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     drydock_prepare_site = DrydockPrepareSiteOperator(
         task_id='prepare_site',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     drydock_nodes = DrydockNodesOperator(
         task_id='prepare_and_deploy_nodes',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Define dependencies
