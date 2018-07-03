@@ -108,6 +108,8 @@ class UcpHealthCheckOperator(BaseOperator):
         """
         # If Drydock health check fails and continue-on-fail, continue
         # and create xcom key 'drydock_continue_on_fail'
+        # Note that 'update_software' does not interact with Drydock, and
+        # therefore does not use the continue-on-fail option.
         if (component == service_endpoint.DRYDOCK and
                 self.action_info['parameters'].get(
                     'continue-on-fail', 'false').lower() == 'true' and

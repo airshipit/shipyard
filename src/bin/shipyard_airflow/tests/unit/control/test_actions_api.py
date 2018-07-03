@@ -313,7 +313,7 @@ def test_create_action():
 
     # with invalid input. fail.
     with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action') as validator:
+                    '.validate_site_action_full') as validator:
         try:
             action = action_resource.create_action(
                 action={'name': 'broken',
@@ -330,7 +330,7 @@ def test_create_action():
 
     # with valid input and some parameters
     with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action') as validator:
+                    '.validate_site_action_full') as validator:
         try:
             action = action_resource.create_action(
                 action={'name': 'deploy_site',
@@ -351,7 +351,7 @@ def test_create_action():
 
     # with valid input and no parameters
     with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action') as validator:
+                    '.validate_site_action_full') as validator:
         try:
             action = action_resource.create_action(
                 action={'name': 'deploy_site'},
@@ -382,7 +382,7 @@ def test_create_action_validator_error():
 
     # with valid input and some parameters
     with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action',
+                    '.validate_site_action_full',
                     side_effect=ApiError(title='bad')):
         with pytest.raises(ApiError) as apie:
             action = action_resource.create_action(

@@ -222,7 +222,7 @@ def get_version(ctx, buffer, committed, last_site_action,
             'successful or failed site action\n'
             '--successful-site-action for the documents associated with the '
             'last successful site action\n'
-            'Site actions include deploy_site and update_site.')
+            'Site actions are deploy_site, update_site, and update_software')
 
     elif len(optional_site_parameters) == 1:
         return optional_site_parameters[0]

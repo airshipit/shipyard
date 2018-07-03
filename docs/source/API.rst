@@ -93,11 +93,11 @@ be several versions of documents in a site that are accessible via this API:
   default. (This behavior can be overridden by query parameters issued by the
   user of Shipyard)
 - The "Last Site Action" version represents the version of documents associated
-  with the last successful or failed site action. Site actions include 'deploy_site'
-  and 'update_site'.
+  with the last successful or failed site action.
 - The "Successful Site Action" version represents the version of documents
-  associated with the last successful site action. Site actions include 'deploy_site'
-  and 'update_site'.
+  associated with the last successful site action.
+- Site actions include ``deploy_site``, ``update_site``, and
+  ``update_software``.
 
 All versions of documents rely upon Deckhand for storage. Shipyard uses the
 tagging features of Deckhand to find the appropriate Committed Documents,

@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This is a common script that is used by the deploy_site, update_site
-# and redeploy_server scripts
+# This is a common script that is used by the deploy_site, update_site,
+# update_software and redeploy_server scripts
 
 set -ex
 

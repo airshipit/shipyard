@@ -28,7 +28,8 @@ DAG_RUN_SELECT_RUNNING_SQL = ("select dag_id, execution_date "
 AIRFLOW_DB = 'airflows_own_db'
 
 # each set in this list of sets indicates DAGs that shouldn't execute together
-CONFLICTING_DAG_SETS = [set(['deploy_site', 'update_site', 'redeploy_server'])]
+CONFLICTING_DAG_SETS = [set(['deploy_site', 'update_site', 'update_software',
+                             'redeploy_server'])]
 
 
 def find_conflicting_dag_set(dag_name, conflicting_dag_sets=None):

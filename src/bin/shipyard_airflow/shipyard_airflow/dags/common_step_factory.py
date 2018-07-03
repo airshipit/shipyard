@@ -105,6 +105,7 @@ class CommonStepFactory(object):
             dag=self.dag)
 
     def get_validate_site_design(self,
+                                 targets=None,
                                  task_id=dn.VALIDATE_SITE_DESIGN_DAG_NAME):
         """Generate the validate site design step
 
@@ -115,7 +116,8 @@ class CommonStepFactory(object):
             subdag=validate_site_design(
                 self.parent_dag_name,
                 task_id,
-                args=self.default_args),
+                args=self.default_args,
+                targets=targets),
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)

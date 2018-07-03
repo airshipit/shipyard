@@ -26,14 +26,29 @@ from .validate_deployment_strategy import ValidateDeploymentStrategy
 LOG = logging.getLogger(__name__)
 
 
-class ValidateDeploymentConfiguration(DocumentValidator):
-    """Validates the DeploymentConfiguration."""
+class ValidateDeploymentConfigurationBasic(DocumentValidator):
+    """Validates that the DeploymentConfiguration is present
+
+    The base DocumentValidator ensures the document is present.
+    The Schema validation done separately ensures that the Armada Manifest
+    document is specified.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     schema = "shipyard/DeploymentConfiguration/v1"
     missing_severity = "Error"
 
+    def do_validate(self):
+        self.error_status = False
+
+
+class ValidateDeploymentConfigurationFull(
+        ValidateDeploymentConfigurationBasic):
+    """Validates the DeploymentConfiguration
+
+    Includes a triggered check for DeploymentStrategy
+    """
     def do_validate(self):
         try:
             dep_strat_nm = (
@@ -42,7 +57,10 @@ class ValidateDeploymentConfiguration(DocumentValidator):
             self.add_triggered_validation(ValidateDeploymentStrategy,
                                           dep_strat_nm)
 
-        except KeyError:
+        except (KeyError, TypeError):
+            # need to check both KeyError for missing 'deployment_strategy'
+            # and TypeError for not subscriptable exception when
+            # 'physical_provisioner' is None
             self.val_msg_list.append(self.val_msg(
                 name="DeploymentStrategyNotSpecified",
                 error=False,
@@ -55,4 +73,4 @@ class ValidateDeploymentConfiguration(DocumentValidator):
                      "'all-at-once' is assumed, and deployment strategy will "
                      "not be further validated")
 
-        self.error_status = False
+        super().do_validate()

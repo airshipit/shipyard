@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# NOTE: If user is executing deploy_site, update_site or redeploy_server
-# workflow from outside the cluster, e.g. from a remote jump server, then
-# he/she will need to ensure that the DNS server is able to resolve the
-# FQDN of the Shipyard and Keystone public URL (both will be pointing to
-# the IP of the Ingress Controller). If the DNS resolution is not available,
-# the user will need to ensure that the /etc/hosts file is properly updated
-# before setting up the environment variables and running the worflow.
+# NOTE: If a user is executing deploy_site, update_site, update_software or
+# redeploy_server workflow from outside the cluster, e.g. from a remote jump
+# server, then the user will need to ensure that the DNS server is able to
+# resolve the FQDN of the Shipyard and Keystone public URL (both will be
+# pointing to the IP of the Ingress Controller). If the DNS resolution is not
+# available, the user will need to ensure that the /etc/hosts file is properly
+# updated before setting up the environment variables and running the worflow.
 
 # Define Variable
 namespace="${namespace:-ucp}"

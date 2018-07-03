@@ -44,11 +44,15 @@ def _action_mappings():
     return {
         'deploy_site': {
             'dag': 'deploy_site',
-            'validators': [action_validators.validate_site_action]
+            'validators': [action_validators.validate_site_action_full]
         },
         'update_site': {
             'dag': 'update_site',
-            'validators': [action_validators.validate_site_action]
+            'validators': [action_validators.validate_site_action_full]
+        },
+        'update_software': {
+            'dag': 'update_software',
+            'validators': [action_validators.validate_site_action_basic]
         },
         'redeploy_server': {
             'dag': 'redeploy_server',
