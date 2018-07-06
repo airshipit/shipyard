@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from airflow.operators import ConcurrencyCheckOperator
+from airflow.operators import DeckhandRetrieveRenderedDocOperator
+from airflow.operators import DeploymentConfigurationOperator
+from airflow.operators import DeckhandCreateSiteActionTagOperator
+
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
 from armada_deploy_site import deploy_site_armada
-from dag_deployment_configuration import get_deployment_configuration
-from deckhand_create_tag import create_deckhand_tag
-from deckhand_get_rendered_doc import get_rendered_doc_deckhand
+from config_path import config_path
 from destroy_node import destroy_server
 from drydock_deploy_site import deploy_site_drydock
 from failure_handlers import step_failure_handler
@@ -64,7 +66,7 @@ class CommonStepFactory(object):
                               dag=self.dag,
                               python_callable=xcom_push)
 
-    def get_concurrency_check(self, task_id=dn.DAG_CONCURRENCY_CHECK_DAG_NAME):
+    def get_concurrency_check(self, task_id=dn.CONCURRENCY_CHECK):
         """Generate the concurrency check step
 
         Concurrency check prevents simultaneous execution of dags that should
@@ -95,11 +97,9 @@ class CommonStepFactory(object):
         Check that we are able to render the docs before proceeding
         further with the workflow
         """
-        return SubDagOperator(
-            subdag=get_rendered_doc_deckhand(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
+        return DeckhandRetrieveRenderedDocOperator(
+            shipyard_conf=config_path,
+            main_dag_name=self.parent_dag_name,
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)
@@ -121,17 +121,15 @@ class CommonStepFactory(object):
             dag=self.dag)
 
     def get_deployment_configuration(self,
-                                     task_id=dn.GET_DEPLOY_CONF_DAG_NAME):
+                                     task_id=dn.DEPLOYMENT_CONFIGURATION):
         """Generate the step to retrieve the deployment configuration
 
         This step provides the timings and strategies that will be used in
         subsequent steps
         """
-        return SubDagOperator(
-            subdag=get_deployment_configuration(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
+        return DeploymentConfigurationOperator(
+            main_dag_name=self.parent_dag_name,
+            shipyard_conf=config_path,
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)
@@ -254,12 +252,11 @@ class CommonStepFactory(object):
         Note that trigger_rule is set to "all_done" so that this
         step will run even when upstream tasks are in failed state.
         """
-        return SubDagOperator(
-            subdag=create_deckhand_tag(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
+
+        return DeckhandCreateSiteActionTagOperator(
             task_id=task_id,
+            shipyard_conf=config_path,
             on_failure_callback=step_failure_handler,
             trigger_rule="all_done",
+            main_dag_name=self.parent_dag_name,
             dag=self.dag)

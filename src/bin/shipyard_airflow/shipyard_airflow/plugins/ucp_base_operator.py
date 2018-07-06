@@ -71,7 +71,6 @@ class UcpBaseOperator(BaseOperator):
                  pod_selector_pattern=None,
                  shipyard_conf=None,
                  start_time=None,
-                 sub_dag_name=None,
                  xcom_push=True,
                  *args, **kwargs):
         """Initialization of UcpBaseOperator object.
@@ -92,7 +91,6 @@ class UcpBaseOperator(BaseOperator):
                                      log-rotate container.
         :param shipyard_conf: Location of shipyard.conf
         :param start_time: Time when Operator gets executed
-        :param sub_dag_name: Child Dag
         :param xcom_push: xcom usage
 
         """
@@ -103,7 +101,6 @@ class UcpBaseOperator(BaseOperator):
         self.pod_selector_pattern = pod_selector_pattern or []
         self.shipyard_conf = shipyard_conf
         self.start_time = datetime.now()
-        self.sub_dag_name = sub_dag_name
         self.xcom_push_flag = xcom_push
         self.doc_utils = _get_document_util(self.shipyard_conf)
         self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)

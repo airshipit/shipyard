@@ -39,7 +39,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='promenade_drain_node',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Clear Labels
@@ -47,7 +46,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='promenade_clear_labels',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Shutdown Kubelet
@@ -55,7 +53,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='promenade_shutdown_kubelet',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # ETCD Sanity Check
@@ -63,7 +60,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='promenade_check_etcd',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Power down and destroy node using DryDock
@@ -71,7 +67,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='destroy_node',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Decommission node from Kubernetes cluster using Promenade
@@ -79,7 +74,6 @@ def destroy_server(parent_dag_name, child_dag_name, args):
         task_id='promenade_decommission_node',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
         dag=dag)
 
     # Define dependencies

@@ -33,7 +33,20 @@ class XcomPuller(object):
         self.ti = task_instance
 
     def _get_xcom(self, source_task, dag_id=None, key=None, log_result=True):
-        """Find a particular xcom value"""
+        """Find and return an xcom value
+
+        :param source_task: The name of the task that wrote the xcom
+        :param dag_id: The name of the subdag (of the main DAG) that contained
+            the source task. Let this default to None if the task is a direct
+            child of the main dag
+        :param key: The name of the xcom item that was written by the task. If
+            the source task allowed for the step to simply push xcom at the
+            end of the step, leave this None.
+        :param log_result: boolean to indicate if the value of the xcom should
+            be logged upon retreival. This can be nice for investigative
+            purposes, but would likely not be good for large or complex
+            values.
+        """
         if dag_id is None:
             source_dag = self.mdn
         else:
@@ -53,8 +66,8 @@ class XcomPuller(object):
 
     def get_deployment_configuration(self):
         """Retrieve the deployment configuration dictionary"""
-        source_task = 'get_deployment_configuration'
-        source_dag = 'dag_deployment_configuration'
+        source_task = 'deployment_configuration'
+        source_dag = None
         key = None
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
@@ -77,7 +90,7 @@ class XcomPuller(object):
     def get_check_drydock_continue_on_fail(self):
         """Check if 'drydock_continue_on_fail' key exists"""
         source_task = 'ucp_preflight_check'
-        source_dag = 'preflight'
+        source_dag = None
         key = 'drydock_continue_on_fail'
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,

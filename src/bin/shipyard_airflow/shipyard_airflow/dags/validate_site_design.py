@@ -22,9 +22,10 @@ from config_path import config_path
 
 
 def validate_site_design(parent_dag_name, child_dag_name, args):
-    '''
-    Subdag to delegate design verification to the UCP components
-    '''
+    """Subdag to delegate design verification to the UCP components
+
+    There is no wiring of steps - they all execute in parallel
+    """
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
@@ -33,32 +34,28 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         task_id='deckhand_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        retries=3,
+        retries=1,
         dag=dag)
 
     drydock_validate_docs = DrydockValidateDesignOperator(
         task_id='drydock_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        retries=3,
+        retries=1,
         dag=dag)
 
     armada_validate_docs = ArmadaValidateDesignOperator(
         task_id='armada_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        retries=3,
+        retries=1,
         dag=dag)
 
     promenade_validate_docs = PromenadeValidateSiteDesignOperator(
         task_id='promenade_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        sub_dag_name=child_dag_name,
-        retries=3,
+        retries=1,
         dag=dag)
 
     return dag
