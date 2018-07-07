@@ -132,7 +132,7 @@ class DocumentValidator(metaclass=abc.ABCMeta):
                                                          self.doc_name,
                                                          self.schema)
             # only proceed to validating the document if it is present.
-            LOG.debug("Generic document validaton complete. Proceeding to "
+            LOG.debug("Generic document validation complete. Proceeding to "
                       "specific validation")
             self.do_validate()
         except DocumentLookupError as dle:

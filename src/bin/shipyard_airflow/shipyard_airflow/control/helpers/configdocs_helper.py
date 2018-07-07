@@ -35,7 +35,7 @@ from shipyard_airflow.control.helpers.deckhand_client import (
 from shipyard_airflow.control.service_endpoints import (
     Endpoints, get_endpoint, get_token)
 from shipyard_airflow.control.validators.validate_deployment_configuration \
-    import ValidateDeploymentConfiguration
+    import ValidateDeploymentConfigurationFull
 from shipyard_airflow.errors import ApiError, AppError
 
 CONF = cfg.CONF
@@ -497,12 +497,13 @@ class ConfigdocsHelper(object):
         return _format_validations_to_status(resp_msgs, error_count)
 
     def _get_shipyard_validations(self, revision_id):
-        # Run Shipyard's own validations
+        # Run Shipyard's own validations.
         try:
             sy_val_mgr = DocumentValidationManager(
                 service_clients.deckhand_client(),
                 revision_id,
-                [(ValidateDeploymentConfiguration, 'deployment-configuration')]
+                [(ValidateDeploymentConfigurationFull,
+                  'deployment-configuration')]
             )
             return sy_val_mgr.validate()
         except Exception as ex:

@@ -46,6 +46,11 @@ def _get_node_lookup(revision_id):
     ).lookup
 
 
+def _get_deployment_group_manager(groups, revision_id):
+    """Retrieves the deployment group manager"""
+    return DeploymentGroupManager(groups, _get_node_lookup(revision_id))
+
+
 class ValidateDeploymentStrategy(DocumentValidator):
     """Validates the deployment strategy"""
     def __init__(self, **kwargs):
@@ -57,7 +62,7 @@ class ValidateDeploymentStrategy(DocumentValidator):
     def do_validate(self):
         groups = self.doc_dict['groups']
         try:
-            DeploymentGroupManager(groups, _get_node_lookup(self.revision))
+            _get_deployment_group_manager(groups, self.revision)
         except DeploymentGroupCycleError as dgce:
             self.val_msg_list.append(self.val_msg(
                 name=dgce.__class__.__name__,

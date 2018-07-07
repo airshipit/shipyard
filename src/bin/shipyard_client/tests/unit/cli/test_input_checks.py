@@ -176,6 +176,7 @@ def test_check_action_commands():
     ctx = Mock(side_effect=Exception("failed"))
     input_checks.check_action_command(ctx, 'deploy_site')
     input_checks.check_action_command(ctx, 'update_site')
+    input_checks.check_action_command(ctx, 'update_software')
     input_checks.check_action_command(ctx, 'redeploy_server')
     ctx.fail.assert_not_called()
 

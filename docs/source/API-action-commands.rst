@@ -54,6 +54,22 @@ update_site
 Applies a new committed configuration to the environment. The steps of
 update_site mirror those of :ref:`deploy_site`.
 
+.. _update_software:
+
+update_software
+~~~~~~~~~~~~~~~
+Triggers an update of the software in a site, using the latest committed
+configuration documents. Steps, conceptually:
+
+#. Concurrency check
+    Prevents concurrent site modifications by conflicting
+    actions/workflows.
+#. Validate design
+    Asks each involved Airship component to validate the design. This ensures
+    that the previously committed design is valid at the present time.
+#. Armada build
+    Orchestrates Armada to configure software on the nodes as designed.
+
 Actions under development
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -18,9 +18,11 @@ from arrow.parser import ParserError
 
 def check_action_command(ctx, action_command):
     """Verifies the action command is valid"""
-    if action_command not in ['deploy_site', 'update_site', 'redeploy_server']:
+    valid_commands = ['deploy_site', 'update_site', 'update_software',
+                      'redeploy_server']
+    if action_command not in valid_commands:
         ctx.fail('Invalid action command.  The action commands available are '
-                 'deploy_site, update_site, and redeploy_server.')
+                 ' {}'.format(', '.join(valid_commands)))
 
 
 def check_control_action(ctx, action):

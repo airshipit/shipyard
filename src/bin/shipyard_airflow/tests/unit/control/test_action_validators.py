@@ -18,8 +18,14 @@ import yaml
 
 import pytest
 
+from shipyard_airflow.common.deployment_group.errors import (
+    DeploymentGroupCycleError,
+    InvalidDeploymentGroupError,
+    InvalidDeploymentGroupNodeLookupError
+)
 from shipyard_airflow.control.action.action_validators import (
-    validate_site_action
+    validate_site_action_basic,
+    validate_site_action_full
 )
 from shipyard_airflow.errors import ApiError
 from tests.unit.common.deployment_group.node_lookup_stubs import node_lookup
@@ -70,10 +76,10 @@ class TestActionValidator:
     @mock.patch("shipyard_airflow.control.validators."
                 "validate_deployment_strategy._get_node_lookup",
                 return_value=node_lookup)
-    def test_validate_site_action(self, *args):
+    def test_validate_site_action_full(self, *args):
         """Test the function that runs the validator class"""
         try:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site',
                 'committed_rev_id': 1
@@ -87,12 +93,12 @@ class TestActionValidator:
     @mock.patch("shipyard_airflow.control.validators."
                 "validate_deployment_strategy._get_node_lookup",
                 return_value=node_lookup)
-    def test_validate_site_action_cycle(self, *args):
+    def test_validate_site_action_full_cycle(self, *args):
         """Test the function that runs the validator class with a
         deployment strategy that has a cycle in the groups
         """
         with pytest.raises(ApiError) as apie:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site',
                 'committed_rev_id': 1
@@ -107,12 +113,12 @@ class TestActionValidator:
     @mock.patch("shipyard_airflow.control.validators."
                 "validate_deployment_strategy._get_node_lookup",
                 return_value=node_lookup)
-    def test_validate_site_action_missing_dep_strat(self, *args):
+    def test_validate_site_action_full_missing_dep_strat(self, *args):
         """Test the function that runs the validator class with a missing
         deployment strategy - specified, but not present
         """
         with pytest.raises(ApiError) as apie:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site',
                 'committed_rev_id': 1
@@ -121,21 +127,21 @@ class TestActionValidator:
         assert apie.value.error_list[0]['name'] == 'DocumentNotFoundError'
 
     @mock.patch("shipyard_airflow.control.service_clients.deckhand_client",
-                return_value=fake_dh_doc_client('clean'), ds_name='defaulted')
+                return_value=fake_dh_doc_client('clean', ds_name='defaulted'))
     @mock.patch("shipyard_airflow.control.validators."
                 "validate_deployment_strategy._get_node_lookup",
                 return_value=node_lookup)
-    def test_validate_site_action_default_dep_strat(self, *args):
+    def test_validate_site_action_full_default_dep_strat(self, *args):
         """Test the function that runs the validator class with a defaulted
         deployment strategy (not specified)
         """
         try:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site',
                 'committed_rev_id': 1
             })
-        except:
+        except Exception:
             # any exception is a failure
             assert False
 
@@ -149,7 +155,7 @@ class TestActionValidator:
         deployment strategy that has a cycle in the groups
         """
         with pytest.raises(ApiError) as apie:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site'
             })
@@ -160,17 +166,81 @@ class TestActionValidator:
     @mock.patch("shipyard_airflow.control.validators."
                 "validate_deployment_strategy._get_node_lookup",
                 return_value=node_lookup)
-    def test_validate_site_action_continue_failure(self, *args):
-        """Test the function that runs the validator class with a defaulted
-        deployment strategy (not specified)
+    def test_validate_site_action_full_continue_failure(self, *args):
+        """Test the function that runs the validator class with a missing
+        deployment strategy (not specified), but continue-on-fail specified
         """
         try:
-            validate_site_action({
+            validate_site_action_full({
                 'id': '123',
                 'name': 'deploy_site',
                 'committed_rev_id': 1,
                 'parameters': {'continue-on-fail': 'true'}
             })
-        except:
+        except Exception:
             # any exception is a failure
             assert False
+
+    @mock.patch("shipyard_airflow.control.service_clients.deckhand_client",
+                return_value=fake_dh_doc_client('clean', ds_name='not-there'))
+    @mock.patch("shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_node_lookup",
+                return_value=node_lookup)
+    def test_validate_site_action_basic_missing_dep_strat(self, *args):
+        """Test the function that runs the validator class with a missing
+        deployment strategy - specified, but not present. This should be
+        ignored by the basic valdiator
+        """
+        try:
+            validate_site_action_basic({
+                'id': '123',
+                'name': 'deploy_site',
+                'committed_rev_id': 1
+            })
+        except Exception:
+            # any exception is a failure
+            assert False
+
+    @mock.patch("shipyard_airflow.control.service_clients.deckhand_client",
+                return_value=fake_dh_doc_client('clean'))
+    @mock.patch("shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_node_lookup",
+                return_value=node_lookup)
+    def test_validate_site_action_dep_strategy_exceptions(self, *args):
+        """Test the function that runs the validator class for exceptions"""
+        to_catch = [InvalidDeploymentGroupNodeLookupError,
+                    InvalidDeploymentGroupError, DeploymentGroupCycleError]
+        for exc in to_catch:
+            with mock.patch(
+                "shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_deployment_group_manager",
+                side_effect=exc()
+            ):
+                with pytest.raises(ApiError) as apie:
+                    validate_site_action_full({
+                        'id': '123',
+                        'name': 'deploy_site',
+                        'committed_rev_id': 1
+                    })
+            assert apie.value.description == 'InvalidConfigurationDocuments'
+            assert apie.value.error_list[0]['name'] == (exc.__name__)
+
+    @mock.patch("shipyard_airflow.control.service_clients.deckhand_client",
+                return_value=fake_dh_doc_client('clean'))
+    @mock.patch("shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_node_lookup",
+                return_value=node_lookup)
+    @mock.patch("shipyard_airflow.control.validators."
+                "validate_deployment_strategy._get_deployment_group_manager",
+                side_effect=TypeError())
+    def test_validate_site_action_dep_strategy_exception_other(self, *args):
+        """Test the function that runs the validator class"""
+        with pytest.raises(ApiError) as apie:
+            validate_site_action_full({
+                'id': '123',
+                'name': 'deploy_site',
+                'committed_rev_id': 1
+            })
+        assert apie.value.description == 'InvalidConfigurationDocuments'
+        assert apie.value.error_list[0]['name'] == (
+            'DocumentValidationProcessingError')

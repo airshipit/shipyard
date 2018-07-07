@@ -582,9 +582,9 @@ get configdocs
 
 Retrieve documents loaded into Shipyard. The possible options include last
 committed, last site action, last successful site action and retrieval from
-the Shipyard Buffer. Site actions include deploy_site and update_site. Note
-that we can only select one of the options when we retrieve the documents
-for a particular collection.
+the Shipyard Buffer. Site actions include ``deploy_site``, ``update_site`` and
+``update_software``. Note that only one option may be selected when retrieving
+the documents for a particular collection.
 
 The command will compare the differences between the revisions specified if
 the collection option is not specified. Note that we can only compare between

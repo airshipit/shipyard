@@ -37,8 +37,11 @@ The workflow actions that may be invoked using Shipyard
 deploy_site: Triggers the initial deployment of a site using the latest
              committed configuration documents.
 
-update_site: Triggers the initial deployment of a site, using the latest
+update_site: Triggers the update to a deployment of a site, using the latest
              committed configuration documents.
+
+update_software: Starts an update that only exercises the software portion of
+                 the commited configuration documents.
 
 redeploy_server: Using parameters to indicate which server(s), triggers a
                  redeployment of servers to the last committed design and

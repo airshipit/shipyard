@@ -21,7 +21,11 @@ from airflow.operators import PromenadeValidateSiteDesignOperator
 from config_path import config_path
 
 
-def validate_site_design(parent_dag_name, child_dag_name, args):
+BAREMETAL = 'baremetal'
+SOFTWARE = 'software'
+
+
+def validate_site_design(parent_dag_name, child_dag_name, args, targets=None):
     """Subdag to delegate design verification to the UCP components
 
     There is no wiring of steps - they all execute in parallel
@@ -30,32 +34,44 @@ def validate_site_design(parent_dag_name, child_dag_name, args):
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
 
-    deckhand_validate_docs = DeckhandValidateSiteDesignOperator(
+    if targets is None:
+        targets = [BAREMETAL, SOFTWARE]
+
+    # Always add Deckhand validations
+    DeckhandValidateSiteDesignOperator(
         task_id='deckhand_validate_site_design',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
         retries=1,
-        dag=dag)
+        dag=dag
+    )
 
-    drydock_validate_docs = DrydockValidateDesignOperator(
-        task_id='drydock_validate_site_design',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        retries=1,
-        dag=dag)
+    if BAREMETAL in targets:
+        # Add Drydock and Promenade validations
+        DrydockValidateDesignOperator(
+            task_id='drydock_validate_site_design',
+            shipyard_conf=config_path,
+            main_dag_name=parent_dag_name,
+            retries=1,
+            dag=dag
+        )
 
-    armada_validate_docs = ArmadaValidateDesignOperator(
-        task_id='armada_validate_site_design',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        retries=1,
-        dag=dag)
+        PromenadeValidateSiteDesignOperator(
+            task_id='promenade_validate_site_design',
+            shipyard_conf=config_path,
+            main_dag_name=parent_dag_name,
+            retries=1,
+            dag=dag
+        )
 
-    promenade_validate_docs = PromenadeValidateSiteDesignOperator(
-        task_id='promenade_validate_site_design',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        retries=1,
-        dag=dag)
+    if SOFTWARE in targets:
+        # Add Armada validations
+        ArmadaValidateDesignOperator(
+            task_id='armada_validate_site_design',
+            shipyard_conf=config_path,
+            main_dag_name=parent_dag_name,
+            retries=1,
+            dag=dag
+        )
 
     return dag

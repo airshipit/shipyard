@@ -24,13 +24,15 @@ from shipyard_airflow.common.document_validators.document_validator_manager \
     import DocumentValidationManager
 from shipyard_airflow.control import service_clients
 from shipyard_airflow.control.validators.validate_deployment_configuration \
-    import ValidateDeploymentConfiguration
+    import ValidateDeploymentConfigurationBasic
+from shipyard_airflow.control.validators.validate_deployment_configuration \
+    import ValidateDeploymentConfigurationFull
 from shipyard_airflow.errors import ApiError
 
 LOG = logging.getLogger(__name__)
 
 
-def validate_site_action(action):
+def validate_site_action_full(action):
     """Validates that the deployment configuration is correctly set up
 
     Checks:
@@ -46,24 +48,53 @@ def validate_site_action(action):
     """
     validator = _SiteActionValidator(
         dh_client=service_clients.deckhand_client(),
-        action=action
+        action=action,
+        full_validation=True
+    )
+    validator.validate()
+
+
+def validate_site_action_basic(action):
+    """Validates that the DeploymentConfiguration is present
+
+    Checks:
+
+      - The deployment configuration from Deckhand using the design version
+
+          - If the deployment configuration is missing, error
+    """
+    validator = _SiteActionValidator(
+        dh_client=service_clients.deckhand_client(),
+        action=action,
+        full_validation=False
     )
     validator.validate()
 
 
 class _SiteActionValidator:
-    """The validator object setup and used by the validate_site_action function
+    """The validator object used by the validate_site_action_<x> functions
     """
-    def __init__(self, dh_client, action):
+    def __init__(self, dh_client, action, full_validation=True):
         self.action = action
         self.doc_revision = self._get_doc_revision()
         self.cont_on_fail = str(self._action_param(
             'continue-on-fail')).lower() == 'true'
-        self.doc_val_mgr = DocumentValidationManager(
-            dh_client,
-            self.doc_revision,
-            [(ValidateDeploymentConfiguration, 'deployment-configuration')]
-        )
+        if full_validation:
+            # Perform a complete validation
+            self.doc_val_mgr = DocumentValidationManager(
+                dh_client,
+                self.doc_revision,
+                [(ValidateDeploymentConfigurationFull,
+                  'deployment-configuration')]
+            )
+        else:
+            # Perform a basic validation only
+            self.doc_val_mgr = DocumentValidationManager(
+                dh_client,
+                self.doc_revision,
+                [(ValidateDeploymentConfigurationBasic,
+                  'deployment-configuration')]
+            )
 
     def validate(self):
         results = self.doc_val_mgr.validate()

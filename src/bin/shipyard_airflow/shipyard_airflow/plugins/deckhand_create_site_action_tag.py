@@ -111,7 +111,7 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
         task = ['armada_build']
         task_result = {}
 
-        if self.main_dag_name == 'update_site':
+        if self.main_dag_name in ['update_site', 'update_software']:
             # NOTE: We will check the final state of the 'armada_build' task
             # as a 'success' means that all tasks preceding it would either
             # be in 'skipped' or 'success' state. A failure of 'armada_build'
@@ -119,8 +119,8 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
             # to determine the success/failure of the 'deploy_site' workflow
             # with the final state of the 'armada_build' task.
             #
-            # NOTE: The 'update_site' workflow contains additional steps for
-            # upgrading of worker pods.
+            # NOTE: The 'update_site' and 'update_software' workflows contain
+            # additional steps for upgrading of worker pods.
             for k in ['skip_upgrade_airflow', 'upgrade_airflow']:
                 task.append(k)
 
