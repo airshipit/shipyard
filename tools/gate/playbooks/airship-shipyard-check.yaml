@@ -14,9 +14,18 @@
 
 - hosts: primary
   tasks:
+    - name: Setup environment
+      shell: |
+        set -xe;
+        ./tools/gate/scripts/000-environment-setup.sh
+      environment:
+        OSH_INFRA_PATH: "{{ zuul_osh_infra_relative_path | default('') }}"
+      args:
+        chdir: "{{ zuul_shipyard_relative_path | default(zuul.project.src_dir) }}"
+
     - name: Build Charts
       shell: |
         set -xe;
         ./tools/gate/scripts/010-build-charts.sh
       args:
-        chdir: "{{ zuul_osh_relative_path | default(zuul.project.src_dir) }}"
+        chdir: "{{ zuul_shipyard_relative_path | default(zuul.project.src_dir) }}"
