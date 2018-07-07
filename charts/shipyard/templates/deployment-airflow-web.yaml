@@ -37,7 +37,7 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
+        {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
       restartPolicy: Always
       terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.airflow.timeout | default "30" }}
       initContainers:

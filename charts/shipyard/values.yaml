@@ -22,6 +22,12 @@ labels:
   job:
     node_selector_key: ucp-control-plane
     node_selector_value: enabled
+  shipyard:
+    node_selector_key: ucp-control-plane
+    node_selector_value: enabled
+  airflow:
+    node_selector_key: ucp-control-plane
+    node_selector_value: enabled
 
 images:
   tags:

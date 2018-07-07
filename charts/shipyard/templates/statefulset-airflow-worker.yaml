@@ -74,7 +74,7 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
-        {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
+        {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
       initContainers:
 {{ tuple $envAll "airflow_server" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
 {{- if .Values.prod_environment }}
