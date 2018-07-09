@@ -77,6 +77,7 @@ def test_get_actions(*args):
     assert 'deploy_site' in response
     assert 'action/01BTP9T2WCE1PAJR2DWYXG805V' in response
     assert 'Lifecycle' in response
+    assert '2/1/0' in response
 
 
 @responses.activate

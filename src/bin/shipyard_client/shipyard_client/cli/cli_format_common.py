@@ -122,18 +122,41 @@ def gen_action_table(action_list):
     'action_lifecycle'
     """
     actions = format_utils.table_factory(
-        field_names=['Name', 'Action', 'Lifecycle'])
+        field_names=['Name', 'Action', 'Lifecycle', 'Execution Time',
+                     'Step Succ/Fail/Oth'])
     if action_list:
         # sort by id, which is ULID - chronological.
         for action in sorted(action_list, key=lambda k: k['id']):
             actions.add_row([
-                action.get('name'), 'action/{}'.format(action.get('id')),
-                action.get('action_lifecycle')
+                action.get('name'),
+                'action/{}'.format(action.get('id')),
+                action.get('action_lifecycle'),
+                action.get('dag_execution_date'),
+                _step_summary(action.get('steps', []))
             ])
     else:
-        actions.add_row(['None', '', ''])
+        actions.add_row(['None', '', '', '', ''])
 
     return format_utils.table_get_string(actions)
+
+
+def _step_summary(step_list):
+    """Creates a single string representation of the step status
+
+    Success/Failed/Other counts in each position
+    """
+    successes = 0
+    failures = 0
+    other = 0
+    for s in step_list:
+        state = s.get('state')
+        if state in ['success']:
+            successes += 1
+        elif state in ['failed']:
+            failures += 1
+        else:
+            other += 1
+    return "{}/{}/{}".format(successes, failures, other)
 
 
 def gen_collection_table(collection_list):

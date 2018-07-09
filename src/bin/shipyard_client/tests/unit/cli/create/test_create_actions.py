@@ -55,6 +55,7 @@ def test_create_action(*args):
     assert 'Lifecycle' in response
     assert 'action/01BTTMFVDKZFRJM80FGD7J1AKN' in response
     assert 'Error:' not in response
+    assert '0/0/0' in response
 
 
 @responses.activate
