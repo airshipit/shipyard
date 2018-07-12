@@ -175,3 +175,38 @@ class GetWorkflows(CliAction):
         resp_j = response.json()
         wf_list = resp_j if resp_j else []
         return cli_format_common.gen_workflow_table(wf_list)
+
+
+class GetSiteStatuses(CliAction):
+    """Action to get the site statuses"""
+
+    def __init__(self, ctx, fltr=None):
+        """Sets parameters."""
+        super().__init__(ctx)
+        self.logger.debug("GetSiteStatuses action with filter %s "
+                          "invoked", fltr)
+        self.fltr = fltr
+
+    def invoke(self):
+        """Calls API Client and formats response from API Client"""
+        self.logger.debug("Calling API Client get_site_statuses")
+
+        return self.get_api_client().get_site_statuses(self.fltr)
+
+    # Handle 400 with default error handler for cli.
+    cli_handled_err_resp_codes = [400]
+
+    # Handle 200 responses using the cli_format_response_handler
+    cli_handled_succ_resp_codes = [200]
+
+    def cli_format_response_handler(self, response):
+        """CLI output handler
+
+        :param response: a requests response object
+        :returns: a string representing a CLI appropriate response
+            Handles 200 responses
+        """
+        resp_j = response.json()
+        status_dict = resp_j if resp_j else []
+
+        return cli_format_common.gen_site_statuses(status_dict)

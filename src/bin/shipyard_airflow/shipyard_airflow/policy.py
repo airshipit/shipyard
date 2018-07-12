@@ -174,6 +174,15 @@ class ShipyardPolicy(object):
                 'method': 'GET'
             }]
         ),
+        policy.DocumentedRuleDefault(
+            'workflow_orchestrator:get_site_statuses',
+            RULE_ADMIN_REQUIRED,
+            'Retrieve the statuses for the site',
+            [{
+                'path': '/api/v1.0/site_statuses',
+                'method': 'GET'
+            }]
+        ),
     ]
 
     # Regions Policy

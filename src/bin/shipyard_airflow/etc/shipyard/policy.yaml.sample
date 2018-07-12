@@ -59,3 +59,6 @@
 # GET  /api/v1.0/workflows/{id}
 #"workflow_orchestrator:get_workflow": "rule:admin_required"
 
+# Retrieve the status for node provision status
+# GET  /api/v1.0/site_statuses
+#"workflow_orchestrator:get_site_statuses": "rule:admin_required"

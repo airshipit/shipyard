@@ -260,3 +260,79 @@ def gen_sub_workflows(wf_list):
     for wf in wf_list:
         wfs.append(gen_workflow_details(wf))
     return '\n\n'.join(wfs)
+
+
+def gen_site_statuses(status_dict):
+    """Generates site statuses table.
+
+    Assumes status_types as list of filters and status_dict a dictionary
+    with statuses lists
+    """
+    formatted_output = ''
+
+    status_types = status_dict.keys()
+
+    for st in status_types:
+        call_func = _site_statuses_switcher(st)
+        op = call_func(status_dict)
+        formatted_output = "{}\n{}\n".format(formatted_output, op)
+
+    return formatted_output
+
+
+def _gen_machines_powerstate_table(status_dict):
+    # Generates machines power states status table
+
+    machine_powerstate_table = format_utils.table_factory(
+        field_names=['Hostname', 'Power State'])
+
+    pwrstate_list = status_dict.get('machines_powerstate')
+
+    if pwrstate_list:
+        for pwrstate in pwrstate_list:
+            machine_powerstate_table.add_row(
+                [pwrstate.get('hostname'),
+                 pwrstate.get('power_state')])
+    else:
+        machine_powerstate_table.add_row(['', ''])
+
+    return format_utils.table_get_string(table=machine_powerstate_table,
+                                         title="Machines Power State:",
+                                         vertical_char=' ')
+
+
+def _gen_nodes_provision_status_table(status_dict):
+    # Generates nodes provision status table
+
+    nodes_status_table = format_utils.table_factory(
+        field_names=['Hostname', 'Status'])
+    prov_status_list = status_dict.get('nodes_provision_status')
+
+    if prov_status_list:
+        for status in prov_status_list:
+            nodes_status_table.add_row(
+                [status.get('hostname'),
+                 status.get('status')])
+    else:
+        nodes_status_table.add_row(['', ''])
+
+    return format_utils.table_get_string(table=nodes_status_table,
+                                         title="Nodes Provision Status:",
+                                         vertical_char=' ')
+
+
+def _site_statuses_switcher(status_type):
+    """Maps status types with a callabe function to the format
+     output.
+
+    The dictionary will be updated with new functions
+    to map future supported status-types for "site-statuses"
+    """
+    status_func_switcher = {
+        'nodes_provision_status': _gen_nodes_provision_status_table,
+        'machines_powerstate': _gen_machines_powerstate_table,
+    }
+
+    call_func = status_func_switcher.get(status_type, lambda: None)
+
+    return call_func

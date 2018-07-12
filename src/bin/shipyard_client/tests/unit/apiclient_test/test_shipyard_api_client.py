@@ -234,3 +234,16 @@ def test_get_step_log(*args):
     assert result['url'] == '{}/actions/{}/steps/{}/logs'.format(
         shipyard_client.get_endpoint(), action_id, step_id)
     assert params['try'] == try_number
+
+
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(BaseClient, 'get_endpoint', replace_get_endpoint)
+def test_get_site_statuses(*args):
+    shipyard_client = get_api_client()
+    fltrs = 'nodes-provision-status,machines-power-state'
+    result = shipyard_client.get_site_statuses(fltrs=fltrs)
+    params = result['params']
+    assert result['url'] == '{}/site_statuses'.format(
+        shipyard_client.get_endpoint())
+    assert params['filters'] == fltrs

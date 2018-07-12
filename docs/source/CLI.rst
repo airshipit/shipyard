@@ -737,6 +737,77 @@ Sample
     deploy_site__2017-11-27T20:34:33.000000        failed
     update_site__2017-11-27T20:45:47.000000        running
 
+get site-statuses
+~~~~~~~~~~~~~~~~~
+
+Retrieve the provisioning status of nodes and/or power states of the baremetal
+machines in the site. If no option provided, retrieve records for both status types.
+
+::
+
+    shipyard get site-statuses
+        [--status-type=<status-type>] (repeatable)
+                   |
+
+    Example:
+        shipyard get site-statuses
+        shipyard get site-statuses --status-type=nodes-provision-status
+        shipyard get site-statuses --status-type=machines-power-state
+        shipyard get site-statuses --status-type=nodes-provision-status --status-type=machines-power-state
+
+\--status-type=<status-type>
+  Retrieve provisioning statuses of all nodes for status-type
+  "nodes-provision-status" and retrieve power states of all baremetal
+  machines in the site for status-type "machines-power-state".
+
+Sample
+^^^^^^
+
+::
+
+    $ shipyard get site-statuses
+
+     Nodes Provision Status:
+    Hostname           Status
+    abc.xyz.com        Ready
+    def.xyz.com        Deploying
+
+     Machines Power State:
+    Hostname           Power State
+    abc.xyz.com        On
+    def.xyz.com        On
+
+::
+
+    $ shipyard get site-statuses --status-type=nodes-provision-status
+
+     Nodes Provision Status:
+    Hostname           Status
+    abc.xyz.com        Ready
+    def.xyz.com        Deploying
+
+::
+
+    $ shipyard get site-statuses --status-type=nodes-power-state
+
+     Machines Power State:
+    Hostname           Power State
+    abc.xyz.com        On
+    def.xyz.com        On
+
+::
+
+    $ shipyard get site-statuses --status-type=nodes-provision-status --status-type=nodes-power-state
+
+     Nodes Provision Status:
+    Hostname           Status
+    abc.xyz.com        Ready
+    def.xyz.com        Deploying
+
+     Machines Power State:
+    Hostname           Power State
+    abc.xyz.com        On
+    def.xyz.com        On
 
 Logs Commands
 -------------

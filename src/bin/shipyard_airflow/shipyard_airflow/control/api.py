@@ -40,6 +40,7 @@ from shipyard_airflow.control.health import HealthResource
 from shipyard_airflow.control.middleware.auth import AuthMiddleware
 from shipyard_airflow.control.middleware.context import ContextMiddleware
 from shipyard_airflow.control.middleware.logging_mw import LoggingMiddleware
+from shipyard_airflow.control.status.status_api import StatusResource
 from shipyard_airflow.errors import (AppError, default_error_serializer,
                                      default_exception_handler)
 
@@ -77,6 +78,7 @@ def start_api():
         ('/renderedconfigdocs', RenderedConfigDocsResource()),
         ('/workflows', WorkflowResource()),
         ('/workflows/{workflow_id}', WorkflowIdResource()),
+        ('/site_statuses', StatusResource()),
     ]
 
     # Set up the 1.0 routes

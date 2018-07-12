@@ -21,6 +21,7 @@ from shipyard_client.cli.get.actions import GetConfigdocs
 from shipyard_client.cli.get.actions import GetConfigdocsStatus
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
 from shipyard_client.cli.get.actions import GetWorkflows
+from shipyard_client.cli.get.actions import GetSiteStatuses
 from shipyard_client.cli.input_checks import check_reformat_versions
 
 
@@ -63,8 +64,8 @@ EXAMPLE: shipyard get configdocs --colllection=design
 """
 
 SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
-                         "committed, last site action, successful site action "
-                         "or from the Shipyard Buffer. Allows comparison "
+                         "committed, last site action, successful site action"
+                         " or from the Shipyard Buffer. Allows comparison "
                          "between 2 revisions using valid revision tags")
 
 
@@ -229,3 +230,38 @@ def get_version(ctx, buffer, committed, last_site_action,
 
     else:
         return 'buffer'
+
+
+DESC_STATUS = """
+COMMAND: status
+DESCRIPTION: Retrieve statuses of different status types for the site.
+Supported status types are nodes-provision-status and machines-power-state. \n
+Status type nodes-provision-status will fetch provisioning status for all nodes
+and machines-power-state will fetch power state for all baremetal machines
+in the site. Supports fetching statuses of multiple types. Without status-type
+option, command fetches statuses of all status types. \n
+FORMAT: shipyard get site-statuses [--status-type=<status-type>] (repeatable)\n
+EXAMPLE: shipyard get status --status-type=nodes-provision-status \
+ --status-type=machines-power-state
+"""
+
+SHORT_DESC_STATUS = "Retrieve statuses for the site."
+
+
+@get.command(
+    name='site-statuses',
+    help=DESC_STATUS,
+    short_help=SHORT_DESC_STATUS)
+@click.option(
+    '--status-type',
+    '-s',
+    multiple=True,
+    help='Fetches statuses of specific status type.(repeatable) \n'
+    'Supported status types are: \n'
+    'nodes-provision-status \n'
+    'machines-power-state')
+@click.pass_context
+def get_site_statuses(ctx, status_type):
+
+    fltr = ",".join(status_type)
+    click.echo(GetSiteStatuses(ctx, fltr).invoke_and_return_resp())

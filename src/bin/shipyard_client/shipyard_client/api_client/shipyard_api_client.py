@@ -36,6 +36,7 @@ class ApiPaths(enum.Enum):
     POST_CONTROL_ACTION = _BASE_URL + 'actions/{}/control/{}'
     GET_WORKFLOWS = _BASE_URL + 'workflows'
     GET_DAG_DETAIL = _BASE_URL + 'workflows/{}'
+    GET_SITE_STATUSES = _BASE_URL + 'site_statuses'
 
 
 class ShipyardClient(BaseClient):
@@ -246,3 +247,18 @@ class ShipyardClient(BaseClient):
         url = ApiPaths.GET_DAG_DETAIL.value.format(self.get_endpoint(),
                                                    workflow_id)
         return self.get_resp(url)
+
+    def get_site_statuses(self, fltrs=None):
+        """
+        Get statuses for the site.
+        :param str filters: status-types for site statuses to retrieve.
+        :rtype: Response object
+        """
+        if fltrs:
+            query_params = {'filters': fltrs}
+        else:
+            query_params = {}
+
+        url = ApiPaths.GET_SITE_STATUSES.value.format(
+            self.get_endpoint())
+        return self.get_resp(url, query_params)

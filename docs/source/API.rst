@@ -18,13 +18,14 @@
 
 Shipyard API
 ============
-Logically, the API has three parts to handle the three areas of
-functionality in Shipyard.
+Logically, the API has several parts, each to handle each area of
+Shipyard functionality:
 
 1. Document Staging
 2. Action Handling
 3. Airflow Monitoring
-4. Logs Retrieval
+4. Site Statuses
+5. Logs Retrieval
 
 Standards used by the API
 -------------------------
@@ -963,6 +964,154 @@ Example
         }
       ]
     }
+
+
+Site Statuses API
+-----------------
+
+Site Statuses API retrieves node provision status and/or node power state
+for all nodes in the site.
+
+/v1.0/site-statuses
+~~~~~~~~~~~~~~~~~~~
+
+GET /v1.0/site-statuses
+^^^^^^^^^^^^^^^^^^^^^^^
+Returns the dictionary with nodes provision status and nodes power state status
+
+Query Parameters
+''''''''''''''''
+- filters=nodes-provision-status,machines-power-state
+  filters query parameter allows to specify one or more status types to return statuses
+  of those types. The filter value ``nodes-provision-status`` will fetch provisioning
+  statuses of all nodes in the site. The filter value ``machines-power-state`` will fetch
+  power states of all baremetal machines in the site. By omitting the filters
+  query parameter, statuses of all status types will be returned.
+
+Responses
+'''''''''
+200 OK
+  If statuses are retrieved successfully.
+400 Bad Request
+  If invalid filters option is given.
+
+Example
+'''''''
+
+::
+
+    $ curl -X GET $URL/api/v1.0/site-statuses -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    x-shipyard-req: 0804d13e-08fc-4e60-a819-3b7532cac4ec
+    content-type: application/json; charset=UTF-8
+
+   {
+     {
+           "nodes-provision-status": [
+             {
+               "hostname": "abc.xyz.com",
+               "status": "Ready"
+             },
+             {
+               "hostname": "def.xyz.com",
+               "status": "Ready"
+             }
+           ],
+           "machines-power-state": [
+             {
+               "hostname": "abc.xyz.com",
+               "power_state": "On",
+             },
+             {
+               "hostname": "def.xyz.com",
+               "power_state": "On",
+             }
+           ]
+         }
+   }
+
+::
+
+    $ curl -X GET $URL/api/v1.0/site-statuses?filters=nodes-provision-status \
+           -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    x-shipyard-req: 0804d13e-08fc-4e60-a819-3b7532cac4ec
+    content-type: application/json; charset=UTF-8
+
+   {
+     {
+           "nodes-provision-status": [
+             {
+               "hostname": "abc.xyz.com",
+               "status": "Ready"
+             },
+             {
+               "hostname": "def.xyz.com",
+               "status": "Ready"
+             }
+           ]
+         }
+   }
+
+::
+
+    $ curl -X GET $URL/api/v1.0/site-statuses?filters=machines-power-state \
+           -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    x-shipyard-req: 0804d13e-08fc-4e60-a819-3b7532cac4ec
+    content-type: application/json; charset=UTF-8
+
+   {
+     {
+           "machines-power-state": [
+             {
+               "hostname": "abc.xyz.com",
+               "power_state": "On",
+             },
+             {
+               "hostname": "def.xyz.com",
+               "power_state": "On",
+             }
+           ]
+         }
+   }
+
+ ::
+
+    $ curl -X GET $URL/api/v1.0/site-statuses?filters=nodes-provision-status,machines-power-state \
+               -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    x-shipyard-req: 0804d13e-08fc-4e60-a819-3b7532cac4ec
+    content-type: application/json; charset=UTF-8
+
+   {
+     {
+           "nodes-provision-status": [
+             {
+               "hostname": "abc.xyz.com",
+               "status": "Ready"
+             },
+             {
+               "hostname": "def.xyz.com",
+               "status": "Ready"
+             }
+           ],
+           "machines-power-state": [
+             {
+               "hostname": "abc.xyz.com",
+               "power_state": "On",
+             },
+             {
+               "hostname": "def.xyz.com",
+               "power_state": "On",
+             }
+           ]
+         }
+   }
 
 
 Logs Retrieval API
