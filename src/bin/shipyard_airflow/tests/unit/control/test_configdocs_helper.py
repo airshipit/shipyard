@@ -17,6 +17,7 @@ from unittest.mock import patch
 import yaml
 
 import pytest
+import responses
 
 from .fake_response import FakeResponse
 from shipyard_airflow.control.base import ShipyardRequestContext
@@ -906,3 +907,117 @@ def test_get_revision_dict_last_site_action_and_successful_site_action():
     last_site_action = rev_dict.get(configdocs_helper.LAST_SITE_ACTION)
     assert successful_site_action.get('id') == 1
     assert last_site_action.get('id') == 2
+
+
+@responses.activate
+@mock.patch("shipyard_airflow.control.helpers.configdocs_helper.get_token",
+            return_value="1")
+def test_get_validations_for_component_200_null_body(*args):
+    """Tests the function used to call the remote validators
+
+    This is an error case - a 200 should include a response body per spec
+    """
+    url = 'http://shiptest/validate_empty'
+    design_reference = {}
+    response = {}
+    exception = {}
+    context_marker = "testing"
+    thread_name = "unittest"
+
+    responses.add(responses.POST,
+                  url,
+                  body=None,
+                  status=200)
+    configdocs_helper._get_validations_for_component(
+        url, design_reference, response, exception, context_marker,
+        thread_name)
+
+    ex_unable = ('unittest unable to validate configdocs or an invalid '
+                 'response has been returned')
+
+    assert response['response'] == {
+        'details': {
+            'messageList': [{
+                'message': ex_unable,
+                'kind': 'ValidationMessage',
+                'error': True,
+                'level': "Error",
+                'diagnostic': ('JSONDecodeError: Expecting value: line 1 '
+                            'column 1 (char 0)')
+            }]
+        }
+    }
+    assert exception['exception'].__class__.__name__ == "JSONDecodeError"
+
+
+def _exercise_get_validations_for_component_valid(resp_code, *args):
+    """Tests the function used to call the remote validators"""
+    url = 'http://shiptest/validate_{}'.format(resp_code)
+    design_reference = {}
+    response = {}
+    exception = {}
+    context_marker = "testing"
+    thread_name = "unittest"
+
+    valid_response = '{"response": "something"}'
+    responses.add(responses.POST,
+                  url,
+                  body=valid_response,
+                  status=resp_code)
+    configdocs_helper._get_validations_for_component(
+        url, design_reference, response, exception, context_marker,
+        thread_name)
+
+    assert response['response'] == {'response': 'something'}
+    assert exception == {}
+
+
+@responses.activate
+@mock.patch("shipyard_airflow.control.helpers.configdocs_helper.get_token",
+            return_value="1")
+def test_get_validations_for_component_valid_status_codes(*args):
+    """ test a 200 and 400 response code, as valid """
+    for sc in [200, 400]:
+        _exercise_get_validations_for_component_valid(sc, *args)
+
+
+@responses.activate
+@mock.patch("shipyard_airflow.control.helpers.configdocs_helper.get_token",
+            return_value="1")
+def test_get_validations_for_component_bad_status_404(*args):
+    """Tests the function used to call the remote validators
+
+    This is an error case - a 404 should not occur for the validate endpoint
+    """
+    url = 'http://shiptest/validate_404'
+    design_reference = {}
+    response = {}
+    exception = {}
+    context_marker = "testing"
+    thread_name = "unittest"
+
+    responses.add(responses.POST,
+                  url,
+                  body="Some string",
+                  status=404)
+    configdocs_helper._get_validations_for_component(
+        url, design_reference, response, exception, context_marker,
+        thread_name)
+
+    ex_unable = ('unittest unable to validate configdocs or an invalid '
+                 'response has been returned')
+
+    assert response['response'] == {
+        'details': {
+            'messageList': [{
+                'message': ex_unable,
+                'kind': 'ValidationMessage',
+                'error': True,
+                'level': "Error",
+                'diagnostic': ('HTTPError: 404 Client Error: Not Found for '
+                               'url: http://shiptest/validate_404')
+
+            }]
+        }
+    }
+    assert exception['exception'].__class__.__name__ == "HTTPError"

@@ -791,25 +791,25 @@ def _get_validations_for_component(url, design_reference, response,
                 CONF.requests_config.validation_connect_timeout,
                 CONF.requests_config.validation_read_timeout))
         # 400 response is "valid" failure to validate. > 400 is a problem.
+        LOG.debug("%s responded with status code %s", thread_name,
+                  http_resp.status_code)
         if http_resp.status_code > 400:
             http_resp.raise_for_status()
-        response_dict = http_resp.json()
-        response['response'] = response_dict
+        response['response'] = http_resp.json()
     except Exception as ex:
         # catch anything exceptional as a failure to run validations
-        unable_str = '{} unable to validate configdocs'.format(thread_name)
-        LOG.error("%s. Exception follows.", unable_str)
-        LOG.error(str(ex))
+        unable_str = ('{} unable to validate configdocs or an invalid response'
+                      ' has been returned').format(thread_name)
+        LOG.exception(unable_str)
         response['response'] = {
             'details': {
                 'messageList': [{
                     'message': unable_str,
-                    'kind': 'SimpleMessage',
-                    'error': True
-                }, {
-                    'message': str(ex),
-                    'kind': 'SimpleMessage',
-                    'error': True
+                    'kind': 'ValidationMessage',
+                    'error': True,
+                    'level': "Error",
+                    'diagnostic': '{}: {}'.format(
+                        ex.__class__.__name__, str(ex))
                 }]
             }
         }
