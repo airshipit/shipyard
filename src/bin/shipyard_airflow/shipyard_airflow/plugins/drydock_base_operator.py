@@ -368,6 +368,22 @@ class DrydockBaseOperator(UcpBaseOperator):
                         "Unable to retrieve subtask info!"
                     )
 
+    def get_nodes(self):
+        """
+        Get the list of all the build data record for all nodes(hostname)
+        in raw dictionary format.
+
+        Raises DrydockClientUseFailureException if the client raises an
+        exception
+        See:
+        https://att-comdev-drydock.readthedocs.io/en/latest/API.html
+        """
+        try:
+            return self.drydock_client.get_nodes()
+        except errors.ClientError as client_error:
+            LOG.error("Drydock client failed to get nodes from Drydock.")
+            raise DrydockClientUseFailureException(client_error)
+
     def get_successes_for_task(self, task_id, extend_success=True):
         """Discover the successful nodes based on the current task id.
 

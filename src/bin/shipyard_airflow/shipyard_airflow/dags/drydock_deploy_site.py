@@ -18,6 +18,7 @@ try:
     from airflow.operators import DrydockNodesOperator
     from airflow.operators import DrydockPrepareSiteOperator
     from airflow.operators import DrydockVerifySiteOperator
+    from airflow.operators import DrydockVerifyNodesExistOperator
     from config_path import config_path
 except ImportError:
     from shipyard_airflow.plugins.drydock_nodes import \
@@ -26,16 +27,26 @@ except ImportError:
         DrydockPrepareSiteOperator
     from shipyard_airflow.plugins.drydock_verify_site import \
         DrydockVerifySiteOperator
+    from shipyard_airflow.plugins.drydock_verify_nodes import \
+        DrydockVerifyNodesExistOperator
     from shipyard_airflow.dags.config_path import config_path
 
 
-def deploy_site_drydock(parent_dag_name, child_dag_name, args):
+def deploy_site_drydock(parent_dag_name, child_dag_name, args,
+                        verify_nodes_exist=False):
     '''
     DryDock Subdag
     '''
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
+
+    if verify_nodes_exist:
+        drydock_verify_nodes_exist = DrydockVerifyNodesExistOperator(
+            task_id='verify_nodes_exist',
+            shipyard_conf=config_path,
+            main_dag_name=parent_dag_name,
+            dag=dag)
 
     drydock_verify_site = DrydockVerifySiteOperator(
         task_id='verify_site',
@@ -57,6 +68,10 @@ def deploy_site_drydock(parent_dag_name, child_dag_name, args):
 
     # Define dependencies
     drydock_prepare_site.set_upstream(drydock_verify_site)
-    drydock_nodes.set_upstream(drydock_prepare_site)
+    if verify_nodes_exist:
+        drydock_verify_nodes_exist.set_upstream(drydock_prepare_site)
+        drydock_nodes.set_upstream(drydock_verify_nodes_exist)
+    else:
+        drydock_nodes.set_upstream(drydock_prepare_site)
 
     return dag

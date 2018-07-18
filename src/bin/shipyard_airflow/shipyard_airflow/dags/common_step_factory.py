@@ -174,7 +174,8 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_drydock_build(self, task_id=dn.DRYDOCK_BUILD_DAG_NAME):
+    def get_drydock_build(self, task_id=dn.DRYDOCK_BUILD_DAG_NAME,
+                          verify_nodes_exist=False):
         """Generate the drydock build step
 
         Drydock build does the hardware provisioning.
@@ -183,7 +184,8 @@ class CommonStepFactory(object):
             subdag=deploy_site_drydock(
                 self.parent_dag_name,
                 task_id,
-                args=self.default_args),
+                args=self.default_args,
+                verify_nodes_exist=verify_nodes_exist),
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)
