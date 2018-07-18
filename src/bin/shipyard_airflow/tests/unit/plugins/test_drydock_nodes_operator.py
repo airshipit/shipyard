@@ -30,10 +30,13 @@ from shipyard_airflow.common.deployment_group.deployment_group_manager import (
     DeploymentGroupManager
 )
 
+from shipyard_airflow.plugins.drydock_base_operator import (
+    gen_node_name_filter,
+)
+
 from shipyard_airflow.plugins.drydock_nodes import (
-    _default_deployment_strategy,
-    _gen_node_name_filter,
     DrydockNodesOperator,
+    gen_simple_deployment_strategy,
     _process_deployment_groups,
     QueryTaskResult
 )
@@ -176,7 +179,7 @@ DEP_STRAT = {'groups': yaml.safe_load(tdgm.GROUPS_YAML)}
 
 
 def _fake_setup_ds(self):
-    self.strategy = DEP_STRAT
+    return DEP_STRAT
 
 
 def _fake_get_task_dict(task_id):
@@ -217,7 +220,7 @@ class TestDrydockNodesOperator:
         critical, has no selector values, and an all-or-nothing success
         criteria
         """
-        s = _default_deployment_strategy()
+        s = gen_simple_deployment_strategy()
         assert s['groups'][0]['name'] == 'default'
         assert s['groups'][0]['critical']
         assert s['groups'][0]['selectors'][0]['node_names'] == []
@@ -228,10 +231,24 @@ class TestDrydockNodesOperator:
             'percent_successful_nodes': 100
         }
 
+    def test_targeted_deployment_strategy(self):
+        """Test a deployment strategy used for a targeted deployment"""
+        s = gen_simple_deployment_strategy(name="targeted", nodes=['a', 'b'])
+        assert s['groups'][0]['name'] == 'targeted'
+        assert s['groups'][0]['critical']
+        assert s['groups'][0]['selectors'][0]['node_names'] == ['a', 'b']
+        assert s['groups'][0]['selectors'][0]['node_labels'] == []
+        assert s['groups'][0]['selectors'][0]['node_tags'] == []
+        assert s['groups'][0]['selectors'][0]['rack_names'] == []
+        assert s['groups'][0]['success_criteria'] == {
+            'percent_successful_nodes': 100
+        }
+        assert len(s['groups']) == 1
+
     def test_gen_node_name_filter(self):
         """Test that a node name filter with only node_names is created"""
         nodes = ['node1', 'node2']
-        f = _gen_node_name_filter(nodes)
+        f = gen_node_name_filter(nodes)
         assert f['filter_set'][0]['node_names'] == nodes
         assert len(f['filter_set']) == 1
 
@@ -242,7 +259,7 @@ class TestDrydockNodesOperator:
         assert op is not None
 
     @mock.patch.object(DrydockNodesOperator, "get_unique_doc")
-    def test_setup_deployment_strategy(self, udoc):
+    def get_deployment_strategy(self, udoc):
         """Assert that the base class method get_unique_doc would be invoked
         """
         op = DrydockNodesOperator(main_dag_name="main",
@@ -252,7 +269,7 @@ class TestDrydockNodesOperator:
             DeploymentConfigurationOperator.config_keys_defaults
         )
         op.dc['physical_provisioner.deployment_strategy'] = 'taco-salad'
-        op._setup_deployment_strategy()
+        op.setup_deployment_strategy()
         udoc.assert_called_once_with(
             name='taco-salad',
             schema="shipyard/DeploymentStrategy/v1"
@@ -353,21 +370,21 @@ class TestDrydockNodesOperator:
         assert 'node4 failed to join Kubernetes' in caplog.text
         assert len(task_res.successes) == 2
 
-    def test_get_successess_for_task(self):
+    def test_get_successes_for_task(self):
         op = DrydockNodesOperator(main_dag_name="main",
                                   shipyard_conf=CONF_FILE,
                                   task_id="t1")
         op.get_task_dict = _fake_get_task_dict
-        s = op._get_successes_for_task('0')
+        s = op.get_successes_for_task('0')
         for i in range(1, 3):
             assert "node{}".format(i) in s
 
-    def test_get_successess_for_task_more_logging(self):
+    def test_get_successes_for_task_more_logging(self):
         op = DrydockNodesOperator(main_dag_name="main",
                                   shipyard_conf=CONF_FILE,
                                   task_id="t1")
         op.get_task_dict = _fake_get_task_dict
-        s = op._get_successes_for_task('99')
+        s = op.get_successes_for_task('99')
         for i in range(97, 98):
             assert "node{}".format(i) in s
         assert "node2" not in s
@@ -430,7 +447,7 @@ class TestDrydockNodesOperator:
         '_execute_deployment',
         new=_gen_pe_func('all-success')
     )
-    @mock.patch.object(DrydockNodesOperator, '_setup_deployment_strategy',
+    @mock.patch.object(DrydockNodesOperator, 'get_deployment_strategy',
                        new=_fake_setup_ds)
     def test_do_execute_with_dgm(self, nl, caplog):
         op = DrydockNodesOperator(main_dag_name="main",

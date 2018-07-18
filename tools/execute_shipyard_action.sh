@@ -32,7 +32,7 @@ run_action () {
 
     # Define Variables
     action=$1
-    server=$2
+    servers=$2
 
     # Define Color
     NC='\033[0m'
@@ -49,11 +49,11 @@ run_action () {
 
     # Note that deploy and update site do not require additional parameter
     # to be passed in while redeploy_server requires user to indicate which
-    # server to redeploy
+    # servers to redeploy
     if ! [[ ${server} ]] && [[ ${action} ]]; then
         ${base_docker_command} ${SHIPYARD_IMAGE} create action ${action}
-    elif [[ ${action} == 'redeploy_server' && ${server} ]]; then
-        ${base_docker_command} ${SHIPYARD_IMAGE} create action redeploy_server --param="server-name=${server}"
+    elif [[ ${action} == 'redeploy_server' && ${servers} ]]; then
+        ${base_docker_command} ${SHIPYARD_IMAGE} create action redeploy_server --param="target_nodes=${servers}"
     else
         echo "Invalid Input!"
         exit 1

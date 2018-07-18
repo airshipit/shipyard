@@ -18,13 +18,14 @@ from airflow import DAG
 
 try:
     from common_step_factory import CommonStepFactory
+    from validate_site_design import BAREMETAL
 except ImportError:
     from shipyard_airflow.dags.common_step_factory import CommonStepFactory
+    from shipyard_airflow.dags.validate_site_design import BAREMETAL
 
 """redeploy_server
 
-The top-level orchestration DAG for redeploying a server using the Undercloud
-platform.
+The top-level orchestration DAG for redeploying server(s).
 """
 
 PARENT_DAG_NAME = 'redeploy_server'
@@ -45,23 +46,29 @@ dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
-                                 default_args=default_args)
+                                 default_args=default_args,
+                                 action_type='targeted')
 
 
 action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()
-preflight = step_factory.get_preflight()
-get_rendered_doc = step_factory.get_get_rendered_doc()
 deployment_configuration = step_factory.get_deployment_configuration()
-validate_site_design = step_factory.get_validate_site_design()
-destroy_server = step_factory.get_destroy_server()
+validate_site_design = step_factory.get_validate_site_design(
+    targets=[BAREMETAL]
+)
+# TODO(bryan-strassner): When the rest of the necessary functionality is in
+#     place, this step may need to be replaced with the guarded version of
+#     destroying servers.
+#     For now, this is the unguarded action, which will tear down the server
+#     without concern for any workload.
+destroy_server = step_factory.get_unguarded_destroy_servers()
 drydock_build = step_factory.get_drydock_build()
 
 # DAG Wiring
-concurrency_check.set_upstream(action_xcom)
-preflight.set_upstream(concurrency_check)
-get_rendered_doc.set_upstream(preflight)
-deployment_configuration.set_upstream(get_rendered_doc)
-validate_site_design.set_upstream(deployment_configuration)
+deployment_configuration.set_upstream(action_xcom)
+validate_site_design.set_upstream([
+    concurrency_check,
+    deployment_configuration
+])
 destroy_server.set_upstream(validate_site_design)
 drydock_build.set_upstream(destroy_server)

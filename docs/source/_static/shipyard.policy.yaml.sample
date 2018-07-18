@@ -63,3 +63,19 @@
 # GET  /api/v1.0/site_statuses
 #"workflow_orchestrator:get_site_statuses": "rule:admin_required"
 
+# Create a workflow action to deploy the site
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_deploy_site": "rule:admin_required"
+
+# Create a workflow action to update the site
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_update_site": "rule:admin_required"
+
+# Create a workflow action to update the site software
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_update_software": "rule:admin_required"
+
+# Create a workflow action to redeploy target servers
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_redeploy_server": "rule:admin_required"
+

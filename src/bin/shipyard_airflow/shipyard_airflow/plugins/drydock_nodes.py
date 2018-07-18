@@ -36,6 +36,7 @@ from shipyard_airflow.common.deployment_group.node_lookup import NodeLookup
 try:
     import check_k8s_node_status
     from drydock_base_operator import DrydockBaseOperator
+    from drydock_base_operator import gen_node_name_filter
     from drydock_errors import (
         DrydockTaskFailedException,
         DrydockTaskTimeoutException
@@ -44,6 +45,8 @@ except ImportError:
     from shipyard_airflow.plugins import check_k8s_node_status
     from shipyard_airflow.plugins.drydock_base_operator import \
         DrydockBaseOperator
+    from shipyard_airflow.plugins.drydock_base_operator import \
+        gen_node_name_filter
     from shipyard_airflow.plugins.drydock_errors import (
         DrydockTaskFailedException,
         DrydockTaskTimeoutException
@@ -61,9 +64,8 @@ class DrydockNodesOperator(DrydockBaseOperator):
 
     def do_execute(self):
         self._setup_configured_values()
-        # setup self.strat_name and self.strategy
-        self.strategy = {}
-        self._setup_deployment_strategy()
+        # setup self.strategy
+        self.strategy = self.get_deployment_strategy()
         dgm = _get_deployment_group_manager(
             self.strategy['groups'],
             _get_node_lookup(self.drydock_client, self.design_ref)
@@ -119,7 +121,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         """
         LOG.info("Group %s is preparing nodes", group.name)
 
-        self.node_filter = _gen_node_name_filter(group.actionable_nodes)
+        self.node_filter = gen_node_name_filter(group.actionable_nodes)
         return self._execute_task('prepare_nodes',
                                   self.prep_interval,
                                   self.prep_timeout)
@@ -132,7 +134,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         """
         LOG.info("Group %s is deploying nodes", group.name)
 
-        self.node_filter = _gen_node_name_filter(group.actionable_nodes)
+        self.node_filter = gen_node_name_filter(group.actionable_nodes)
         task_result = self._execute_task('deploy_nodes',
                                          self.dep_interval,
                                          self.dep_timeout)
@@ -223,103 +225,76 @@ class DrydockNodesOperator(DrydockBaseOperator):
         # Other AirflowExceptions will fail the whole task - let them do this.
 
         # find successes
-        result.successes = self._get_successes_for_task(self.drydock_task_id)
+        result.successes = self.get_successes_for_task(self.drydock_task_id)
         return result
 
-    def _get_successes_for_task(self, task_id, extend_success=True):
-        """Discover the successful nodes based on the current task id.
-
-        :param task_id: The id of the task
-        :param extend_successes: determines if this result extends successes
-            or simply reports on the task.
-        Gets the set of successful nodes by examining the self.drydock_task_id.
-        The children are traversed recursively to display each sub-task's
-        information.
-
-        Only a reported success at the parent task indicates success of the
-        task. Drydock is assumed to roll up overall success to the top level.
-        """
-        success_nodes = []
-        try:
-            task_dict = self.get_task_dict(task_id)
-            task_status = task_dict.get('status', "Not Specified")
-            task_result = task_dict.get('result')
-            if task_result is None:
-                LOG.warn("Task result is missing for task %s, with status %s."
-                         " Neither successes nor further details can be"
-                         " extracted from this result",
-                         task_id, task_status)
-            else:
-                if extend_success:
-                    try:
-                        # successes and failures on the task result drive the
-                        # interpretation of success or failure for this
-                        # workflow.
-                        #  - Any node that is _only_ success for a task is a
-                        #    success to us.
-                        #  - Any node that is listed as a failure is a failure.
-                        # This implies that a node listed as a success and a
-                        # failure is a failure. E.g. some subtasks succeeded
-                        # and some failed
-                        t_successes = task_result.get('successes', [])
-                        t_failures = task_result.get('failures', [])
-                        actual_successes = set(t_successes) - set(t_failures)
-                        # acquire the successes from success nodes
-                        success_nodes.extend(actual_successes)
-                        LOG.info("Nodes <%s> added as successes for task %s",
-                                 ", ".join(success_nodes), task_id)
-                    except KeyError:
-                        # missing key on the path to getting nodes - don't add
-                        LOG.warn(
-                            "Missing successes field on result of task %s, "
-                            "but a success field was expected. No successes"
-                            " can be extracted from this result", task_id
-                        )
-                        pass
-                _report_task_info(task_id, task_result, task_status)
-
-            # for each child, report only the step info, do not add to overall
-            # success list.
-            for ch_task_id in task_dict.get('subtask_id_list', []):
-                success_nodes.extend(
-                    self._get_successes_for_task(ch_task_id,
-                                                 extend_success=False)
-                )
-        except Exception:
-            # since we are reporting task results, if we can't get the
-            # results, do not block the processing.
-            LOG.warn("Failed to retrieve a result for task %s. Exception "
-                     "follows:", task_id, exc_info=True)
-
-        # deduplicate and return
-        return set(success_nodes)
-
-    def _setup_deployment_strategy(self):
+    def get_deployment_strategy(self):
         """Determine the deployment strategy
 
         Uses the specified strategy from the deployment configuration
         or returns a default configuration of 'all-at-once'
         """
-        self.strat_name = self.dc['physical_provisioner.deployment_strategy']
-        if self.strat_name:
-            # if there is a deployment strategy specified, get it and use it
-            self.strategy = self.get_unique_doc(
-                name=self.strat_name,
-                schema="shipyard/DeploymentStrategy/v1"
-            )
+        if self.target_nodes:
+            # Set up a strategy with one group with the list of nodes, so those
+            # nodes are the only nodes processed.
+            LOG.info("Seting up deployment strategy using targeted nodes")
+            strat_name = 'targeted nodes'
+            strategy = gen_simple_deployment_strategy(name='target-group',
+                                                      nodes=self.target_nodes)
         else:
-            # The default behavior is to deploy all nodes, and fail if
-            # any nodes fail to deploy.
-            self.strat_name = 'all-at-once (defaulted)'
-            self.strategy = _default_deployment_strategy()
+            # Otherwise, do a strategy for the site - either from the
+            # configdocs or a default "everything".
+            strat_name = self.dc['physical_provisioner.deployment_strategy']
+            if strat_name:
+                # if there is a deployment strategy specified, use it
+                strategy = self.get_unique_doc(
+                    name=strat_name,
+                    schema="shipyard/DeploymentStrategy/v1"
+                )
+            else:
+                # The default behavior is to deploy all nodes, and fail if
+                # any nodes fail to deploy.
+                strat_name = 'all-at-once (defaulted)'
+                strategy = gen_simple_deployment_strategy()
         LOG.info("Strategy Name: %s has %s groups",
-                 self.strat_name,
-                 len(self.strategy.get('groups', [])))
+                 strat_name,
+                 len(strategy.get('groups', [])))
+        return strategy
 
 
 #
 # Functions supporting the nodes operator class
 #
+def gen_simple_deployment_strategy(name=None, nodes=None):
+    """Generates a single group deployment strategy
+
+    :param name: the name of the single group. Defaults to 'default'
+    :param nodes: the list of node_names to be used. Defaults to []
+    """
+    target_name = name or 'default'
+    target_nodes = list(nodes) if nodes else []
+
+    return {
+        'groups': [
+            {
+                'name': target_name,
+                'critical': True,
+                'depends_on': [],
+                'selectors': [
+                    {
+                        'node_names': target_nodes,
+                        'node_labels': [],
+                        'node_tags': [],
+                        'rack_names': [],
+                    },
+                ],
+                'success_criteria': {
+                    'percent_successful_nodes': 100
+                },
+            }
+        ]
+    }
+
 
 def _get_node_lookup(drydock_client, design_ref):
     """Return a NodeLookup suitable for the DeploymentGroupManager
@@ -407,71 +382,6 @@ def _process_deployment_groups(dgm, prepare_func, deploy_func):
             dgm.mark_node_deployed(node_name)
         dgm.fail_unsuccessful_nodes(group, dep_qtr.successes)
         dgm.evaluate_group_succ_criteria(group.name, Stage.DEPLOYED)
-
-
-def _report_task_info(task_id, task_result, task_status):
-    """Logs information regarding a task.
-
-    :param task_id: id of the task
-    :param task_result: The result dictionary of the task
-    :param task_status: The status for the task
-    """
-    # setup fields, or defaults if missing values
-    task_failures = task_result.get('failures', [])
-    task_successes = task_result.get('successes', [])
-    result_details = task_result.get('details', {'messageList': []})
-    result_status = task_result.get('status', "No status supplied")
-    LOG.info("Task %s with status %s/%s reports successes: [%s] and"
-             " failures: [%s]", task_id, task_status, result_status,
-             ", ".join(task_successes), ", ".join(task_failures))
-    for message_item in result_details['messageList']:
-        context_type = message_item.get('context_type', 'N/A')
-        context_id = message_item.get('context', 'N/A')
-        message = message_item.get('message', "No message text supplied")
-        error = message_item.get('error', False)
-        timestamp = message_item.get('ts', 'No timestamp supplied')
-        LOG.info(" - Task %s for item %s:%s has message: %s [err=%s, at %s]",
-                 task_id, context_type, context_id, message, error, timestamp)
-
-
-def _default_deployment_strategy():
-    """The default deployment strategy for 'all-at-once'"""
-    return {
-        'groups': [
-            {
-                'name': 'default',
-                'critical': True,
-                'depends_on': [],
-                'selectors': [
-                    {
-                        'node_names': [],
-                        'node_labels': [],
-                        'node_tags': [],
-                        'rack_names': [],
-                    },
-                ],
-                'success_criteria': {
-                    'percent_successful_nodes': 100
-                },
-            }
-        ]
-    }
-
-
-def _gen_node_name_filter(node_names):
-    """Generates a drydock compatible node filter using only node names
-
-    :param node_names: the nodes with which to create a filter
-    """
-    return {
-        'filter_set_type': 'union',
-        'filter_set': [
-            {
-                'filter_type': 'union',
-                'node_names': node_names
-            }
-        ]
-    }
 
 
 class QueryTaskResult:

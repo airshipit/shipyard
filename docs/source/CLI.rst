@@ -245,7 +245,7 @@ id of the action invoked so that it can be queried subsequently.
         [--allow-intermediate-commits]
 
     Example:
-        shipyard create action redeploy_server --param="server-name=mcp"
+        shipyard create action redeploy_server --param="target_nodes=mcp"
         shipyard create action update_site --param="continue-on-fail=true"
 
 <action_command>

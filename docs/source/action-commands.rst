@@ -19,10 +19,47 @@
 Action Commands
 ===============
 
+Example invocation
+------------------
+
+API input to create an action follows this pattern, varying the name field:
+
+Without Parmeters::
+
+  POST /v1.0/actions
+
+  {"name" : "update_site"}
+
+With Parameters::
+
+  POST /v1.0/actions
+
+  {
+    "name": "redeploy_server",
+    "parameters": {
+      "target_nodes": ["node1", "node2"]
+    }
+  }
+
+  POST /v1.0/actions
+
+  {
+    "name": "update_site",
+    "parameters": {
+      "continue-on-fail": "true"
+    }
+  }
+
+Analogous CLI commands::
+
+  shipyard create action update_site
+  shipyard create action redeploy_server --param="target_nodes=node1,node2"
+  shipyard create action update_site --param="continue-on-fail=true"
+
 Supported actions
 -----------------
 
-These actions are currently supported using the Action API
+These actions are currently supported using the Action API and CLI
 
 .. _deploy_site:
 
@@ -70,30 +107,47 @@ configuration documents. Steps, conceptually:
 #. Armada build
     Orchestrates Armada to configure software on the nodes as designed.
 
-Actions under development
-~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _redeploy_server:
 
-These actions are under active development
+redeploy_server
+~~~~~~~~~~~~~~~
+Using parameters to indicate which server(s) triggers a teardown and
+subsequent deployment of those servers to restore them to the current
+committed design.
 
--  redeploy_server
+This action is a `target action`, and does not apply the `site action`
+labels to the revision of documents in Deckhand. Application of site action
+labels is reserved for site actions such as `deploy_site` and `update_site`.
 
-  Using parameters to indicate which server(s) triggers a redeployment of those
-  servers to the last-known-good design and secrets
+Like other `target actions` that will use a baremetal or Kubernetes node as
+a target, the `target_nodes` parameter will be used to list the names of the
+nodes that will be acted upon.
+
+.. danger::
+
+   At this time, there are no safeguards with regard to the running workload
+   in place before tearing down a server and the result may be *very*
+   disruptive to a working site. Users are cautioned to ensure the server
+   being torn down is not running a critical workload.
+   To support controlling this, the Shipyard service allows actions to be
+   associated with RBAC rules. A deployment of Shipyard can restrict access
+   to this action to help prevent unexpected disaster.
 
 Future actions
 ~~~~~~~~~~~~~~
 
 These actions are anticipated for development
 
--  test region
-
+test region
   Invoke site validation testing - perhaps a baseline is an invocation of all
-  component's exposed tests or extended health checks. This test would be used
+  components' exposed tests or extended health checks. This test would be used
   as a preflight-style test to ensure all components are in a working state.
 
--  test component
-
+test component
   Invoke a particular platform component to test it. This test would be
   used to interrogate a particular platform component to ensure it is in a
   working state, and that its own downstream dependencies are also
   operational
+
+update labels
+  Triggers an update to the Kubernetes node labels for specified server(s)

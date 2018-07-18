@@ -17,7 +17,6 @@ import logging
 import time
 from urllib.parse import urlparse
 
-from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
@@ -51,13 +50,11 @@ LOG = logging.getLogger(__name__)
 
 
 class DrydockBaseOperator(UcpBaseOperator):
-
     """Drydock Base Operator
 
     All drydock related workflow operators will use the drydock
     base operator as the parent and inherit attributes and methods
     from this class
-
     """
 
     @apply_defaults
@@ -85,7 +82,6 @@ class DrydockBaseOperator(UcpBaseOperator):
         the action and the deployment configuration
 
         """
-
         super(DrydockBaseOperator,
               self).__init__(
                   pod_selector_pattern=[{'pod_pattern': 'drydock-api',
@@ -97,40 +93,36 @@ class DrydockBaseOperator(UcpBaseOperator):
         self.redeploy_server = redeploy_server
         self.svc_session = svc_session
         self.svc_token = svc_token
+        self.target_nodes = None
 
     def run_base(self, context):
+        """Base setup/processing for Drydock operators
 
-        # Logs uuid of action performed by the Operator
-        LOG.info("DryDock Operator for action %s", self.action_info['id'])
+        :param context: the context supplied by the dag_run in Airflow
+        """
+        LOG.debug("Drydock Operator for action %s", self.action_id)
+        # if continue processing is false, don't bother setting up things.
+        if self._continue_processing_flag():
+            self._setup_drydock_client()
 
-        # Skip workflow if health checks on Drydock failed and continue-on-fail
-        # option is turned on
+    def _continue_processing_flag(self):
+        """Checks if this processing should continue or not
+
+        Skip workflow if health checks on Drydock failed and continue-on-fail
+        option is turned on.
+        Returns the self.continue_processing value.
+        """
         if self.xcom_puller.get_check_drydock_continue_on_fail():
             LOG.info("Skipping %s as health checks on Drydock have "
                      "failed and continue-on-fail option has been "
                      "turned on", self.__class__.__name__)
-
             # Set continue processing to False
             self.continue_processing = False
 
-            return
+        return self.continue_processing
 
-        # Retrieve information of the server that we want to redeploy if user
-        # executes the 'redeploy_server' dag
-        # Set node filter to be the server that we want to redeploy
-        if self.action_info['dag_id'] == 'redeploy_server':
-            self.redeploy_server = (
-                self.action_info['parameters']['server-name'])
-
-            if self.redeploy_server:
-                LOG.info("Server to be redeployed is %s",
-                         self.redeploy_server)
-                self.node_filter = self.redeploy_server
-            else:
-                raise AirflowException('%s was unable to retrieve the '
-                                       'server to be redeployed.'
-                                       % self.__class__.__name__)
-
+    def _setup_drydock_client(self):
+        """Setup the drydock client for use by this operator"""
         # Retrieve Endpoint Information
         self.drydock_svc_endpoint = self.endpoints.endpoint_by_name(
             service_endpoint.DRYDOCK
@@ -145,31 +137,25 @@ class DrydockBaseOperator(UcpBaseOperator):
         # information.
         # The DrydockSession will care for TCP connection pooling
         # and header management
-        LOG.info("Build DryDock Session")
         dd_session = session.DrydockSession(drydock_url.hostname,
                                             port=drydock_url.port,
                                             auth_gen=self._auth_gen)
 
         # Raise Exception if we are not able to set up the session
-        if dd_session:
-            LOG.info("Successfully Set Up DryDock Session")
-        else:
+        if not dd_session:
             raise DrydockClientUseFailureException(
                 "Failed to set up Drydock Session!"
             )
 
         # Use the DrydockSession to build a DrydockClient that can
         # be used to make one or more API calls
-        LOG.info("Create DryDock Client")
         self.drydock_client = client.DrydockClient(dd_session)
-
         # Raise Exception if we are not able to build the client
-        if self.drydock_client:
-            LOG.info("Successfully Set Up DryDock client")
-        else:
+        if not self.drydock_client:
             raise DrydockClientUseFailureException(
                 "Failed to set up Drydock Client!"
             )
+        LOG.info("Drydock Session and Client etablished.")
 
     @shipyard_service_token
     def _auth_gen(self):
@@ -375,6 +361,115 @@ class DrydockBaseOperator(UcpBaseOperator):
                     raise DrydockClientUseFailureException(
                         "Unable to retrieve subtask info!"
                     )
+
+    def get_successes_for_task(self, task_id, extend_success=True):
+        """Discover the successful nodes based on the current task id.
+
+        :param task_id: The id of the task
+        :param extend_successes: determines if this result extends successes
+            or simply reports on the task.
+        Gets the set of successful nodes by examining the self.drydock_task_id.
+        The children are traversed recursively to display each sub-task's
+        information.
+
+        Only a reported success at the parent task indicates success of the
+        task. Drydock is assumed to roll up overall success to the top level.
+        """
+        success_nodes = []
+        try:
+            task_dict = self.get_task_dict(task_id)
+            task_status = task_dict.get('status', "Not Specified")
+            task_result = task_dict.get('result')
+            if task_result is None:
+                LOG.warn("Task result is missing for task %s, with status %s."
+                         " Neither successes nor further details can be"
+                         " extracted from this result",
+                         task_id, task_status)
+            else:
+                if extend_success:
+                    try:
+                        # successes and failures on the task result drive the
+                        # interpretation of success or failure for this
+                        # workflow.
+                        #  - Any node that is _only_ success for a task is a
+                        #    success to us.
+                        #  - Any node that is listed as a failure is a failure.
+                        # This implies that a node listed as a success and a
+                        # failure is a failure. E.g. some subtasks succeeded
+                        # and some failed
+                        t_successes = task_result.get('successes', [])
+                        t_failures = task_result.get('failures', [])
+                        actual_successes = set(t_successes) - set(t_failures)
+                        # acquire the successes from success nodes
+                        success_nodes.extend(actual_successes)
+                        LOG.info("Nodes <%s> added as successes for task %s",
+                                 ", ".join(success_nodes), task_id)
+                    except KeyError:
+                        # missing key on the path to getting nodes - don't add
+                        LOG.warn(
+                            "Missing successes field on result of task %s, "
+                            "but a success field was expected. No successes"
+                            " can be extracted from this result", task_id
+                        )
+                        pass
+                _report_task_info(task_id, task_result, task_status)
+
+            # for each child, report only the step info, do not add to overall
+            # success list.
+            for ch_task_id in task_dict.get('subtask_id_list', []):
+                success_nodes.extend(
+                    self.get_successes_for_task(ch_task_id,
+                                                extend_success=False)
+                )
+        except Exception:
+            # since we are reporting task results, if we can't get the
+            # results, do not block the processing.
+            LOG.warn("Failed to retrieve a result for task %s. Exception "
+                     "follows:", task_id, exc_info=True)
+
+        # deduplicate and return
+        return set(success_nodes)
+
+
+def gen_node_name_filter(node_names):
+    """Generates a drydock compatible node filter using only node names
+
+    :param node_names: the nodes with which to create a filter
+    """
+    return {
+        'filter_set_type': 'union',
+        'filter_set': [
+            {
+                'filter_type': 'union',
+                'node_names': node_names
+            }
+        ]
+    }
+
+
+def _report_task_info(task_id, task_result, task_status):
+    """Logs information regarding a task.
+
+    :param task_id: id of the task
+    :param task_result: The result dictionary of the task
+    :param task_status: The status for the task
+    """
+    # setup fields, or defaults if missing values
+    task_failures = task_result.get('failures', [])
+    task_successes = task_result.get('successes', [])
+    result_details = task_result.get('details', {'messageList': []})
+    result_status = task_result.get('status', "No status supplied")
+    LOG.info("Task %s with status %s/%s reports successes: [%s] and"
+             " failures: [%s]", task_id, task_status, result_status,
+             ", ".join(task_successes), ", ".join(task_failures))
+    for message_item in result_details['messageList']:
+        context_type = message_item.get('context_type', 'N/A')
+        context_id = message_item.get('context', 'N/A')
+        message = message_item.get('message', "No message text supplied")
+        error = message_item.get('error', False)
+        timestamp = message_item.get('ts', 'No timestamp supplied')
+        LOG.info(" - Task %s for item %s:%s has message: %s [err=%s, at %s]",
+                 task_id, context_type, context_id, message, error, timestamp)
 
 
 class DrydockBaseOperatorPlugin(AirflowPlugin):

@@ -46,7 +46,8 @@ dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
-                                 default_args=default_args)
+                                 default_args=default_args,
+                                 action_type='site')
 
 action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()

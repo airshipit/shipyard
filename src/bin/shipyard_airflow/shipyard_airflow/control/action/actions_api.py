@@ -45,19 +45,39 @@ def _action_mappings():
     return {
         'deploy_site': {
             'dag': 'deploy_site',
-            'validators': [action_validators.validate_site_action_full]
+            'rbac_policy': policy.ACTION_DEPLOY_SITE,
+            'validators': [
+                action_validators.validate_committed_revision,
+                action_validators.validate_intermediate_commits,
+                action_validators.validate_deployment_action_full,
+            ]
         },
         'update_site': {
             'dag': 'update_site',
-            'validators': [action_validators.validate_site_action_full]
+            'rbac_policy': policy.ACTION_UPDATE_SITE,
+            'validators': [
+                action_validators.validate_committed_revision,
+                action_validators.validate_intermediate_commits,
+                action_validators.validate_deployment_action_full,
+            ]
         },
         'update_software': {
             'dag': 'update_software',
-            'validators': [action_validators.validate_site_action_basic]
+            'rbac_policy': policy.ACTION_UPDATE_SOFTWARE,
+            'validators': [
+                action_validators.validate_committed_revision,
+                action_validators.validate_intermediate_commits,
+                action_validators.validate_deployment_action_basic,
+            ]
         },
         'redeploy_server': {
             'dag': 'redeploy_server',
-            'validators': []
+            'rbac_policy': policy.ACTION_REDEPLOY_SERVER,
+            'validators': [
+                action_validators.validate_target_nodes,
+                action_validators.validate_committed_revision,
+                action_validators.validate_deployment_action_basic,
+            ]
         }
     }
 
@@ -100,7 +120,6 @@ class ActionsResource(BaseResource):
         resp.location = '/api/v1.0/actions/{}'.format(action['id'])
 
     def create_action(self, action, context, allow_intermediate_commits=False):
-        action_mappings = _action_mappings()
         # use uuid assigned for this request as the id of the action.
         action['id'] = ulid.ulid()
         # the invoking user
@@ -109,12 +128,18 @@ class ActionsResource(BaseResource):
         action['timestamp'] = str(datetime.utcnow())
         # validate that action is supported.
         LOG.info("Attempting action: %s", action['name'])
+        action_mappings = _action_mappings()
         if action['name'] not in action_mappings:
             raise ApiError(
                 title='Unable to start action',
                 description='Unsupported Action: {}'.format(action['name']))
 
-        dag = action_mappings.get(action['name'])['dag']
+        action_cfg = action_mappings.get(action['name'])
+
+        # check access to specific actions - lack of access will exception out
+        policy.check_auth(context, action_cfg['rbac_policy'])
+
+        dag = action_cfg['dag']
         action['dag_id'] = dag
 
         # Set up configdocs_helper
@@ -122,18 +147,19 @@ class ActionsResource(BaseResource):
 
         # Retrieve last committed design revision
         action['committed_rev_id'] = self.get_committed_design_version()
-
-        # Check for intermediate commit
-        self.check_intermediate_commit_revision(allow_intermediate_commits)
+        # Set if intermediate commits are ignored
+        action['allow_intermediate_commits'] = allow_intermediate_commits
 
         # populate action parameters if they are not set
         if 'parameters' not in action:
             action['parameters'] = {}
 
-        # validate if there is any validation to do
-        for validator in action_mappings.get(action['name'])['validators']:
-            # validators will raise ApiError if they are not validated.
-            validator(action)
+        for validator in action_cfg['validators']:
+            # validators will raise ApiError if they fail validation.
+            # validators are expected to accept action as a parameter, but
+            # handle all other kwargs (e.g. def vdtr(action, **kwargs): even if
+            # they don't use that parameter.
+            validator(action=action, configdocs_helper=self.configdocs_helper)
 
         # invoke airflow, get the dag's date
         dag_execution_date = self.invoke_airflow_dag(
@@ -347,43 +373,16 @@ class ActionsResource(BaseResource):
                 )
 
     def get_committed_design_version(self):
+        """Retrieves the committed design version from Deckhand.
 
-        LOG.info("Checking for committed revision in Deckhand...")
+        Returns None if there is no committed version
+        """
         committed_rev_id = self.configdocs_helper.get_revision_id(
             configdocs_helper.COMMITTED
         )
-
         if committed_rev_id:
             LOG.info("The committed revision in Deckhand is %d",
                      committed_rev_id)
-
             return committed_rev_id
-
-        else:
-            raise ApiError(
-                title='Unable to locate any committed revision in Deckhand',
-                description='No committed version found in Deckhand',
-                status=falcon.HTTP_404,
-                retry=False)
-
-    def check_intermediate_commit_revision(self,
-                                           allow_intermediate_commits=False):
-
-        LOG.info("Checking for intermediate committed revision in Deckhand...")
-        intermediate_commits = (
-            self.configdocs_helper.check_intermediate_commit())
-
-        if intermediate_commits and not allow_intermediate_commits:
-
-            raise ApiError(
-                title='Intermediate Commit Detected',
-                description=(
-                    'The current committed revision of documents has '
-                    'other prior commits that have not been used as '
-                    'part of a site action, e.g. update_site. If you '
-                    'are aware and these other commits are intended, '
-                    'please rerun this action with the option '
-                    '`allow-intermediate-commits=True`'),
-                status=falcon.HTTP_409,
-                retry=False
-            )
+        LOG.info("No committed revision found in Deckhand")
+        return None

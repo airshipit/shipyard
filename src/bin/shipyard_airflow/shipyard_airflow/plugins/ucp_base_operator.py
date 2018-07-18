@@ -122,9 +122,15 @@ class UcpBaseOperator(BaseOperator):
         # Set up and retrieve values from xcom
         self.xcom_puller = XcomPuller(self.main_dag_name, self.task_instance)
         self.action_info = self.xcom_puller.get_action_info()
+        self.action_type = self.xcom_puller.get_action_type()
         self.dc = self.xcom_puller.get_deployment_configuration()
+
+        # Set up other common-use values
+        self.action_id = self.action_info['id']
         self.revision_id = self.action_info['committed_rev_id']
+        self.action_params = self.action_info.get('parameters', {})
         self.design_ref = self._deckhand_design_ref()
+        self._setup_target_nodes()
 
     def get_k8s_logs(self):
         """Retrieve Kubernetes pod/container logs specified by an opererator
@@ -154,6 +160,35 @@ class UcpBaseOperator(BaseOperator):
 
         else:
             LOG.debug("There are no pod logs specified to retrieve")
+
+    def _setup_target_nodes(self):
+        """Sets up the target nodes field for this action
+
+        When managing a targeted action, this step needs to resolve the
+        target node. If there are no targets found (should be caught before
+        invocation of the DAG), then raise an exception so that it does not
+        try to take action on more nodes than targeted.
+        Later, when creating the deployment group, if this value
+        (self.target_nodes) is set, it will be used in lieu of the design
+        based deployment strategy.
+        target_nodes will be a comma separated string provided as part of the
+        parameters to an action on input to Shipyard.
+        """
+        if self.action_type == 'targeted':
+            t_nodes = self.action_params.get('target_nodes', '')
+            self.target_nodes = [n.strip() for n in t_nodes.split(',')]
+            if not self.target_nodes:
+                raise AirflowException(
+                    '{} ({}) requires targeted nodes, but was unable to '
+                    'resolve any targets in {}'.format(
+                        self.main_dag_name, self.action_id,
+                        self.__class__.__name__
+                    )
+                )
+            LOG.info("Target Nodes for action: [%s]",
+                     ', '.join(self.target_nodes))
+        else:
+            self.target_nodes = None
 
     def _deckhand_design_ref(self):
         """Assemble a deckhand design_ref"""
