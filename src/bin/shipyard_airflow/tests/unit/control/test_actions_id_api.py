@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from datetime import datetime
-import mock
+from unittest import mock
+
 import pytest
 
 from shipyard_airflow.control.action.actions_id_api import (ActionsIdResource)

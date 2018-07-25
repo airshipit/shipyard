@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest.mock import patch
 
 from click.testing import CliRunner
-from mock import patch
 
 from shipyard_client.cli.commands import shipyard
 from shipyard_client.api_client.shipyardclient_context import \

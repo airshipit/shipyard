@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import mock
+from unittest import mock
 from unittest.mock import patch
-import yaml
 
 import pytest
 import responses
+import yaml
 
 from .fake_response import FakeResponse
 from shipyard_airflow.control.base import ShipyardRequestContext

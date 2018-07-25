@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import mock
+from unittest import mock
 
 from shipyard_client.api_client.base_client import BaseClient
 from shipyard_client.api_client.shipyard_api_client import ShipyardClient

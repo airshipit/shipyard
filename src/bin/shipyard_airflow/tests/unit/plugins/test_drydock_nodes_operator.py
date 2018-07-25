@@ -13,11 +13,11 @@
 # limitations under the License.
 """Tests for drydock_nodes operator functions"""
 import copy
-import mock
 import os
-import yaml
+from unittest import mock
 
 import pytest
+import yaml
 
 from airflow.exceptions import AirflowException
 
@@ -274,9 +274,9 @@ class TestDrydockNodesOperator:
         )
         op.design_ref = {}
         op.do_execute()
-        get_dgm.assert_called_once()
-        nl.assert_called_once()
-        pdg.assert_called_once()
+        assert get_dgm.call_count == 1
+        assert nl.call_count == 1
+        assert pdg.call_count == 1
         assert "critical groups have met their success criteria" in caplog.text
 
     @mock.patch("shipyard_airflow.plugins.drydock_nodes."
@@ -297,9 +297,9 @@ class TestDrydockNodesOperator:
             op.design_ref = {}
             op.do_execute()
 
-        get_dgm.assert_called_once()
-        nl.assert_called_once()
-        pdg.assert_called_once()
+        assert get_dgm.call_count == 1
+        assert nl.call_count == 1
+        assert pdg.call_count == 1
 
     def test_execute_prepare(self):
         op = DrydockNodesOperator(main_dag_name="main",
@@ -313,7 +313,7 @@ class TestDrydockNodesOperator:
         group = DeploymentGroup(GROUP_DICT, mock.MagicMock())
         group.actionable_nodes = ['node1', 'node2', 'node3']
         op._execute_prepare(group)
-        op._execute_task.assert_called_once()
+        assert op._execute_task.call_count == 1
 
     @mock.patch("shipyard_airflow.plugins.check_k8s_node_status."
                 "check_node_status", return_value=[])
@@ -330,8 +330,8 @@ class TestDrydockNodesOperator:
         group = DeploymentGroup(GROUP_DICT, mock.MagicMock())
         group.actionable_nodes = ['node1', 'node2', 'node3']
         op._execute_deployment(group)
-        op._execute_task.assert_called_once()
-        cns.assert_called_once()
+        assert op._execute_task.call_count == 1
+        assert cns.call_count == 1
 
     @mock.patch("shipyard_airflow.plugins.check_k8s_node_status."
                 "check_node_status", return_value=['node2', 'node4'])
@@ -348,8 +348,8 @@ class TestDrydockNodesOperator:
         group = DeploymentGroup(GROUP_DICT, mock.MagicMock())
         group.actionable_nodes = ['node1', 'node2', 'node3']
         task_res = op._execute_deployment(group)
-        op._execute_task.assert_called_once()
-        cns.assert_called_once()
+        assert op._execute_task.call_count == 1
+        assert cns.call_count == 1
         assert 'node4 failed to join Kubernetes' in caplog.text
         assert len(task_res.successes) == 2
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for check_k8s_node_status functions"""
-import mock
+from unittest import mock
 
 from shipyard_airflow.plugins.check_k8s_node_status import (
     check_node_status

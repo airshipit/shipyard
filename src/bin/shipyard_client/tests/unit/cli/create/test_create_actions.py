@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import mock
-import yaml
+from unittest import mock
 
 import responses
+import yaml
 
 from shipyard_client.api_client.base_client import BaseClient
 from shipyard_client.cli.create.actions import CreateAction

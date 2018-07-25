@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import mock
 from datetime import datetime
-from mock import patch
+from unittest import mock
+from unittest.mock import patch
 
 from shipyard_airflow.control.action.actions_steps_id_logs_api import \
     ActionsStepsLogsResource

@@ -13,8 +13,8 @@
 # limitations under the License.
 """ Tests for the configdocs_api"""
 import json
-import mock
-from mock import ANY, patch
+from unittest import mock
+from unittest.mock import ANY, patch
 
 import pytest
 

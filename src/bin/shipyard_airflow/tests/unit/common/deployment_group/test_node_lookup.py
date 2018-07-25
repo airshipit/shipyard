@@ -14,7 +14,7 @@
 """Tests for the default node_lookup provided with the deployment group
 functionality.
 """
-import mock
+from unittest import mock
 
 import pytest
 

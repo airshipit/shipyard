@@ -1,7 +1,6 @@
 # Testing
 pytest==3.4
 pytest-cov==2.5.1
-mock==2.0.0
 responses==0.8.1
 testfixtures==5.1.1
 

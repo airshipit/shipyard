@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the action validators run when an action is created"""
-import mock
-from mock import MagicMock
-import yaml
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
+import yaml
 
 from shipyard_airflow.common.deployment_group.errors import (
     DeploymentGroupCycleError,

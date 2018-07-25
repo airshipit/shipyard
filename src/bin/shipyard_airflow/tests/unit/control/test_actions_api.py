@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from datetime import datetime
-from falcon import testing
-from mock import patch
-from oslo_config import cfg
-import falcon
 import json
 import logging
-import mock
 import os
+from unittest import mock
+from unittest.mock import patch
+
+import falcon
+from falcon import testing
+from oslo_config import cfg
 import pytest
 import responses
 
@@ -241,7 +242,7 @@ def test_on_get(mock_get_all_actions, mock_authorize):
     act_resource.on_get(req, resp)
     mock_authorize.assert_called_once_with(
         'workflow_orchestrator:list_actions', context)
-    mock_get_all_actions.assert_called_once()
+    assert mock_get_all_actions.call_count == 1
     assert resp.body is not None
     assert resp.status == '200 OK'
 
@@ -406,21 +407,21 @@ def test_create_action_validator_error():
 def test_get_all_actions_db(mock_get_all_submitted_actions):
     act_resource = ActionsResource()
     act_resource.get_all_actions_db()
-    mock_get_all_submitted_actions.assert_called()
+    assert mock_get_all_submitted_actions.called
 
 
 @patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_all_dag_runs')
 def test_get_all_dag_runs_db(mock_get_all_dag_runs):
     act_resource = ActionsResource()
     act_resource.get_all_dag_runs_db()
-    mock_get_all_dag_runs.assert_called()
+    assert mock_get_all_dag_runs.called
 
 
 @patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_all_tasks')
 def test_get_all_tasks_db(mock_get_all_tasks):
     act_resource = ActionsResource()
     act_resource.get_all_tasks_db()
-    mock_get_all_tasks.assert_called()
+    assert mock_get_all_tasks.called
 
 
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.insert_action')
