@@ -73,6 +73,18 @@ password:
 """
         assert redactor.redact(to_redact) == expected
 
+        # Covering database connection urls, for example
+        to_redact = "This is a basic auth url something+x://shipy:passw@postg"
+        expected = "This is a basic auth url something+x://shipy:***@postg"
+        assert redactor.redact(to_redact) == expected
+
+        to_redact = """
+a+http://usr:pssw@fakeurl.fake -37!!! with b+http://usr2:sword@fakeurl.fake
+"""
+        expected = """
+a+http://usr:***@fakeurl.fake -37!!! with b+http://usr2:***@fakeurl.fake
+"""
+
     def test_extended_keys_redactor(self):
         redactor = Redactor(redaction="++++", keys=['trains'])
         to_redact = """
@@ -87,6 +99,30 @@ password:
   trains:
     ++++
 """
+        assert redactor.redact(to_redact) == expected
+
+    def test_extra_nonkey_patterns(self):
+        redactor = Redactor(nonkey_patterns=[r'(toes).*(nose)'])
+        to_redact = 'do not put toes by your nose'
+        expected = 'do not put toes***nose'
+        assert redactor.redact(to_redact) == expected
+
+        to_redact = """
+do not put toes
+ by
+your nose
+"""
+        expected = """
+do not put toes***nose
+"""
+        assert redactor.redact(to_redact) == expected
+
+    def test_extra_keyed_patterns(self):
+        redactor = Redactor(
+            single_patterns=[r'(%(key)s\s*[#]\s*)[^\s^\'^\"]+'],
+            double_patterns=[r'(%(key)s\s*[#]\s*[\"\'])[^\"\']*([\"\'])'])
+        to_redact = 'password# hi and password  # "hi"'
+        expected = 'password# *** and password  # "***"'
         assert redactor.redact(to_redact) == expected
 
     def test_redaction_formatter(self, caplog):

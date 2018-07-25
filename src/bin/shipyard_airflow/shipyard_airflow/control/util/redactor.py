@@ -50,6 +50,10 @@ class Redactor():
         patterns
     :param double_patterns: list of additional double capture group regex
         patterns
+    :param nonkey_patterns: list of additional non-key-based double capture
+        group regex patterns. These are always applied to messages.
+    Note: Regex patterns are processed using re.DOTALL, so newline characters
+        are included in the '.' pattern.
     """
     # Start with the values defined in strutils
     _KEYS = list(_SANITIZE_KEYS)
@@ -64,17 +68,25 @@ class Redactor():
     # More two capture group patterns
     _DOUBLE_CG_PATTERNS.extend([])
 
+    # Set up the non-key patterns. These can be precompiled.
+    _NONKEY_CG_PATTERNS = [
+        re.compile(r'([^\s]+:\/\/[^:]+:)[^@\s]+(@[^\s]+)', re.DOTALL)
+    ]
+
     def __init__(self,
                  redaction='***',
                  keys=None,
                  single_patterns=None,
-                 double_patterns=None):
+                 double_patterns=None,
+                 nonkey_patterns=None):
         if keys is None:
             keys = []
         if single_patterns is None:
             single_patterns = []
         if double_patterns is None:
             double_patterns = []
+        if nonkey_patterns is None:
+            nonkey_patterns = []
 
         self.redaction = redaction
 
@@ -89,7 +101,10 @@ class Redactor():
 
         self._single_cg_patterns = self._gen_patterns(patterns=singles)
         self._double_cg_patterns = self._gen_patterns(patterns=doubles)
-        # the two capture group patterns
+        self._non_key_patterns = Redactor._NONKEY_CG_PATTERNS
+        for p in nonkey_patterns:
+            rx = re.compile(p, re.DOTALL)
+            self._non_key_patterns.append(rx)
 
     def _gen_patterns(self, patterns):
         """Initialize the redaction patterns"""
@@ -116,4 +131,8 @@ class Redactor():
                     message = re.sub(pattern, substitute2, message)
                 for pattern in self._single_cg_patterns[key]:
                     message = re.sub(pattern, substitute1, message)
+        # Apply the nonkey patterns
+        for pattern in self._non_key_patterns:
+            message = re.sub(pattern, substitute2, message)
+
         return message
