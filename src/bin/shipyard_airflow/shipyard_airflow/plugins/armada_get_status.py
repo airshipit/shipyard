@@ -16,7 +16,11 @@ import logging
 from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
 
-from armada_base_operator import ArmadaBaseOperator
+try:
+    from armada_base_operator import ArmadaBaseOperator
+except ImportError:
+    from shipyard_airflow.plugins.armada_base_operator import \
+        ArmadaBaseOperator
 from armada.exceptions import api_exceptions as errors
 
 LOG = logging.getLogger(__name__)

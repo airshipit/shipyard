@@ -13,13 +13,23 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import ArmadaValidateDesignOperator
-from airflow.operators import DeckhandValidateSiteDesignOperator
-from airflow.operators import DrydockValidateDesignOperator
-from airflow.operators import PromenadeValidateSiteDesignOperator
 
-from config_path import config_path
-
+try:
+    from airflow.operators import ArmadaValidateDesignOperator
+    from airflow.operators import DeckhandValidateSiteDesignOperator
+    from airflow.operators import DrydockValidateDesignOperator
+    from airflow.operators import PromenadeValidateSiteDesignOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.armada_validate_design import \
+        ArmadaValidateDesignOperator
+    from shipyard_airflow.plugins.deckhand_validate_site import \
+        DeckhandValidateSiteDesignOperator
+    from shipyard_airflow.plugins.drydock_validate_design import \
+        DrydockValidateDesignOperator
+    from shipyard_airflow.plugins.promenade_validate_site_design import \
+        PromenadeValidateSiteDesignOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 BAREMETAL = 'baremetal'
 SOFTWARE = 'software'

@@ -35,21 +35,15 @@ from shipyard_airflow.common.deployment_group.node_lookup import NodeLookup
 
 try:
     import check_k8s_node_status
-except ImportError:
-    from shipyard_airflow.plugins import check_k8s_node_status
-
-try:
     from drydock_base_operator import DrydockBaseOperator
-except ImportError:
-    from shipyard_airflow.plugins.drydock_base_operator import \
-        DrydockBaseOperator
-
-try:
     from drydock_errors import (
         DrydockTaskFailedException,
         DrydockTaskTimeoutException
     )
 except ImportError:
+    from shipyard_airflow.plugins import check_k8s_node_status
+    from shipyard_airflow.plugins.drydock_base_operator import \
+        DrydockBaseOperator
     from shipyard_airflow.plugins.drydock_errors import (
         DrydockTaskFailedException,
         DrydockTaskTimeoutException

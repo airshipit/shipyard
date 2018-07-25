@@ -20,7 +20,11 @@ import subprocess  # nosec
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
-from deckhand_base_operator import DeckhandBaseOperator
+try:
+    from deckhand_base_operator import DeckhandBaseOperator
+except ImportError:
+    from shipyard_airflow.plugins.deckhand_base_operator import \
+        DeckhandBaseOperator
 
 FAILED_STATUSES = ('failed', 'upstream_failed')
 LOG = logging.getLogger(__name__)

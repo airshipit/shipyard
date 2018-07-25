@@ -16,7 +16,11 @@ import time
 
 from airflow.plugins_manager import AirflowPlugin
 
-from drydock_base_operator import DrydockBaseOperator
+try:
+    from drydock_base_operator import DrydockBaseOperator
+except ImportError:
+    from shipyard_airflow.plugins.drydock_base_operator import \
+        DrydockBaseOperator
 
 LOG = logging.getLogger(__name__)
 

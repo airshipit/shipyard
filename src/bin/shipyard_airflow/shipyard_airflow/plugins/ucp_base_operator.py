@@ -23,34 +23,21 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
 
 try:
+    from deckhand_client_factory import DeckhandClientFactory
     import service_endpoint
-except ImportError:
-    from shipyard_airflow.plugins import service_endpoint
-
-try:
     from get_k8s_logs import get_pod_logs
-except ImportError:
-    from shipyard_airflow.plugins.get_k8s_logs import get_pod_logs
-
-try:
     from get_k8s_logs import K8sLoggingException
-except ImportError:
-    from shipyard_airflow.plugins.get_k8s_logs import K8sLoggingException
-
-try:
     from xcom_puller import XcomPuller
 except ImportError:
+    from shipyard_airflow.plugins.deckhand_client_factory import \
+        DeckhandClientFactory
+    from shipyard_airflow.plugins import service_endpoint
+    from shipyard_airflow.plugins.get_k8s_logs import get_pod_logs
+    from shipyard_airflow.plugins.get_k8s_logs import K8sLoggingException
     from shipyard_airflow.plugins.xcom_puller import XcomPuller
 
 from shipyard_airflow.common.document_validators.document_validation_utils \
     import DocumentValidationUtils
-
-try:
-    from deckhand_client_factory import DeckhandClientFactory
-except ImportError:
-    from shipyard_airflow.plugins.deckhand_client_factory import (
-        DeckhandClientFactory
-    )
 
 LOG = logging.getLogger(__name__)
 
@@ -102,10 +89,11 @@ class UcpBaseOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.start_time = datetime.now()
         self.xcom_push_flag = xcom_push
-        self.doc_utils = _get_document_util(self.shipyard_conf)
-        self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
     def execute(self, context):
+        # Setup values that depend on the shipyard configuration
+        self.doc_utils = _get_document_util(self.shipyard_conf)
+        self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
         # Execute UCP base function
         self.ucp_base(context)

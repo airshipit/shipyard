@@ -19,9 +19,15 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
 from deckhand.client import client as deckhand_client
-import service_endpoint
-from service_token import shipyard_service_token
-from ucp_base_operator import UcpBaseOperator
+
+try:
+    import service_endpoint
+    from service_token import shipyard_service_token
+    from ucp_base_operator import UcpBaseOperator
+except ImportError:
+    from shipyard_airflow.plugins import service_endpoint
+    from shipyard_airflow.plugins.service_token import shipyard_service_token
+    from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
 
 LOG = logging.getLogger(__name__)
 

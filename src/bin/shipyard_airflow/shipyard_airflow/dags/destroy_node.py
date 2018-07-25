@@ -13,14 +13,29 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DrydockDestroyNodeOperator
-from airflow.operators import PromenadeCheckEtcdOperator
-from airflow.operators import PromenadeClearLabelsOperator
-from airflow.operators import PromenadeDecommissionNodeOperator
-from airflow.operators import PromenadeDrainNodeOperator
-from airflow.operators import PromenadeShutdownKubeletOperator
 
-from config_path import config_path
+try:
+    from airflow.operators import DrydockDestroyNodeOperator
+    from airflow.operators import PromenadeCheckEtcdOperator
+    from airflow.operators import PromenadeClearLabelsOperator
+    from airflow.operators import PromenadeDecommissionNodeOperator
+    from airflow.operators import PromenadeDrainNodeOperator
+    from airflow.operators import PromenadeShutdownKubeletOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.drydock_destroy_nodes import \
+        DrydockDestroyNodeOperator
+    from shipyard_airflow.plugins.promenade_check_etcd import \
+        PromenadeCheckEtcdOperator
+    from shipyard_airflow.plugins.promenade_clear_labels import \
+        PromenadeClearLabelsOperator
+    from shipyard_airflow.plugins.promenade_decommission_node import \
+        PromenadeDecommissionNodeOperator
+    from shipyard_airflow.plugins.promenade_drain_node import \
+        PromenadeDrainNodeOperator
+    from shipyard_airflow.plugins.promenade_shutdown_kubelet import \
+        PromenadeShutdownKubeletOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 
 def destroy_server(parent_dag_name, child_dag_name, args):

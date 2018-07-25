@@ -16,7 +16,11 @@ from datetime import timedelta
 import airflow
 from airflow import DAG
 
-from common_step_factory import CommonStepFactory
+try:
+    from common_step_factory import CommonStepFactory
+except ImportError:
+    from shipyard_airflow.dags.common_step_factory import CommonStepFactory
+
 """deploy_site
 
 the top-level orchestration DAG for deploying a site using the Undercloud

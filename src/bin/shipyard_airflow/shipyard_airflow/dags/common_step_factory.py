@@ -11,24 +11,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from airflow.operators import ConcurrencyCheckOperator
-from airflow.operators import DeckhandRetrieveRenderedDocOperator
-from airflow.operators import DeploymentConfigurationOperator
-from airflow.operators import DeckhandCreateSiteActionTagOperator
-
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
-from armada_deploy_site import deploy_site_armada
-from config_path import config_path
-from destroy_node import destroy_server
-from drydock_deploy_site import deploy_site_drydock
-from failure_handlers import step_failure_handler
-from preflight_checks import all_preflight_checks
-from validate_site_design import validate_site_design
-import dag_names as dn
+try:
+    # Operators are loaded from being registered to airflow.operators
+    # in a deployed fashion
+    from airflow.operators import ConcurrencyCheckOperator
+    from airflow.operators import DeckhandRetrieveRenderedDocOperator
+    from airflow.operators import DeploymentConfigurationOperator
+    from airflow.operators import DeckhandCreateSiteActionTagOperator
+except ImportError:
+    # for local testing, they are loaded from their source directory
+    from shipyard_airflow.plugins.concurrency_check_operator import \
+        ConcurrencyCheckOperator
+    from shipyard_airflow.plugins.deckhand_retrieve_rendered_doc import \
+        DeckhandRetrieveRenderedDocOperator
+    from shipyard_airflow.plugins.deployment_configuration_operator import \
+        DeploymentConfigurationOperator
+    from shipyard_airflow.plugins.deckhand_create_site_action_tag import \
+        DeckhandCreateSiteActionTagOperator
+
+try:
+    # modules reside in a flat directory when deployed with dags
+    from armada_deploy_site import deploy_site_armada
+    from config_path import config_path
+    from destroy_node import destroy_server
+    from drydock_deploy_site import deploy_site_drydock
+    from failure_handlers import step_failure_handler
+    from preflight_checks import all_preflight_checks
+    from validate_site_design import validate_site_design
+    import dag_names as dn
+except ImportError:
+    # for testing, specify the qualified source directory
+    from shipyard_airflow.dags.armada_deploy_site import deploy_site_armada
+    from shipyard_airflow.dags.config_path import config_path
+    from shipyard_airflow.dags.destroy_node import destroy_server
+    from shipyard_airflow.dags.drydock_deploy_site import deploy_site_drydock
+    from shipyard_airflow.dags.failure_handlers import step_failure_handler
+    from shipyard_airflow.dags.preflight_checks import all_preflight_checks
+    from shipyard_airflow.dags.validate_site_design import validate_site_design
+    import shipyard_airflow.dags.dag_names as dn
 
 
 class CommonStepFactory(object):

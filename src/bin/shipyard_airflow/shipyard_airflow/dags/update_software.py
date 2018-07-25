@@ -16,8 +16,12 @@ from datetime import timedelta
 import airflow
 from airflow import DAG
 
-from common_step_factory import CommonStepFactory
-from validate_site_design import SOFTWARE
+try:
+    from common_step_factory import CommonStepFactory
+    from validate_site_design import SOFTWARE
+except ImportError:
+    from shipyard_airflow.dags.common_step_factory import CommonStepFactory
+    from shipyard_airflow.dags.validate_site_design import SOFTWARE
 
 """update_software
 

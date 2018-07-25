@@ -13,11 +13,20 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import DrydockNodesOperator
-from airflow.operators import DrydockPrepareSiteOperator
-from airflow.operators import DrydockVerifySiteOperator
 
-from config_path import config_path
+try:
+    from airflow.operators import DrydockNodesOperator
+    from airflow.operators import DrydockPrepareSiteOperator
+    from airflow.operators import DrydockVerifySiteOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.drydock_nodes import \
+        DrydockNodesOperator
+    from shipyard_airflow.plugins.drydock_prepare_site import \
+        DrydockPrepareSiteOperator
+    from shipyard_airflow.plugins.drydock_verify_site import \
+        DrydockVerifySiteOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 
 def deploy_site_drydock(parent_dag_name, child_dag_name, args):

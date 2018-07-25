@@ -22,9 +22,8 @@ from airflow.plugins_manager import AirflowPlugin
 try:
     from promenade_base_operator import PromenadeBaseOperator
 except ImportError:
-    from shipyard_airflow.plugins.promenade_base_operator import (
+    from shipyard_airflow.plugins.promenade_base_operator import \
         PromenadeBaseOperator
-    )
 
 LOG = logging.getLogger(__name__)
 

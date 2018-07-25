@@ -20,11 +20,20 @@ from airflow.utils.decorators import apply_defaults
 
 import armada.common.client as client
 import armada.common.session as session
-from get_k8s_pod_port_ip import get_pod_port_ip
-from service_token import shipyard_service_token
-from ucp_base_operator import UcpBaseOperator
-import service_endpoint
-from xcom_pusher import XcomPusher
+
+try:
+    from get_k8s_pod_port_ip import get_pod_port_ip
+    import service_endpoint
+    from service_token import shipyard_service_token
+    from ucp_base_operator import UcpBaseOperator
+    from xcom_pusher import XcomPusher
+except ImportError:
+    from shipyard_airflow.plugins.get_k8s_pod_port_ip import get_pod_port_ip
+    from shipyard_airflow.plugins import service_endpoint
+    from shipyard_airflow.plugins.service_token import shipyard_service_token
+    from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
+    from shipyard_airflow.plugins.xcom_pusher import XcomPusher
+
 
 LOG = logging.getLogger(__name__)
 

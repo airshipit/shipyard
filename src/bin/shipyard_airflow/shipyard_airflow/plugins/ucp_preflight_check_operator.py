@@ -22,17 +22,11 @@ from airflow.utils.decorators import apply_defaults
 
 try:
     import service_endpoint
-except ImportError:
-    from shipyard_airflow.plugins import service_endpoint
-
-try:
     from xcom_puller import XcomPuller
-except ImportError:
-    from shipyard_airflow.plugins.xcom_puller import XcomPuller
-
-try:
     from xcom_pusher import XcomPusher
 except ImportError:
+    from shipyard_airflow.plugins import service_endpoint
+    from shipyard_airflow.plugins.xcom_puller import XcomPuller
     from shipyard_airflow.plugins.xcom_pusher import XcomPusher
 
 LOG = logging.getLogger(__name__)

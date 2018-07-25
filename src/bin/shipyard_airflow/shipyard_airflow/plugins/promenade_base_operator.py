@@ -19,17 +19,11 @@ from airflow.exceptions import AirflowException
 
 try:
     import service_endpoint
-except ImportError:
-    from shipyard_airflow.plugins import service_endpoint
-
-try:
     from service_token import shipyard_service_token
-except ImportError:
-    from shipyard_airflow.plugins.service_token import shipyard_service_token
-
-try:
     from ucp_base_operator import UcpBaseOperator
 except ImportError:
+    from shipyard_airflow.plugins import service_endpoint
+    from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
 
 LOG = logging.getLogger(__name__)

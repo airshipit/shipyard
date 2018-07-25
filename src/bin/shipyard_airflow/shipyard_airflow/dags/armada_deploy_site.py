@@ -13,11 +13,20 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import ArmadaGetReleasesOperator
-from airflow.operators import ArmadaGetStatusOperator
-from airflow.operators import ArmadaPostApplyOperator
 
-from config_path import config_path
+try:
+    from airflow.operators import ArmadaGetReleasesOperator
+    from airflow.operators import ArmadaGetStatusOperator
+    from airflow.operators import ArmadaPostApplyOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.armada_get_releases import \
+        ArmadaGetReleasesOperator
+    from shipyard_airflow.plugins.armada_get_status import \
+        ArmadaGetStatusOperator
+    from shipyard_airflow.plugins.armada_post_apply import \
+        ArmadaPostApplyOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 
 def deploy_site_armada(parent_dag_name, child_dag_name, args):

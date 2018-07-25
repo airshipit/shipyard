@@ -13,9 +13,14 @@
 # limitations under the License.
 
 from airflow.models import DAG
-from airflow.operators import UcpHealthCheckOperator
 
-from config_path import config_path
+try:
+    from airflow.operators import UcpHealthCheckOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.ucp_preflight_check_operator import \
+        UcpHealthCheckOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 
 def all_preflight_checks(parent_dag_name, child_dag_name, args):
