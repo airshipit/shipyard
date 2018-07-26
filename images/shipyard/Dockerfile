@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.5
+ARG FROM=python:3.5
+FROM ${FROM}
 
 ENV container docker
 ENV PORT 9000
