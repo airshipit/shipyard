@@ -68,9 +68,6 @@
       with_items:
         - docker-ce
         - python-pip
-    - pip:
-        name: docker
-        version: 2.7.0
     # NOTE(SamYaple): Allow all connections from containers to host so the
     # containers can access the http server for git and wheels
     - iptables:
