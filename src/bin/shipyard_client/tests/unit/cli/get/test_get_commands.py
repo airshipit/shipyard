@@ -17,7 +17,7 @@ from click.testing import CliRunner
 
 from shipyard_client.cli.get.actions import (
     GetActions, GetConfigdocs, GetConfigdocsStatus, GetRenderedConfigdocs,
-    GetWorkflows)
+    GetWorkflows, GetSiteStatuses)
 from shipyard_client.cli.commands import shipyard
 
 auth_vars = ('--os-project-domain-name=OS_PROJECT_DOMAIN_NAME_test '
@@ -126,4 +126,34 @@ def test_get_workflows_negative(*args):
     runner = CliRunner()
     results = runner.invoke(shipyard,
                             [auth_vars, 'get', 'workflows', invalid_arg])
+    assert 'Error' in results.output
+
+
+def test_get_site_statuses(*args):
+    """test get site-statuses"""
+
+    runner = CliRunner()
+    with patch.object(GetSiteStatuses, '__init__') as mock_method:
+        runner.invoke(shipyard, [auth_vars, 'get', 'site-statuses'])
+    mock_method.assert_called_once_with(ANY, '')
+
+    status_type_val1 = 'nodes-provision-status'
+    status_type_val2 = 'machines-power-state'
+    status_type_arg1 = '--status-type={}'.format(status_type_val1)
+    status_type_arg2 = '--status-type={}'.format(status_type_val2)
+    with patch.object(GetSiteStatuses, '__init__') as mock_method:
+        runner.invoke(shipyard,
+                      [auth_vars, 'get', 'site-statuses',
+                       status_type_arg1, status_type_arg2])
+    mock_method.assert_called_once_with(ANY, status_type_val1 + ',' +
+                                        status_type_val2)
+
+
+def test_get_site_statuses_negative(*args):
+    """Negative unit test for get site-statuses command"""
+
+    invalid_arg = 'invalid_st'
+    runner = CliRunner()
+    results = runner.invoke(shipyard,
+                            [auth_vars, 'get', 'site-statuses', invalid_arg])
     assert 'Error' in results.output

@@ -23,6 +23,7 @@ from shipyard_client.cli.get.actions import GetActions
 from shipyard_client.cli.get.actions import GetConfigdocs
 from shipyard_client.cli.get.actions import GetConfigdocsStatus
 from shipyard_client.cli.get.actions import GetRenderedConfigdocs
+from shipyard_client.cli.get.actions import GetSiteStatuses
 from shipyard_client.cli.get.actions import GetWorkflows
 from tests.unit.cli import stubs
 
@@ -323,3 +324,66 @@ def test_get_workflows_empty(*args):
     response = GetWorkflows(stubs.StubCliContext()).invoke_and_return_resp()
     assert 'None' in response
     assert 'State' in response
+
+
+GET_SITE_STATUSES_API_RESP = """
+{
+  "nodes_provision_status": [
+      {
+        "hostname": "xyz.abc.com",
+        "status": "deployed"},
+      {
+        "hostname": "def.abc.com",
+        "status": "provisioning"}
+    ],
+  "machines_powerstate": [
+      {
+        "hostname": "xyz.abc.com",
+        "power_state": "on"},
+      {
+        "hostname": "def.abc.com",
+        "power_state": "off"}
+    ]}
+"""
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_site_statuses(*args):
+    responses.add(
+        responses.GET,
+        'http://shiptest/site_statuses',
+        body=GET_SITE_STATUSES_API_RESP,
+        status=200)
+    response = GetSiteStatuses(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'xyz.abc.com' in response
+    assert 'def.abc.com' in response
+    assert 'deployed' in response
+    assert 'on' in response
+    assert 'off' in response
+    assert 'provisioning' in response
+    assert 'Nodes Provision Status:' in response
+    assert 'Machines Power State:' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_site_statuses_with_filters(*args):
+    responses.add(
+        responses.GET,
+        'http://shiptest/site_statuses',
+        body=GET_SITE_STATUSES_API_RESP,
+        status=200)
+    response = GetSiteStatuses(stubs.StubCliContext(),
+                               fltr="nodes-provision-status,"
+                               "machines-power-state").invoke_and_return_resp()
+    assert 'xyz.abc.com' in response
+    assert 'def.abc.com' in response
+    assert 'deployed' in response
+    assert 'on' in response
+    assert 'off' in response
+    assert 'provisioning' in response
+    assert 'Nodes Provision Status:' in response
+    assert 'Machines Power State:' in response
