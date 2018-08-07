@@ -361,12 +361,17 @@ conf:
     workflow_orchestrator:create_action: rule:admin_required
     workflow_orchestrator:get_action: rule:admin_required
     workflow_orchestrator:get_action_step: rule:admin_required
+    workflow_orchestrator:get_action_step_logs: rule:admin_required
     workflow_orchestrator:get_action_validation: rule:admin_required
     workflow_orchestrator:invoke_action_control: rule:admin_required
+    workflow_orchestrator:get_configdocs_status: rule:admin_required
     workflow_orchestrator:create_configdocs: rule:admin_required
     workflow_orchestrator:get_configdocs: rule:admin_required
     workflow_orchestrator:commit_configdocs: rule:admin_required
     workflow_orchestrator:get_renderedconfigdocs: rule:admin_required
+    workflow_orchestrator:list_workflows: rule:admin_required
+    workflow_orchestrator:get_workflow: rule:admin_required
+    workflow_orchestrator:get_site_statuses: rule:admin_required
   paste:
     app:shipyard-api:
       paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
@@ -385,17 +390,6 @@ conf:
       service_type: armada
     drydock:
       service_type: physicalprovisioner
-      verify_site_query_interval: 10
-      verify_site_task_timeout: 60
-      prepare_site_query_interval: 10
-      prepare_site_task_timeout: 300
-      prepare_node_query_interval: 30
-      prepare_node_task_timeout: 1800
-      deploy_node_query_interval: 30
-      deploy_node_task_timeout: 3600
-      destroy_node_query_interval: 30
-      destroy_node_task_timeout: 900
-      cluster_join_check_backoff_time: 120
     promenade:
       service_type: kubernetesprovisioner
     keystone_authtoken:
@@ -416,6 +410,11 @@ conf:
       worker_port: 8793
     k8s_logs:
       ucp_namespace: 'ucp'
+    oslo_policy:
+      policy_file: /etc/shipyard/policy.yaml
+      # If non-existent rule is used, the request should be denied. The
+      # deny_all rule is hard coded in the policy.py code to allow no access.
+      policy_default_rule: deny_all
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
   airflow:
