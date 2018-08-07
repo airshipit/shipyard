@@ -109,7 +109,7 @@ class DbAccess:
         executes the supplied query and returns the array of dictionaries of
         the row results
         """
-        LOG.debug('Query: %s', query)
+        LOG.debug('Query: %s', _query_single_line(query))
         result_dict_list = []
         if query is not None:
             with self.get_engine().connect() as connection:
@@ -142,7 +142,15 @@ class DbAccess:
         """
         Performs an update/insert/delete
         """
-        LOG.debug('Query: %s', query)
+        LOG.debug('Query: %s', _query_single_line(query))
         if query is not None:
             with self.get_engine().connect() as connection:
                 return connection.execute(query, **kwargs)
+
+
+def _query_single_line(query):
+    """Reformats a query string to remove newlines and extra spaces
+
+    :param query: The query string to log
+    """
+    return " ".join(query.split())
