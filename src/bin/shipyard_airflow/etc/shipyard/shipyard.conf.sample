@@ -33,7 +33,7 @@
 #
 
 # The web server for Airflow (string value)
-#web_server = http://localhost:32080/
+#web_server = http://localhost:8080/
 
 # Seconds to wait to connect to the airflow api (integer value)
 #airflow_api_connect_timeout = 5

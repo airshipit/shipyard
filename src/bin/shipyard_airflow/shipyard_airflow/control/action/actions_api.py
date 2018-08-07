@@ -13,6 +13,7 @@
 # limitations under the License.
 from datetime import datetime
 import logging
+import os
 
 import falcon
 import requests
@@ -254,6 +255,8 @@ class ActionsResource(BaseResource):
 
         # Retrieve URL
         web_server_url = CONF.base.web_server
+        api_path = 'api/experimental/dags/{}/dag_runs'
+        req_url = os.path.join(web_server_url, api_path.format(dag_id))
         c_timeout = CONF.base.airflow_api_connect_timeout
         r_timeout = CONF.base.airflow_api_read_timeout
 
@@ -266,15 +269,16 @@ class ActionsResource(BaseResource):
                 status=falcon.HTTP_503,
                 retry=True, )
         else:
-            conf_value = {'action': action}
+            # No cache please
+            headers = {'Cache-Control': 'no-cache'}
             # "conf" - JSON string that gets pickled into the DagRun's
-            # conf attribute
-            req_url = ('{}admin/rest_api/api?api=trigger_dag&dag_id={}'
-                       '&conf={}'.format(web_server_url,
-                                         dag_id, self.to_json(conf_value)))
-
+            # conf attribute. The conf is passed as as a string of escaped
+            # json inside the json payload accepted by the API.
+            conf_value = self.to_json({'action': action})
+            payload = {'run_id': action['id'], 'conf': conf_value}
             try:
-                resp = requests.get(req_url, timeout=(c_timeout, r_timeout))
+                resp = requests.post(req_url, timeout=(c_timeout, r_timeout),
+                                     headers=headers, json=payload)
                 LOG.info('Response code from Airflow trigger_dag: %s',
                          resp.status_code)
                 # any 4xx/5xx will be HTTPError, which are RequestException
@@ -295,16 +299,14 @@ class ActionsResource(BaseResource):
                     retry=True, )
 
             dag_time = self._exhume_date(dag_id,
-                                         response['output']['stdout'])
+                                         response['message'])
             dag_execution_date = dag_time.strftime('%Y-%m-%dT%H:%M:%S')
             return dag_execution_date
 
     def _exhume_date(self, dag_id, log_string):
-        # TODO(bryan-strassner) refactor this to an airflow api client module
-
         # we are unable to use the response time because that
         # does not match the time when the dag was recorded.
-        # We have to parse the stdout returned to find the
+        # We have to parse the returned message to find the
         # Created <DagRun {dag_id} @ {timestamp}
         # e.g.
         # ...- Created <DagRun deploy_site @ 2017-09-22 22:16:14: man...

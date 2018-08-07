@@ -727,4 +727,3 @@ manifests:
   service_airflow_worker: true
   service_discovery_airflow_worker: true
   test_shipyard_api: true
-  test_airflow_api: true

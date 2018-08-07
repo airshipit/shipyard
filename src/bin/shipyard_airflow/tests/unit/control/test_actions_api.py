@@ -450,20 +450,16 @@ def test_audit_control_command_db(mock_insert_action_audit):
 def test_invoke_airflow_dag_success(mock_info, mock_exhume_date):
     act_resource = ActionsResource()
     dag_id = 'test_dag_id'
-    action = 'test_action'
+    action = {'id': '123', 'user': 'unittester'}
     CONF = cfg.CONF
     web_server_url = CONF.base.web_server
     conf_value = {'action': action}
     log_string = 'Created <DagRun deploy_site @ 2017-09-22 22:16:14: man'
     responses.add(
-        method='GET',
-        url='{}admin/rest_api/api?api=trigger_dag&dag_id={}&conf={}'.format(
-            web_server_url, dag_id, act_resource.to_json(conf_value)),
-        body=json.dumps({
-            'output': {
-                'stdout': log_string
-            }
-        }),
+        method='POST',
+        url='{}api/experimental/dags/{}/dag_runs'.format(
+            web_server_url, dag_id),
+        body=json.dumps({'message': log_string}),
         status=200,
         content_type='application/json')
 
@@ -477,14 +473,13 @@ def test_invoke_airflow_dag_success(mock_info, mock_exhume_date):
 def test_invoke_airflow_dag_errors(mock_info):
     act_resource = ActionsResource()
     dag_id = 'test_dag_id'
-    action = 'test_action'
+    action = {'id': '123', 'user': 'unittester'}
     web_server_url = CONF.base.web_server
     conf_value = {'action': action}
     responses.add(
-        method='GET',
-        url='{}admin/rest_api/api?api=trigger_dag&dag_id={}'
-        '&conf={}'.format(web_server_url, dag_id,
-                          act_resource.to_json(conf_value)),
+        method='POST',
+        url='{}api/experimental/dags/{}/dag_runs'.format(
+            web_server_url, dag_id),
         body=json.dumps({
             "error": "not found"
         }),
