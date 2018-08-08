@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import sqlalchemy
+
 from shipyard_airflow.db import common_db
 
 
@@ -45,9 +47,20 @@ M2_RES = 'SELECT things FROM tables'
 
 S_QUERY = "SELECT 1 FROM dual"
 
+SQL_ALCHEMY_QUERY = sqlalchemy.sql.text("""
+SELECT
+  fields
+FROM
+  tables
+WHERE 1=1
+""")
+
+SQL_A_RES = 'SELECT fields FROM tables WHERE 1=1'
+
 
 class TestCommonDb():
     def test_single_line_query(self):
         assert M_RES == common_db._query_single_line(M_QUERY)
         assert M2_RES == common_db._query_single_line(M2_QUERY)
         assert S_QUERY == common_db._query_single_line(S_QUERY)
+        assert SQL_A_RES == common_db._query_single_line(SQL_ALCHEMY_QUERY)

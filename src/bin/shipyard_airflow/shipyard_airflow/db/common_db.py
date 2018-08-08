@@ -151,6 +151,8 @@ class DbAccess:
 def _query_single_line(query):
     """Reformats a query string to remove newlines and extra spaces
 
-    :param query: The query string to log
+    :param query: The query to log. This will work for anything that will
+        result in a string after str() is applied to it. Be aware of this
+        conversion. E.g. sqlalchemy's TextClause objects.
     """
-    return " ".join(query.split())
+    return " ".join(str(query).split())
