@@ -34,7 +34,7 @@ class ActionsStepsLogsResource(BaseResource):
     the names of the logs as 1.log, 2.log, 3.log, etc.
 
     """
-    @policy.ApiEnforcer('workflow_orchestrator:get_action_step_logs')
+    @policy.ApiEnforcer(policy.GET_ACTION_STEP_LOGS)
     def on_get(self, req, resp, **kwargs):
         """
         Returns the logs of an action step

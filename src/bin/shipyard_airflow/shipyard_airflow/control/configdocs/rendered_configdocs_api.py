@@ -37,7 +37,7 @@ class RenderedConfigDocsResource(BaseResource):
     in a complete or rendered state.
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_renderedconfigdocs')
+    @policy.ApiEnforcer(policy.GET_RENDEREDCONFIGDOCS)
     def on_get(self, req, resp):
         """
         Returns the whole set of rendered documents

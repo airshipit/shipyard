@@ -25,6 +25,23 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 policy_engine = None
 
+# Policy name constants
+LIST_ACTIONS = 'workflow_orchestrator:list_actions'
+CREATE_ACTION = 'workflow_orchestrator:create_action'
+GET_ACTION = 'workflow_orchestrator:get_action'
+GET_ACTION_STEP = 'workflow_orchestrator:get_action_step'
+GET_ACTION_STEP_LOGS = 'workflow_orchestrator:get_action_step_logs'
+GET_ACTION_VALIDATION = 'workflow_orchestrator:get_action_validation'
+INVOKE_ACTION_CONTROL = 'workflow_orchestrator:invoke_action_control'
+GET_CONFIGDOCS_STATUS = 'workflow_orchestrator:get_configdocs_status'
+CREATE_CONFIGDOCS = 'workflow_orchestrator:create_configdocs'
+GET_CONFIGDOCS = 'workflow_orchestrator:get_configdocs'
+COMMIT_CONFIGDOCS = 'workflow_orchestrator:commit_configdocs'
+GET_RENDEREDCONFIGDOCS = 'workflow_orchestrator:get_renderedconfigdocs'
+LIST_WORKFLOWS = 'workflow_orchestrator:list_workflows'
+GET_WORKFLOW = 'workflow_orchestrator:get_workflow'
+GET_SITE_STATUSES = 'workflow_orchestrator:get_site_statuses'
+
 
 class ShipyardPolicy(object):
     """
@@ -44,7 +61,7 @@ class ShipyardPolicy(object):
     # Orchestrator Policy
     task_rules = [
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:list_actions',
+            LIST_ACTIONS,
             RULE_ADMIN_REQUIRED,
             'List workflow actions invoked by users',
             [{
@@ -53,7 +70,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:create_action',
+            CREATE_ACTION,
             RULE_ADMIN_REQUIRED,
             'Create a workflow action',
             [{
@@ -62,7 +79,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_action',
+            GET_ACTION,
             RULE_ADMIN_REQUIRED,
             'Retrieve an action by its id',
             [{
@@ -71,7 +88,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_action_step',
+            GET_ACTION_STEP,
             RULE_ADMIN_REQUIRED,
             'Retrieve an action step by its id',
             [{
@@ -80,7 +97,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_action_step_logs',
+            GET_ACTION_STEP_LOGS,
             RULE_ADMIN_REQUIRED,
             'Retrieve logs of an action step by its id',
             [{
@@ -89,7 +106,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_action_validation',
+            GET_ACTION_VALIDATION,
             RULE_ADMIN_REQUIRED,
             'Retrieve an action validation by its id',
             [{
@@ -99,7 +116,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:invoke_action_control',
+            INVOKE_ACTION_CONTROL,
             RULE_ADMIN_REQUIRED,
             'Send a control to an action',
             [{
@@ -108,7 +125,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_configdocs_status',
+            GET_CONFIGDOCS_STATUS,
             RULE_ADMIN_REQUIRED,
             'Retrieve the status of the configdocs',
             [{
@@ -117,7 +134,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:create_configdocs',
+            CREATE_CONFIGDOCS,
             RULE_ADMIN_REQUIRED,
             'Ingest configuration documents for the site design',
             [{
@@ -126,7 +143,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_configdocs',
+            GET_CONFIGDOCS,
             RULE_ADMIN_REQUIRED,
             'Retrieve a collection of configuration documents',
             [{
@@ -135,7 +152,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:commit_configdocs',
+            COMMIT_CONFIGDOCS,
             RULE_ADMIN_REQUIRED,
             ('Move documents from the Shipyard buffer to the committed '
              'documents'),
@@ -145,7 +162,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_renderedconfigdocs',
+            GET_RENDEREDCONFIGDOCS,
             RULE_ADMIN_REQUIRED,
             ('Retrieve the configuration documents rendered by Deckhand into '
              'a complete design'),
@@ -155,7 +172,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:list_workflows',
+            LIST_WORKFLOWS,
             RULE_ADMIN_REQUIRED,
             ('Retrieve the list of workflows (DAGs) that have been invoked '
              'in Airflow, whether via Shipyard or scheduled'),
@@ -165,7 +182,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_workflow',
+            GET_WORKFLOW,
             RULE_ADMIN_REQUIRED,
             ('Retrieve the detailed information for a workflow (DAG) from '
              'Airflow'),
@@ -175,7 +192,7 @@ class ShipyardPolicy(object):
             }]
         ),
         policy.DocumentedRuleDefault(
-            'workflow_orchestrator:get_site_statuses',
+            GET_SITE_STATUSES,
             RULE_ADMIN_REQUIRED,
             'Retrieve the statuses for the site',
             [{

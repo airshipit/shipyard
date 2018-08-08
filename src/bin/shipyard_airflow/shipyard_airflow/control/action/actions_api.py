@@ -67,7 +67,7 @@ class ActionsResource(BaseResource):
     The actions resource represent the asyncrhonous invocations of shipyard
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:list_actions')
+    @policy.ApiEnforcer(policy.LIST_ACTIONS)
     def on_get(self, req, resp, **kwargs):
         """
         Return actions that have been invoked through shipyard.
@@ -76,7 +76,7 @@ class ActionsResource(BaseResource):
         resp.body = self.to_json(self.get_all_actions())
         resp.status = falcon.HTTP_200
 
-    @policy.ApiEnforcer('workflow_orchestrator:create_action')
+    @policy.ApiEnforcer(policy.CREATE_ACTION)
     def on_post(self, req, resp, **kwargs):
         """
         Accept an action into shipyard

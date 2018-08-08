@@ -30,7 +30,7 @@ class WorkflowResource(BaseResource):
     /api/v1.0/workflows
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:list_workflows')
+    @policy.ApiEnforcer(policy.LIST_WORKFLOWS)
     def on_get(self, req, resp):
         """
         Return actions that have been invoked through shipyard.
@@ -60,7 +60,7 @@ class WorkflowIdResource(BaseResource):
     /api/v1/workflows/{workflow_id}
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_workflow')
+    @policy.ApiEnforcer(policy.GET_WORKFLOW)
     def on_get(self, req, resp, workflow_id):
         """
         Retrieve the step details of workflows invoked in Airflow.

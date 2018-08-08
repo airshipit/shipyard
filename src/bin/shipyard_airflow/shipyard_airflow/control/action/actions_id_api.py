@@ -28,7 +28,7 @@ class ActionsIdResource(BaseResource):
     """
     The actions resource represent the asyncrhonous invocations of shipyard
     """
-    @policy.ApiEnforcer('workflow_orchestrator:get_action')
+    @policy.ApiEnforcer(policy.GET_ACTION)
     def on_get(self, req, resp, **kwargs):
         """
         Return actions that have been invoked through shipyard.
