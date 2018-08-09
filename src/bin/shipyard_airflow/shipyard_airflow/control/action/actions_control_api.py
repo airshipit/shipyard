@@ -34,7 +34,7 @@ class ActionsControlResource(BaseResource):
             'stop': self.stop_dag
         }
 
-    @policy.ApiEnforcer('workflow_orchestrator:invoke_action_control')
+    @policy.ApiEnforcer(policy.INVOKE_ACTION_CONTROL)
     def on_post(self, req, resp, **kwargs):
         """
         Returns that a control was recevied (202 response)

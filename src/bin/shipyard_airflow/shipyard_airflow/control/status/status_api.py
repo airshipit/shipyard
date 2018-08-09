@@ -30,7 +30,7 @@ class StatusResource(BaseResource):
     node status and power state
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_site_statuses')
+    @policy.ApiEnforcer(policy.GET_SITE_STATUSES)
     def on_get(self, req, resp, **kwargs):
         """
         Return site based statuses that has been invoked through shipyard.

@@ -25,7 +25,7 @@ class ActionsValidationsResource(BaseResource):
     The actions validations resource is the validtions of an action
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_action_validation')
+    @policy.ApiEnforcer(policy.GET_ACTION_VALIDATION)
     def on_get(self, req, resp, **kwargs):
         """
         Return validation details for an action validation

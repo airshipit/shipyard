@@ -38,7 +38,7 @@ class ConfigDocsStatusResource(BaseResource):
     statuses
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_configdocs_status')
+    @policy.ApiEnforcer(policy.GET_CONFIGDOCS_STATUS)
     def on_get(self, req, resp):
         """Returns a list of the configdocs and their statuses"""
         versions = req.params.get('versions') or None
@@ -53,7 +53,7 @@ class ConfigDocsResource(BaseResource):
     documents into Shipyard.
     """
 
-    @policy.ApiEnforcer('workflow_orchestrator:create_configdocs')
+    @policy.ApiEnforcer(policy.CREATE_CONFIGDOCS)
     @api_lock(ApiLockType.CONFIGDOCS_UPDATE)
     def on_post(self, req, resp, collection_id):
         """
@@ -92,7 +92,7 @@ class ConfigDocsResource(BaseResource):
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
         resp.body = self.to_json(validations)
 
-    @policy.ApiEnforcer('workflow_orchestrator:get_configdocs')
+    @policy.ApiEnforcer(policy.GET_CONFIGDOCS)
     def on_get(self, req, resp, collection_id):
         """
         Returns a collection of documents
@@ -178,7 +178,7 @@ class CommitConfigDocsResource(BaseResource):
 
     unable_to_commmit = 'Unable to commit configuration documents'
 
-    @policy.ApiEnforcer('workflow_orchestrator:commit_configdocs')
+    @policy.ApiEnforcer(policy.COMMIT_CONFIGDOCS)
     @api_lock(ApiLockType.CONFIGDOCS_UPDATE)
     def on_post(self, req, resp):
         """

@@ -24,7 +24,7 @@ class ActionsStepsResource(BaseResource):
     """
     The actions steps resource is the steps of an action
     """
-    @policy.ApiEnforcer('workflow_orchestrator:get_action_step')
+    @policy.ApiEnforcer(policy.GET_ACTION_STEP)
     def on_get(self, req, resp, **kwargs):
         """
         Return step details for an action step
