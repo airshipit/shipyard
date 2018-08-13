@@ -49,13 +49,20 @@ class ShipyardPolicy(object):
     """
 
     RULE_ADMIN_REQUIRED = 'rule:admin_required'
+    RULE_DENY_ALL = 'rule:deny_all'
 
     # Base Policy
     base_rules = [
         policy.RuleDefault(
             'admin_required',
             'role:admin',
-            description='Actions requiring admin authority'),
+            description='Actions requiring admin authority'
+        ),
+        policy.RuleDefault(
+            'deny_all',
+            '!',
+            description='Rule to deny all access. Used for default denial'
+        ),
     ]
 
     # Orchestrator Policy
@@ -251,7 +258,7 @@ class ApiEnforcer(object):
                     authorized = True
             except:
                 # couldn't service the auth request
-                LOG.error(
+                LOG.exception(
                     "Error - Expectation Failed - action: %s", self.action)
                 raise ApiError(
                     title="Expectation Failed",
