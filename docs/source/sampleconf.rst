@@ -19,7 +19,7 @@ Sample Configuration File
 The following is a sample Shipyard configuration for adaptation and use. It is
 auto-generated from Shipyard when this documentation is built, so
 if you are having issues with an option, please compare your version of
-Patrole with the version of this documentation.
+Shipyard with the version of this documentation.
 
 The sample configuration can also be viewed in `file form <_static/shipyard.conf.sample>`_.
 
