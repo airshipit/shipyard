@@ -104,4 +104,3 @@ Post Deployment
 
 .. _airship-in-a-bottle: https://git.airshipit.org/cgit/airship-in-a-bottle
 .. _dev_minimal: https://git.airshipit.org/cgit/airship-in-a-bottle/tree/manifests/dev_minimal
-.. _rest_api_plugin: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/plugins/rest_api_plugin.py
