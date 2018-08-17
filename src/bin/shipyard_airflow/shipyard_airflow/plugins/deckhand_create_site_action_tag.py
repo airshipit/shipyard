@@ -83,9 +83,13 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
 
         # Retrieve result of task execution
         #
-        # TODO(eanylin): Use Airflow API instead of CLI once the API is
-        # ready for consumption, i.e. no longer experimental
-        response = subprocess.run(
+        # Using nosec because:
+        #   1) this subprocess runs within the same container
+        #      that runs this code
+        #   2) has no input that is sourced from an external user
+        #   3) Is not supported via any API that is also accessible to this
+        #      container.
+        response = subprocess.run(  # nosec
             ['airflow',
              'task_state',
              self.main_dag_name,
