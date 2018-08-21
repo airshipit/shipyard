@@ -13,15 +13,15 @@
 - project:
     check:
       jobs:
+        - openstack-tox-pep8
         - airship-shipyard-linter
         - airship-shipyard-ubuntu:
             voting: false
         - airship-shipyard-tox-py35
-        - airship-shipyard-pep8
-        - airship-shipyard-security-bandit
         - airship-shipyard-image
     gate:
       jobs:
+        - openstack-tox-pep8
         - airship-shipyard-linter
         # NOTE(portdirect): enable when voting enabled.
         # - airship-shipyard-ubuntu:
@@ -30,8 +30,6 @@
         #       - ^doc/.*$
         #       - ^releasenotes/.*$
         - airship-shipyard-tox-py35
-        - airship-shipyard-pep8
-        - airship-shipyard-security-bandit
         - airship-shipyard-image
     post:
       jobs:
@@ -102,23 +100,6 @@
     nodeset: airship-shipyard-single-node
     vars:
       tox_envlist: py35
-
-- job:
-    name: airship-shipyard-pep8
-    description: |
-      Run pep8 tests for the Airship Shipyard project under
-      cPython version 3.5.
-    parent: airship-shipyard-tox-base
-    nodeset: airship-shipyard-single-node
-    vars:
-      tox_envlist: pep8
-
-- job:
-    name: airship-shipyard-security-bandit
-    description: |
-      Run bandit code scans for the Airship Shipyard project
-    run: tools/gate/playbooks/security-bandit.yaml
-    nodeset: airship-shipyard-single-node
 
 - job:
     name: airship-shipyard-image-base

@@ -18,4 +18,4 @@ git+https://github.com/att-comdev/promenade.git@master#egg=promenade
 flake8==3.3.0
 
 # Security scanning
-bandit>=1.1.0 # Apache-2.0
+bandit>=1.5.0 # Apache-2.0
