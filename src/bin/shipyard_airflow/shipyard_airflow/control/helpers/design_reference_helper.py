@@ -36,6 +36,10 @@ class DesignRefHelper:
         """
         return json.dumps(self.get_design_reference_dict(revision_id))
 
+    def get_design_reference_href(self, revision_id):
+        """Returns only the href to the deckhand design"""
+        return "deckhand+{}".format(self._path.format(revision_id))
+
     def get_design_reference_dict(self, revision_id):
         """Constructs a Deckhand specific design reference
 
@@ -44,6 +48,6 @@ class DesignRefHelper:
         """
         return {
             "rel": "design",
-            "href": "deckhand+{}".format(self._path.format(revision_id)),
+            "href": self.get_design_reference_href(revision_id),
             "type": "application/x-yaml"
         }

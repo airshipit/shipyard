@@ -42,7 +42,7 @@ def _get_node_lookup(revision_id):
 
     return NodeLookup(
         service_clients.drydock_client(),
-        DesignRefHelper().get_design_reference_dict(revision_id)
+        DesignRefHelper().get_design_reference_href(revision_id)
     ).lookup
 
 
