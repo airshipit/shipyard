@@ -30,13 +30,13 @@ def test_create_action():
     """test create_action works with action id and param input"""
 
     action_name = 'redeploy_server'
-    param = '--param="server-name=mcp"'
+    param = '--param="target_nodes=mcp"'
     runner = CliRunner()
     with patch.object(CreateAction, '__init__') as mock_method:
         runner.invoke(shipyard,
                       [auth_vars, 'create', 'action', action_name, param])
     mock_method.assert_called_once_with(ANY, action_name,
-                                        {'"server-name': 'mcp"'}, False)
+                                        {'"target_nodes': 'mcp"'}, False)
 
 
 def test_create_action_negative():

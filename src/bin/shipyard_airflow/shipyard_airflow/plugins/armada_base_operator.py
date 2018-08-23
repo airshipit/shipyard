@@ -81,7 +81,7 @@ class ArmadaBaseOperator(UcpBaseOperator):
         self.xcom_pusher = XcomPusher(self.task_instance)
 
         # Logs uuid of action performed by the Operator
-        LOG.info("Armada Operator for action %s", self.action_info['id'])
+        LOG.info("Armada Operator for action %s", self.action_id)
 
         # Set up armada client
         self.armada_client = self._init_armada_client(

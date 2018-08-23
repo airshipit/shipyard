@@ -26,7 +26,7 @@ control plane life-cycle management, and is part of the `Airship`_ platform.
 
    sampleconf
    API
-   API-action-commands
+   action-commands
    CLI
    site-definition-documents
    client-user-guide

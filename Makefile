@@ -69,13 +69,13 @@ docs: clean build_docs
 
 .PHONY: security
 security:
-	cd $(BUILD_CTX)/shipyard_airflow; tox -e bandit
 	cd $(BUILD_CTX)/shipyard_client; tox -e bandit
+	cd $(BUILD_CTX)/shipyard_airflow; tox -e bandit
 
 .PHONY: tests
 tests:
-	cd $(BUILD_CTX)/shipyard_airflow; tox
 	cd $(BUILD_CTX)/shipyard_client; tox
+	cd $(BUILD_CTX)/shipyard_airflow; tox
 
 # Make targets intended for use by the primary targets above.
 
@@ -130,13 +130,13 @@ clean:
 	rm -rf $(BUILD_DIR)/*
 	rm -rf build
 	rm -rf docs/build
-	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
 	cd $(BUILD_CTX)/shipyard_client; rm -rf build
+	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
 
 .PHONY: pep8
 pep8:
-	cd $(BUILD_CTX)/shipyard_airflow; tox -e pep8
 	cd $(BUILD_CTX)/shipyard_client; tox -e pep8
+	cd $(BUILD_CTX)/shipyard_airflow; tox -e pep8
 
 .PHONY: helm_lint
 helm_lint: clean helm-init

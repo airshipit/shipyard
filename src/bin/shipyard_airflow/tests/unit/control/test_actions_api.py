@@ -43,10 +43,6 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-def CHECK_INTERMEDIATE_COMMIT(allow_intermediate_commits):
-    return False
-
-
 def create_req(ctx, body):
     '''creates a falcon request'''
     env = testing.create_environ(
@@ -300,7 +296,8 @@ def test_get_all_actions():
             assert action['dag_status'] == 'SUCCESS'
 
 
-def test_create_action():
+def _gen_action_resource_stubbed():
+    # TODO(bryan-strassner): mabye subclass this instead?
     action_resource = ActionsResource()
     action_resource.get_all_actions_db = actions_db
     action_resource.get_all_dag_runs_db = dag_runs_db
@@ -309,97 +306,243 @@ def test_create_action():
     action_resource.insert_action = insert_action_stub
     action_resource.audit_control_command_db = audit_control_command_db
     action_resource.get_committed_design_version = lambda: DESIGN_VERSION
-    action_resource.check_intermediate_commit_revision = (
-        CHECK_INTERMEDIATE_COMMIT)
+    return action_resource
 
+
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_full')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_intermediate_commits')
+def test_create_action_invalid_input(ic_val, full_val, basic_val):
+    action_resource = _gen_action_resource_stubbed()
     # with invalid input. fail.
-    with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action_full') as validator:
-        try:
-            action = action_resource.create_action(
-                action={'name': 'broken',
-                        'parameters': {
-                            'a': 'aaa'
-                        }},
-                context=context,
-                allow_intermediate_commits=False)
-            assert False, 'Should throw an ApiError'
-        except ApiError:
-            # expected
-            pass
-    assert not validator.called
+    with pytest.raises(ApiError):
+        action = action_resource.create_action(
+            action={'name': 'broken',
+                    'parameters': {
+                        'a': 'aaa'
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+    assert not ic_val.called
+    assert not full_val.called
+    assert not basic_val.called
 
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_full')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_intermediate_commits')
+def test_create_action_valid_input_and_params(ic_val, full_val, *args):
+    action_resource = _gen_action_resource_stubbed()
     # with valid input and some parameters
-    with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action_full') as validator:
-        try:
-            action = action_resource.create_action(
-                action={'name': 'deploy_site',
-                        'parameters': {
-                            'a': 'aaa'
-                        }},
-                context=context,
-                allow_intermediate_commits=False)
-            assert action['timestamp']
-            assert action['id']
-            assert len(action['id']) == 26
-            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
-            assert action['dag_status'] == 'SCHEDULED'
-            assert action['committed_rev_id'] == 1
-        except ApiError:
-            assert False, 'Should not raise an ApiError'
-    validator.assert_called_once_with(action)
+    try:
+        action = action_resource.create_action(
+            action={'name': 'deploy_site',
+                    'parameters': {
+                        'a': 'aaa'
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    except ApiError:
+        assert False, 'Should not raise an ApiError'
+    full_val.assert_called_once_with(
+        action=action, configdocs_helper=action_resource.configdocs_helper)
+    ic_val.assert_called_once_with(
+        action=action, configdocs_helper=action_resource.configdocs_helper)
 
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_full')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_intermediate_commits')
+def test_create_action_valid_input_no_params(ic_val, full_val, *args):
+    action_resource = _gen_action_resource_stubbed()
     # with valid input and no parameters
-    with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action_full') as validator:
-        try:
-            action = action_resource.create_action(
-                action={'name': 'deploy_site'},
-                context=context,
-                allow_intermediate_commits=False)
-            assert action['timestamp']
-            assert action['id']
-            assert len(action['id']) == 26
-            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
-            assert action['dag_status'] == 'SCHEDULED'
-            assert action['committed_rev_id'] == 1
-        except ApiError:
-            assert False, 'Should not raise an ApiError'
-    validator.assert_called_once_with(action)
+    try:
+        action = action_resource.create_action(
+            action={'name': 'deploy_site'},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    except ApiError:
+        assert False, 'Should not raise an ApiError'
+    full_val.assert_called_once_with(
+        action=action, configdocs_helper=action_resource.configdocs_helper)
+    ic_val.assert_called_once_with(
+        action=action, configdocs_helper=action_resource.configdocs_helper)
 
 
-def test_create_action_validator_error():
-    action_resource = ActionsResource()
-    action_resource.get_all_actions_db = actions_db
-    action_resource.get_all_dag_runs_db = dag_runs_db
-    action_resource.get_all_tasks_db = tasks_db
-    action_resource.invoke_airflow_dag = airflow_stub
-    action_resource.insert_action = insert_action_stub
-    action_resource.audit_control_command_db = audit_control_command_db
-    action_resource.get_committed_design_version = lambda: DESIGN_VERSION
-    action_resource.check_intermediate_commit_revision = (
-        CHECK_INTERMEDIATE_COMMIT)
-
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_full',
+            side_effect=ApiError(title='bad'))
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_intermediate_commits')
+def test_create_action_validator_error(*args):
+    action_resource = _gen_action_resource_stubbed()
     # with valid input and some parameters
-    with mock.patch('shipyard_airflow.control.action.action_validators'
-                    '.validate_site_action_full',
-                    side_effect=ApiError(title='bad')):
-        with pytest.raises(ApiError) as apie:
+    with pytest.raises(ApiError) as apie:
+        action = action_resource.create_action(
+            action={'name': 'deploy_site',
+                    'parameters': {
+                        'a': 'aaa'
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+
+    assert apie.value.title == 'bad'
+
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+def test_create_targeted_action_valid_input_and_params(basic_val, *args):
+    action_resource = _gen_action_resource_stubbed()
+    # with valid input and some parameters
+    try:
+        action = action_resource.create_action(
+            action={'name': 'redeploy_server',
+                    'parameters': {
+                        'target_nodes': ['node1']
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    except ApiError:
+        assert False, 'Should not raise an ApiError'
+    basic_val.assert_called_once_with(
+        action=action, configdocs_helper=action_resource.configdocs_helper)
+
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+def test_create_targeted_action_valid_input_missing_target(basic_val, *args):
+    action_resource = _gen_action_resource_stubbed()
+    # with valid input and some parameters
+    with pytest.raises(ApiError) as apie:
+        action = action_resource.create_action(
+            action={'name': 'redeploy_server',
+                    'parameters': {
+                        'target_nodes': []
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    assert apie.value.title == 'Invalid target_nodes parameter'
+    assert not basic_val.called
+
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+def test_create_targeted_action_valid_input_missing_param(basic_val, *args):
+    action_resource = _gen_action_resource_stubbed()
+    # with valid input and some parameters
+    with pytest.raises(ApiError) as apie:
+        action = action_resource.create_action(
+            action={'name': 'redeploy_server'},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    assert apie.value.title == 'Invalid target_nodes parameter'
+    assert not basic_val.called
+
+
+@mock.patch('shipyard_airflow.policy.check_auth')
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic')
+def test_create_targeted_action_no_committed(basic_val, *args):
+    action_resource = _gen_action_resource_stubbed()
+    action_resource.get_committed_design_version = lambda: None
+    # with valid input and some parameters
+    with pytest.raises(ApiError) as apie:
+        action = action_resource.create_action(
+            action={'name': 'redeploy_server',
+                    'parameters': {
+                        'target_nodes': ['node1']
+                    }},
+            context=context,
+            allow_intermediate_commits=False)
+        assert action['timestamp']
+        assert action['id']
+        assert len(action['id']) == 26
+        assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
+        assert action['dag_status'] == 'SCHEDULED'
+        assert action['committed_rev_id'] == 1
+    assert apie.value.title == 'No committed configdocs'
+    assert not basic_val.called
+
+
+# Purposefully raising Exception to test only the value passed to auth
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_basic',
+            side_effect=Exception('purposeful'))
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_deployment_action_full',
+            side_effect=Exception('purposeful'))
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_intermediate_commits',
+            side_effect=Exception('purposeful'))
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_target_nodes',
+            side_effect=Exception('purposeful'))
+@mock.patch('shipyard_airflow.policy.check_auth')
+def test_auth_alignment(auth, *args):
+    action_resource = _gen_action_resource_stubbed()
+    for action_name, action_cfg in actions_api._action_mappings().items():
+        with pytest.raises(Exception) as ex:
             action = action_resource.create_action(
-                action={'name': 'deploy_site',
-                        'parameters': {
-                            'a': 'aaa'
-                        }},
+                action={'name': action_name},
                 context=context,
                 allow_intermediate_commits=False)
-            assert action['timestamp']
-            assert action['id']
-            assert len(action['id']) == 26
-            assert action['dag_execution_date'] == '2017-09-06 14:10:08.528402'
-            assert action['dag_status'] == 'SCHEDULED'
-            assert action['committed_rev_id'] == 1
-        assert apie.value.title == 'bad'
+        assert 'purposeful' in str(ex)
+        assert auth.called_with(action_cfg['rbac_policy'])
+        assert (action_cfg['rbac_policy'] ==
+                'workflow_orchestrator:action_{}'.format(action_name))
 
 
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.'
@@ -536,12 +679,8 @@ def test_get_committed_design_version(*args):
 
 @mock.patch.object(ConfigdocsHelper, 'get_revision_id', return_value=None)
 def test_get_committed_design_version_missing(*args):
-    with pytest.raises(ApiError) as apie:
-        act_resource = ActionsResource()
-        act_resource.configdocs_helper = ConfigdocsHelper(
-            ShipyardRequestContext()
-        )
-        act_resource.get_committed_design_version()
-    assert apie.value.status == falcon.HTTP_404
-    assert apie.value.title == ('Unable to locate any committed revision in '
-                                'Deckhand')
+    act_resource = ActionsResource()
+    act_resource.configdocs_helper = ConfigdocsHelper(
+        ShipyardRequestContext()
+    )
+    assert act_resource.get_committed_design_version() is None

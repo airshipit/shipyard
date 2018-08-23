@@ -18,35 +18,37 @@ there are any validation failures.
 """
 import logging
 
-import falcon
-
-from shipyard_airflow.common.document_validators.document_validator_manager \
-    import DocumentValidationManager
 from shipyard_airflow.control import service_clients
-from shipyard_airflow.control.validators.validate_deployment_configuration \
-    import ValidateDeploymentConfigurationBasic
-from shipyard_airflow.control.validators.validate_deployment_configuration \
-    import ValidateDeploymentConfigurationFull
-from shipyard_airflow.errors import ApiError
+from shipyard_airflow.control.validators.validate_committed_revision import \
+    ValidateCommittedRevision
+from shipyard_airflow.control.validators.validate_deployment_action import \
+    ValidateDeploymentAction
+from shipyard_airflow.control.validators.validate_intermediate_commit import \
+    ValidateIntermediateCommit
+from shipyard_airflow.control.validators.validate_target_nodes import \
+    ValidateTargetNodes
 
 LOG = logging.getLogger(__name__)
 
 
-def validate_site_action_full(action):
+def validate_committed_revision(action, **kwargs):
+    """Invokes a validation that the committed revision of site design exists
+    """
+    validator = ValidateCommittedRevision(action=action)
+    validator.validate()
+
+
+def validate_deployment_action_full(action, **kwargs):
     """Validates that the deployment configuration is correctly set up
 
     Checks:
-
       - The deployment configuration from Deckhand using the design version
-
           - If the deployment configuration is missing, error
-
       - The deployment strategy from the deployment configuration.
-
           - If the deployment strategy is specified, but is missing, error.
           - Check that there are no cycles in the groups
     """
-    validator = _SiteActionValidator(
+    validator = ValidateDeploymentAction(
         dh_client=service_clients.deckhand_client(),
         action=action,
         full_validation=True
@@ -54,16 +56,14 @@ def validate_site_action_full(action):
     validator.validate()
 
 
-def validate_site_action_basic(action):
+def validate_deployment_action_basic(action, **kwargs):
     """Validates that the DeploymentConfiguration is present
 
     Checks:
-
       - The deployment configuration from Deckhand using the design version
-
           - If the deployment configuration is missing, error
     """
-    validator = _SiteActionValidator(
+    validator = ValidateDeploymentAction(
         dh_client=service_clients.deckhand_client(),
         action=action,
         full_validation=False
@@ -71,72 +71,22 @@ def validate_site_action_basic(action):
     validator.validate()
 
 
-class _SiteActionValidator:
-    """The validator object used by the validate_site_action_<x> functions
+def validate_intermediate_commits(action, configdocs_helper, **kwargs):
+    """Validates that intermediate commits don't exist
+
+    Prevents the execution of an action if there are intermediate commits
+    since the last site action. If 'allow_intermediate_commits' is set on the
+    action, allows the action to continue
     """
-    def __init__(self, dh_client, action, full_validation=True):
-        self.action = action
-        self.doc_revision = self._get_doc_revision()
-        self.cont_on_fail = str(self._action_param(
-            'continue-on-fail')).lower() == 'true'
-        if full_validation:
-            # Perform a complete validation
-            self.doc_val_mgr = DocumentValidationManager(
-                dh_client,
-                self.doc_revision,
-                [(ValidateDeploymentConfigurationFull,
-                  'deployment-configuration')]
-            )
-        else:
-            # Perform a basic validation only
-            self.doc_val_mgr = DocumentValidationManager(
-                dh_client,
-                self.doc_revision,
-                [(ValidateDeploymentConfigurationBasic,
-                  'deployment-configuration')]
-            )
+    validator = ValidateIntermediateCommit(
+        action=action, configdocs_helper=configdocs_helper)
+    validator.validate()
 
-    def validate(self):
-        results = self.doc_val_mgr.validate()
-        if self.doc_val_mgr.errored:
-            if self.cont_on_fail:
-                LOG.warn("Validation failures occured, but 'continue-on-fail' "
-                         "is set to true. Processing continues")
-            else:
-                raise ApiError(
-                    title='Document validation failed',
-                    description='InvalidConfigurationDocuments',
-                    status=falcon.HTTP_400,
-                    error_list=results,
-                    retry=False,
-                )
 
-    def _action_param(self, p_name):
-        """Retrieve the value of the specified parameter or None if it doesn't
-        exist
-        """
-        try:
-            return self.action['parameters'][p_name]
-        except KeyError:
-            return None
+def validate_target_nodes(action, **kwargs):
+    """Validates the target_nodes parameter
 
-    def _get_doc_revision(self):
-        """Finds the revision id for the committed revision"""
-        doc_revision = self.action.get('committed_rev_id')
-        if doc_revision is None:
-            raise ApiError(
-                title='Invalid document revision',
-                description='InvalidDocumentRevision',
-                status=falcon.HTTP_400,
-                error_list=[{
-                    'message': (
-                        'Action {} with id {} was unable to find a valid '
-                        'committed document revision'.format(
-                            self.action.get('name'),
-                            self.action.get('id')
-                        )
-                    )
-                }],
-                retry=False,
-            )
-        return doc_revision
+    Ensures the target_nodes is present and properly specified.
+    """
+    validator = ValidateTargetNodes(action=action)
+    validator.validate()

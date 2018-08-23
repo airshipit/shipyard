@@ -93,7 +93,7 @@ class DeckhandBaseOperator(UcpBaseOperator):
 
         # Logs uuid of Shipyard action
         LOG.info("Executing Shipyard Action %s",
-                 self.action_info['id'])
+                 self.action_id)
 
         # Retrieve Endpoint Information
         self.deckhand_svc_endpoint = self.endpoints.endpoint_by_name(

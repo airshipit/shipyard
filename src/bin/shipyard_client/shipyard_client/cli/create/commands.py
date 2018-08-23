@@ -40,7 +40,7 @@ DESC_ACTION = """
     id of the action invoked so that it can be queried subsequently. \n
     FORMAT: shipyard create action <action command> --param=<parameter>
     (repeatable) [--allow-intermediate-commits] \n
-    EXAMPLE: shipyard create action redeploy_server --param="server-name=mcp"
+    EXAMPLE: shipyard create action redeploy_server --param="target_nodes=mcp"
              shipyard create action update_site --param="continue-on-fail=true"
 """
 

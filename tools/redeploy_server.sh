@@ -23,15 +23,15 @@ set -ex
 # $ ./redeploy_server.sh controller01
 #
 if [[ -z "$1" ]]; then
-    echo -e "Please specify the server name!"
+    echo -e "Please specify the server names as a comma separated string."
     exit 1
 fi
 
 # Define Variables
-server=$1
+servers=$1
 
 # Source environment variables
 source set_env
 
 # Execute shipyard action for redeploy_server
-bash execute_shipyard_action.sh 'redeploy_server' ${server}
+bash execute_shipyard_action.sh 'redeploy_server' ${servers}

@@ -23,6 +23,7 @@ try:
     from airflow.operators import DeckhandRetrieveRenderedDocOperator
     from airflow.operators import DeploymentConfigurationOperator
     from airflow.operators import DeckhandCreateSiteActionTagOperator
+    from airflow.operators import DrydockDestroyNodeOperator
 except ImportError:
     # for local testing, they are loaded from their source directory
     from shipyard_airflow.plugins.concurrency_check_operator import \
@@ -33,6 +34,8 @@ except ImportError:
         DeploymentConfigurationOperator
     from shipyard_airflow.plugins.deckhand_create_site_action_tag import \
         DeckhandCreateSiteActionTagOperator
+    from shipyard_airflow.plugins.drydock_destroy_nodes import \
+        DrydockDestroyNodeOperator
 
 try:
     # modules reside in a flat directory when deployed with dags
@@ -61,14 +64,22 @@ class CommonStepFactory(object):
 
     A factory to generate steps that are reused among multiple dags
     """
-    def __init__(self, parent_dag_name, dag, default_args):
+    def __init__(self, parent_dag_name, dag, default_args, action_type):
         """Creates a factory
 
-        Uses the specified parent_dag_name
+        :param parent_dag_name: the name of the base DAG that this step
+            factory will service
+        :param dag: the dag object
+        :param default_args: the default args from the dag that will be used
+            by steps in lieu of overridden values.
+        :action_type: defines the type of action - site, targeted, possibly
+            others that will be stored on xcom if the action_xcom step is used.
+            This can then be used to drive behavior in later steps.
         """
         self.parent_dag_name = parent_dag_name
         self.dag = dag
         self.default_args = default_args
+        self.action_type = action_type or 'default'
 
     def get_action_xcom(self, task_id=dn.ACTION_XCOM):
         """Generate the action_xcom step
@@ -81,11 +92,13 @@ class CommonStepFactory(object):
 
             Defines a push function to store the content of 'action' that is
             defined via 'dag_run' in XCOM so that it can be used by the
-            Operators
+            Operators. Includes action-related information for later steps.
             """
 
             kwargs['ti'].xcom_push(key='action',
                                    value=kwargs['dag_run'].conf['action'])
+            kwargs['ti'].xcom_push(key='action_type',
+                                   value=self.action_type)
 
         return PythonOperator(task_id=task_id,
                               dag=self.dag,
@@ -185,6 +198,21 @@ class CommonStepFactory(object):
                 self.parent_dag_name,
                 task_id,
                 args=self.default_args),
+            task_id=task_id,
+            on_failure_callback=step_failure_handler,
+            dag=self.dag)
+
+    def get_unguarded_destroy_servers(self, task_id=dn.DESTROY_SERVER):
+        """Generates an unguarded destroy server step.
+
+        This version of destroying servers does no pre-validations or extra
+        shutdowns of anything. It unconditionally triggers Drydock to destroy
+        the server. The counterpart to this step is the subdag returned by the
+        get_destroy_server method below.
+        """
+        return DrydockDestroyNodeOperator(
+            shipyard_conf=config_path,
+            main_dag_name=self.parent_dag_name,
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)

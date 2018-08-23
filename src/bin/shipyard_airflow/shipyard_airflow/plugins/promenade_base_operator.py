@@ -13,9 +13,8 @@
 # limitations under the License.
 import logging
 
-from airflow.utils.decorators import apply_defaults
 from airflow.plugins_manager import AirflowPlugin
-from airflow.exceptions import AirflowException
+from airflow.utils.decorators import apply_defaults
 
 try:
     import service_endpoint
@@ -63,20 +62,7 @@ class PromenadeBaseOperator(UcpBaseOperator):
     def run_base(self, context):
 
         # Logs uuid of Shipyard action
-        LOG.info("Executing Shipyard Action %s", self.action_info['id'])
-
-        # Retrieve information of the server that we want to redeploy
-        # if user executes the 'redeploy_server' dag
-        if self.action_info['dag_id'] == 'redeploy_server':
-            self.redeploy_server = self.action_info['parameters'].get(
-                'server-name')
-
-            if self.redeploy_server:
-                LOG.info("Server to be redeployed is %s", self.redeploy_server)
-            else:
-                raise AirflowException('%s was unable to retrieve the '
-                                       'server to be redeployed.'
-                                       % self.__class__.__name__)
+        LOG.info("Executing Shipyard Action %s", self.action_id)
 
         # Retrieve promenade endpoint
         self.promenade_svc_endpoint = self.endpoints.endpoint_by_name(

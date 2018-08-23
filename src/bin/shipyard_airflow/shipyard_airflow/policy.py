@@ -41,6 +41,10 @@ GET_RENDEREDCONFIGDOCS = 'workflow_orchestrator:get_renderedconfigdocs'
 LIST_WORKFLOWS = 'workflow_orchestrator:list_workflows'
 GET_WORKFLOW = 'workflow_orchestrator:get_workflow'
 GET_SITE_STATUSES = 'workflow_orchestrator:get_site_statuses'
+ACTION_DEPLOY_SITE = 'workflow_orchestrator:action_deploy_site'
+ACTION_UPDATE_SITE = 'workflow_orchestrator:action_update_site'
+ACTION_UPDATE_SOFTWARE = 'workflow_orchestrator:action_update_software'
+ACTION_REDEPLOY_SERVER = 'workflow_orchestrator:action_redeploy_server'
 
 
 class ShipyardPolicy(object):
@@ -76,6 +80,8 @@ class ShipyardPolicy(object):
                 'method': 'GET'
             }]
         ),
+        # See below for finer grained action access. This controls access
+        # to being able to create any actions.
         policy.DocumentedRuleDefault(
             CREATE_ACTION,
             RULE_ADMIN_REQUIRED,
@@ -207,6 +213,45 @@ class ShipyardPolicy(object):
                 'method': 'GET'
             }]
         ),
+        # Specific actions - can be controlled independently. See above for
+        # overall access to creating an action. This controls the ability to
+        # create specific actions (invoke specific workflows)
+        policy.DocumentedRuleDefault(
+            ACTION_DEPLOY_SITE,
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action to deploy the site',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            ACTION_UPDATE_SITE,
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action to update the site',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            ACTION_UPDATE_SOFTWARE,
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action to update the site software',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            ACTION_REDEPLOY_SERVER,
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action to redeploy target servers',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
     ]
 
     # Regions Policy
@@ -235,61 +280,64 @@ class ApiEnforcer(object):
     def __call__(self, f):
         @functools.wraps(f)
         def secure_handler(slf, req, resp, *args, **kwargs):
-            ctx = req.context
-            policy_eng = ctx.policy_engine
-            LOG.info("Policy Engine: %s", policy_eng.__class__.__name__)
-            # perform auth
-            LOG.info("Enforcing policy %s on request %s",
-                     self.action, ctx.request_id)
-            # policy engine must be configured
-            if policy_eng is None:
-                LOG.error(
-                    "Error-Policy engine required-action: %s", self.action)
-                raise AppError(
-                    title="Auth is not being handled by any policy engine",
-                    status=falcon.HTTP_500,
-                    retry=False
-                )
-            authorized = False
-            try:
-                if policy_eng.authorize(self.action, ctx):
-                    # authorized
-                    LOG.info("Request is authorized")
-                    authorized = True
-            except:
-                # couldn't service the auth request
-                LOG.exception(
-                    "Error - Expectation Failed - action: %s", self.action)
-                raise ApiError(
-                    title="Expectation Failed",
-                    status=falcon.HTTP_417,
-                    retry=False
-                )
-            if authorized:
-                return f(slf, req, resp, *args, **kwargs)
-            else:
-                LOG.error("Auth check failed. Authenticated:%s",
-                          ctx.authenticated)
-                # raise the appropriate response exeception
-                if ctx.authenticated:
-                    LOG.error("Error: Forbidden access - action: %s",
-                              self.action)
-                    raise ApiError(
-                        title="Forbidden",
-                        status=falcon.HTTP_403,
-                        description="Credentials do not permit access",
-                        retry=False
-                    )
-                else:
-                    LOG.error("Error - Unauthenticated access")
-                    raise ApiError(
-                        title="Unauthenticated",
-                        status=falcon.HTTP_401,
-                        description="Credentials are not established",
-                        retry=False
-                    )
-
+            check_auth(ctx=req.context, rule=self.action)
+            return f(slf, req, resp, *args, **kwargs)
         return secure_handler
+
+
+def check_auth(ctx, rule):
+    """Checks the authorization to the requested rule
+
+    :param ctx: the request context for the action being performed
+    :param rule: the name of the policy rule to validate the user in the
+        context against
+
+    Returns if authorized, otherwise raises an ApiError.
+    """
+    try:
+        policy_eng = ctx.policy_engine
+        LOG.info("Policy Engine: %s", policy_eng.__class__.__name__)
+        # perform auth
+        LOG.info("Enforcing policy %s on request %s", rule, ctx.request_id)
+        # policy engine must be configured
+        if policy_eng is None:
+            LOG.error(
+                "Error-Policy engine required-action: %s", rule)
+            raise AppError(
+                title="Auth is not being handled by any policy engine",
+                status=falcon.HTTP_500,
+                retry=False
+            )
+        if policy_eng.authorize(rule, ctx):
+            # authorized - log and return
+            LOG.info("Request to %s is authorized", rule)
+            return
+    except Exception as ex:
+        # couldn't service the auth request
+        LOG.exception("Error - Expectation Failed - action: %s", rule)
+        raise ApiError(
+            title="Expectation Failed",
+            status=falcon.HTTP_417,
+            retry=False
+        )
+    # raise the appropriate response exeception
+    if ctx.authenticated:
+        # authenticated but not authorized
+        LOG.error("Error: Forbidden access - action: %s", rule)
+        raise ApiError(
+            title="Forbidden",
+            status=falcon.HTTP_403,
+            description="Credentials do not permit access",
+            retry=False
+        )
+    else:
+        LOG.error("Error - Unauthenticated access")
+        raise ApiError(
+            title="Unauthenticated",
+            status=falcon.HTTP_401,
+            description="Credentials are not established",
+            retry=False
+        )
 
 
 def list_policies():

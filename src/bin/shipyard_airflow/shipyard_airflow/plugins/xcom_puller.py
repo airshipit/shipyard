@@ -74,7 +74,7 @@ class XcomPuller(object):
                               key=key)
 
     def get_action_info(self):
-        """Retrive the action and action parameter info dictionary
+        """Retrieve the action and action parameter info dictionary
 
         Extract information related to current workflow. This is a dictionary
         that contains information about the workflow such as action_id, name
@@ -83,6 +83,15 @@ class XcomPuller(object):
         source_task = 'action_xcom'
         source_dag = None
         key = 'action'
+        return self._get_xcom(source_task=source_task,
+                              dag_id=source_dag,
+                              key=key)
+
+    def get_action_type(self):
+        """Retrieve the action type"""
+        source_task = 'action_xcom'
+        source_dag = None
+        key = 'action_type'
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)
