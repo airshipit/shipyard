@@ -171,7 +171,7 @@ def test_describe_validation(*args):
     responses.add(
         responses.GET,
         'http://shiptest/actions/01BTTMFVDKZFRJM80FGD7J1AKN/'
-        'validationdetails/02AURNEWAAAESKN99EBF8J2BHD',
+        'validations/02AURNEWAAAESKN99EBF8J2BHD',
         body=GET_VALIDATION_API_RESP,
         status=200)
 
@@ -197,7 +197,7 @@ def test_describe_validation_not_found(*args):
     responses.add(
         responses.GET,
         'http://shiptest/actions/01BTTMFVDKZFRJM80FGD7J1AKN/'
-        'validationdetails/02AURNEWAAAESKN99EBF8J2BHD',
+        'validations/02AURNEWAAAESKN99EBF8J2BHD',
         body=api_resp,
         status=404)
 

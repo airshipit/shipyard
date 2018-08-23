@@ -168,7 +168,7 @@ def test_get_val_details(*args):
     action_id = 'GoodAction'
     validation_id = 'Validation'
     result = shipyard_client.get_validation_detail(action_id, validation_id)
-    assert result['url'] == '{}/actions/{}/validationdetails/{}'.format(
+    assert result['url'] == '{}/actions/{}/validations/{}'.format(
         shipyard_client.get_endpoint(), action_id, validation_id)
 
 

@@ -621,8 +621,8 @@ Example
       "action_lifecycle": "Failed"
     }
 
-/v1.0/actions/{action_id}/validationdetails/{validation_id}
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/v1.0/actions/{action_id}/validations/{validation_id}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Allows for drilldown to validation detailed info.
 
 Entity Structure
@@ -633,8 +633,8 @@ The detailed information for a validation
 
     { TBD }
 
-GET /v1.0/actions/{action_id}/validationdetails/{validation_id}
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+GET /v1.0/actions/{action_id}/validations/{validation_id}
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Returns the validation detail by Id for the supplied action Id.
 
 Responses
@@ -733,8 +733,8 @@ Entity Structure
 ^^^^^^^^^^^^^^^^
 None, there is no associated response entity for this resource
 
-POST /v1.0/actions/{action_id}/{control_verb}
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+POST /v1.0/actions/{action_id}/control/{control_verb}
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Trigger a control action against an activity.- this includes: pause, unpause
 
 Responses

@@ -30,7 +30,7 @@ class ApiPaths(enum.Enum):
     COMMIT_CONFIG = _BASE_URL + 'commitconfigdocs'
     POST_GET_ACTIONS = _BASE_URL + 'actions'
     GET_ACTION_DETAIL = _BASE_URL + 'actions/{}'
-    GET_VALIDATION_DETAIL = _BASE_URL + 'actions/{}/validationdetails/{}'
+    GET_VALIDATION_DETAIL = _BASE_URL + 'actions/{}/validations/{}'
     GET_STEP_DETAIL = _BASE_URL + 'actions/{}/steps/{}'
     GET_STEP_LOG = _BASE_URL + 'actions/{}/steps/{}/logs'
     POST_CONTROL_ACTION = _BASE_URL + 'actions/{}/control/{}'
