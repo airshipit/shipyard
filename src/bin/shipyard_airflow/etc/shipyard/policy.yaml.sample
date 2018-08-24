@@ -1,6 +1,9 @@
 # Actions requiring admin authority
 #"admin_required": "role:admin"
 
+# Rule to deny all access. Used for default denial
+#"deny_all": "!"
+
 # List workflow actions invoked by users
 # GET  /api/v1.0/actions
 #"workflow_orchestrator:list_actions": "rule:admin_required"
@@ -78,3 +81,4 @@
 # Create a workflow action to redeploy target servers
 # POST  /api/v1.0/actions
 #"workflow_orchestrator:action_redeploy_server": "rule:admin_required"
+
