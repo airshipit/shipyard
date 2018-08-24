@@ -61,6 +61,7 @@ network:
       annotations:
         nginx.ingress.kubernetes.io/rewrite-target: /
         nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     node_port: 31901
     enable_node_port: false
   airflow:
