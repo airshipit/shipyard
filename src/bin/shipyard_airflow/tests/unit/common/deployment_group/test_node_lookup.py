@@ -27,6 +27,7 @@ from shipyard_airflow.common.deployment_group.errors import (
 from shipyard_airflow.common.deployment_group.node_lookup import (
     NodeLookup, _generate_node_filter, _validate_selectors
 )
+from drydock_provisioner import error as errors
 
 
 class TestNodeLookup:
@@ -143,6 +144,70 @@ class TestNodeLookup:
 
         resp = nl.lookup([sel])
         assert resp == ['node1', 'node2']
+
+    @mock.patch('shipyard_airflow.common.deployment_group.node_lookup'
+                '._get_nodes_for_filter',
+                side_effect=errors.ClientError("nope"))
+    def test_NodeLookup_lookup_retry(self, get_nodes):
+        """Test the functionality of the setup and lookup functions"""
+        nl = NodeLookup(mock.MagicMock(), {"design": "ref"}, retry_delay=0.1)
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': [],
+            'node_tags': [],
+            'rack_names': [],
+        })
+        with pytest.raises(errors.ClientError) as ex:
+            resp = nl.lookup([sel])
+        assert get_nodes.call_count == 3
+
+    @mock.patch('shipyard_airflow.common.deployment_group.node_lookup'
+                '._get_nodes_for_filter',
+                side_effect=Exception("nope"))
+    def test_NodeLookup_lookup_retry_exception(self, get_nodes):
+        """Test the functionality of the setup and lookup functions"""
+        nl = NodeLookup(mock.MagicMock(), {"design": "ref"}, retry_delay=0.1)
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': [],
+            'node_tags': [],
+            'rack_names': [],
+        })
+        with pytest.raises(Exception) as ex:
+            resp = nl.lookup([sel])
+        assert get_nodes.call_count == 3
+
+    @mock.patch('shipyard_airflow.common.deployment_group.node_lookup'
+                '._get_nodes_for_filter',
+                side_effect=errors.ClientUnauthorizedError("nope"))
+    def test_NodeLookup_lookup_client_unauthorized(self, get_nodes):
+        """Test the functionality of the setup and lookup functions"""
+        nl = NodeLookup(mock.MagicMock(), {"design": "ref"}, retry_delay=0.1)
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': [],
+            'node_tags': [],
+            'rack_names': [],
+        })
+        with pytest.raises(errors.ClientUnauthorizedError) as ex:
+            resp = nl.lookup([sel])
+        assert get_nodes.call_count == 1
+
+    @mock.patch('shipyard_airflow.common.deployment_group.node_lookup'
+                '._get_nodes_for_filter',
+                side_effect=errors.ClientForbiddenError("nope"))
+    def test_NodeLookup_lookup_client_forbidden(self, get_nodes):
+        """Test the functionality of the setup and lookup functions"""
+        nl = NodeLookup(mock.MagicMock(), {"design": "ref"}, retry_delay=0.1)
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': [],
+            'node_tags': [],
+            'rack_names': [],
+        })
+        with pytest.raises(errors.ClientForbiddenError) as ex:
+            resp = nl.lookup([sel])
+        assert get_nodes.call_count == 1
 
     def test_NodeLookup_lookup_missing_design_ref(self):
         """Test the functionality of the setup and lookup functions"""
