@@ -356,22 +356,27 @@ conf:
     threads: 1
     workers: 4
   policy:
-    admin_required: role:admin
-    workflow_orchestrator:list_actions: rule:admin_required
-    workflow_orchestrator:create_action: rule:admin_required
-    workflow_orchestrator:get_action: rule:admin_required
-    workflow_orchestrator:get_action_step: rule:admin_required
-    workflow_orchestrator:get_action_step_logs: rule:admin_required
-    workflow_orchestrator:get_action_validation: rule:admin_required
-    workflow_orchestrator:invoke_action_control: rule:admin_required
-    workflow_orchestrator:get_configdocs_status: rule:admin_required
-    workflow_orchestrator:create_configdocs: rule:admin_required
-    workflow_orchestrator:get_configdocs: rule:admin_required
-    workflow_orchestrator:commit_configdocs: rule:admin_required
-    workflow_orchestrator:get_renderedconfigdocs: rule:admin_required
-    workflow_orchestrator:list_workflows: rule:admin_required
-    workflow_orchestrator:get_workflow: rule:admin_required
-    workflow_orchestrator:get_site_statuses: rule:admin_required
+    admin_create: role:admin or role:admin_ucp
+    admin_read_access: rule:admin_create or role:admin_ucp_viewer
+    workflow_orchestrator:list_actions: rule:admin_read_access
+    workflow_orchestrator:create_action: rule:admin_create
+    workflow_orchestrator:get_action: rule:admin_read_access
+    workflow_orchestrator:get_action_step: rule:admin_read_access
+    workflow_orchestrator:get_action_step_logs: rule:admin_read_access
+    workflow_orchestrator:get_action_validation: rule:admin_read_access
+    workflow_orchestrator:invoke_action_control: rule:admin_create
+    workflow_orchestrator:get_configdocs_status: rule:admin_read_access
+    workflow_orchestrator:create_configdocs: rule:admin_create
+    workflow_orchestrator:get_configdocs: rule:admin_read_access
+    workflow_orchestrator:commit_configdocs: rule:admin_create
+    workflow_orchestrator:get_renderedconfigdocs: rule:admin_read_access
+    workflow_orchestrator:list_workflows: rule:admin_read_access
+    workflow_orchestrator:get_workflow: rule:admin_read_access
+    workflow_orchestrator:get_site_statuses: rule:admin_read_access
+    workflow_orchestrator:action_deploy_site: rule:admin_create
+    workflow_orchestrator:action_update_site: rule:admin_create
+    workflow_orchestrator:action_update_software: rule:admin_create
+    workflow_orchestrator:action_redeploy_server: rule:admin_create
   paste:
     app:shipyard-api:
       paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
