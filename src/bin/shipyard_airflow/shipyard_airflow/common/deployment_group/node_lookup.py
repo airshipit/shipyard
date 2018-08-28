@@ -16,11 +16,13 @@
 to retrieve nodes based on a list of GroupNodeSelector objects
 """
 import logging
+import time
 
 from .deployment_group import GroupNodeSelector
 from .errors import (
     InvalidDeploymentGroupNodeLookupError
 )
+from drydock_provisioner import error as errors
 
 LOG = logging.getLogger(__name__)
 
@@ -30,8 +32,13 @@ class NodeLookup:
 
     :param drydock_client: a Drydock Client (Api Client from Drydock)
     :param design_ref: the design ref that will be used to perform a lookup
+    :param retries: the number of times to retry a lookup if an exception
+        is raised. Defaults to 2 retries.
+    :param retry_delay: seconds to wait between retries. Defaults to 30s.
+    Note that after the specified number of retries, any exceptions will be
+    bubbled out to the client of this node lookup
     """
-    def __init__(self, drydock_client, design_ref):
+    def __init__(self, drydock_client, design_ref, retries=2, retry_delay=30):
         # Empty dictionary or none for design ref will not work.
         if not design_ref:
             raise InvalidDeploymentGroupNodeLookupError(
@@ -42,6 +49,8 @@ class NodeLookup:
             raise TypeError('Drydock client is required.')
         self.design_ref = design_ref
         self.drydock_client = drydock_client
+        self.retries = retries
+        self.retry_delay = retry_delay
 
     def lookup(self, selectors):
         """Lookup method
@@ -51,9 +60,32 @@ class NodeLookup:
         """
         sel_list = _validate_selectors(selectors)
         node_filter = _generate_node_filter(sel_list)
-        return _get_nodes_for_filter(self.drydock_client,
-                                     self.design_ref,
-                                     node_filter)
+        retries_remaining = self.retries or 0
+        while retries_remaining >= 0:
+            try:
+                return _get_nodes_for_filter(self.drydock_client,
+                                             self.design_ref,
+                                             node_filter)
+            except (errors.ClientUnauthorizedError,
+                    errors.ClientForbiddenError) as er:
+                # do not retry the client related (4xx) errors
+                msg = "Status Code: {:d}, Status message: {}".format(
+                    er.status_code, er.message)
+                LOG.exception("Lookup of nodes encountered a client error."
+                              "{}. Will not retry this error.".format(msg))
+                raise
+            except (errors.ClientError, Exception) as ex:
+                # This only includes the 5xx and drydock uncautht errors.
+                if retries_remaining > 0:
+                    LOG.exception("Lookup of nodes encountered a problem, "
+                                  "but will be retried. Retries "
+                                  "remaining: %d", retries_remaining)
+                    retries_remaining -= 1
+                    time.sleep(self.retry_delay)
+                else:
+                    LOG.exception("Lookup of nodes failed. No retries "
+                                  "available")
+                    raise
 
 
 def _validate_selectors(selectors):
