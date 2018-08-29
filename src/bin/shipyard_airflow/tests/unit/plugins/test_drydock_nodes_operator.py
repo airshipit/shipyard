@@ -196,7 +196,7 @@ def _gen_pe_func(mode, stand_alone=False):
         object, it needs to be false, so that the right amount of "self"
         matches the invocation.
     """
-    def _func(group):
+    def _func(group, *args):
         qtr = QueryTaskResult('ti', 'tn')
         if mode == 'all-success':
             qtr.successes.extend(group.actionable_nodes)
@@ -205,7 +205,7 @@ def _gen_pe_func(mode, stand_alone=False):
             pass
         return qtr
 
-    def _func_self(self, group):
+    def _func_self(self, group, *args):
         return _func(group)
 
     if stand_alone:
@@ -346,7 +346,8 @@ class TestDrydockNodesOperator:
         op.join_wait = 0
         group = DeploymentGroup(GROUP_DICT, mock.MagicMock())
         group.actionable_nodes = ['node1', 'node2', 'node3']
-        op._execute_deployment(group)
+        succ_prep_nodes = ['node1', 'node2', 'node3']
+        op._execute_deployment(group, succ_prep_nodes)
         assert op._execute_task.call_count == 1
         assert cns.call_count == 1
 
@@ -364,7 +365,8 @@ class TestDrydockNodesOperator:
         op.join_wait = 0
         group = DeploymentGroup(GROUP_DICT, mock.MagicMock())
         group.actionable_nodes = ['node1', 'node2', 'node3']
-        task_res = op._execute_deployment(group)
+        succ_prep_nodes = ['node1', 'node2', 'node3']
+        task_res = op._execute_deployment(group, succ_prep_nodes)
         assert op._execute_task.call_count == 1
         assert cns.call_count == 1
         assert 'node4 failed to join Kubernetes' in caplog.text

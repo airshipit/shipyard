@@ -126,15 +126,17 @@ class DrydockNodesOperator(DrydockBaseOperator):
                                   self.prep_interval,
                                   self.prep_timeout)
 
-    def _execute_deployment(self, group):
+    def _execute_deployment(self, group, successful_prepared_nodes):
         """Execute the deployment of nodes for the group.
 
         :param group: The DeploymentGroup to deploy
+        :param successful_prepared_nodes: Nodes for this group that are
+            successfully prepared by the prepare nodes step.
         Returns a QueryTaskResult object
         """
         LOG.info("Group %s is deploying nodes", group.name)
 
-        self.node_filter = gen_node_name_filter(group.actionable_nodes)
+        self.node_filter = gen_node_name_filter(successful_prepared_nodes)
         task_result = self._execute_task('deploy_nodes',
                                          self.dep_interval,
                                          self.dep_timeout)
@@ -375,12 +377,24 @@ def _process_deployment_groups(dgm, prepare_func, deploy_func):
             # been marked as failed.
             continue
 
-        # Continue with deployment
-        dep_qtr = deploy_func(group)
-        # Mark successes as deployed
-        for node_name in dep_qtr.successes:
-            dgm.mark_node_deployed(node_name)
-        dgm.fail_unsuccessful_nodes(group, dep_qtr.successes)
+        if prep_qtr.successes:
+            # Continue with deployment, only for successfully prepared nodes
+            dep_qtr = deploy_func(group, prep_qtr.successes)
+            # Mark successes as deployed
+            for node_name in dep_qtr.successes:
+                dgm.mark_node_deployed(node_name)
+            dgm.fail_unsuccessful_nodes(group, dep_qtr.successes)
+        else:
+            # TODO(bryan-strassner) Update this message if Drydock provides
+            #     a way to cancel a task, and that method is employed by
+            #     Shipyard upon timeout.
+            LOG.info("There were no nodes successfully prepared. "
+                     "Deployment will not be attempted for group %s. "
+                     "Success criteria will be immediately checked. "
+                     "If a timeout in the prepare step has occured, it is "
+                     "possible that Drydock is still attempting the prepare "
+                     "task.",
+                     group.name)
         dgm.evaluate_group_succ_criteria(group.name, Stage.DEPLOYED)
 
 

@@ -231,6 +231,12 @@ class DrydockBaseOperator(UcpBaseOperator):
 
             # Raise Time Out Exception
             if task_status == 'running' and i == end_range:
+                # TODO(bryan-strassner) If Shipyard has timed out waiting for
+                #     this task to complete, and Drydock has provided a means
+                #     to cancel a task, that cancellation should be done here.
+
+                # task_failure only exits with an exception, so this is the
+                # end of processing in the  case of a timeout.
                 self.task_failure(False)
 
             # Exit 'for' loop if the task is in 'complete' or 'terminated'
