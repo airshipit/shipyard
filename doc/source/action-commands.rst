@@ -231,6 +231,12 @@ N/A
    underlying implementation already provides the needed resiliency and
    redundancy.
 
+relabel_nodes
+~~~~~~~~~~~~~
+
+Using parameters to indicate which server(s), triggers an update to the
+Kubernetes node labels for those servers.
+
 Future actions
 ~~~~~~~~~~~~~~
 

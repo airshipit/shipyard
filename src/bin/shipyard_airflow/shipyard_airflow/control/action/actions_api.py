@@ -78,6 +78,15 @@ def _action_mappings():
                 action_validators.validate_committed_revision,
                 action_validators.validate_deployment_action_basic,
             ]
+        },
+        'relabel_nodes': {
+            'dag': 'relabel_nodes',
+            'rbac_policy': policy.ACTION_RELABEL_NODES,
+            'validators': [
+                action_validators.validate_target_nodes,
+                action_validators.validate_committed_revision,
+                action_validators.validate_deployment_action_basic,
+            ]
         }
     }
 

@@ -37,6 +37,10 @@ data:
           type: 'integer'
         verify_timeout:
           type: 'integer'
+        relabel_nodes_interval:
+          type: 'integer'
+        relabel_nodes_timeout:
+          type: 'integer'
       additionalProperties: false
     kubernetes:
       type: 'object'

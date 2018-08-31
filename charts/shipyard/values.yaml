@@ -377,6 +377,7 @@ conf:
     workflow_orchestrator:action_update_site: rule:admin_create
     workflow_orchestrator:action_update_software: rule:admin_create
     workflow_orchestrator:action_redeploy_server: rule:admin_create
+    workflow_orchestrator:action_relabel_nodes: rule:admin_create
   paste:
     app:shipyard-api:
       paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
