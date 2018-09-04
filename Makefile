@@ -127,7 +127,6 @@ endif
 
 .PHONY: clean
 clean:
-	rm -r $(BUILD_DIR)
 	rm -rf build
 	rm -rf docs/build
 	cd $(BUILD_CTX)/shipyard_client; rm -rf build
