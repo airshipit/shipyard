@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import copy
 import json
 from unittest import mock
 from unittest.mock import patch
@@ -1021,3 +1022,41 @@ def test_get_validations_for_component_bad_status_404(*args):
         }
     }
     assert exception['exception'].__class__.__name__ == "HTTPError"
+
+
+def test_check_intermediate_commit():
+    helper_no_revs = ConfigdocsHelper(CTX)
+    helper_no_revs.deckhand.get_revision_list = lambda: []
+
+    helper_no_intermidiate_commits = ConfigdocsHelper(CTX)
+    revs = yaml.load("""
+---
+  - id: 1
+    url: https://deckhand/api/v1.0/revisions/1
+    createdAt: 2018-04-30T21:23Z
+    buckets: [mop]
+    tags: [committed, site-action-success]
+    validationPolicies:
+      site-deploy-validation:
+        status: succeeded
+  - id: 2
+    url: https://deckhand/api/v1.0/revisions/2
+    createdAt: 2018-04-30T23:35Z
+    buckets: [flop, mop]
+    tags: [committed, site-action-failure]
+    validationPolicies:
+      site-deploy-validation:
+        status: succeeded
+...
+""")
+    helper_no_intermidiate_commits.deckhand.get_revision_list = lambda: revs
+    revs_interm = copy.deepcopy(revs)
+    revs_interm[0]['tags'] = ['committed']
+
+    helper_with_intermidiate_commits = ConfigdocsHelper(CTX)
+    helper_with_intermidiate_commits.deckhand.get_revision_list = \
+        lambda: revs_interm
+
+    assert not helper_no_revs.check_intermediate_commit()
+    assert not helper_no_intermidiate_commits.check_intermediate_commit()
+    assert helper_with_intermidiate_commits.check_intermediate_commit()

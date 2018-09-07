@@ -623,8 +623,9 @@ class ConfigdocsHelper(object):
             # We will check the second last most recent committed revision
             # to see if a site-action has been executed on it
             if len(list_of_committed_rev) > 1:
-                if (('site-action-success' and 'site-action-failure') not in
-                        list_of_committed_rev[-2]['tags']):
+                revision_tags = list_of_committed_rev[-2]['tags']
+                if ('site-action-success' not in revision_tags and
+                        'site-action-failure' not in revision_tags):
                     return True
 
         return False
