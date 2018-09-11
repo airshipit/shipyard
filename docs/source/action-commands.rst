@@ -123,6 +123,9 @@ Like other `target actions` that will use a baremetal or Kubernetes node as
 a target, the `target_nodes` parameter will be used to list the names of the
 nodes that will be acted upon.
 
+Using redeploy_server
+`````````````````````
+
 .. danger::
 
    At this time, there are no safeguards with regard to the running workload
@@ -132,6 +135,101 @@ nodes that will be acted upon.
    To support controlling this, the Shipyard service allows actions to be
    associated with RBAC rules. A deployment of Shipyard can restrict access
    to this action to help prevent unexpected disaster.
+
+Redeploying a server can have consequences to the running workload as noted
+above. There are actions that can be taken by a deployment engineer or system
+administrator before performing a redeploy_server to mitigate the risks and
+impact.
+
+There are three broad categories of nodes that can be considered in regard to
+redeploy_server. It is possible that a node is both a Worker and a Control
+node depending on the deployment of Airship:
+
+#. Broken Node:
+
+   A non-functional node, e.g. a host that has been corrupted to the point of
+   being unable to participate in the Kubernetes cluster.
+
+#. Worker Node:
+
+   A node that is participating in the Kubernetes cluster not running
+   control plane software, but providing capacity for workloads running in
+   the environment.
+
+#. Control Node:
+
+   A node that is participating in the Kubernetes cluster and is hosting
+   control plane software. E.g. Airship or other components that serve as
+   controllers for the rest of the cluster in some way. These nodes may run
+   software such as etcd or databases that contribute to the health of the
+   overall Kubernetes cluster.
+
+   Note that there is also the Genesis host, used to bootstrap the Airship
+   platform. This node currently runs the Airship containers, including some
+   that are not yet able to be migrated to other nodes, e.g. the MAAS rack
+   controller, and disruptions arising from moving PostgreSQL.
+
+.. important::
+
+   Use of redeploy_server on the Airship Genesis host/node is not supported,
+   and will result in serious disruption.
+
+Yes
+  Recommended step for this node type
+
+No
+  Generally not necessary for this node type
+
+N/A
+  Not applicable for this node type
+
+
++----------------------------------------+--------+--------+---------+
+| Action                                 | Broken | Worker | Control |
++========================================+========+========+=========+
+| Coordinate workload impacts with users | Yes    | Yes    | No      |
+| [*]_                                   |        |        |         |
++----------------------------------------+--------+--------+---------+
+|                                                                    |
++----------------------------------------+--------+--------+---------+
+| Clear Kubernetes labels from the node  | N/A    | Yes    | Yes     |
+| (for each label)                       |        |        |         |
++----------------------------------------+--------+--------+---------+
+| ``$ kubectl label nodes <node> <label>-``                          |
++----------------------------------------+--------+--------+---------+
+| Etcd - check for cluster health        | N/A    | N/A    | Yes     |
++----------------------------------------+--------+--------+---------+
+| ``$ kubectl -n kube-system exec kubernetes-etcd-<hostname> etcdctl |
+| member list``                                                      |
++----------------------------------------+--------+--------+---------+
+| Drain Kubernetes node                  | N/A    | Yes    | Yes     |
++----------------------------------------+--------+--------+---------+
+| ``$ kubectl drain <node>``                                         |
++----------------------------------------+--------+--------+---------+
+| Disable the kubelet service            | N/A    | Yes    | Yes     |
++----------------------------------------+--------+--------+---------+
+| ``$ systemctl stop kubelet``                                       |
+|                                                                    |
+| ``$ systemctl disable kubelet``                                    |
++----------------------------------------+--------+--------+---------+
+| Remove node from Kubernetes            | Yes    | Yes    | Yes     |
++----------------------------------------+--------+--------+---------+
+| ``$ kubectl delete node <node>``                                   |
++----------------------------------------+--------+--------+---------+
+| Backup Disks (processes vary) [*]_     | Yes    | Yes    | Yes     |
++----------------------------------------+--------+--------+---------+
+|                                                                    |
++----------------------------------------+--------+--------+---------+
+
+.. [*] Of course it is up to the infrastructure operator if they wish to
+   coordinate with their users. This guide assumes client or user
+   communication as a common courtesy.
+
+.. [*] Server redeployment will (quick) erase all disks during the process,
+   but desired enhancements to redeploy_server may include options for disk
+   handling. Situationally, it may not be necessary to backup disks if the
+   underlying implementation already provides the needed resiliency and
+   redundancy.
 
 Future actions
 ~~~~~~~~~~~~~~
