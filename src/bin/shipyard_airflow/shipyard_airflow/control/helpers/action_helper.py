@@ -145,15 +145,23 @@ class ActionsHelper(object):
 
             return steps
 
-    def get_step(self, step_id):
+    def get_step(self, step_id, try_number=None):
         """
+        :param step_id: Step ID - task_id in db
+        :param try_number: Number of try - try_number in db
+
         returns: Step
         """
         # Retrieve step. Note that we will get a list and it will
         # be the content of step[0]
         step_list = [x for x in
                      self._get_all_steps()
-                     if step_id == x['task_id']]
+                     if step_id == x['task_id'] and
+                     (try_number is None or try_number == x['try_number'])
+                     ]
+        # try_number is needed to get correct task from correct worker
+        # the worker host for request URL
+        # is referenced in correct task's 'hostname' field
 
         if not step_list:
             raise ApiError(

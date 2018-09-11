@@ -64,7 +64,7 @@ class ActionsStepsLogsResource(BaseResource):
         self.actions_helper = ActionsHelper(action_id=action_id)
 
         # Retrieve step
-        step = self.actions_helper.get_step(step_id)
+        step = self.actions_helper.get_step(step_id, try_number)
 
         # Retrieve Dag ID
         dag_id = step['dag_id']
