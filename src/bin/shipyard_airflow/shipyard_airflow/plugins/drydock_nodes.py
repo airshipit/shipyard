@@ -135,8 +135,8 @@ class DrydockNodesOperator(DrydockBaseOperator):
         Returns a QueryTaskResult object
         """
         LOG.info("Group %s is deploying nodes", group.name)
-
-        self.node_filter = gen_node_name_filter(successful_prepared_nodes)
+        s_nodes = list(successful_prepared_nodes)
+        self.node_filter = gen_node_name_filter(s_nodes)
         task_result = self._execute_task('deploy_nodes',
                                          self.dep_interval,
                                          self.dep_timeout)
