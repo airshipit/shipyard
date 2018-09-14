@@ -38,6 +38,6 @@ Building this Documentation
 
 Use ``make docs`` or ``tox -e docs`` to generate these docs. This will and
 build an html version of this documentation that can be viewed using a browser
-at docs/build/index.html on the local filesystem.
+at doc/build/index.html on the local filesystem.
 
 .. _Airship: https://airshipit.org
