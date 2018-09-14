@@ -55,6 +55,8 @@ apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: airflow-worker
+  annotations:
+    {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   serviceName: {{ tuple "airflow_worker" "discovery" $envAll | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
   podManagementPolicy: "Parallel"

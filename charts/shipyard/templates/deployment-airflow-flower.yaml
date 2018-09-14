@@ -24,6 +24,8 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: airflow-flower
+  annotations:
+    {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   replicas: {{ .Values.pod.replicas.airflow.flower }}
 {{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
