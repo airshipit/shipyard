@@ -64,9 +64,6 @@ lint: pep8 helm_lint build_docs
 dry-run: clean helm-init
 	$(HELM) template charts/shipyard
 
-.PHONY: docs
-docs: clean build_docs
-
 .PHONY: security
 security:
 	cd $(BUILD_CTX)/shipyard_client; tox -e bandit
@@ -128,7 +125,7 @@ endif
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -rf docs/build
+	rm -rf doc/build
 	cd $(BUILD_CTX)/shipyard_client; rm -rf build
 	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
 
@@ -150,6 +147,9 @@ helm-init: helm-install
 .PHONY: helm-install
 helm-install:
 	tools/helm_install.sh $(HELM)
+
+.PHONY: docs
+docs: clean build_docs
 
 .PHONY: build_docs
 build_docs:

@@ -11,6 +11,10 @@
 # limitations under the License.
 
 - project:
+    templates:
+      - docs-on-readthedocs
+    vars:
+      rtd_webhook_id: '38576'
     check:
       jobs:
         - openstack-tox-pep8
@@ -172,7 +176,6 @@
           BXeHSJY2wGADZChYKVl1/DFn2w5R8sjf+JMUhDkfNUXFFfLS12lWexNH7V2PAy3mQrnQ0
           +IYNI959TAdyUwa9ZyQyu0lTkQpsuUwBSfnJ9+1orwlruzGeCeofIfHIzWitmB5yxtI/Z
           XRw2Uif34GEkerIQGnoQazOTVf6jAw/gp9X49+WpghTC+ExKTqCelggcKBukZA=
-
       password: !encrypted/pkcs1-oaep
         - ts6uhbQxb9EKWfQ1RmZUZGKoGEkJ9RkyupmmFHZllo2iEqNG21jrqhBbHVEt9iXqOGAUL
           AICzGos4p/RQXgISmmGVmBfR2MhH93txPLtKfIQCMw/838Mmy4z1gr1ALhepnEsgb3d9X

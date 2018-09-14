@@ -5,6 +5,9 @@ Shipyard
 Shipyard adopts the Falcon web framework and uses Apache Airflow as the backend
 engine to programmatically author, schedule and monitor workflows.
 
+Find more documentation for Shipyard on
+`Read the Docs <https://airship-shipyard.readthedocs.io/>`_.
+
 The current workflow is as follows:
 
 1. Initial region/site data will be passed to Shipyard from either a human
