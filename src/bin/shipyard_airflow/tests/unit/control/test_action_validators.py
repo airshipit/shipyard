@@ -28,7 +28,8 @@ from shipyard_airflow.control.action.action_validators import (
     validate_deployment_action_basic,
     validate_deployment_action_full,
     validate_intermediate_commits,
-    validate_target_nodes
+    validate_target_nodes,
+    validate_test_cleanup
 )
 from shipyard_airflow.errors import ApiError
 from tests.unit.common.deployment_group.node_lookup_stubs import node_lookup
@@ -270,6 +271,22 @@ class TestActionValidator:
                 self._action({'target_nodes': [{'not': 'string'}]})
             )
         assert apie.value.title == 'Invalid target_nodes parameter'
+
+    def test_validate_test_cleanup(self, **args):
+        """Test that the validate_test_cleanup validator enforces an optional,
+        boolean value.
+        """
+        # No cleanup param provided
+        validate_test_cleanup(self._action(None))
+
+        # Valid cleanup params
+        validate_test_cleanup(self._action({'cleanup': 'True'}))
+        validate_test_cleanup(self._action({'cleanup': 'false'}))
+
+        # Bad cleanup params
+        with pytest.raises(ApiError):
+            validate_test_cleanup(self._action({'cleanup': 'string'}))
+            validate_test_cleanup(self._action({'cleanup': '10000'}))
 
     def test_validate_committed_revision(self, *args):
         """Test the committed revision validator"""

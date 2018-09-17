@@ -27,6 +27,8 @@ from shipyard_airflow.control.validators.validate_intermediate_commit import \
     ValidateIntermediateCommit
 from shipyard_airflow.control.validators.validate_target_nodes import \
     ValidateTargetNodes
+from shipyard_airflow.control.validators.validate_test_cleanup import \
+    ValidateTestCleanup
 
 LOG = logging.getLogger(__name__)
 
@@ -89,4 +91,13 @@ def validate_target_nodes(action, **kwargs):
     Ensures the target_nodes is present and properly specified.
     """
     validator = ValidateTargetNodes(action=action)
+    validator.validate()
+
+
+def validate_test_cleanup(action, **kwargs):
+    """Validates the cleanup parameter
+
+    Ensures the cleanup parameter is a boolean value.
+    """
+    validator = ValidateTestCleanup(action=action)
     validator.validate()

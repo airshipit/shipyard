@@ -86,3 +86,8 @@
 # POST  /api/v1.0/actions
 #"workflow_orchestrator:action_relabel_nodes": "rule:admin_required"
 
+# Create a workflow action to invoke Helm tests on all releases or a
+# targeted release
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_test_site": "rule:admin_required"
+

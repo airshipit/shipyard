@@ -87,6 +87,13 @@ def _action_mappings():
                 action_validators.validate_committed_revision,
                 action_validators.validate_deployment_action_basic,
             ]
+        },
+        'test_site': {
+            'dag': 'test_site',
+            'rbac_policy': policy.ACTION_TEST_SITE,
+            'validators': [
+                action_validators.validate_test_cleanup,
+            ]
         }
     }
 
