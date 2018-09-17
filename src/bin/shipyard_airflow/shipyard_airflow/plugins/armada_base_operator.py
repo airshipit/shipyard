@@ -20,6 +20,7 @@ from airflow.utils.decorators import apply_defaults
 
 import armada.common.client as client
 import armada.common.session as session
+from armada.exceptions import api_exceptions as errors
 
 try:
     from get_k8s_pod_port_ip import get_pod_port_ip
@@ -89,6 +90,11 @@ class ArmadaBaseOperator(UcpBaseOperator):
             self.svc_token
         )
 
+        # Retrieve Tiller Information
+        # TODO(@drewwalters96): This should be explicit. Refactor in
+        # conjunction with `get_pod_port_ip` decorator.
+        self.get_tiller_info(pods_ip_port={})
+
     @staticmethod
     def _init_armada_client(armada_svc_endpoint, svc_token):
 
@@ -124,6 +130,19 @@ class ArmadaBaseOperator(UcpBaseOperator):
             return _armada_client
         else:
             raise AirflowException("Failed to set up Armada client!")
+
+    def get_releases(self):
+        """Retrieve all deployed releases"""
+        try:
+            get_releases_resp = self.armada_client.get_releases(
+                query=self.query,
+                timeout=self.dc['armada.get_releases_timeout']
+            )
+            return get_releases_resp['releases']
+        except errors.ClientError as client_error:
+            # Dump logs from Armada pods
+            self.get_k8s_logs()
+            raise AirflowException(client_error)
 
     @get_pod_port_ip('tiller', namespace='kube-system')
     def get_tiller_info(self, pods_ip_port={}):

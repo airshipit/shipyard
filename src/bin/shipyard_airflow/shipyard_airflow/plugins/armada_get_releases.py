@@ -21,7 +21,6 @@ try:
 except ImportError:
     from shipyard_airflow.plugins.armada_base_operator import \
         ArmadaBaseOperator
-from armada.exceptions import api_exceptions as errors
 
 LOG = logging.getLogger(__name__)
 
@@ -36,23 +35,9 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
     """
 
     def do_execute(self):
-
-        # Retrieve Tiller Information
-        self.get_tiller_info(pods_ip_port={})
-
-        # Retrieve read timeout
-        timeout = self.dc['armada.get_releases_timeout']
-
         # Retrieve Armada Releases after deployment
         LOG.info("Retrieving Helm charts releases after deployment..")
-
-        try:
-            armada_get_releases = self.armada_client.get_releases(
-                self.query,
-                timeout=timeout)
-
-        except errors.ClientError as client_error:
-            raise AirflowException(client_error)
+        armada_get_releases = self.get_releases()
 
         if armada_get_releases:
             LOG.info("Successfully retrieved Helm charts releases")
