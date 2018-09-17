@@ -89,9 +89,6 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
             LOG.info("Promenade Site Design has been successfully validated")
 
         else:
-            # Dump logs from Promenade pods
-            self.get_k8s_logs()
-
             raise AirflowException("Promenade Site Design Validation Failed "
                                    "with status: {}!".format(status))
 

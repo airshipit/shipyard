@@ -58,9 +58,6 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
             LOG.info("Successfully retrieved Helm charts releases")
             LOG.info(armada_get_releases)
         else:
-            # Dump logs from Armada API pods
-            self.get_k8s_logs()
-
             raise AirflowException("Failed to retrieve Helm charts releases!")
 
 

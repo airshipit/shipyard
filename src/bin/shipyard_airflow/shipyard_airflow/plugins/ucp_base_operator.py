@@ -102,8 +102,18 @@ class UcpBaseOperator(BaseOperator):
         self.run_base(context)
 
         if self.continue_processing:
-            # Exeute child function
-            self.do_execute()
+            # Execute child function
+            try:
+                self.do_execute()
+            except Exception:
+                LOG.exception(
+                    'Exception happened during %s execution, '
+                    'will try to log additional details',
+                    self.__class__.__name__)
+                self.get_k8s_logs()
+                if hasattr(self, 'fetch_failure_details'):
+                    self.fetch_failure_details()
+                raise
 
     def ucp_base(self, context):
 

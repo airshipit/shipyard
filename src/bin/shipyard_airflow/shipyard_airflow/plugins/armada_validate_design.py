@@ -50,9 +50,6 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
                 manifest=self.design_ref, timeout=timeout)
 
         except errors.ClientError as client_error:
-            # Dump logs from Armada API pods
-            self.get_k8s_logs()
-
             raise AirflowException(client_error)
 
         # Print results
@@ -65,9 +62,6 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
         if status.lower() == 'success':
             LOG.info("Site Design has been successfully validated")
         else:
-            # Dump logs from Armada API pods
-            self.get_k8s_logs()
-
             raise AirflowException("Site Design Validation Failed "
                                    "with status: {}!".format(status))
 

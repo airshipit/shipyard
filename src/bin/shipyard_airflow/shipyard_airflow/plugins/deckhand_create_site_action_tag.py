@@ -70,9 +70,6 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
                      self.revision_id)
 
         except:
-            # Dump logs from Deckhand pods
-            self.get_k8s_logs()
-
             raise AirflowException("Failed to create revision tag!")
 
     def check_task_result(self, task_id):

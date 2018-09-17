@@ -81,9 +81,6 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         if status.lower() == 'success':
             LOG.info("DryDock Site Design has been successfully validated")
         else:
-            # Dump logs from Drydock pods
-            self.get_k8s_logs()
-
             raise AirflowException("DryDock Site Design Validation Failed "
                                    "with status: {}!".format(status))
 
