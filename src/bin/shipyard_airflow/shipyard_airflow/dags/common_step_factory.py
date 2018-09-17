@@ -19,6 +19,7 @@ from airflow.operators.subdag_operator import SubDagOperator
 try:
     # Operators are loaded from being registered to airflow.operators
     # in a deployed fashion
+    from airflow.operators import ArmadaTestReleasesOperator
     from airflow.operators import ConcurrencyCheckOperator
     from airflow.operators import DeckhandRetrieveRenderedDocOperator
     from airflow.operators import DeploymentConfigurationOperator
@@ -27,6 +28,8 @@ try:
     from airflow.operators import DrydockRelabelNodesOperator
 except ImportError:
     # for local testing, they are loaded from their source directory
+    from shipyard_airflow.plugins.armada_test_releases import \
+        ArmadaTestReleasesOperator
     from shipyard_airflow.plugins.concurrency_check_operator import \
         ConcurrencyCheckOperator
     from shipyard_airflow.plugins.deckhand_retrieve_rendered_doc import \
@@ -215,6 +218,19 @@ class CommonStepFactory(object):
                 self.parent_dag_name,
                 task_id,
                 args=self.default_args),
+            task_id=task_id,
+            on_failure_callback=step_failure_handler,
+            dag=self.dag)
+
+    def get_armada_test_releases(self, task_id=dn.ARMADA_TEST_RELEASES):
+        """Generate the armada_test_releases step
+
+        Armada invokes Helm tests for all deployed releases or a targeted
+        release specified by the "release" parameter.
+        """
+        return ArmadaTestReleasesOperator(
+            shipyard_conf=config_path,
+            main_dag_name=self.parent_dag_name,
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)
