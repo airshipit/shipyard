@@ -2,7 +2,7 @@
 A CLI for using a deployed Shipyard API.
 
 Find more documentation for Shipyard on
-[Read the Docs](http://shipyard.readthedocs.io/en/latest/)
+[Read the Docs](https://airshipit.readthedocs.io/projects/shipyard/en/latest/)
 
 
 ## Getting Started:
