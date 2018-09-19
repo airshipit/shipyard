@@ -423,21 +423,44 @@ conf:
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
   airflow:
+    # NOTE: Airflow 1.10 introduces a need to declare all config options:
+    #     https://issues.apache.org/jira/browse/AIRFLOW-3099
     core:
       airflow_home: /usr/local/airflow
       dags_folder: /usr/local/airflow/dags
       base_log_folder: /usr/local/airflow/logs
       remote_logging: "False"
-      remote_log_conn_id:
+      remote_log_conn_id: ""
+      remote_base_log_folder: ""
       encrypt_s3_logs: "False"
       logging_level: "INFO"
-      log_format: "[%%(asctime)s] {{%%(filename)s:%%(lineno)d}} %%(levelname)s - %%(message)s"
+      fab_logging_level: "WARN"
+      # TODO(bryan-strassner) Use this for custom log formatting!
+      logging_config_class: ""
+      # NOTE: Airflow 1.10 introduces extra newline characters between log
+      #     records. Version 1.10.1 should resolve this issue
+      #     https://issues.apache.org/jira/browse/AIRFLOW-1917
+      #
+      # NOTE: The log format ends up repeated for each log record that we log
+      #     in our custom operators, once for the logging_mixin class of
+      #     Airflow itself, and once again for the message we want to log.
+      #     E.g.:
+      #         2018-09-21 19:38:48,950 INFO     logging_mixin(95) write - 2018-09-21 19:38:48,950 INFO     deployment_configuration_operator(135) get_doc - Deckhand Client acquired
+      #
+      # NOTE: Updated from default to match Shipyard logging as much as
+      #     possible without more aggressive techniques
+      #
+      log_format: "%%(asctime)s %%(levelname)-8s %%(module)s(%%(lineno)d) %%(funcName)s - %%(message)s"
       simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
+      log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
+      log_processor_filename_template: "{{ filename }}.log"
+      hostname_callable: "socket:getfqdn"
       default_timezone: "utc"
       executor: "CeleryExecutor"
+      # sql_alchemy_conn is extracted from endpoints by the configmap template
       sql_alchemy_pool_enabled: "True"
       sql_alchemy_pool_size: 5
-      sql_alchemy_pool_recycle: 3600
+      sql_alchemy_pool_recycle: 1800
       sql_alchemy_reconnect_timeout: 30
       parallelism: 32
       dag_concurrency: 16
@@ -449,28 +472,47 @@ conf:
       fernet_key: fKp7omMJ4QlTxfZzVBSiyXVgeCK-6epRjGgMpEIsjvs=
       donot_pickle: "False"
       dagbag_import_timeout: 30
+      # NOTE: Versions after 1.10 will change this to StandardTaskRunner
       task_runner: "BashTaskRunner"
-      default_impersonation:
-      security:
+      default_impersonation: ""
+      security: ""
       secure_mode: "True"
       unit_test_mode: "False"
+      task_log_reader: "task"
       enable_xcom_pickling: "False"
       killed_task_cleanup_time: 60
+      dag_run_conf_overrides_params: "False"
     cli:
       api_client: airflow.api.client.local_client
+      # endpoint_url is extracted from endpoints by the configmap template
     api:
       auth_backend: airflow.api.auth.backend.default
+    lineage:
+      # Shipyard is not using this
+      backend: ""
+    atlas:
+      # Shipyard is not using this
+      sasl_enabled: "False"
+      host: ""
+      port: 21000
+      username: ""
+      password: ""
     operators:
       default_owner: "Airflow"
       default_cpus: 1
       default_ram: 512
       default_disk: 512
-      default_igpus: 0
+      default_gpus: 0
+    hive:
+      # Shipyard is not using this
+      default_hive_mapred_queue: ""
     webserver:
+      # base_url is extracted from endpoints by the configmap template
       web_server_host: 0.0.0.0
       web_server_port: 8080
-      web_server_ssl_cert:
-      web_server_ssl_key:
+      web_server_ssl_cert: ""
+      web_server_ssl_key: ""
+      web_server_master_timeout: 120
       web_server_worker_timeout: 120
       worker_refresh_batch_size: 1
       worker_refresh_interval: 30
@@ -486,62 +528,130 @@ conf:
       dag_default_view: "tree"
       dag_orientation: "LR"
       demo_mode: "False"
-      log_fetch_timeout_sec: 5
+      log_fetch_timeout_sec: 10
       hide_paused_dags_by_default: "False"
       page_size: 100
+      rbac: "False"
+      navbar_color: "#007A87"
+      default_dag_run_display_number: 25
     email:
+      # Shipyard is not using this
       email_backend: airflow.utils.send_email_smtp
     smtp:
+      # Shipyard is not using this
       smtp_host: "localhost"
       smtp_starttls: "True"
       smtp_ssl: "False"
       smtp_user: "airflow"
-      smtp_port: 25
       smtp_password: "airflow"
+      smtp_port: 25
       smtp_mail_from: airflow@airflow.local
     celery:
       celery_app_name: airflow.executors.celery_executor
       worker_concurrency: 16
       worker_log_server_port: 8793
+      # broker_url is extracted from endpoints by the configmap template
+      # result_backend is extracted from endpoints by the configmap template
       flower_host: 0.0.0.0
       flower_url_prefix:
       flower_port: 5555
       default_queue: "default"
       celery_config_options: airflow.config_templates.default_celery.DEFAULT_CELERY_CONFIG
+      # TODO: Enable this for security
+      ssl_active: "False"
+      ssl_key: ""
+      ssl_cert: ""
+      ssl_cacert: ""
     celery_broker_transport_options:
       visibility_timeout: 21600
-      ssl_active: "False"
-      ssl_key:
-      ssl_cert:
-      ssl_cacert:
+    dask:
+      # Shipyard is not using this
+      cluster_adresss: "127.0.0.1:8786"
+      tls_ca: ""
+      tls_cert: ""
+      tls_key: ""
     scheduler:
       job_heartbeat_sec: 5
       scheduler_heartbeat_sec: 5
       run_duration: -1
       min_file_process_interval: 0
+      min_file_parsing_loop_time: 1
       dag_dir_list_interval: 300
-      print_stats_interval: 30
+      print_stats_interval: 120
       child_process_log_directory: /usr/local/airflow/logs/scheduler
       scheduler_zombie_task_threshold: 300
       catchup_by_default: "True"
-      max_tis_per_query: 0
+      max_tis_per_query: 512
+      statsd_on: "False"
+      statsd_host: "localhost"
+      statsd_port: 8125
+      statsd_prefix: "airflow"
       max_threads: 2
       authenticate: "False"
     ldap:
-      uri:
-      user_filter:
-      user_name_attr:
-      group_member_attr:
-      superuser_filter:
-      data_profiler_filter:
-      bind_user:
-      bind_password:
-      basedn:
-      cacert:
-      search_scope:
+      # Shipyard is not using this
+      uri: ""
+      user_filter: "objectClass=*"
+      user_name_attr: "uid"
+      group_member_attr: "memberOf"
+      superuser_filter: ""
+      data_profiler_filter: ""
+      bind_user: "cn=Manager,dc=example,dc=com"
+      bind_password: "insecure"
+      basedn: "dc=example,dc=com"
+      cacert: "/etc/ca/ldap_ca.crt"
+      search_scope: "LEVEL"
+    mesos:
+      # Shipyard is not using this
+      master: ""
+      framework_name: ""
+      task_cpu: ""
+      task_memory: ""
+      checkpoint: ""
+      authenticate: ""
+    kerberos:
+      # Shipyard is not using this
+      ccache: ""
+      principal: ""
+      reinit_frequency: ""
+      kinit_path: ""
+      keytab: ""
+    github_enterprise:
+      # Shipyard is not using this
+      api_rev: v3
     admin:
       hide_sensitive_variable_fields: "True"
-
+    elasticsearch:
+      # Shipyard is not using this
+      elasticsearch_host: ""
+      elasticsearch_log_id_template: ""
+      elasticsearch_end_of_log_mark: ""
+    kubernetes:
+      # Shipyard is not using this (maybe future for spawning own workers)
+      worker_container_repository: ""
+      worker_container_tag: ""
+      delete_worker_pods: "True"
+      namespace: "default"
+      airflow_configmap: ""
+      dags_volume_subpath: ""
+      dags_volume_claim: ""
+      logs_volume_subpath: ""
+      logs_volume_claim: ""
+      git_repo: ""
+      git_branch: ""
+      git_user: ""
+      git_password: ""
+      git_subpath: ""
+      git_sync_container_repository: ""
+      git_sync_container_tag: ""
+      git_sync_init_container_name: ""
+      worker_service_account_name: ""
+      image_pull_secrets: ""
+      gcp_service_account_keys: ""
+      in_cluster: ""
+    kubernetes_secrets:
+      #Shipyard is not using this
+    # End of Airflow config options
 pod:
   mounts:
     dag_path: /home/ubuntu/workbench/dags
