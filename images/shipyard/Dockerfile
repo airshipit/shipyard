@@ -15,6 +15,13 @@
 ARG FROM=python:3.5
 FROM ${FROM}
 
+LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode'
+LABEL org.opencontainers.image.url='https://airshipit.org'
+LABEL org.opencontainers.image.documentation='https://airship-shipyard.readthedocs.org'
+LABEL org.opencontainers.image.source='https://git.openstack.org/openstack/airship-shipyard'
+LABEL org.opencontainers.image.vendor='The Airship Authors'
+LABEL org.opencontainers.image.licenses='Apache-2.0'
+
 ENV container docker
 ENV PORT 9000
 ENV LC_ALL C.UTF-8

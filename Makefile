@@ -18,7 +18,7 @@ BUILD_CTX                  ?= src/bin
 IMAGE_PREFIX               ?= airshipit
 IMAGE_TAG                  ?= untagged
 IMAGE_NAME                 := airflow shipyard
-LABEL                      ?= commit-id
+COMMIT                     ?= commit-id
 
 DOCKER_REGISTRY            ?= quay.io
 PUSH_IMAGE                 ?= false
@@ -86,7 +86,11 @@ run:
 .PHONY: build_airflow
 build_airflow:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+	docker build --network host -t $(IMAGE) \
+		--label "org.opencontainers.image.revision=$(COMMIT)" \
+		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
+		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
+		-f $(IMAGE_DIR)/Dockerfile \
 		--build-arg FROM=$(UBUNTU_BASE_IMAGE) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
@@ -96,7 +100,11 @@ ifeq ($(USE_PROXY), true)
 		--build-arg NO_PROXY=$(NO_PROXY) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+	docker build --network host -t $(IMAGE) \
+		--label "org.opencontainers.image.revision=$(COMMIT)" \
+		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
+		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
+		-f $(IMAGE_DIR)/Dockerfile \
 		--build-arg FROM=$(UBUNTU_BASE_IMAGE) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 endif
@@ -107,7 +115,11 @@ endif
 .PHONY: build_shipyard
 build_shipyard:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+	docker build --network host -t $(IMAGE) \
+		--label "org.opencontainers.image.revision=$(COMMIT)" \
+		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
+		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
+		-f $(IMAGE_DIR)/Dockerfile \
 		--build-arg FROM=$(PYTHON_BASE_IMAGE) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
@@ -117,7 +129,11 @@ ifeq ($(USE_PROXY), true)
 		--build-arg NO_PROXY=$(NO_PROXY) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) --label $(LABEL) -f $(IMAGE_DIR)/Dockerfile \
+	docker build --network host -t $(IMAGE) \
+		--label "org.opencontainers.image.revision=$(COMMIT)" \
+		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
+		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
+		-f $(IMAGE_DIR)/Dockerfile \
 		--build-arg FROM=$(PYTHON_BASE_IMAGE) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 endif
