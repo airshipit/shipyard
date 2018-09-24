@@ -51,5 +51,5 @@ If you find a bug, please feel free to create a `Storyboard issue`_.
 .. _Promenade: https://github.com/openstack/airship-promenade
 .. _Armada: https://github.com/openstack/airship-armada
 .. _OpenStack Helm: https://github.com/openstack/openstack-helm
-.. _documentation: http://airship-shipyard.readthedocs.io/en/latest/
+.. _documentation: https://airship-shipyard.readthedocs.io/
 .. _Storyboard issue: https://storyboard.openstack.org/#!/project/1010

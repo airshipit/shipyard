@@ -66,7 +66,7 @@ create configdocs ${collection} --replace --directory=/target
 # Following the creation of a configdocs collection in the Shipyard buffer,
 # the configdocs must be committed before Shipyard is able to use them as
 # part of an action.
-# The other UCP components will be contacted to validate the designs in
+# The other Airship components will be contacted to validate the designs in
 # Deckhand when 'commit configdocs' command is executed. Shipyard will
 # only mark the revision as committed if the validations are successful
 echo -e "Committing Configdocs..."

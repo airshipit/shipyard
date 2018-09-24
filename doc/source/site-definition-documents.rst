@@ -615,7 +615,7 @@ An Example of CLI `describe action` command output, with failed processing::
     step/01BZZK07NF04XPC5F4SCTHNPKN/drydock_nodes                      6            failed
 
 
-.. _`Armada manifest document`: https://airshipit.readthedocs.io/projects/armada/en/latest/operations/guide-build-armada-yaml.html?highlight=manifest
+.. _`Armada manifest document`: https://airship-armada.readthedocs.io/en/latest/operations/guide-build-armada-yaml.html?highlight=manifest
 .. _`Default configuration values`: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/plugins/deployment_configuration_operator.py
 .. _DeploymentConfiguration: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentConfiguration.yaml
 .. _DeploymentStrategy: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentStrategy.yaml

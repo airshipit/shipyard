@@ -220,12 +220,13 @@ SECTIONS = [
             cfg.IntOpt(
                 'validation_connect_timeout',
                 default=5,
-                help='UCP component validation connect timeout (in seconds)'
+                help=('Airship component validation connect timeout '
+                      '(in seconds)')
             ),
             cfg.IntOpt(
                 'validation_read_timeout',
                 default=300,
-                help='UCP component validation timeout (in seconds)'
+                help='Airship component validation timeout (in seconds)'
             ),
         ]
     ),
@@ -252,7 +253,7 @@ SECTIONS = [
             cfg.StrOpt(
                 'ucp_namespace',
                 default='ucp',
-                help='Namespace of UCP Pods'
+                help='Namespace of Airship Pods'
             ),
         ]
     ),

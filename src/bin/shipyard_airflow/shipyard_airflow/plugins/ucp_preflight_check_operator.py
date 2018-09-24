@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 
 class UcpHealthCheckOperator(BaseOperator):
     """
-    UCP Health Checks
+    Airship Health Checks
     """
 
     @apply_defaults
@@ -72,7 +72,7 @@ class UcpHealthCheckOperator(BaseOperator):
         # Set up xcom_pusher to push values to xcom
         self.xcom_pusher = XcomPusher(self.task_instance)
 
-        # Loop through various UCP Components
+        # Loop through various Airship Components
         for component in ucp_components:
 
             # Retrieve Endpoint Information

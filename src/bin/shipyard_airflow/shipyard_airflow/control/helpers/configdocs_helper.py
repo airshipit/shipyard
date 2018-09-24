@@ -409,7 +409,7 @@ class ConfigdocsHelper(object):
                 retry=False)
 
     def _get_validations_from_ucp_components(self, revision_id):
-        """Invoke other UCP components to retrieve their validations"""
+        """Invoke other Airship components to retrieve their validations"""
         resp_msgs = []
         error_count = 0
         design_ref = DesignRefHelper().get_design_reference(revision_id)
@@ -456,11 +456,12 @@ class ConfigdocsHelper(object):
 
         Invokes Deckhand to render the revision, which will either succeed, or
         fail and return validaiton failures. If there are any failures, the
-        process will not proceed to validate against the other UCP components.
+        process will not proceed to validate against the other Airship
+        components.
         Upon success from Deckhand rendering, uses the endpoints for each of
-        the UCP components to validate the version indicated.
+        the Airship components to validate the version indicated.
         Responds in the format defined here:
-        https://github.com/att-comdev/ucp-integration/blob/master/docs/api-conventions.md#post-v10validatedesign
+        https://github.com/openstack/airship-in-a-bottle/blob/master/doc/source/api-conventions.rst#post-v10validatedesign
         """
         resp_msgs = []
         error_count = 0
@@ -491,7 +492,7 @@ class ConfigdocsHelper(object):
                 revision_id)
             resp_msgs.extend(cpnt_msgs)
             error_count += cpnt_ec
-            LOG.debug("UCP component validations: %s", cpnt_ec)
+            LOG.debug("Airship component validations: %s", cpnt_ec)
 
         # return the formatted status response
         return _format_validations_to_status(resp_msgs, error_count)

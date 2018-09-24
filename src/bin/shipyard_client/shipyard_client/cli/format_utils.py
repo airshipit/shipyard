@@ -100,7 +100,7 @@ def cli_format_status_handler(response, is_error=False):
 
 # Map of levels by severity. Extra values are included in this map but valid
 # values are defined here:
-# https://github.com/att-comdev/ucp-integration/blob/master/docs/source/api-conventions.rst#validationmessage-message-type
+# https://github.com/openstack/airship-in-a-bottle/blob/master/doc/source/api-conventions.rst#validationmessage-message-type
 _LEVEL_KEYS = {
     0: ['error', 'fatal'],
     1: ['warn', 'warning'],

@@ -20,11 +20,11 @@ version: 0.1.0
 keywords:
 - shipyard
 - airflow
-home: https://github.com/att-comdev/shipyard
+home: https://github.com/openstack/airship-shipyard
 sources:
 - https://github.com/apache/incubator-airflow
-- https://github.com/att-comdev/aic-helm
+- https://github.com/openstack/airship-shipyard/tree/master/charts/shipyard
 - https://git.openstack.org/cgit/openstack/openstack-helm
 maintainers:
-- name: OpenStack-Helm Authors
+- name: Airship
 engine: gotpl

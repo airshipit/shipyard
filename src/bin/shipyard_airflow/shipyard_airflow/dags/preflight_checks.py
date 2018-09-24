@@ -31,7 +31,7 @@ def all_preflight_checks(parent_dag_name, child_dag_name, args):
         default_args=args)
 
     '''
-    Check that all UCP components are in good state for the purposes
+    Check that all Airship components are in good state for the purposes
     of the Undercloud Platform to proceed with processing.
     '''
     shipyard = UcpHealthCheckOperator(

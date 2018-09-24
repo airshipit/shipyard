@@ -109,7 +109,7 @@ class ShipyardClient(BaseClient):
         """
         :param force: boolean, True|False
         :param dryrun: boolean, True|False
-        :returns: dictionary, validations from UCP components
+        :returns: dictionary, validations from Airship components
         :rtype: Response object
         """
         query_params = {"force": force, "dryrun": dryrun}

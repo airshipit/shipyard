@@ -182,7 +182,7 @@ class CommitConfigDocsResource(BaseResource):
     @api_lock(ApiLockType.CONFIGDOCS_UPDATE)
     def on_post(self, req, resp):
         """
-        Get validations from all UCP components
+        Get validations from all Airship components
         Functionality does not exist yet
         """
         # force and dryrun query parameter is False unless explicitly true

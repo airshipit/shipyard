@@ -261,7 +261,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         Raises DrydockClientUseFailureException if the client raises an
         exception
         See:
-        http://att-comdev-drydock.readthedocs.io/en/latest/task.html#task-status-schema
+        https://airship-drydock.readthedocs.io/en/latest/task.html#task-status-schema
         """
         try:
             return self.drydock_client.get_task(task_id=task_id)
@@ -376,7 +376,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         Raises DrydockClientUseFailureException if the client raises an
         exception
         See:
-        https://att-comdev-drydock.readthedocs.io/en/latest/API.html
+        https://airship-drydock.readthedocs.io/en/latest/API.html
         """
         try:
             return self.drydock_client.get_nodes()

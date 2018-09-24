@@ -36,7 +36,7 @@ SOFTWARE = 'software'
 
 
 def validate_site_design(parent_dag_name, child_dag_name, args, targets=None):
-    """Subdag to delegate design verification to the UCP components
+    """Subdag to delegate design verification to the Airship components
 
     There is no wiring of steps - they all execute in parallel
     """

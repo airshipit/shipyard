@@ -43,7 +43,7 @@ class DeckhandClientFactory(object):
         Notes:
         TODO(bryan-strassner): If/when the airflow plugin modules move to using
             oslo config, consider using the example here:
-            https://github.com/att-comdev/deckhand/blob/cef3b52a104e620e88a24caf70ed2bb1297c268f/deckhand/barbican/client_wrapper.py#L53
+            https://github.com/openstack/airship-deckhand/blob/cef3b52a104e620e88a24caf70ed2bb1297c268f/deckhand/barbican/client_wrapper.py#L53
             which will load the attributes from the config more flexibly.
             Keystoneauth1 also provides for a simpler solution with:
             https://docs.openstack.org/keystoneauth/latest/api/keystoneauth1.loading.html

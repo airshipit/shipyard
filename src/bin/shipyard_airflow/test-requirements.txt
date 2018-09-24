@@ -5,13 +5,13 @@ responses==0.8.1
 testfixtures==5.1.1
 apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.9.0
 
-# Testing - Client libraries for UCP components
-git+https://github.com/att-comdev/deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand
-git+https://github.com/att-comdev/drydock.git@8af92eaf29ca0dd6a129748c132ea7f6593eae83#egg=drydock_provisioner
-git+https://github.com/att-comdev/armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
+# Testing - Client libraries for Airship components
+git+https://github.com/openstack/airship-deckhand.git@3cdf3d2d896d43c6e3bc26170522c3eee0d7158f#egg=deckhand
+git+https://github.com/openstack/airship-drydock.git@8af92eaf29ca0dd6a129748c132ea7f6593eae83#egg=drydock_provisioner
+git+https://github.com/openstack/airship-armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
 # TODO(bryan-strassner) Pin to version for airflow when added to the
 # requirements.txt in the airflow images directory
-git+https://github.com/att-comdev/promenade.git@master#egg=promenade
+git+https://github.com/openstack/airship-promenade.git@master#egg=promenade
 
 
 # Linting

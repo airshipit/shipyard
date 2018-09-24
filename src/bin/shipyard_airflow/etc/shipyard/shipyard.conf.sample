@@ -99,7 +99,7 @@
 # From shipyard_api
 #
 
-# Namespace of UCP Pods (string value)
+# Namespace of Airship Pods (string value)
 #ucp_namespace = ucp
 
 
@@ -363,10 +363,10 @@
 # (integer value)
 #deckhand_client_read_timeout = 300
 
-# UCP component validation connect timeout (in seconds) (integer value)
+# Airship component validation connect timeout (in seconds) (integer value)
 #validation_connect_timeout = 5
 
-# UCP component validation timeout (in seconds) (integer value)
+# Airship component validation timeout (in seconds) (integer value)
 #validation_read_timeout = 300
 
 

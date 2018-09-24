@@ -2,16 +2,16 @@
 A CLI for using a deployed Shipyard API.
 
 Find more documentation for Shipyard on
-[Read the Docs](https://airshipit.readthedocs.io/projects/shipyard/en/latest/)
+[Read the Docs](https://airship-shipyard.readthedocs.io/)
 
 
 ## Getting Started:
 
-[Shipyard @ Gerrithub](https://review.gerrithub.io/#/q/project:att-comdev/shipyard)
+[Shipyard @ Openstack Gerrit](https://review.openstack.org/#/q/project:openstack/airship-shipyard)
 \
-[Helm chart](https://github.com/att-comdev/aic-helm/tree/master/shipyard)
+[Helm chart](https://github.com/openstack/airship-shipyard/tree/master/charts/shipyard)
 
 
 ## See also:
 
-[Undercloud Platform (UCP)](https://github.com/att-comdev/ucp-integration)
+[Airship in a Bottle](https://github.com/openstack/airship-in-a-bottle)

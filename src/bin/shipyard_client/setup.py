@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import setuptools
 
 setuptools.setup(
     name='shipyard_client',
     version='0.1a1',
     description='CLI for Shipyard',
-    url='https://github.com/att-comdev/shipyard',
-    author='AT&T - AIC UCP Developers',
+    url='https://github.com/openstack/airship-shipyard',
+    author='AT&T - Airship Developers',
     license='Apache 2.0',
     packages=setuptools.find_packages(),
     entry_points={

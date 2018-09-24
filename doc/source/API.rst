@@ -342,8 +342,8 @@ Action API
 ----------
 The Shipyard Action API is a resource that allows for creation, control and
 investigation of triggered workflows. These actions encapsulate a command
-interface for the Undercloud Platform. See :ref:`shipyard_action_commands` for
-supported actions
+interface for the Airship Undercloud Platform. See
+:ref:`shipyard_action_commands` for supported actions
 
 /v1.0/actions
 ~~~~~~~~~~~~~

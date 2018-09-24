@@ -44,9 +44,9 @@ LOG = logging.getLogger(__name__)
 
 class UcpBaseOperator(BaseOperator):
 
-    """UCP Base Operator
+    """Airship Base Operator
 
-    All UCP related workflow operators will use the UCP base
+    All Airship related workflow operators will use the Airship base
     operator as the parent and inherit attributes and methods
     from this class
 
@@ -95,7 +95,7 @@ class UcpBaseOperator(BaseOperator):
         self.doc_utils = _get_document_util(self.shipyard_conf)
         self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
-        # Execute UCP base function
+        # Execute Airship base function
         self.ucp_base(context)
 
         # Execute base function
@@ -107,7 +107,7 @@ class UcpBaseOperator(BaseOperator):
 
     def ucp_base(self, context):
 
-        LOG.info("Running UCP Base Operator...")
+        LOG.info("Running Airship Base Operator...")
 
         # Read and parse shiyard.conf
         config = configparser.ConfigParser()
