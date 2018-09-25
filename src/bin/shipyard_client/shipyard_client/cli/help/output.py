@@ -46,6 +46,9 @@ update_software: Starts an update that only exercises the software portion of
 redeploy_server: Using parameters to indicate which server(s), triggers a
                  redeployment of servers to the last committed design and
                  secrets.
+
+relabel_nodes: Using parameters to indicate which server(s), updates the
+               labels for those servers.
     '''
 
 

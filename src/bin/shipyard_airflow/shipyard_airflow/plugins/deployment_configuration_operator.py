@@ -57,6 +57,8 @@ class DeploymentConfigurationOperator(BaseOperator):
         "physical_provisioner.prepare_site_timeout": 300,
         "physical_provisioner.verify_interval": 10,
         "physical_provisioner.verify_timeout": 60,
+        "physical_provisioner.relabel_nodes_interval": 30,
+        "physical_provisioner.relabel_nodes_timeout": 900,
         "kubernetes.node_status_interval": 30,
         "kubernetes.node_status_timeout": 1800,
         "kubernetes_provisioner.drain_timeout": 3600,

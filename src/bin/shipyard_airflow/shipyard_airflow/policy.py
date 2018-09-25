@@ -45,6 +45,7 @@ ACTION_DEPLOY_SITE = 'workflow_orchestrator:action_deploy_site'
 ACTION_UPDATE_SITE = 'workflow_orchestrator:action_update_site'
 ACTION_UPDATE_SOFTWARE = 'workflow_orchestrator:action_update_software'
 ACTION_REDEPLOY_SERVER = 'workflow_orchestrator:action_redeploy_server'
+ACTION_RELABEL_NODES = 'workflow_orchestrator:action_relabel_nodes'
 
 
 class ShipyardPolicy(object):
@@ -247,6 +248,15 @@ class ShipyardPolicy(object):
             ACTION_REDEPLOY_SERVER,
             RULE_ADMIN_REQUIRED,
             'Create a workflow action to redeploy target servers',
+            [{
+                'path': '/api/v1.0/actions',
+                'method': 'POST'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            ACTION_RELABEL_NODES,
+            RULE_ADMIN_REQUIRED,
+            'Create a workflow action to relabel target nodes',
             [{
                 'path': '/api/v1.0/actions',
                 'method': 'POST'

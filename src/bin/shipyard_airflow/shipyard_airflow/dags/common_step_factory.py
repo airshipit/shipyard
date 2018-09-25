@@ -24,6 +24,7 @@ try:
     from airflow.operators import DeploymentConfigurationOperator
     from airflow.operators import DeckhandCreateSiteActionTagOperator
     from airflow.operators import DrydockDestroyNodeOperator
+    from airflow.operators import DrydockRelabelNodesOperator
 except ImportError:
     # for local testing, they are loaded from their source directory
     from shipyard_airflow.plugins.concurrency_check_operator import \
@@ -36,6 +37,8 @@ except ImportError:
         DeckhandCreateSiteActionTagOperator
     from shipyard_airflow.plugins.drydock_destroy_nodes import \
         DrydockDestroyNodeOperator
+    from shipyard_airflow.plugins.drydock_relabel_nodes import \
+        DrydockRelabelNodesOperator
 
 try:
     # modules reside in a flat directory when deployed with dags
@@ -186,6 +189,18 @@ class CommonStepFactory(object):
                 task_id,
                 args=self.default_args,
                 verify_nodes_exist=verify_nodes_exist),
+            task_id=task_id,
+            on_failure_callback=step_failure_handler,
+            dag=self.dag)
+
+    def get_relabel_nodes(self, task_id=dn.RELABEL_NODES_DAG_NAME):
+        """Generate the relabel nodes step
+
+        This step uses Drydock to relabel select nodes.
+        """
+        return DrydockRelabelNodesOperator(
+            main_dag_name=self.parent_dag_name,
+            shipyard_conf=config_path,
             task_id=task_id,
             on_failure_callback=step_failure_handler,
             dag=self.dag)

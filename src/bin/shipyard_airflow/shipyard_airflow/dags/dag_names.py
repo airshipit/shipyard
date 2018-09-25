@@ -18,6 +18,7 @@ ARMADA_BUILD_DAG_NAME = 'armada_build'
 DESTROY_SERVER_DAG_NAME = 'destroy_server'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
 VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
+RELABEL_NODES_DAG_NAME = 'relabel_nodes'
 
 # Steps
 ACTION_XCOM = 'action_xcom'
