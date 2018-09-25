@@ -20,7 +20,7 @@ setuptools.setup(
     description=('Directed acyclic graph controller for Kubernetes and '
                  'OpenStack control plane life cycle management'),
     url='https://github.com/openstack/airship-shipyard',
-    author='AT&T - Airship Developers',
+    author='The Airship Authors',
     license='Apache 2.0',
     packages=setuptools.find_packages(),
     entry_points={
