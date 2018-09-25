@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pytz==2017.2
-pyOpenSSL==17.3.0
-ndg-httpsclient==0.4.3
-pyasn1==0.3.6
-psycopg2==2.7.3.1
-docker-py==1.6.0
-apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.9.0
-python-openstackclient==3.11.0
+pytz==2018.5
+pyOpenSSL==18.0.0
+ndg-httpsclient==0.5.1
+pyasn1==0.4.4
+psycopg2==2.7.5
+docker==3.5.0
+apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.0
+python-openstackclient==3.16.1
 kubernetes>=6.0.0
 
-# Dependencies for other Airship components
-git+https://git.openstack.org/openstack/airship-deckhand@177675e96fffcda9799c68bbce831424c1167020#egg=deckhand
-git+https://github.com/openstack/airship-drydock.git@8af92eaf29ca0dd6a129748c132ea7f6593eae83#egg=drydock_provisioner
-git+https://github.com/openstack/airship-armada.git@7a2ba22ab12a3f1f180b6af4085972ba44853377#egg=armada
+# Dependencies for other UCP components
+git+https://git.openstack.org/openstack/airship-deckhand@d1701774266069dda6eab9e70c7851da7e97919a#egg=deckhand
+git+https://git.openstack.org/openstack/airship-drydock.git@b1d24ad254c04cdbb4dc4e06f2bfe92c266aad70#egg=drydock_provisioner&subdirectory=python
+git+https://git.openstack.org/openstack/airship-armada.git@90618f549c1f6d7741b11dc5c4898f3c6d536895#egg=armada
 

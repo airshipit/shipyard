@@ -89,7 +89,7 @@ def test_get_revision_id(ti):
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
     ti = airflow.models.TaskInstance(task=mock.MagicMock(),
-                                     execution_date="no")
+                                     execution_date=None)
     rid = dco.get_revision_id(ti)
     assert rid == 2
 
@@ -101,7 +101,8 @@ def test_get_revision_id_none(ti):
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
-    ti = airflow.models.TaskInstance(task=mock.MagicMock(), execution_date="o")
+    ti = airflow.models.TaskInstance(task=mock.MagicMock(),
+                                     execution_date=None)
     with pytest.raises(AirflowException) as expected_exc:
         rid = dco.get_revision_id(ti)
     assert "Design_revision is not set." in str(expected_exc)

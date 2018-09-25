@@ -24,6 +24,7 @@ ENV container docker
 ENV WEB_PORT 8080
 ENV FLOWER_PORT 5555
 ENV WORKER_PORT 8793
+ENV SLUGIFY_USES_TEXT_UNIDECODE yes
 
 # Expose port for applications
 EXPOSE $WEB_PORT
@@ -36,7 +37,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.8.6
+ARG KUBECTL_VERSION=1.10.2
 
 RUN set -ex && \
     apt-get -qq update && \
