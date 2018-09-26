@@ -46,9 +46,6 @@ class DeckhandRetrieveRenderedDocOperator(DeckhandBaseOperator):
             LOG.info("Successfully Retrieved Rendered Document")
 
         except:
-            # Dump logs from Deckhand pods
-            self.get_k8s_logs()
-
             raise AirflowException("Failed to Retrieve Rendered Document!")
 
 

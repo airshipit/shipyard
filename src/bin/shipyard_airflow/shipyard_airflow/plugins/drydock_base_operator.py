@@ -179,9 +179,6 @@ class DrydockBaseOperator(UcpBaseOperator):
                 node_filter=self.node_filter)
 
         except errors.ClientError as client_error:
-            # Dump logs from Drydock pods
-            self.get_k8s_logs()
-
             raise DrydockClientUseFailureException(client_error)
 
         # Retrieve Task ID
@@ -221,7 +218,6 @@ class DrydockBaseOperator(UcpBaseOperator):
                 LOG.info("Current status of task id %s is %s",
                          self.drydock_task_id, task_status)
             except DrydockClientUseFailureException:
-                self.get_k8s_logs()
                 raise
             except:
                 # There can be situations where there are intermittent network
@@ -234,10 +230,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                 # TODO(bryan-strassner) If Shipyard has timed out waiting for
                 #     this task to complete, and Drydock has provided a means
                 #     to cancel a task, that cancellation should be done here.
-
-                # task_failure only exits with an exception, so this is the
-                # end of processing in the  case of a timeout.
-                self.task_failure(False)
+                raise DrydockTaskTimeoutException("Task Execution Timed Out!")
 
             # Exit 'for' loop if the task is in 'complete' or 'terminated'
             # state
@@ -252,7 +245,8 @@ class DrydockBaseOperator(UcpBaseOperator):
             LOG.info('Task id %s has been successfully completed',
                      self.drydock_task_id)
         else:
-            self.task_failure(True)
+            raise DrydockTaskFailedException(
+                "Failed to Execute/Complete Task!")
 
     def get_task_dict(self, task_id):
         """Retrieve task output in its raw dictionary format
@@ -268,10 +262,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         except errors.ClientError as client_error:
             raise DrydockClientUseFailureException(client_error)
 
-    def task_failure(self, _task_failure):
-        # Dump logs from Drydock pods
-        self.get_k8s_logs()
-
+    def fetch_failure_details(self):
         LOG.info('Retrieving all tasks records from Drydock...')
 
         try:
@@ -297,21 +288,14 @@ class DrydockBaseOperator(UcpBaseOperator):
 
             LOG.error(pprint.pprint(failed_parent_task[0]))
 
-        # Get the list of subtasks belonging to the failed parent task
-        parent_subtask_id_list = failed_parent_task[0]['subtask_id_list']
+            # Get the list of subtasks belonging to the failed parent task
+            parent_subtask_id_list = failed_parent_task[0]['subtask_id_list']
 
-        # Check for failed subtasks
-        self.check_subtask_failure(parent_subtask_id_list)
-
-        # Raise Exception to terminate workflow
-        if _task_failure:
-            raise DrydockTaskFailedException(
-                "Failed to Execute/Complete Task!"
-            )
+            # Check for failed subtasks
+            self.check_subtask_failure(parent_subtask_id_list)
         else:
-            raise DrydockTaskTimeoutException(
-                "Task Execution Timed Out!"
-            )
+            LOG.info("No failed parent task found for task_id %s",
+                     self.drydock_task_id)
 
     def check_subtask_failure(self, subtask_id_list):
 

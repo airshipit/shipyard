@@ -57,16 +57,10 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
                              timeout=self.validation_read_timeout).text)
 
         except requests.exceptions.RequestException as e:
-            # Dump logs from Deckhand pods
-            self.get_k8s_logs()
-
             raise AirflowException(e)
 
         if (any([str(v.get('status', 'unspecified')).lower() == 'failure'
                 for v in retrieved_list.get('results', [])])):
-            # Dump logs from Deckhand pods
-            self.get_k8s_logs()
-
             raise AirflowException("DeckHand Site Design Validation Failed!")
         else:
             LOG.info("Revision %d has been successfully validated",

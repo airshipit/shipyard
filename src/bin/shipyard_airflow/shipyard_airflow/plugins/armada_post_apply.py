@@ -69,9 +69,6 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
                 timeout=timeout)
 
         except errors.ClientError as client_error:
-            # Dump logs from Armada API pods
-            self.get_k8s_logs()
-
             raise AirflowException(client_error)
 
         # if this is a retry, assume that the airflow worker needs to be

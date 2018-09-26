@@ -61,9 +61,6 @@ class ArmadaGetStatusOperator(ArmadaBaseOperator):
                      armada_get_status['tiller']['version'])
 
         else:
-            # Dump logs from Armada API pods
-            self.get_k8s_logs()
-
             raise AirflowException("Please check Tiller!")
 
 
