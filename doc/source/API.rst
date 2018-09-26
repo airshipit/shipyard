@@ -972,21 +972,25 @@ Site Statuses API
 Site Statuses API retrieves node provision status and/or node power state
 for all nodes in the site.
 
-/v1.0/site-statuses
+/v1.0/site_statuses
 ~~~~~~~~~~~~~~~~~~~
 
-GET /v1.0/site-statuses
+GET /v1.0/site_statuses
 ^^^^^^^^^^^^^^^^^^^^^^^
 Returns the dictionary with nodes provision status and nodes power state status
 
 Query Parameters
 ''''''''''''''''
 - filters=nodes-provision-status,machines-power-state
-  filters query parameter allows to specify one or more status types to return statuses
-  of those types. The filter value ``nodes-provision-status`` will fetch provisioning
-  statuses of all nodes in the site. The filter value ``machines-power-state`` will fetch
-  power states of all baremetal machines in the site. By omitting the filters
-  query parameter, statuses of all status types will be returned.
+  filters query parameter allows to specify one or more status types to return
+  statuses of those types. The filter value ``nodes-provision-status`` will
+  fetch provisioning statuses of all nodes in the site. The filter value
+  ``machines-power-state`` will fetch power states of all baremetal machines
+  in the site. By omitting the filters query parameter, statuses of all status
+  types will be returned. To specify multiple items explicitly, separate items
+  with the URL encoded version of a comma: %2C. e.g.::
+
+    &filters=nodes-provision-status%2Cmachines-power-state
 
 Responses
 '''''''''
@@ -1000,7 +1004,7 @@ Example
 
 ::
 
-    $ curl -X GET $URL/api/v1.0/site-statuses -H "X-Auth-Token:$TOKEN"
+    $ curl -X GET $URL/api/v1.0/site_statuses -H "X-Auth-Token:$TOKEN"
 
     HTTP/1.1 200 OK
     x-shipyard-req: 0804d13e-08fc-4e60-a819-3b7532cac4ec
@@ -1033,7 +1037,7 @@ Example
 
 ::
 
-    $ curl -X GET $URL/api/v1.0/site-statuses?filters=nodes-provision-status \
+    $ curl -X GET $URL/api/v1.0/site_statuses?filters=nodes-provision-status \
            -H "X-Auth-Token:$TOKEN"
 
     HTTP/1.1 200 OK
@@ -1057,7 +1061,7 @@ Example
 
 ::
 
-    $ curl -X GET $URL/api/v1.0/site-statuses?filters=machines-power-state \
+    $ curl -X GET $URL/api/v1.0/site_statuses?filters=machines-power-state \
            -H "X-Auth-Token:$TOKEN"
 
     HTTP/1.1 200 OK
@@ -1081,7 +1085,7 @@ Example
 
  ::
 
-    $ curl -X GET $URL/api/v1.0/site-statuses?filters=nodes-provision-status,machines-power-state \
+    $ curl -X GET $URL/api/v1.0/site_statuses?filters=nodes-provision-status%2Cmachines-power-state \
                -H "X-Auth-Token:$TOKEN"
 
     HTTP/1.1 200 OK
