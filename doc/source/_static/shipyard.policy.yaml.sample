@@ -82,3 +82,7 @@
 # POST  /api/v1.0/actions
 #"workflow_orchestrator:action_redeploy_server": "rule:admin_required"
 
+# Create a workflow action to relabel target nodes
+# POST  /api/v1.0/actions
+#"workflow_orchestrator:action_relabel_nodes": "rule:admin_required"
+
