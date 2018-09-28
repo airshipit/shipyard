@@ -156,12 +156,10 @@ class ConfigdocsHelper(object):
             if committed_rev:
                 committed_rev_id = committed_rev['id']
             if committed_rev_id is None:
-                # TODO (bryan-strassner) use rollback to 0 if/when that
-                #     is implemented in deckhand.
-                #     reset_to_empty has side effect of deleting history
-                #     from deckhand although it is only the corner case
-                #     where no commit has ever been done.
-                self.deckhand.reset_to_empty()
+                # Simulate rolling back to a blank revision history, which
+                # creates an empty revision with no documents, while still
+                # retaining the previous revision history.
+                self.deckhand.rollback(0)
             else:
                 self.deckhand.rollback(committed_rev_id)
             return True

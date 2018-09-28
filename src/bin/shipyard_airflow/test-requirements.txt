@@ -5,14 +5,9 @@ responses==0.8.1
 testfixtures==5.1.1
 apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.0
 
-# Testing - Client libraries for UCP components
-git+https://git.openstack.org/openstack/airship-deckhand@d1701774266069dda6eab9e70c7851da7e97919a#egg=deckhand
-git+https://git.openstack.org/openstack/airship-drydock.git@b1d24ad254c04cdbb4dc4e06f2bfe92c266aad70#egg=drydock_provisioner&subdirectory=python
-git+https://git.openstack.org/openstack/airship-armada.git@90618f549c1f6d7741b11dc5c4898f3c6d536895#egg=armada
 # TODO(bryan-strassner) Pin to version for airflow when added to the
 # requirements.txt in the airflow images directory
 git+https://git.openstack.org/openstack/airship-promenade.git@master#egg=promenade
-
 
 # Linting
 flake8==3.3.0
