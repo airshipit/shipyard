@@ -21,6 +21,7 @@ from oslo_config import cfg
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.helpers.action_helper import ActionsHelper
+from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -116,18 +117,29 @@ class ActionsStepsLogsResource(BaseResource):
         """
         Retrieve Logs
         """
-        try:
-            LOG.debug("Retrieving Airflow logs...")
 
+        LOG.debug("Retrieving Airflow logs...")
+        try:
             response = requests.get(
                 log_endpoint,
                 timeout=(
                     CONF.requests_config.airflow_log_connect_timeout,
                     CONF.requests_config.airflow_log_read_timeout))
-
-            return response.text
-
         except requests.exceptions.RequestException as e:
-            LOG.info(e)
-            LOG.info("Unable to retrieve requested logs")
-            return []
+            LOG.exception(e)
+            raise ApiError(
+                title='Log retrieval error',
+                description='Exception happened during Airflow API request',
+                status=falcon.HTTP_500)
+        if response.status_code >= 400:
+            LOG.info('Airflow endpoint returned error status code %s, '
+                     'content %s. Response code will be bubbled up',
+                     response.status_code, response.text)
+            raise ApiError(
+                title='Log retrieval error',
+                description='Airflow endpoint returned error status code',
+                status=getattr(
+                    falcon,
+                    'HTTP_%d' % response.status_code,
+                    falcon.HTTP_500))
+        return response.text
