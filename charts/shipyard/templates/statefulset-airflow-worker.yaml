@@ -127,8 +127,6 @@ spec:
           readinessProbe:
             tcpSocket:
               port: {{ .Values.network.airflow.worker.port }}
-          securityContext:
-            privileged: true
           volumeMounts:
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
@@ -179,8 +177,6 @@ spec:
                 ps -ef | grep 'sleep 3600' | grep -v 'grep'
             initialDelaySeconds: 15
             periodSeconds: 15
-          securityContext:
-            privileged: true
           volumeMounts:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
