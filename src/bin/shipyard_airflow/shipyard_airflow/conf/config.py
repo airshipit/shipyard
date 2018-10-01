@@ -228,6 +228,17 @@ SECTIONS = [
                 default=300,
                 help='Airship component validation timeout (in seconds)'
             ),
+            cfg.IntOpt(
+                'notes_connect_timeout',
+                default=5,
+                help=('Maximum time to wait to connect to a note source URL '
+                      '(in seconds)')
+            ),
+            cfg.IntOpt(
+                'notes_read_timeout',
+                default=10,
+                help='Read timeout for a note source URL (in seconds)'
+            ),
         ]
     ),
     ConfigSection(

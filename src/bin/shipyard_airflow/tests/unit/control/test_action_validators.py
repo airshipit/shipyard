@@ -58,7 +58,6 @@ def get_doc_returner(style, ds_name):
                 # if passed a name of 'defaulted' clear the section
                 if ds_name == 'defaulted':
                     dc.data["physical_provisioner"] = None
-                print(dc.__dict__)
                 return [dc]
             elif doc == 'dep-strat':
                 return [strategy]

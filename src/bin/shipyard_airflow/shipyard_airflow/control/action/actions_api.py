@@ -32,6 +32,7 @@ from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.helpers import configdocs_helper
 from shipyard_airflow.control.helpers.configdocs_helper import (
     ConfigdocsHelper)
+from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.control.json_schemas import ACTION
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
@@ -182,6 +183,10 @@ class ActionsResource(BaseResource):
 
         # insert the action into the shipyard db
         self.insert_action(action=action)
+        notes_helper.make_action_note(
+            action_id=action['id'],
+            note_val="Configdoc revision {}".format(action['committed_rev_id'])
+        )
         self.audit_control_command_db({
             'id': ulid.ulid(),
             'action_id': action['id'],
@@ -202,6 +207,7 @@ class ActionsResource(BaseResource):
         all_dag_runs = self.get_dag_run_map()
         all_tasks = self.get_all_tasks_db()
 
+        notes = notes_helper.get_all_action_notes(verbosity=1)
         # correlate the actions and dags into a list of action entites
         actions = []
 
@@ -222,6 +228,9 @@ class ActionsResource(BaseResource):
                     '%Y-%m-%dT%H:%M:%S') == dag_key_date
             ]
             action['steps'] = format_action_steps(action_id, action_tasks)
+            action['notes'] = []
+            for note in notes.get(action_id, []):
+                action['notes'].append(note.view())
             actions.append(action)
 
         return actions
