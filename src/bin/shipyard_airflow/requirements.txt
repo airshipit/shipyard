@@ -35,6 +35,9 @@ SQLAlchemy==1.2.12
 ulid==1.1
 uwsgi==2.0.17
 
+# To support profiling in non-prod
+Werkzeug==0.14.1
+
 # Dependencies for other UCP components
 git+https://git.openstack.org/openstack/airship-deckhand@0b5aa2e98a1ab5ab8a58c9dec3c1f88ef00d17a9#egg=deckhand
 git+https://git.openstack.org/openstack/airship-drydock.git@b1d24ad254c04cdbb4dc4e06f2bfe92c266aad70#egg=drydock_provisioner&subdirectory=python

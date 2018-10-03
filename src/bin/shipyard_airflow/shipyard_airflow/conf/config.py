@@ -91,6 +91,12 @@ SECTIONS = [
                 default='/home/shipyard/shipyard',
                 help='The directory containing the alembic.ini file'
             ),
+            cfg.BoolOpt(
+                'profiler',
+                default=False,
+                help=('Enable profiling of API requests. Do NOT '
+                      'use in production.')
+            ),
         ]
     ),
     ConfigSection(

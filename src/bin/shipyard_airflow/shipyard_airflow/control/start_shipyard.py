@@ -16,7 +16,10 @@
 Sets up the global configurations for the Shipyard service. Hands off
 to the api startup to handle the Falcon specific setup.
 """
+import logging
+
 from oslo_config import cfg
+from werkzeug.contrib.profiler import ProfilerMiddleware
 
 from shipyard_airflow.conf import config
 import shipyard_airflow.control.api as api
@@ -24,6 +27,7 @@ from shipyard_airflow.control.logging.logging_config import LoggingConfig
 from shipyard_airflow import policy
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 
 
 def start_shipyard(default_config_files=None):
@@ -40,4 +44,11 @@ def start_shipyard(default_config_files=None):
     policy.policy_engine.register_policy()
 
     # Start the API
-    return api.start_api()
+    if CONF.base.profiler:
+        LOG.warning("Profiler ENABLED. Expect significant "
+                    "performance overhead.")
+        return ProfilerMiddleware(
+            api.start_api(),
+            profile_dir="/tmp/profiles")  # nosec
+    else:
+        return api.start_api()
