@@ -15,8 +15,13 @@ from datetime import datetime
 from unittest import mock
 from unittest.mock import patch
 
+import falcon
+import pytest
+import requests
+
 from shipyard_airflow.control.action.actions_steps_id_logs_api import \
     ActionsStepsLogsResource
+from shipyard_airflow.errors import ApiError
 from tests.unit.control import common
 
 # Define Global Variables
@@ -194,3 +199,23 @@ class TestActionsStepsLogsEndpoint():
         result = action_logs_resource.retrieve_logs(log_endpoint)
 
         assert result == XCOM_RUN_LOGS
+
+    @mock.patch('requests.get')
+    def test_retrieve_logs_404(self, mock_get):
+        mock_get.return_value.status_code = 404
+        action_logs_resource = ActionsStepsLogsResource()
+        with pytest.raises(ApiError) as e:
+            action_logs_resource.retrieve_logs(None)
+        assert ('Airflow endpoint returned error status code' in
+                e.value.description)
+        assert falcon.HTTP_404 == e.value.status
+
+    @mock.patch('requests.get')
+    def test_retrieve_logs_error(self, mock_get):
+        mock_get.side_effect = requests.exceptions.ConnectionError
+        action_logs_resource = ActionsStepsLogsResource()
+        with pytest.raises(ApiError) as e:
+            action_logs_resource.retrieve_logs(None)
+        assert ("Exception happened during Airflow API request" in
+                e.value.description)
+        assert falcon.HTTP_500 == e.value.status

@@ -1151,6 +1151,10 @@ try={int try_number}
 Responses
 '''''''''
 200 OK
+4xx or 5xx
+
+A 4xx or 5xx code will be returned if some error happens during
+Airflow HTTP request or Airflow responds with a status code of 400 or greater.
 
 Example
 '''''''
