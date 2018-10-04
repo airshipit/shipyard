@@ -16,9 +16,10 @@ from datetime import datetime
 import falcon
 import logging
 
+from shipyard_airflow.common.notes.notes import MIN_VERBOSITY
+from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
-
 
 LOG = logging.getLogger(__name__)
 
@@ -49,25 +50,43 @@ def determine_lifecycle(dag_status=None):
     return lifecycle
 
 
-def format_action_steps(action_id, steps):
-    """ Converts a list of action step db records to desired format """
+def format_action_steps(action_id, steps, verbosity=MIN_VERBOSITY):
+    """ Converts a list of action step db records to desired format
+
+    :param action_id: the action containing steps
+    :param steps: the list of dictionaries of step info, in database format
+    :param verbosity: the verbosity level of notes to retrieve, defaults to 1.
+        if set to a value less than 1, notes will not be retrieved.
+    """
     if not steps:
         return []
     steps_response = []
+    step_notes_dict = notes_helper.get_all_step_notes_for_action(
+        action_id=action_id,
+        verbosity=verbosity
+    )
     for idx, step in enumerate(steps):
-        steps_response.append(format_step(action_id=action_id,
-                                          step=step,
-                                          index=idx + 1))
+        step_task_id = step.get('task_id')
+        steps_response.append(
+            format_step(
+                action_id=action_id,
+                step=step,
+                index=idx + 1,
+                notes=[
+                    note.view()
+                    for note in step_notes_dict.get(step_task_id, [])
+                ]))
     return steps_response
 
 
-def format_step(action_id, step, index):
+def format_step(action_id, step, index, notes):
     """ reformat a step (dictionary) into a common response format """
     return {
         'url': '/actions/{}/steps/{}'.format(action_id, step.get('task_id')),
         'state': step.get('state'),
         'id': step.get('task_id'),
-        'index': index
+        'index': index,
+        'notes': notes
     }
 
 

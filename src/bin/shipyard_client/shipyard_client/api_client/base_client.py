@@ -86,6 +86,7 @@ class BaseClient(metaclass=abc.ABCMeta):
                 'content-type': content_type,
                 'X-Auth-Token': self.get_token()
             }
+            query_params['verbosity'] = self.context.verbosity
             self.debug('Post request url: ' + url)
             self.debug('Query Params: ' + str(query_params))
             # This could use keystoneauth1 session, but that library handles
@@ -112,6 +113,7 @@ class BaseClient(metaclass=abc.ABCMeta):
                 'X-Context-Marker': self.context.context_marker,
                 'X-Auth-Token': self.get_token()
             }
+            query_params['verbosity'] = self.context.verbosity
             self.debug('url: ' + url)
             self.debug('Query Params: ' + str(query_params))
             response = requests.get(url, params=query_params, headers=headers)

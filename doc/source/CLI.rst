@@ -47,7 +47,7 @@ These OpenStack identity variables are not supported by shipyard.
 Shipyard command options
 ------------------------
 The base shipyard command supports options that determine cross-CLI behaviors.
-These options are positionally immediately following the shipyard command as
+These options are positioned immediately following the shipyard command as
 shown here:
 
 ::
@@ -59,6 +59,7 @@ shown here:
       [--debug/--no-debug]
       [--os-{various}=<value>]
       [--output-format=[format | raw | cli]]  (default = cli)
+      [--verbosity=[0-5]  (default = 1)
       <subcommands, as noted in this document>
 
 
@@ -94,6 +95,16 @@ shown here:
   -  cli (default)
        Display results in a plain text interpretation of the response from the
        invoked Shipyard API.
+
+\--verbosity=<0-5>
+  Integer value specifying the level of verbosity for the response information
+  gathered from the API server. Setting a verbosity of ``0`` will remove all
+  additional information from the response, a verbosity setting of ``1`` will
+  include summary level notes and information, and ``5`` will include all
+  available information. This setting does not necessarily effect all of the
+  CLI commands, but may be set on all invocations. A default value of ``1`` is
+  used if not specified.
+
 
 Commit Commands
 ---------------
@@ -415,20 +426,26 @@ Sample
     Context Marker:        71d4112e-8b6d-44e8-9617-d9587231ffba
     User:                  shipyard
 
-    Steps                                                              Index        State
+    Steps                                                              Index        State     Notes
     step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom                        1            success
     step/01BZZK07NF04XPC5F4SCTHNPKN/dag_concurrency_check              2            success
-    step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        3            failed
+    step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        3            failed    (1)
     step/01BZZK07NF04XPC5F4SCTHNPKN/validate_site_design               4            None
     step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        5            failed
     step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        6            failed
     step/01BZZK07NF04XPC5F4SCTHNPKN/drydock_build                      7            None
+
+    (1):
+
+    step metadata: deckhand_get_design_version(2017-11-27 20:34:34.443053): Unable to determine version
 
     Commands        User            Datetime
     invoke          shipyard        2017-11-27 20:34:34.443053+00:00
 
     Validations: None
 
+    Notes:
+    action metadata: 01BZZK07NF04XPC5F4SCTHNPKN(2017-11-27 20:34:24.610604): Invoked using revision 3
 
 describe step
 ~~~~~~~~~~~~~
@@ -573,9 +590,18 @@ Sample
 ::
 
     $ shipyard get actions
-    Name               Action                                   Lifecycle
-    deploy_site        action/01BZZK07NF04XPC5F4SCTHNPKN        Failed
-    update_site        action/01BZZKMW60DV2CJZ858QZ93HRS        Processing
+    Name               Action                                   Lifecycle        Execution Time             Step Succ/Fail/Oth        Notes
+    deploy_site        action/01BTP9T2WCE1PAJR2DWYXG805V        Failed           2017-09-23T02:42:12        12/1/3                     (1)
+    update_site        action/01BZZKMW60DV2CJZ858QZ93HRS        Processing       2017-09-23T04:12:21        6/0/10                     (2)
+
+    (1):
+
+    action metadata:01BTP9T2WCE1PAJR2DWYXG805V(2017-09-23 02:42:23.346534): Invoked with revision 3
+
+    (2):
+
+    action metadata:01BZZKMW60DV2CJZ858QZ93HRS(2017-09-23 04:12:31.465342): Invoked with revision 4
+
 
 get configdocs
 ~~~~~~~~~~~~~~

@@ -24,18 +24,36 @@ def gen_action_steps(step_list, action_id):
     Returns a string representation of the table.
     """
     # Generate the steps table.
-    steps = format_utils.table_factory(field_names=['Steps', 'Index', 'State'])
+    steps = format_utils.table_factory(
+        field_names=['Steps', 'Index', 'State', 'Notes']
+    )
+    # rendered notes , a list of lists of notes
+    r_notes = []
+
     if step_list:
         for step in step_list:
+            notes = step.get('notes')
+            if notes:
+                r_notes.append(format_utils.format_notes(notes))
             steps.add_row([
                 'step/{}/{}'.format(action_id, step.get('id')),
                 step.get('index'),
-                step.get('state')
+                step.get('state'),
+                "({})".format(len(r_notes)) if notes else ""
             ])
     else:
-        steps.add_row(['None', '', ''])
+        steps.add_row(['None', '', '', ''])
 
-    return format_utils.table_get_string(steps)
+    table_string = format_utils.table_get_string(steps)
+
+    if r_notes:
+        note_index = 1
+        for note_list in r_notes:
+            table_string += "\n\n({}):\n\n{}".format(
+                note_index, "\n".join(note_list)
+            )
+            note_index += 1
+    return table_string
 
 
 def gen_action_commands(command_list):
@@ -123,21 +141,36 @@ def gen_action_table(action_list):
     """
     actions = format_utils.table_factory(
         field_names=['Name', 'Action', 'Lifecycle', 'Execution Time',
-                     'Step Succ/Fail/Oth'])
+                     'Step Succ/Fail/Oth', 'Notes'])
+    # list of lists of rendered notes
+    r_notes = []
     if action_list:
         # sort by id, which is ULID - chronological.
         for action in sorted(action_list, key=lambda k: k['id']):
+            notes = action.get('notes')
+            if notes:
+                r_notes.append(format_utils.format_notes(notes))
             actions.add_row([
                 action.get('name'),
                 'action/{}'.format(action.get('id')),
                 action.get('action_lifecycle'),
                 action.get('dag_execution_date'),
-                _step_summary(action.get('steps', []))
+                _step_summary(action.get('steps', [])),
+                "({})".format(len(r_notes)) if notes else ""
             ])
     else:
-        actions.add_row(['None', '', '', '', ''])
+        actions.add_row(['None', '', '', '', '', ''])
 
-    return format_utils.table_get_string(actions)
+    table_string = format_utils.table_get_string(actions)
+
+    if r_notes:
+        note_index = 1
+        for note_list in r_notes:
+            table_string += "\n\n({}):\n\n{}".format(
+                note_index, "\n".join(note_list)
+            )
+            note_index += 1
+    return table_string
 
 
 def _step_summary(step_list):
@@ -336,3 +369,14 @@ def _site_statuses_switcher(status_type):
     call_func = status_func_switcher.get(status_type, lambda: None)
 
     return call_func
+
+def gen_detail_notes(dict_with_notes):
+    """Generates a standard formatted section of notes
+
+    :param dict_with_notes: a dictionary with a possible notes field.
+    :returns: string of notes or empty string if there were no notes
+    """
+    n_strings = format_utils.format_notes(dict_with_notes.get('notes', []))
+    if n_strings:
+        return "Notes:\n{}".format("\n".join(n_strings))
+    return ""

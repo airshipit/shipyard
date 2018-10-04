@@ -301,7 +301,7 @@ def test_get_all_actions(*args):
     action_resource.get_all_actions_db = actions_db
     action_resource.get_all_dag_runs_db = dag_runs_db
     action_resource.get_all_tasks_db = tasks_db
-    result = action_resource.get_all_actions()
+    result = action_resource.get_all_actions(verbosity=1)
     assert len(result) == len(actions_db())
     for action in result:
         if action['name'] == 'dag_it':
@@ -327,7 +327,7 @@ def test_get_all_actions_notes(*args):
     nh.make_action_note('aaaaaa', "hello from aaaaaa2")
     nh.make_action_note('bbbbbb', "hello from bbbbbb")
 
-    result = action_resource.get_all_actions()
+    result = action_resource.get_all_actions(verbosity=1)
     assert len(result) == len(actions_db())
     for action in result:
         if action['id'] == 'aaaaaa':

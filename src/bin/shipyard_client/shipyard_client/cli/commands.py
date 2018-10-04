@@ -61,17 +61,24 @@ from shipyard_client.cli.input_checks import check_control_action, check_id
 @click.option(
     '--os-auth-url', envvar='OS_AUTH_URL', required=False)
 # Allows context (ctx) to be passed
+@click.option(
+    '--verbosity',
+    '-v',
+    required=False,
+    type=click.IntRange(0, 5),
+    default=1)
 @click.pass_context
 def shipyard(ctx, context_marker, debug, os_project_domain_name,
              os_user_domain_name, os_project_name, os_username, os_password,
-             os_auth_url, output_format):
+             os_auth_url, output_format, verbosity):
     """
     COMMAND: shipyard \n
     DESCRIPTION: The base shipyard command supports options that determine
     cross-CLI behaviors. These options are positioned immediately following
     the shipyard command. \n
     FORMAT: shipyard [--context-marker=<uuid>] [--os_{various}=<value>]
-    [--debug/--no-debug] [--output-format=<json,yaml,raw] <subcommands> \n
+    [--debug/--no-debug] [--output-format=<json,yaml,raw] [--verbosity=<0-5>]
+    <subcommands> \n
     """
     if not ctx.obj:
         ctx.obj = {}
@@ -99,7 +106,8 @@ def shipyard(ctx, context_marker, debug, os_project_domain_name,
     ctx.obj['API_PARAMETERS'] = {
         'auth_vars': auth_vars,
         'context_marker': str(context_marker) if context_marker else None,
-        'debug': debug
+        'debug': debug,
+        'verbosity': verbosity,
     }
 
     ctx.obj['FORMAT'] = output_format

@@ -111,7 +111,9 @@ class ActionsResource(BaseResource):
         Return actions that have been invoked through shipyard.
         :returns: a json array of action entities
         """
-        resp.body = self.to_json(self.get_all_actions())
+        resp.body = self.to_json(self.get_all_actions(
+            verbosity=req.context.verbosity)
+        )
         resp.status = falcon.HTTP_200
 
     @policy.ApiEnforcer(policy.CREATE_ACTION)
@@ -203,8 +205,12 @@ class ActionsResource(BaseResource):
 
         return action
 
-    def get_all_actions(self):
-        """
+    def get_all_actions(self, verbosity):
+        """Retrieve all actions known to Shipyard
+
+        :param verbosity: Integer 0-5, the level of verbosity applied to the
+            response's notes.
+
         Interacts with airflow and the shipyard database to return the list of
         actions invoked through shipyard.
         """
@@ -214,7 +220,7 @@ class ActionsResource(BaseResource):
         all_dag_runs = self.get_dag_run_map()
         all_tasks = self.get_all_tasks_db()
 
-        notes = notes_helper.get_all_action_notes(verbosity=1)
+        notes = notes_helper.get_all_action_notes(verbosity=verbosity)
         # correlate the actions and dags into a list of action entites
         actions = []
 
@@ -234,7 +240,11 @@ class ActionsResource(BaseResource):
                 step['execution_date'].strftime(
                     '%Y-%m-%dT%H:%M:%S') == dag_key_date
             ]
-            action['steps'] = format_action_steps(action_id, action_tasks)
+            action['steps'] = format_action_steps(
+                action_id=action_id,
+                steps=action_tasks,
+                verbosity=0
+            )
             action['notes'] = []
             for note in notes.get(action_id, []):
                 action['notes'].append(note.view())

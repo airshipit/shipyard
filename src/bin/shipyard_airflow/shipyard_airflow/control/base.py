@@ -19,6 +19,7 @@ import falcon
 import falcon.request as request
 import falcon.routing as routing
 
+from shipyard_airflow.common.notes.notes import MIN_VERBOSITY
 from shipyard_airflow.control.json_schemas import validate_json
 from shipyard_airflow.errors import InvalidFormatError
 
@@ -104,6 +105,7 @@ class ShipyardRequestContext(object):
         self.project_domain_id = None  # Domain owning project
         self.is_admin_project = False
         self.authenticated = False
+        self.verbosity = MIN_VERBOSITY
 
     def set_user(self, user):
         self.user = user

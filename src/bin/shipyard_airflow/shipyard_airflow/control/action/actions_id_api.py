@@ -19,6 +19,8 @@ from shipyard_airflow.control.helpers.action_helper import (
     determine_lifecycle,
     format_action_steps
 )
+from shipyard_airflow.common.notes.notes import MIN_VERBOSITY
+from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 
@@ -34,13 +36,21 @@ class ActionsIdResource(BaseResource):
         Return actions that have been invoked through shipyard.
         :returns: a json array of action entities
         """
-        resp.body = self.to_json(self.get_action(kwargs['action_id']))
+        resp.body = self.to_json(self.get_action(
+            action_id=kwargs['action_id'],
+            verbosity=req.context.verbosity
+        ))
         resp.status = falcon.HTTP_200
 
-    def get_action(self, action_id):
+    def get_action(self, action_id, verbosity):
         """
         Interacts with airflow and the shipyard database to return the
         requested action invoked through shipyard.
+        :param action_id: the action_id to look up
+        :param verbosity: the maximum verbosity for the associated action.
+            note that the associated steps will only support a verbosity
+            of 1 when retrieving an action (but support more verbosity when
+            retreiving the step itself)
         """
         # get the action from shipyard db
         action = self.get_action_db(action_id=action_id)
@@ -61,9 +71,22 @@ class ActionsIdResource(BaseResource):
             # put the values together into an "action" object
             action['dag_status'] = dag['state']
             action['action_lifecycle'] = determine_lifecycle(dag['state'])
-            action['steps'] = format_action_steps(action_id, steps)
+            step_verbosity = MIN_VERBOSITY if (
+                verbosity > MIN_VERBOSITY) else verbosity
+            action['steps'] = format_action_steps(
+                action_id=action_id,
+                steps=steps,
+                verbosity=step_verbosity
+            )
         action['validations'] = self.get_validations_db(action_id)
         action['command_audit'] = self.get_action_command_audit_db(action_id)
+        notes = notes_helper.get_action_notes(
+            action_id=action_id,
+            verbosity=verbosity
+        )
+        action['notes'] = []
+        for note in notes:
+            action['notes'].append(note.view())
         return action
 
     def get_dag_run_by_id(self, dag_id, execution_date):

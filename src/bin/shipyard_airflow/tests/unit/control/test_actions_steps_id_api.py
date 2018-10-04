@@ -16,15 +16,29 @@ from unittest.mock import patch
 
 import pytest
 
-from shipyard_airflow.errors import ApiError
+from shipyard_airflow.common.notes.notes import NotesManager
+from shipyard_airflow.common.notes.notes_helper import NotesHelper
+from shipyard_airflow.common.notes.storage_impl_mem import (
+    MemoryNotesStorage
+)
 from shipyard_airflow.control.action.actions_steps_id_api import \
     ActionsStepsResource
+from shipyard_airflow.errors import ApiError
 from tests.unit.control import common
 
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
 DATE_TWO_STR = DATE_TWO.strftime('%Y-%m-%dT%H:%M:%S')
+
+
+def get_token():
+    """Stub method to use for NotesHelper/NotesManager"""
+    return "token"
+
+# Notes helper that can be mocked into various objects to prevent database
+# dependencies
+nh = NotesHelper(NotesManager(MemoryNotesStorage(), get_token))
 
 
 def actions_db(action_id):
@@ -99,7 +113,11 @@ class TestActionsStepsResource():
             headers=common.AUTH_HEADERS)
         assert result.status_code == 200
 
-    def test_get_action_step_success(self):
+    @patch('shipyard_airflow.control.helpers.action_helper.notes_helper',
+           new=nh)
+    @patch('shipyard_airflow.control.action.actions_steps_id_api.notes_helper',
+           new=nh)
+    def test_get_action_step_success(self, *args):
         """Tests the main response from get all actions"""
         action_resource = ActionsStepsResource()
         # stubs for db
@@ -123,6 +141,10 @@ class TestActionsStepsResource():
                     '59bb330a-9e64-49be-a586-d253bb67d443', 'cheese')
             assert 'Action not found' in str(api_error)
 
+    @patch('shipyard_airflow.control.helpers.action_helper.notes_helper',
+           new=nh)
+    @patch('shipyard_airflow.control.action.actions_steps_id_api.notes_helper',
+           new=nh)
     def test_get_action_step_error_step(self):
         """Validate ApiError, 'Step not found' is raised"""
         action_resource = ActionsStepsResource()

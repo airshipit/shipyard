@@ -45,14 +45,15 @@ class DescribeAction(CliAction):
         """
         resp_j = response.json()
         # Assemble the sections of the action details
-        return '{}\n\n{}\n\n{}\n\n{}\n'.format(
+        return '{}\n\n{}\n\n{}\n\n{}\n\n{}\n'.format(
             cli_format_common.gen_action_details(resp_j),
             cli_format_common.gen_action_steps(resp_j.get('steps'),
                                                resp_j.get('id')),
             cli_format_common.gen_action_commands(resp_j.get('command_audit')),
             cli_format_common.gen_action_validations(
                 resp_j.get('validations')
-            )
+            ),
+            cli_format_common.gen_detail_notes(resp_j)
         )
 
 
@@ -88,8 +89,10 @@ class DescribeStep(CliAction):
             Handles 200 responses
         """
         resp_j = response.json()
-        return cli_format_common.gen_action_step_details(resp_j,
-                                                         self.action_id)
+        return "{}\n\n{}\n".format(
+            cli_format_common.gen_action_step_details(resp_j, self.action_id),
+            cli_format_common.gen_detail_notes(resp_j)
+        )
 
 
 class DescribeValidation(CliAction):

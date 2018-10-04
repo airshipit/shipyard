@@ -17,19 +17,22 @@ LOG = logging.getLogger(__name__)
 
 
 class ShipyardClientContext:
-    """A context object for ShipyardClient instances."""
+    """A context object for ShipyardClient instances.
 
-    def __init__(self, keystone_auth, context_marker, debug=False):
-        """Shipyard context object
+    :param dict keystone_auth: auth_url, password, project_domain_name,
+        project_name, username, user_domain_name
+    :param str context_marker: a UUID value used to track a request
+    :param bool debug: defaults False, enable debugging
+    :param int verbosity: 0-5, default=1, the level of verbosity to set
+        for the API
+    """
 
-        :param bool debug: true, or false
-        :param str context_marker:
-        :param dict keystone_auth: auth_url, password, project_domain_name,
-               project_name, username, user_domain_name
-        """
+    def __init__(self, keystone_auth, context_marker,
+                 debug=False, verbosity=1):
         self.debug = debug
         if self.debug:
             LOG.setLevel(logging.DEBUG)
 
         self.keystone_auth = keystone_auth
         self.context_marker = context_marker
+        self.verbosity = verbosity

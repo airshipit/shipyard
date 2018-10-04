@@ -50,5 +50,6 @@ def test_shipyard():
     mock_method.assert_called_once_with(
         auth_vars,
         '88888888-4444-4444-4444-121212121212',
-        True
+        True,
+        1
     )

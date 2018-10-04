@@ -109,7 +109,8 @@ class CliAction(AbstractCliAction):
         self.debug = self.api_parameters.get('debug')
 
         self.client_context = ShipyardClientContext(
-            self.auth_vars, self.context_marker, self.debug)
+            self.auth_vars, self.context_marker, self.debug,
+            self.api_parameters.get('verbosity'))
 
     def get_api_client(self):
         """Returns the api client for this action"""

@@ -31,6 +31,22 @@ Standards used by the API
 -------------------------
 See `API Conventions`_
 
+Query Parameters
+~~~~~~~~~~~~~~~~
+
+Query parameters are mostly specific to a Shipyard API resource, but the
+following are reused to provide a more consistent interface:
+
+verbosity
+  ``?verbosity=1``
+
+  Provides the user some control over the level of details provided in a
+  response, with values ranging from 0 (none) to 5 (most). Only some resources
+  are affected by setting verbosity, but all resources will accept the
+  parameter. Setting the verbosity parameter to 0 will instruct the resource to
+  turn off all optional data being returned. The default verbosity level is 1
+  (summary).
+
 Notes on examples
 -----------------
 Examples assume the following environment variables are set before

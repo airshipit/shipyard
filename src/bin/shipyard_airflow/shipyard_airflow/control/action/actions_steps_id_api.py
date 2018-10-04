@@ -15,6 +15,8 @@ import falcon
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
+from shipyard_airflow.common.notes.notes import MAX_VERBOSITY
+from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 
@@ -31,11 +33,22 @@ class ActionsStepsResource(BaseResource):
         :returns: a json object describing a step
         """
         resp.body = self.to_json(
-            self.get_action_step(kwargs['action_id'], kwargs['step_id']))
+            self.get_action_step(
+                action_id=kwargs['action_id'],
+                step_id=kwargs['step_id'],
+                verbosity=req.context.verbosity
+            )
+        )
         resp.status = falcon.HTTP_200
 
-    def get_action_step(self, action_id, step_id):
-        """
+    def get_action_step(self, action_id, step_id, verbosity=MAX_VERBOSITY):
+        """Retrieve a single step
+
+        :param action_id: the action_id containing the target step
+        :param step_id: the step to retrieve
+        :param verbosity: the level of detail to return for the step. Defaults
+            to the highest level of detail.
+
         Interacts with airflow and the shipyard database to return the
         requested step invoked through shipyard.
         """
@@ -53,12 +66,17 @@ class ActionsStepsResource(BaseResource):
 
         # get the action steps from shipyard db
         steps = self.get_tasks_db(dag_id, dag_execution_date)
-
+        step_notes = notes_helper.get_step_notes(
+            action_id=action_id,
+            step_id=step_id,
+            verbosity=verbosity
+        )
         for idx, step in enumerate(steps):
             if step_id == step['task_id']:
-                # TODO (Bryan Strassner) more info about the step?
-                #                        like logs? Need requirements defined
                 step['index'] = idx + 1
+                step['notes'] = []
+                for note in step_notes:
+                    step['notes'].append(note.view())
                 return step
 
         # if we didn't find it, 404

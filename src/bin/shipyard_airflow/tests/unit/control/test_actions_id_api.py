@@ -16,6 +16,11 @@ from unittest import mock
 
 import pytest
 
+from shipyard_airflow.common.notes.notes import NotesManager
+from shipyard_airflow.common.notes.notes_helper import NotesHelper
+from shipyard_airflow.common.notes.storage_impl_mem import (
+    MemoryNotesStorage
+)
 from shipyard_airflow.control.action.actions_id_api import (ActionsIdResource)
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.policy import ShipyardPolicy
@@ -29,6 +34,15 @@ DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
 DATE_TWO_STR = DATE_TWO.strftime('%Y-%m-%dT%H:%M:%S')
 
 context = ShipyardRequestContext()
+
+
+def get_token():
+    """Stub method to use for NotesHelper/NotesManager"""
+    return "token"
+
+# Notes helper that can be mocked into various objects to prevent database
+# dependencies
+nh = NotesHelper(NotesManager(MemoryNotesStorage(), get_token))
 
 
 def actions_db(action_id):
@@ -151,12 +165,15 @@ def test_on_get(mock_authorize, mock_get_action):
     action_resource.on_get(req, resp, **kwargs)
     mock_authorize.assert_called_once_with('workflow_orchestrator:get_action',
                                            context)
-    mock_get_action.assert_called_once_with(kwargs['action_id'])
+    mock_get_action.assert_called_once_with(action_id=None, verbosity=1)
     assert resp.body == '"action_returned"'
     assert resp.status == '200 OK'
 
-
-def test_get_action_success():
+@mock.patch('shipyard_airflow.control.helpers.action_helper.notes_helper',
+            new=nh)
+@mock.patch('shipyard_airflow.control.action.actions_id_api.notes_helper',
+            new=nh)
+def test_get_action_success(*args):
     """
     Tests the main response from get all actions
     """
@@ -168,7 +185,10 @@ def test_get_action_success():
     action_resource.get_validations_db = get_validations
     action_resource.get_action_command_audit_db = get_ac_audit
 
-    action = action_resource.get_action('12345678901234567890123456')
+    action = action_resource.get_action(
+        action_id='12345678901234567890123456',
+        verbosity=1
+    )
     if action['name'] == 'dag_it':
         assert len(action['steps']) == 3
         assert action['dag_status'] == 'FAILED'
@@ -182,7 +202,7 @@ def test_get_action_errors(mock_get_action):
     action_id = '12345678901234567890123456'
 
     with pytest.raises(ApiError) as expected_exc:
-        action_resource.get_action(action_id)
+        action_resource.get_action(action_id=action_id, verbosity=1)
     assert action_id in str(expected_exc)
     assert 'Action not found' in str(expected_exc)
 

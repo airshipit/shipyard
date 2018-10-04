@@ -118,7 +118,7 @@ class ShipyardSQLNotesStorage(NotesStorage):
 
     def retrieve(self, query):
         a_id_pat = query.assoc_id_pattern
-        m_verb = query.max_verbosity
+        max_verb = query.max_verbosity
         r_notes = []
         with self.session_scope() as session:
             notes_res = []
@@ -126,14 +126,14 @@ class ShipyardSQLNotesStorage(NotesStorage):
                 n_qry = session.query(TNote).filter(
                     and_(
                         TNote.assoc_id == a_id_pat,
-                        TNote.verbosity <= m_verb
+                        TNote.verbosity <= max_verb
                     )
                 )
             else:
                 n_qry = session.query(TNote).filter(
                     and_(
                         TNote.assoc_id.like(a_id_pat + '%'),
-                        TNote.verbosity <= m_verb
+                        TNote.verbosity <= max_verb
                     )
                 )
             db_notes = n_qry.all()

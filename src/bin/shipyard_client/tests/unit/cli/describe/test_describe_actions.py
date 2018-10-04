@@ -49,10 +49,69 @@ GET_ACTION_API_RESP = """
       "id": "action_xcom",
       "url": "/actions/01BTTMFVDKZFRJM80FGD7J1AKN/steps/action_xcom",
       "index": 1,
-      "state": "success"
+      "state": "success",
+      "notes": [
+        {
+            "assoc_id": "step/01BTTMFVDKZFRJM80FGD7J1AKN/action_xcom",
+            "subject": "action_xcom",
+            "sub_type": "step metadata",
+            "note_val": "This is a note for the action_xcom",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXY0",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": null
+        },
+        {
+            "assoc_id": "step/01BTTMFVDKZFRJM80FGD7J1AKN/action_xcom",
+            "subject": "action_xcom",
+            "sub_type": "step metadata",
+            "note_val": "action_xcom really worked",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXY1",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": null
+        }
+      ]
+    },
+    {
+      "id": "part2",
+      "url": "/actions/01BTTMFVDKZFRJM80FGD7J1AKN/steps/part2",
+      "index": 2,
+      "state": "success",
+      "notes": []
+    },
+    {
+      "id": "part3",
+      "url": "/actions/01BTTMFVDKZFRJM80FGD7J1AKN/steps/part3",
+      "index": 3,
+      "state": "success",
+      "notes": [
+        {
+            "assoc_id": "step/01BTTMFVDKZFRJM80FGD7J1AKN/part3",
+            "subject": "part3",
+            "sub_type": "step metadata",
+            "note_val": "This is a note for the part3",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXY2",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": null
+        }
+      ]
     }
   ],
-  "action_lifecycle": "Failed"
+  "action_lifecycle": "Failed",
+  "notes": [
+    {
+        "assoc_id": "action/01BTTMFVDKZFRJM80FGD7J1AKN",
+        "subject": "01BTTMFVDKZFRJM80FGD7J1AKN",
+        "sub_type": "action metadata",
+        "note_val": "This is a note for some action",
+        "verbosity": 1,
+        "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXYA",
+        "note_timestamp": "2018-10-08 14:23:53.346534",
+        "resolved_url_value": "Your lucky numbers are 1, 3, 5, and Q"
+    }
+  ]
 }
 """
 
@@ -75,6 +134,8 @@ def test_describe_action(*args):
     assert 'Steps' in response
     assert 'Commands' in response
     assert 'Validations:' in response
+    assert 'This is a note for the part3' in response
+    assert '>>> Your lucky numbers are 1, 3, 5, and Q'
 
 
 @responses.activate
@@ -111,7 +172,29 @@ GET_STEP_API_RESP = """
   "execution_date": "2017-09-24 19:05:49",
   "dag_id": "deploy_site",
   "index": 1,
-  "start_date": "2017-09-24 19:05:59.281032"
+  "start_date": "2017-09-24 19:05:59.281032",
+  "notes": [
+    {
+        "assoc_id": "step/01BTTMFVDKZFRJM80FGD7J1AKN/preflight",
+        "subject": "preflight",
+        "sub_type": "step metadata",
+        "note_val": "This is a note for the preflight",
+        "verbosity": 1,
+        "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXY3",
+        "note_timestamp": "2018-10-08 14:23:53.346534",
+        "resolved_url_value": null
+    },
+    {
+        "assoc_id": "step/01BTTMFVDKZFRJM80FGD7J1AKN/preflight",
+        "subject": "preflight",
+        "sub_type": "step metadata",
+        "note_val": "preflight really worked",
+        "verbosity": 1,
+        "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXY4",
+        "note_timestamp": "2018-10-08 14:23:53.346534",
+        "resolved_url_value": null
+    }
+  ]
 }
 """
 
@@ -130,6 +213,8 @@ def test_describe_step(*args):
                             '01BTTMFVDKZFRJM80FGD7J1AKN',
                             'preflight').invoke_and_return_resp()
     assert 'step/01BTTMFVDKZFRJM80FGD7J1AKN/preflight' in response
+    assert 'preflight really worked' in response
+    assert 'This is a note for the preflight' in response
 
 
 @responses.activate

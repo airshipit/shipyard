@@ -38,6 +38,8 @@ from shipyard_airflow.control.configdocs.rendered_configdocs_api import \
     RenderedConfigDocsResource
 from shipyard_airflow.control.health import HealthResource
 from shipyard_airflow.control.middleware.auth import AuthMiddleware
+from shipyard_airflow.control.middleware.common_params import \
+    CommonParametersMiddleware
 from shipyard_airflow.control.middleware.context import ContextMiddleware
 from shipyard_airflow.control.middleware.logging_mw import LoggingMiddleware
 from shipyard_airflow.control.status.status_api import StatusResource
@@ -52,6 +54,7 @@ def start_api():
         AuthMiddleware(),
         ContextMiddleware(),
         LoggingMiddleware(),
+        CommonParametersMiddleware()
     ]
     control_api = falcon.API(
         request_type=ShipyardRequest, middleware=middlewares)

@@ -30,14 +30,15 @@ class MemoryNotesStorage(NotesStorage):
 
     def retrieve(self, query):
         pat = query.assoc_id_pattern
-        mv = query.max_verbosity
+        max_verb = query.max_verbosity
         notes = []
         if query.exact_match:
             for note in self.storage.values():
-                if note.assoc_id == pat and note.verbosity <= mv:
+                if note.assoc_id == pat and note.verbosity <= max_verb:
                     notes.append(note)
         else:
             for note in self.storage.values():
-                if note.assoc_id.startswith(pat) and note.verbosity <= mv:
+                if (note.assoc_id.startswith(pat) and
+                        note.verbosity <= max_verb):
                     notes.append(note)
         return notes

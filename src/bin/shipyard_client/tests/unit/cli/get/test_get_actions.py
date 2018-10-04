@@ -43,7 +43,19 @@ GET_ACTIONS_API_RESP = """
         "id": "concurrency_check",
         "url": "/actions/01BTP9T2WCE1PAJR2DWYXG805V/steps/concurrency_check",
         "index": 2,
-        "state": "success"
+        "state": "success",
+        "notes": [
+            {
+                "assoc_id": "step/01BTP9T2WCE1PAJR2DWYXG805V/concurrency_check",
+                "subject": "concurrency_check",
+                "sub_type": "step metadata",
+                "note_val": "This is a note for the concurrency check",
+                "verbosity": 1,
+                "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                "note_timestamp": "2018-10-08 14:23:53.346534",
+                "resolved_url_value": null
+            }
+        ]
       },
       {
         "id": "preflight",
@@ -59,7 +71,19 @@ GET_ACTIONS_API_RESP = """
     "datetime": "2017-09-23 02:42:06.860597+00:00",
     "user": "shipyard",
     "context_marker": "416dec4b-82f9-4339-8886-3a0c4982aec3",
-    "name": "deploy_site"
+    "name": "deploy_site",
+    "notes": [
+        {
+            "assoc_id": "action/01BTP9T2WCE1PAJR2DWYXG805V",
+            "subject": "01BTP9T2WCE1PAJR2DWYXG805V",
+            "sub_type": "action metadata",
+            "note_val": "This is a note for some action",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXYA",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": "Your lucky numbers are 1, 3, 5, and Q"
+        }
+    ]
   }
 ]
 """
@@ -79,6 +103,77 @@ def test_get_actions(*args):
     assert 'action/01BTP9T2WCE1PAJR2DWYXG805V' in response
     assert 'Lifecycle' in response
     assert '2/1/0' in response
+    assert 'This is a note for the concurrency check' not in response
+    assert '>>> Your lucky numbers are 1, 3, 5, and Q' in response
+
+
+GET_ACTIONS_API_RESP_UNPARSEABLE_NOTE = """
+[
+  {
+    "dag_status": "failed",
+    "parameters": {},
+    "steps": [
+      {
+        "id": "action_xcom",
+        "url": "/actions/01BTP9T2WCE1PAJR2DWYXG805V/steps/action_xcom",
+        "index": 1,
+        "state": "success"
+      }
+    ],
+    "action_lifecycle": "Failed",
+    "dag_execution_date": "2017-09-23T02:42:12",
+    "id": "01BTP9T2WCE1PAJR2DWYXG805V",
+    "dag_id": "deploy_site",
+    "datetime": "2017-09-23 02:42:06.860597+00:00",
+    "user": "shipyard",
+    "context_marker": "416dec4b-82f9-4339-8886-3a0c4982aec3",
+    "name": "deploy_site",
+    "notes": [
+        {
+            "assoc_id": "action/01BTP9T2WCE1PAJR2DWYXG805V",
+            "subject": "01BTP9T2WCE1PAJR2DWYXG805V",
+            "sub_type": "action metadata",
+            "note_val": "This is the first note for some action",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXA1",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": "Your lucky numbers are 1, 3, 5, and Q"
+        },
+        {
+            "note_val": "This note is broken"
+        },
+        {
+            "assoc_id": "action/01BTP9T2WCE1PAJR2DWYXG805V",
+            "subject": "01BTP9T2WCE1PAJR2DWYXG805V",
+            "sub_type": "action metadata",
+            "note_val": "The previous note is bad. It is missing fields",
+            "verbosity": 1,
+            "note_id": "ABCDEFGHIJKLMNOPQRSTUVWXA2",
+            "note_timestamp": "2018-10-08 14:23:53.346534",
+            "resolved_url_value": null
+        }
+    ]
+  }
+]
+"""
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_get_actions_unparseable_note(*args):
+    responses.add(
+        responses.GET,
+        'http://shiptest/actions',
+        body=GET_ACTIONS_API_RESP_UNPARSEABLE_NOTE,
+        status=200)
+    response = GetActions(stubs.StubCliContext()).invoke_and_return_resp()
+    assert 'deploy_site' in response
+    assert 'action/01BTP9T2WCE1PAJR2DWYXG805V' in response
+    assert 'Lifecycle' in response
+    assert 'This is the first note for some action' in response
+    assert "{'note_val': 'This note is broken'}" in response
+    assert 'The previous note is bad' in response
 
 
 @responses.activate
