@@ -575,10 +575,14 @@ conf:
       job_heartbeat_sec: 5
       scheduler_heartbeat_sec: 5
       run_duration: -1
-      min_file_process_interval: 0
+      # Check for pending tasks no more than every 5 seconds
+      min_file_process_interval: 5
+      # This is part of 1.10, but disabled in 1.10.1 (pending) See:
+      # https://github.com/apache/incubator-airflow/blob/master/UPDATING.md#min_file_parsing_loop_time-config-option-temporarily-disabled
       min_file_parsing_loop_time: 1
       dag_dir_list_interval: 300
-      print_stats_interval: 120
+      # Stats for the scheduler are minimally useful - every 5 mins is enough
+      print_stats_interval: 300
       child_process_log_directory: /usr/local/airflow/logs/scheduler
       scheduler_zombie_task_threshold: 300
       catchup_by_default: "True"
@@ -587,7 +591,8 @@ conf:
       statsd_host: "localhost"
       statsd_port: 8125
       statsd_prefix: "airflow"
-      max_threads: 2
+      # Shipyard's use of Airflow is low volume. 1 Thread is probably enough.
+      max_threads: 1
       authenticate: "False"
     ldap:
       # Shipyard is not using this
