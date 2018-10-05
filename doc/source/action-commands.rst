@@ -237,21 +237,42 @@ relabel_nodes
 Using parameters to indicate which server(s), triggers an update to the
 Kubernetes node labels for those servers.
 
-Future actions
-~~~~~~~~~~~~~~
+.. _test_site:
 
-These actions are anticipated for development
+test_site
+~~~~~~~~~
 
-test region
-  Invoke site validation testing - perhaps a baseline is an invocation of all
-  components' exposed tests or extended health checks. This test would be used
-  as a preflight-style test to ensure all components are in a working state.
+Triggers the execution of the Helm tests corresponding to all deployed releases
+in all namespaces. Steps, conceptually:
 
-test component
-  Invoke a particular platform component to test it. This test would be
-  used to interrogate a particular platform component to ensure it is in a
-  working state, and that its own downstream dependencies are also
-  operational
+#. Preflight checks
+    Ensures all Airship components are in a responsive state.
+#. Armada test
+    Invokes Armada to execute Helm tests for all releases.
+
+Using test_site
+```````````````
+
+The ``test_site`` action accepts two optional parameters:
+
+#. cleanup: A boolean value that instructs Armada to delete test pods after
+   test execution. Default value is ``false``. Failure to set this value to
+   ``True`` may require manual intervention to re-execute tests, as test pods
+   will not be deleted.
+#. release: The name of a release to test. When provided, tests are only
+   executed for the specified release.
+
+An example of invoking Helm tests with cleanup enabled::
+
+  shipyard create action test_site --param="cleanup=true"
+
+An example of invoking Helm tests for a single release::
+
+  shipyard create action test_site --param="release=keystone"
+
+.. _update_labels:
 
 update labels
-  Triggers an update to the Kubernetes node labels for specified server(s)
+~~~~~~~~~~~~~
+
+Triggers an update to the Kubernetes node labels for specified server(s)

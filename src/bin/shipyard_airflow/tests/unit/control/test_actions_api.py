@@ -530,6 +530,9 @@ def test_create_targeted_action_no_committed(basic_val, *args):
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_target_nodes',
             side_effect=Exception('purposeful'))
+@mock.patch('shipyard_airflow.control.action.action_validators'
+            '.validate_test_cleanup',
+            side_effect=Exception('purposeful'))
 @mock.patch('shipyard_airflow.policy.check_auth')
 def test_auth_alignment(auth, *args):
     action_resource = _gen_action_resource_stubbed()
