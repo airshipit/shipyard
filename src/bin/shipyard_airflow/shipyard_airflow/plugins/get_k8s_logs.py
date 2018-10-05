@@ -46,6 +46,7 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
                              precedes the time a pod was started, only logs
                              since the pod start will be returned. If this
                              value is in the future, no logs will be returned.
+       :return: None
 
         Example::
 
@@ -74,7 +75,7 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
 
     if ret:
         for i in ret.items:
-            if pod_name_pattern in i.metadata.name:
+            if i.metadata.name.startswith(pod_name_pattern):
                 pods_list.append(i.metadata.name)
     else:
         raise K8sLoggingException(_NOT_FOUND_MSG_FMT.format(namespace,
