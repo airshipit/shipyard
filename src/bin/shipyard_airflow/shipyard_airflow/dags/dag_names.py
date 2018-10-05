@@ -22,6 +22,7 @@ RELABEL_NODES_DAG_NAME = 'relabel_nodes'
 
 # Steps
 ACTION_XCOM = 'action_xcom'
+ARMADA_TEST_RELEASES = 'armada_test_releases'
 CONCURRENCY_CHECK = 'dag_concurrency_check'
 CREATE_ACTION_TAG = 'create_action_tag'
 DECIDE_AIRFLOW_UPGRADE = 'decide_airflow_upgrade'
