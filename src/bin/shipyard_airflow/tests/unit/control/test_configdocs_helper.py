@@ -734,24 +734,7 @@ def test_generate_dh_val_message():
     assert generated == expected
 
 
-FK_VAL_BASE_RESP = FakeResponse(
-    status_code=200,
-    text="""
----
-count: 2
-next: null
-prev: null
-results:
-  - name: deckhand-schema-validation
-    url: https://deckhand/a/url/too/long/for/pep8
-    status: success
-  - name: promenade-site-validation
-    url: https://deckhand/a/url/too/long/for/pep8
-    status: failure
-...
-""")
-
-FK_VAL_SUBSET_RESP = FakeResponse(
+FK_VAL_RESP = FakeResponse(
     status_code=200,
     text="""
 ---
@@ -759,77 +742,69 @@ count: 1
 next: null
 prev: null
 results:
-  - id: 0
-    url: https://deckhand/a/url/too/long/for/pep8
+  - name: promenade-site-validation
+    url: https://deckhand/api/v1.0/revisions/4/etc
     status: failure
-...
-""")
+    createdAt: 2017-07-16T02:03Z
+    expiresAfter: null
+    expiresAt: null
+    errors:
+      - documents:
+          - schema: promenade/Node/v1
+            name: node-document-name
+          - schema: promenade/Masters/v1
+            name: kubernetes-masters
+        message: This is a message.
+      - documents:
+          - schema: promenade/Node/v1
+            name: node-document-name
+          - schema: promenade/Masters/v1
+            name: kubernetes-masters
+        message: This is a message.
 
-FK_VAL_ENTRY_RESP = FakeResponse(
-    status_code=200,
-    text="""
----
-name: promenade-site-validation
-url: https://deckhand/a/url/too/long/for/pep8
-status: failure
-createdAt: 2017-07-16T02:03Z
-expiresAfter: null
-expiresAt: null
-errors:
-  - documents:
-      - schema: promenade/Node/v1
-        name: node-document-name
-      - schema: promenade/Masters/v1
-        name: kubernetes-masters
-    message: Node has master role, but not included in cluster masters list.
-...
 """)
 
 
-def test__get_deckhand_validation_errors():
+@mock.patch.object(DeckhandClient, 'get_all_revision_validations',
+                   return_value=yaml.safe_load(FK_VAL_RESP.text))
+def test__get_deckhand_validation_errors(mock_client):
     """
     Tets the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand._get_base_validation_resp = (
-        lambda revision_id: FK_VAL_BASE_RESP)
-    helper.deckhand._get_subset_validation_response = (
-        lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
-    helper.deckhand._get_entry_validation_response = (
-        lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP)
     assert len(helper._get_deckhand_validation_errors(5)) == 2
 
 
-FK_VAL_ENTRY_RESP_EMPTY = FakeResponse(
+FK_VAL_RESP_EMPTY = FakeResponse(
     status_code=200,
     text="""
 ---
-name: promenade-site-validation
-url: https://deckhand/a/url/too/long/for/pep8
-status: failure
-createdAt: 2017-07-16T02:03Z
-expiresAfter: null
-expiresAt: null
-errors: []
+count: 1
+next: null
+prev: null
+results:
+  - name: promenade-site-validation
+    url: https://deckhand/api/v1.0/revisions/4/etc
+    status: failure
+    createdAt: 2017-07-16T02:03Z
+    expiresAfter: null
+    expiresAt: null
+    errors: []
 ...
 """)
 
 
-def test__get_deckhand_validations_empty_errors():
+@mock.patch.object(DeckhandClient, 'get_all_revision_validations',
+                   return_value=yaml.safe_load(FK_VAL_RESP_EMPTY.text))
+def test__get_deckhand_validations_empty_errors(mock_client):
     """
     Tets the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand._get_base_validation_resp = (
-        lambda revision_id: FK_VAL_BASE_RESP)
-    helper.deckhand._get_subset_validation_response = (
-        lambda reivsion_id, subset_name: FK_VAL_SUBSET_RESP)
-    helper.deckhand._get_entry_validation_response = (
-        lambda reivsion_id, subset_name, entry_id: FK_VAL_ENTRY_RESP_EMPTY)
     assert len(helper._get_deckhand_validation_errors(5)) == 0
 
 
-FK_VAL_BASE_RESP_EMPTY = FakeResponse(
+FK_VAL_RESP_EMPTY = FakeResponse(
     status_code=200,
     text="""
 ---
@@ -841,13 +816,13 @@ results: []
 """)
 
 
-def test__get_deckhand_validation_errors_empty_results():
+@mock.patch.object(DeckhandClient, 'get_all_revision_validations',
+                   return_value=yaml.safe_load(FK_VAL_RESP_EMPTY.text))
+def test__get_deckhand_validation_errors_empty_results(mock_client):
     """
     Tets the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand._get_base_validation_resp = (
-        lambda revision_id: FK_VAL_BASE_RESP_EMPTY)
     assert len(helper._get_deckhand_validation_errors(5)) == 0
 
 

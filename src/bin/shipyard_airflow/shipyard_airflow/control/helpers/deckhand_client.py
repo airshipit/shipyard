@@ -41,11 +41,7 @@ class DeckhandPaths(enum.Enum):
     REVISION_LIST = '/revisions'
     REVISION_TAG_LIST = '/revisions/{}/tags'
     REVISION_TAG = '/revisions/{}/tags/{}'
-    REVISION_VALIDATION_LIST = '/revisions/{}/validations'
-    REVISION_VALIDATION = '/revisions/{}/validations/{}'
-    REVISION_VALIDATION_ENTRY = (
-        '/revisions/{}/validations/{}/entries/{}'
-    )
+    REVISION_VALIDATIONS_LIST = '/revisions/{}/validations/detail'
     ROLLBACK = '/rollback/{}'
 
 
@@ -246,98 +242,26 @@ class DeckhandClient(object):
         self._handle_bad_response(response)
         return response.text
 
-    @staticmethod
-    def _build_validation_base(dh_validation):
-        # creates the base structure for validation response
-        return {
-            'count': dh_validation.get('count'),
-            'results': []
-        }
-
-    @staticmethod
-    def _build_validation_entry(dh_val_entry):
-        # creates a validation entry by stripping off the URL
-        # that the end user can't use anyway.
-        dh_val_entry.pop('url', None)
-        return dh_val_entry
-
     def get_all_revision_validations(self, revision_id):
         """
-        Collects and returns the yamls of the validations for a
-        revision
-        """
-        val_resp = {}
-        response = self._get_base_validation_resp(revision_id)
-        # if the base call is no good, stop.
-        self._handle_bad_response(response)
-        all_validation_resp = yaml.safe_load(response.text)
-        if all_validation_resp:
-            val_resp = DeckhandClient._build_validation_base(
-                all_validation_resp
-            )
-            validations = all_validation_resp.get('results')
-            for validation_subset in validations:
-                subset_name = validation_subset.get('name')
-                subset_response = self._get_subset_validation_response(
-                    revision_id,
-                    subset_name
-                )
-                # don't fail hard on a single subset not replying
-                # TODO (bryan-strassner) maybe this should fail hard?
-                #                        what if they all fail?
-                if subset_response.status_code >= 400:
-                    LOG.error(
-                        'Failed to retrieve %s validations for revision %s',
-                        subset_name, revision_id
-                    )
-                val_subset = yaml.safe_load(subset_response.text)
-                entries = val_subset.get('results')
-                for entry in entries:
-                    entry_id = entry.get('id')
-                    e_resp = self._get_entry_validation_response(revision_id,
-                                                                 subset_name,
-                                                                 entry_id)
-                    if e_resp.status_code >= 400:
-                        # don't fail hard on a single entry not working
-                        # TODO (bryan-strassner) maybe this should fail hard?
-                        #                        what if they all fail?
-                        LOG.error(
-                            'Failed to retrieve entry %s for category %s '
-                            'for revision %s',
-                            entry_id, subset_name, revision_id
-                        )
-                    entry = yaml.safe_load(e_resp.text)
-                    val_resp.get('results').append(
-                        DeckhandClient._build_validation_entry(entry)
-                    )
-        return val_resp
+        Collects a YAML document containing a list of validation results
+        corresponding to a Deckhand revision ID.
 
-    def _get_base_validation_resp(self, revision_id):
-        # wraps getting the base validation response
+        :param revision_id: A Deckhand revision ID corresponding to a set of
+            documents.
+        :returns: A YAML document containing a results key mapped to a list of
+            validation results.
+        """
+        # TODO(@drewwalters96): This method should be replaced with usage of
+        #     the official Deckhand client.
         url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_VALIDATION_LIST
+            DeckhandPaths.REVISION_VALIDATIONS_LIST
         ).format(revision_id)
 
-        return self._get_request(url)
+        response = self._get_request(url)
+        self._handle_bad_response(response)
 
-    def _get_subset_validation_response(self, revision_id, subset_name):
-        # wraps getting the subset level of detail of validations
-        subset_url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_VALIDATION
-        ).format(revision_id, subset_name)
-
-        return self._get_request(subset_url)
-
-    def _get_entry_validation_response(self,
-                                       revision_id,
-                                       subset_name,
-                                       entry_id):
-        # wraps getting the entry level detail of validation
-        e_url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_VALIDATION_ENTRY
-        ).format(revision_id, subset_name, entry_id)
-
-        return self._get_request(e_url)
+        return yaml.safe_load(response.text)
 
     @staticmethod
     def _handle_bad_response(response, threshold=400):
