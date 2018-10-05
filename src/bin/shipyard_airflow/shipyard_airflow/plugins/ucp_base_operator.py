@@ -143,7 +143,7 @@ class UcpBaseOperator(BaseOperator):
         self._setup_target_nodes()
 
     def get_k8s_logs(self):
-        """Retrieve Kubernetes pod/container logs specified by an opererator
+        """Retrieve Kubernetes pod/container logs specified by an operator
 
         This method is "best effort" and should not prevent the progress of
         the workflow processing
