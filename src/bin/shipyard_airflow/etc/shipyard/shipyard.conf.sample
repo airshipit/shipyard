@@ -68,6 +68,9 @@
 # The directory containing the alembic.ini file (string value)
 #alembic_ini_path = /home/shipyard/shipyard
 
+# Enable profiling of API requests. Do NOT use in production. (boolean value)
+#profiler = false
+
 
 [deckhand]
 
@@ -314,6 +317,12 @@
 
 # Timeout value for http requests (integer value)
 #timeout = <None>
+
+# Collect per-API call timing information. (boolean value)
+#collect_timing = false
+
+# Log requests to multiple loggers. (boolean value)
+#split_loggers = false
 
 
 [logging]

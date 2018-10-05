@@ -84,8 +84,16 @@ spec:
               subPath: policy.yaml
               mountPath: /etc/shipyard/policy.yaml
               readOnly: true
+{{ if .Values.conf.shipyard.base.profiler }}
+            - name: tmp-profiles
+              mountPath: /tmp/profiles
+{{ end }}
 {{ if $mounts_shipyard.volumeMounts }}{{ toYaml $mounts_shipyard.volumeMounts | indent 12 }}{{ end }}
       volumes:
+{{ if .Values.conf.shipyard.base.profiler }}
+        - name: tmp-profiles
+          emptyDir: {}
+{{ end }}
         - name: etc-shipyard
           emptyDir: {}
         - name: shipyard-etc

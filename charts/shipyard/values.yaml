@@ -388,6 +388,7 @@ conf:
   shipyard:
     base:
       web_server:
+      profiler: false
     shipyard:
       service_type: shipyard
     deckhand:
