@@ -32,7 +32,7 @@ class MockNodeStatus:
 
 
 class MalformedNodeStatus:
-    """A malformed esponse object used to simulate a k8s node status item
+    """A malformed response object used to simulate a k8s node status item
 
     Accepts a name, if the name field should be formed correctly.
     """
