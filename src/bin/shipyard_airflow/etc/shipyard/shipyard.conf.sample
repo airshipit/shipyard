@@ -378,6 +378,13 @@
 # Airship component validation timeout (in seconds) (integer value)
 #validation_read_timeout = 300
 
+# Maximum time to wait to connect to a note source URL (in seconds) (integer
+# value)
+#notes_connect_timeout = 5
+
+# Read timeout for a note source URL (in seconds) (integer value)
+#notes_read_timeout = 10
+
 
 [shipyard]
 

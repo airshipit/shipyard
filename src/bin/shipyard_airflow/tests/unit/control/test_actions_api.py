@@ -24,6 +24,11 @@ from oslo_config import cfg
 import pytest
 import responses
 
+from shipyard_airflow.common.notes.notes import NotesManager
+from shipyard_airflow.common.notes.notes_helper import NotesHelper
+from shipyard_airflow.common.notes.storage_impl_mem import (
+    MemoryNotesStorage
+)
 from shipyard_airflow.control.action import actions_api
 from shipyard_airflow.control.action.actions_api import ActionsResource
 from shipyard_airflow.control.base import ShipyardRequestContext
@@ -41,6 +46,15 @@ DESIGN_VERSION = 1
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+
+
+def get_token():
+    """Stub method to use for NotesHelper/NotesManager"""
+    return "token"
+
+# Notes helper that can be mocked into various objects to prevent database
+# dependencies
+nh = NotesHelper(NotesManager(MemoryNotesStorage(), get_token))
 
 
 def create_req(ctx, body):
@@ -283,8 +297,6 @@ def test_get_all_actions():
     action_resource.get_all_actions_db = actions_db
     action_resource.get_all_dag_runs_db = dag_runs_db
     action_resource.get_all_tasks_db = tasks_db
-    os.environ['DB_CONN_AIRFLOW'] = 'nothing'
-    os.environ['DB_CONN_SHIPYARD'] = 'nothing'
     result = action_resource.get_all_actions()
     assert len(result) == len(actions_db())
     for action in result:
@@ -294,6 +306,31 @@ def test_get_all_actions():
         if action['name'] == 'dag2':
             assert len(action['steps']) == 3
             assert action['dag_status'] == 'SUCCESS'
+
+
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
+def test_get_all_actions_notes(*args):
+    """
+    Tests the main response from get all actions
+    """
+    action_resource = ActionsResource()
+    action_resource.get_all_actions_db = actions_db
+    action_resource.get_all_dag_runs_db = dag_runs_db
+    action_resource.get_all_tasks_db = tasks_db
+    # inject some notes
+    nh.make_action_note('aaaaaa', "hello from aaaaaa1")
+    nh.make_action_note('aaaaaa', "hello from aaaaaa2")
+    nh.make_action_note('bbbbbb', "hello from bbbbbb")
+
+    result = action_resource.get_all_actions()
+    assert len(result) == len(actions_db())
+    for action in result:
+        if action['id'] == 'aaaaaa':
+            assert len(action['notes']) == 2
+        if action['id'] == 'bbbbbb':
+            assert len(action['notes']) == 1
+            assert action['notes'][0]['note_val'] == 'hello from bbbbbb'
 
 
 def _gen_action_resource_stubbed():
