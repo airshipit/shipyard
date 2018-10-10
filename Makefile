@@ -44,7 +44,7 @@ images: $(IMAGE_NAME)
 $(IMAGE_NAME):
 	@echo
 	@echo "===== Processing [$@] image ====="
-	@make build_$@ IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} IMAGE_DIR=images/$@
+	@make build_$@ IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} IMAGE_DIR=images/$@ IMAGE_NAME=$@
 	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} SCRIPT=./tools/$@_image_run.sh
 
 # Build all docker images for this project
