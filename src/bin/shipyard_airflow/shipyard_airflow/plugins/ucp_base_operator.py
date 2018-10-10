@@ -21,12 +21,14 @@ from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from airflow.utils.decorators import apply_defaults
+import sqlalchemy
 
 try:
     from deckhand_client_factory import DeckhandClientFactory
     import service_endpoint
     from get_k8s_logs import get_pod_logs
     from get_k8s_logs import K8sLoggingException
+    from service_token import shipyard_service_token
     from xcom_puller import XcomPuller
 except ImportError:
     from shipyard_airflow.plugins.deckhand_client_factory import \
@@ -34,10 +36,20 @@ except ImportError:
     from shipyard_airflow.plugins import service_endpoint
     from shipyard_airflow.plugins.get_k8s_logs import get_pod_logs
     from shipyard_airflow.plugins.get_k8s_logs import K8sLoggingException
+    from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.xcom_puller import XcomPuller
 
 from shipyard_airflow.common.document_validators.document_validation_utils \
     import DocumentValidationUtils
+from shipyard_airflow.common.notes.notes import NotesManager
+from shipyard_airflow.common.notes.notes_helper import NotesHelper
+from shipyard_airflow.common.notes.storage_impl_db import \
+    ShipyardSQLNotesStorage
+
+# Configuration sections
+BASE = 'base'
+K8S_LOGS = 'k8s_logs'
+REQUESTS_CONFIG = 'requests_config'
 
 LOG = logging.getLogger(__name__)
 
@@ -89,16 +101,22 @@ class UcpBaseOperator(BaseOperator):
         self.shipyard_conf = shipyard_conf
         self.start_time = datetime.now()
         self.xcom_push_flag = xcom_push
+        # lazy init field to hold a shipyard_db_engine
+        self._shipyard_db_engine = None
 
     def execute(self, context):
         # Setup values that depend on the shipyard configuration
         self.doc_utils = _get_document_util(self.shipyard_conf)
         self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
+        # Read and parse shiyard.conf
+        self.config = configparser.ConfigParser()
+        self.config.read(self.shipyard_conf)
+
         # Execute Airship base function
         self.ucp_base(context)
 
-        # Execute base function
+        # Execute base function for child operator
         self.run_base(context)
 
         if self.continue_processing:
@@ -119,12 +137,13 @@ class UcpBaseOperator(BaseOperator):
 
         LOG.info("Running Airship Base Operator...")
 
-        # Read and parse shiyard.conf
-        config = configparser.ConfigParser()
-        config.read(self.shipyard_conf)
+        # Configure the notes helper for this run of an operator
+        # establishes self.notes_helper
+        self._setup_notes_helper()
 
-        # Initialize variable
-        self.ucp_namespace = config.get('k8s_logs', 'ucp_namespace')
+        # Initialize variable that indicates the kubernetes namespace for the
+        # Airship components
+        self.ucp_namespace = self.config.get(K8S_LOGS, 'ucp_namespace')
 
         # Define task_instance
         self.task_instance = context['task_instance']
@@ -137,6 +156,8 @@ class UcpBaseOperator(BaseOperator):
 
         # Set up other common-use values
         self.action_id = self.action_info['id']
+        # extract the `task` or `step` name for easy access
+        self.task_id = self.task_instance.task_id
         self.revision_id = self.action_info['committed_rev_id']
         self.action_params = self.action_info.get('parameters', {})
         self.design_ref = self._deckhand_design_ref()
@@ -249,6 +270,58 @@ class UcpBaseOperator(BaseOperator):
             # if the document is not found for ANY reason, the workflow is
             # broken. Raise an Airflow Exception.
             raise AirflowException(ex)
+
+    def _get_shipyard_db_engine(self):
+        """Lazy initialize an engine for the Shipyard database.
+
+        :returns: a SQLAlchemy engine for the Shipyard database.
+
+        Developer's Note: Initially the idea was to use the PostgresHook and
+        retrieve an engine from there as is done with the concurrency check,
+        but since we have easy access to a configuration file, this does
+        direct SQLAlchemy to get the engine. By using the config, the database
+        connection is not exposed as environment variables -- which is one way
+        that Airflow registers database connections for use by the dbApiHook
+        """
+        if self._shipyard_db_engine is None:
+            connection_string = self.config.get(BASE, 'postgresql_db')
+            pool_size = self.config.getint(BASE, 'pool_size')
+            max_overflow = self.config.getint(BASE, 'pool_overflow')
+            pool_pre_ping = self.config.getboolean(BASE, 'pool_pre_ping')
+            pool_recycle = self.config.getint(BASE, 'connection_recycle')
+            pool_timeout = self.config.getint(BASE, 'pool_timeout')
+            self._shipyard_db_engine = sqlalchemy.create_engine(
+                connection_string, pool_size=pool_size,
+                max_overflow=max_overflow,
+                pool_pre_ping=pool_pre_ping,
+                pool_recycle=pool_recycle,
+                pool_timeout=pool_timeout
+            )
+            LOG.info("Initialized Shipyard database connection with pool "
+                     "size: %d, max overflow: %d, pool pre ping: %s, pool "
+                     "recycle: %d, and pool timeout: %d",
+                     pool_size, max_overflow,
+                     pool_pre_ping, pool_recycle,
+                     pool_timeout)
+
+        return self._shipyard_db_engine
+
+    @shipyard_service_token
+    def _token_getter(self):
+        # Generator method to get a shipyard service token
+        return self.svc_token
+
+    def _setup_notes_helper(self):
+        """Setup a notes helper for use by all descendent operators"""
+        connect_timeout = self.config.get(REQUESTS_CONFIG,
+                                          'notes_connect_timeout')
+        read_timeout = self.config.get(REQUESTS_CONFIG, 'notes_read_timeout')
+        self.notes_helper = NotesHelper(
+            NotesManager(
+                storage=ShipyardSQLNotesStorage(self._get_shipyard_db_engine),
+                get_token=self._token_getter,
+                connect_timeout=connect_timeout,
+                read_timeout=read_timeout))
 
 
 def _get_document_util(shipyard_conf):

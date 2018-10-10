@@ -78,22 +78,60 @@ class DrydockNodesOperator(DrydockBaseOperator):
         # All groups "complete" (as they're going to be). Report summary
         dgm.report_group_summary()
         dgm.report_node_summary()
+        self._gen_summary_notes(dgm)
+
         if dgm.critical_groups_failed():
             raise AirflowException(
                 "One or more deployment groups marked as critical have failed"
             )
         else:
             LOG.info("All critical groups have met their success criteria")
-        # TODO (bryan-strassner) it is very possible that many nodes failed
-        #     deployment, but all critical groups had enough success to
-        #     continue processing. This will be non-obvious to the casual
-        #     observer of the workflow. A likely enhancement is to allow
-        #     notes be added to the shipyard action associated with this
-        #     workflow that would be reported back to the end user doing a
-        #     describe of the action. This will require new database structures
-        #     to hold the notes, and a means to insert the notes. A shared
-        #     functionality in the base ucp operator or a common module would
-        #     be a reasonable way to support this.
+
+    def _gen_summary_notes(self, dgm):
+        """Generate notes for the step summarizing the deployment results
+
+        :param dgm: The deployment group manager containing results
+        """
+        # Assemble the nodes into a note
+        stages = [Stage.NOT_STARTED, Stage.DEPLOYED, Stage.FAILED]
+        nodes_by_stage = []
+        for stage in stages:
+            nodes = dgm.get_nodes(stage=stage)
+            if nodes:
+                nodes_by_stage.append("{}: {}".format(
+                    stage, ", ".join(nodes)))
+        if nodes_by_stage:
+            self.notes_helper.make_step_note(
+                action_id=self.action_id,
+                step_id=self.task_id,
+                note_val="; ".join(nodes_by_stage),
+                subject=self.main_dag_name,
+                sub_type="Node Deployment",
+                verbosity=1)
+
+        # assemble the group info into a note
+        # rotate list into a dict by stage
+        groups_stages = {}
+        for group in dgm.group_list():
+            if group.stage not in groups_stages:
+                groups_stages[group.stage] = []
+            groups_stages[group.stage].append("{}{}".format(
+                group.name, "(critical)" if group.critical else ""))
+
+        # iterate stage keyed dictionary for text summary
+        groups_by_stage = [
+            "{}: {}".format(stage, ", ".join(group_list))
+            for stage, group_list in groups_stages.items()
+        ]
+
+        if groups_by_stage:
+            self.notes_helper.make_step_note(
+                action_id=self.action_id,
+                step_id=self.task_id,
+                note_val="; ".join(groups_by_stage),
+                subject=self.main_dag_name,
+                sub_type="Deployment Groups",
+                verbosity=1)
 
     def _setup_configured_values(self):
         """Sets self.<name> values from the deployment configuration"""

@@ -389,6 +389,11 @@ conf:
   shipyard:
     base:
       web_server:
+      pool_size: 15
+      pool_pre_ping: true
+      pool_timeout: 30
+      pool_overflow: 10
+      connection_recycle: -1
       profiler: false
     shipyard:
       service_type: shipyard
@@ -413,6 +418,8 @@ conf:
       deckhand_client_read_timeout: 300
       validation_connect_timeout: 5
       validation_read_timeout: 300
+      notes_connect_timeout: 5
+      notes_read_timeout: 10
     airflow:
       worker_endpoint_scheme: 'http'
       worker_port: 8793

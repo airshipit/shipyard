@@ -29,6 +29,9 @@ from shipyard_airflow.common.deployment_group.deployment_group import (
 from shipyard_airflow.common.deployment_group.deployment_group_manager import (
     DeploymentGroupManager
 )
+from shipyard_airflow.common.notes.notes import NotesManager
+from shipyard_airflow.common.notes.notes_helper import NotesHelper
+from shipyard_airflow.common.notes.storage_impl_mem import MemoryNotesStorage
 
 from shipyard_airflow.plugins.drydock_base_operator import (
     gen_node_name_filter,
@@ -213,6 +216,13 @@ def _gen_pe_func(mode, stand_alone=False):
     else:
         return _func_self
 
+def get_notes_helper():
+    """Setup a notes helper using the in-memory storage module"""
+    return NotesHelper(NotesManager(
+        storage=MemoryNotesStorage(),
+        get_token=lambda: "fake_token")
+    )
+
 
 class TestDrydockNodesOperator:
     def test_default_deployment_strategy(self):
@@ -290,6 +300,10 @@ class TestDrydockNodesOperator:
             DeploymentConfigurationOperator.config_keys_defaults
         )
         op.design_ref = {}
+        op.notes_helper = get_notes_helper()
+        op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        op.task_id = "prepare_and_deploy_nodes"
+
         op.do_execute()
         assert get_dgm.call_count == 1
         assert nl.call_count == 1
@@ -312,6 +326,10 @@ class TestDrydockNodesOperator:
                 DeploymentConfigurationOperator.config_keys_defaults
             )
             op.design_ref = {}
+            op.notes_helper = get_notes_helper()
+            op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            op.task_id = "prepare_and_deploy_nodes"
+
             op.do_execute()
 
         assert get_dgm.call_count == 1
@@ -459,6 +477,10 @@ class TestDrydockNodesOperator:
             DeploymentConfigurationOperator.config_keys_defaults
         )
         op.design_ref = {"a": "b"}
+        op.notes_helper = get_notes_helper()
+        op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        op.task_id = "prepare_and_deploy_nodes"
+
         op.do_execute()
         assert "critical groups have met their success criteria" in caplog.text
 

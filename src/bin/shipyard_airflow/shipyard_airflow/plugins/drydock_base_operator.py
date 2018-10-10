@@ -419,6 +419,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                         )
                         pass
                 _report_task_info(task_id, task_result, task_status)
+                self._create_drydock_results_notes(task_id, task_result)
 
             # for each child, report only the step info, do not add to overall
             # success list.
@@ -435,6 +436,97 @@ class DrydockBaseOperator(UcpBaseOperator):
 
         # deduplicate and return
         return set(success_nodes)
+
+    def _create_drydock_results_notes(self, dd_task_id, task_result):
+        """Generate a note in the database with a url to the builddata
+
+        :param dd_task_id: the id of the Drydock task. Note that `self.task_id`
+            is the workflow task_id, not the same drydock task_id.
+        :param task_result: the task result object containing the info needed
+            to produce a note.
+
+        Example task result:
+        {
+            'status': 'success',
+            'kind': 'Status',
+            'failures': [],
+            'apiVersion': 'v1.0',
+            'metadata': {},
+            'details': {
+                'errorCount': 0,
+                'messageList': [{
+                    'error': False,
+                    'context': 'n2',
+                    'context_type': 'node',
+                    'extra': '{}',
+                    'ts': '2018-10-12 16:09:53.778696',
+                    'message': 'Acquiring node n2 for deployment'
+                }]
+            },
+            'successes': ['n2'],
+            'links': [{
+                'rel': 'detail_logs',
+                'href': 'http://drydock-api.ucp.svc.cluster.local:9000/api/...'
+            }],
+            'reason': None,
+            'message': None
+        }
+        """
+        for msg in task_result.get('details', {}).get('messageList', []):
+            try:
+                if msg.get('message'):
+                    error = msg.get('error', False)
+                    msg_text = "{}:{}:{}{}".format(
+                        msg.get('context_type', 'N/A'),
+                        msg.get('context', 'N/A'),
+                        msg.get('message'),
+                        " (error)" if error else "")
+                    self.notes_helper.make_step_note(
+                        action_id=self.action_id,
+                        step_id=self.task_id,
+                        note_val=msg_text,
+                        subject=dd_task_id,
+                        sub_type="Task Message",
+                        note_timestamp=msg.get('ts'),
+                        verbosity=3)
+            except Exception as ex:
+                LOG.warn("Error while creating a task result note, "
+                         "processing continues. Source info %s", msg)
+                LOG.exception(ex)
+
+        links = task_result.get('links', [])
+        for link in links:
+            try:
+                rel = link.get('rel')
+                href = link.get('href')
+                extra = _get_context_info_from_url(href)
+                if rel and href:
+                    self.notes_helper.make_step_note(
+                        action_id=self.action_id,
+                        step_id=self.task_id,
+                        note_val="{}{}".format(rel, extra),
+                        subject=dd_task_id,
+                        sub_type="Linked Task Info",
+                        link_url=href,
+                        is_auth_link=True,
+                        verbosity=5)
+            except Exception as ex:
+                LOG.warn("Error while creating a link-based note, "
+                         "processing continues. Source info: %s", link)
+                LOG.exception(ex)
+
+
+def _get_context_info_from_url(url_string):
+    """Examine a url for helpful info for use in a note
+
+    :param url_string: The url to examine
+    :returns: String of helpful information
+    Strings returned should include a leading space.
+    """
+    if url_string.endswith("/builddata"):
+        return " - builddata"
+    # Other "helpful" patterns would show up here.
+    return ""
 
 
 def gen_node_name_filter(node_names):
