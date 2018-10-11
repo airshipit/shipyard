@@ -126,6 +126,52 @@ class TestNodeLookup:
         nf = _generate_node_filter([sel3, sel4])
         assert nf is None
 
+    def test_generate_node_filter_more_labels(self):
+        """Tests the _generate_node_filter function"""
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': ['label1:label1',
+                            'label2:enabled',
+                            'control-plane: bicycle'],
+            'node_tags': [],
+            'rack_names': [],
+        })
+        nf = _generate_node_filter([sel])
+        assert nf == {
+            'filter_set': [{
+                'filter_type': 'intersection',
+                'node_names': [],
+                'node_tags': [],
+                'rack_names': [],
+                'node_labels': {'label1': 'label1',
+                                'label2': 'enabled',
+                                'control-plane': 'bicycle'}
+            }],
+            'filter_set_type': 'union'
+        }
+
+    def test_generate_node_filter_only_rack(self):
+        """Tests the _generate_node_filter function"""
+        sel = GroupNodeSelector({
+            'node_names': [],
+            'node_labels': [],
+            'node_tags': [],
+            'rack_names': ['RACK1', 'RACK2'],
+        })
+        nf = _generate_node_filter([sel])
+        assert nf == {
+            'filter_set': [{
+                'filter_type': 'intersection',
+                'node_names': [],
+                'node_tags': [],
+                'rack_names': ['RACK1', 'RACK2'],
+                'node_labels': {}
+            }],
+            'filter_set_type': 'union'
+        }
+
+
+
     @mock.patch('shipyard_airflow.common.deployment_group.node_lookup'
                 '._get_nodes_for_filter', return_value=['node1', 'node2'])
     def test_NodeLookup_lookup(self, *args):
