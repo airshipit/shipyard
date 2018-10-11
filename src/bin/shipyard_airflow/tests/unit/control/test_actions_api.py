@@ -257,6 +257,8 @@ def test_on_get(mock_get_all_actions, mock_authorize):
     assert resp.status == '200 OK'
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch.object(ShipyardPolicy, 'authorize', return_value=True)
 @mock.patch.object(
     ActionsResource,
@@ -264,7 +266,7 @@ def test_on_get(mock_get_all_actions, mock_authorize):
     return_value={'id': 'test_id',
                   'name': 'test_name'})
 @patch('logging.Logger.info')
-def test_on_post(mock_info, mock_create_action, mock_authorize):
+def test_on_post(mock_info, mock_create_action, mock_authorize, *args):
     act_resource = ActionsResource()
     context.policy_engine = ShipyardPolicy()
     json_body = json.dumps({
@@ -289,7 +291,9 @@ def test_on_post(mock_info, mock_create_action, mock_authorize):
     assert '/api/v1.0/actions/' in resp.location
 
 
-def test_get_all_actions():
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
+def test_get_all_actions(*args):
     """
     Tests the main response from get all actions
     """
@@ -346,13 +350,15 @@ def _gen_action_resource_stubbed():
     return action_resource
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_full')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_intermediate_commits')
-def test_create_action_invalid_input(ic_val, full_val, basic_val):
+def test_create_action_invalid_input(ic_val, full_val, basic_val, *args):
     action_resource = _gen_action_resource_stubbed()
     # with invalid input. fail.
     with pytest.raises(ApiError):
@@ -368,6 +374,8 @@ def test_create_action_invalid_input(ic_val, full_val, basic_val):
     assert not basic_val.called
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -400,6 +408,8 @@ def test_create_action_valid_input_and_params(ic_val, full_val, *args):
         action=action, configdocs_helper=action_resource.configdocs_helper)
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -429,6 +439,8 @@ def test_create_action_valid_input_no_params(ic_val, full_val, *args):
         action=action, configdocs_helper=action_resource.configdocs_helper)
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -458,6 +470,8 @@ def test_create_action_validator_error(*args):
     assert apie.value.title == 'bad'
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -484,6 +498,8 @@ def test_create_targeted_action_valid_input_and_params(basic_val, *args):
         action=action, configdocs_helper=action_resource.configdocs_helper)
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -508,6 +524,8 @@ def test_create_targeted_action_valid_input_missing_target(basic_val, *args):
     assert not basic_val.called
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -529,6 +547,8 @@ def test_create_targeted_action_valid_input_missing_param(basic_val, *args):
     assert not basic_val.called
 
 
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.policy.check_auth')
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic')
@@ -555,6 +575,8 @@ def test_create_targeted_action_no_committed(basic_val, *args):
 
 
 # Purposefully raising Exception to test only the value passed to auth
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
+            new=nh)
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_deployment_action_basic',
             side_effect=Exception('purposeful'))
