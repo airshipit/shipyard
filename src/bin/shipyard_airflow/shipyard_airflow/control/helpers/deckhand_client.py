@@ -184,20 +184,25 @@ class DeckhandClient(object):
         diff = yaml.safe_load(response.text)
         return diff
 
-    def get_docs_from_revision(self, revision_id, bucket_id=None):
+    def get_docs_from_revision(self, revision_id, bucket_id=None,
+                               cleartext_secrets=False):
         """
         Retrieves the collection of docs from the revision specified
         for the bucket_id specified
+        cleartext_secrets: Should deckhand show or redact secrets.
         :returns: a string representing the response.text from Deckhand
         """
+
         url = DeckhandClient.get_path(
             DeckhandPaths.REVISION_DOCS
         ).format(revision_id)
 
         # if a bucket_id is specified, limit the response to a bucket
-        query = None
+        query = {}
         if bucket_id is not None:
             query = {'status.bucket': bucket_id}
+        if cleartext_secrets is True:
+            query['cleartext-secrets'] = 'true'
         response = self._get_request(url, params=query)
         self._handle_bad_response(response)
         return response.text
@@ -335,6 +340,9 @@ class DeckhandClient(object):
                 'X-Context-Marker': self.context_marker,
                 'X-Auth-Token': get_token()
             }
+
+            if not params:
+                params = None
 
             DeckhandClient._log_request('GET', url, params)
             response = requests.get(

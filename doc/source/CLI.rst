@@ -647,6 +647,7 @@ differences between the 'committed' and 'buffer' revision (default behavior).
     shipyard get configdocs
         [--collection=<collection>]
         [--committed | --last-site-action | --successful-site-action | --buffer]
+        [--cleartext-secrets]
 
     Example:
         shipyard get configdocs --collection=design
@@ -674,6 +675,10 @@ differences between the 'committed' and 'buffer' revision (default behavior).
   Retrive the documents that have been loaded into Shipyard since the
   prior commit. If no documents have been loaded into the buffer for this
   collection, this will return an empty response (default)
+
+\--cleartext-secrets
+  Returns cleartext secrets in encrypted documents, otherwise those values
+  are redacted. Only impacts returned documents, not lists of documents.
 
 Sample
 ^^^^^^

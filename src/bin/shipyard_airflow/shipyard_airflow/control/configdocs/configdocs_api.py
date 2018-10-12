@@ -98,11 +98,13 @@ class ConfigDocsResource(BaseResource):
         Returns a collection of documents
         """
         version = (req.params.get('version') or 'buffer')
+        cleartext_secrets = req.get_param_as_bool('cleartext-secrets')
         self._validate_version_parameter(version)
         helper = ConfigdocsHelper(req.context)
         # Not reformatting to JSON or YAML since just passing through
         resp.body = self.get_collection(
-            helper=helper, collection_id=collection_id, version=version)
+            helper=helper, collection_id=collection_id, version=version,
+            cleartext_secrets=cleartext_secrets)
         resp.append_header('Content-Type', 'application/x-yaml')
         resp.status = falcon.HTTP_200
 
@@ -116,13 +118,15 @@ class ConfigDocsResource(BaseResource):
                 status=falcon.HTTP_400,
                 retry=False, )
 
-    def get_collection(self, helper, collection_id, version='buffer'):
+    def get_collection(self, helper, collection_id, version='buffer',
+                       cleartext_secrets=False):
         """
         Attempts to retrieve the specified collection of documents
         either from the buffer, committed version, last site action
         or successful site action, as specified
         """
-        return helper.get_collection_docs(version, collection_id)
+        return helper.get_collection_docs(version, collection_id,
+                                          cleartext_secrets)
 
     def post_collection(self,
                         helper,
