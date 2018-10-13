@@ -53,8 +53,46 @@ class DescribeAction(CliAction):
             cli_format_common.gen_action_validations(
                 resp_j.get('validations')
             ),
-            cli_format_common.gen_detail_notes(resp_j)
+            cli_format_common.gen_detail_notes("Action", resp_j)
         )
+
+
+class DescribeNotedetails(CliAction):
+    """Action to Describe notedetails"""
+
+    def __init__(self, ctx, note_id):
+        """Sets parameters."""
+        super().__init__(ctx)
+        self.logger.debug(
+            "DescribeNotedetails action initialized with note_id=%s", note_id)
+        self.note_id = note_id
+
+    def invoke(self):
+        """Calls API Client and formats response from API Client"""
+        self.logger.debug("Calling API Client get_note_details.")
+        return self.get_api_client().get_note_details(
+            note_id=self.note_id)
+
+    # Handle 404 with default error handler for cli.
+    cli_handled_err_resp_codes = [400, 404, 500]
+
+    # Handle 200 responses using the cli_format_response_handler
+    cli_handled_succ_resp_codes = [200]
+
+    def cli_format_response_handler(self, response):
+        """CLI output handler
+
+        :param response: a requests response object containing the details
+        :returns: a string representing a formatted response
+
+        Handles 200 responses. If the response contains '\n' characters
+        (literally), this will attempt to replace with newline characters
+        """
+        resp = response.text
+        if "\\n" in resp:
+            return "\n".join(resp.split("\\n"))
+        else:
+            return resp
 
 
 class DescribeStep(CliAction):
@@ -91,7 +129,7 @@ class DescribeStep(CliAction):
         resp_j = response.json()
         return "{}\n\n{}\n".format(
             cli_format_common.gen_action_step_details(resp_j, self.action_id),
-            cli_format_common.gen_detail_notes(resp_j)
+            cli_format_common.gen_detail_notes("Step", resp_j)
         )
 
 

@@ -40,6 +40,7 @@ COMMIT_CONFIGDOCS = 'workflow_orchestrator:commit_configdocs'
 GET_RENDEREDCONFIGDOCS = 'workflow_orchestrator:get_renderedconfigdocs'
 LIST_WORKFLOWS = 'workflow_orchestrator:list_workflows'
 GET_WORKFLOW = 'workflow_orchestrator:get_workflow'
+GET_NOTEDETAILS = 'workflow_orchestrator:get_notedetails'
 GET_SITE_STATUSES = 'workflow_orchestrator:get_site_statuses'
 ACTION_DEPLOY_SITE = 'workflow_orchestrator:action_deploy_site'
 ACTION_UPDATE_SITE = 'workflow_orchestrator:action_update_site'
@@ -203,6 +204,16 @@ class ShipyardPolicy(object):
              'Airflow'),
             [{
                 'path': '/api/v1.0/workflows/{id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            GET_NOTEDETAILS,
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve the details for a note. Further authorization is '
+             'required depending on the topic of the note'),
+            [{
+                'path': '/api/v1.0/notedetails/{note_id}',
                 'method': 'GET'
             }]
         ),

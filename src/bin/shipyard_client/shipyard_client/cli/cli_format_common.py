@@ -25,7 +25,7 @@ def gen_action_steps(step_list, action_id):
     """
     # Generate the steps table.
     steps = format_utils.table_factory(
-        field_names=['Steps', 'Index', 'State', 'Notes']
+        field_names=['Steps', 'Index', 'State', 'Footnotes']
     )
     # rendered notes , a list of lists of notes
     r_notes = []
@@ -34,7 +34,7 @@ def gen_action_steps(step_list, action_id):
         for step in step_list:
             notes = step.get('notes')
             if notes:
-                r_notes.append(format_utils.format_notes(notes))
+                r_notes.append(format_notes(notes))
             steps.add_row([
                 'step/{}/{}'.format(action_id, step.get('id')),
                 step.get('index'),
@@ -44,16 +44,9 @@ def gen_action_steps(step_list, action_id):
     else:
         steps.add_row(['None', '', '', ''])
 
-    table_string = format_utils.table_get_string(steps)
-
-    if r_notes:
-        note_index = 1
-        for note_list in r_notes:
-            table_string += "\n\n({}):\n\n{}".format(
-                note_index, "\n".join(note_list)
-            )
-            note_index += 1
-    return table_string
+    return "{}\n\n{}".format(
+        format_utils.table_get_string(steps),
+        notes_table("Step", r_notes))
 
 
 def gen_action_commands(command_list):
@@ -141,7 +134,7 @@ def gen_action_table(action_list):
     """
     actions = format_utils.table_factory(
         field_names=['Name', 'Action', 'Lifecycle', 'Execution Time',
-                     'Step Succ/Fail/Oth', 'Notes'])
+                     'Step Succ/Fail/Oth', 'Footnotes'])
     # list of lists of rendered notes
     r_notes = []
     if action_list:
@@ -149,7 +142,7 @@ def gen_action_table(action_list):
         for action in sorted(action_list, key=lambda k: k['id']):
             notes = action.get('notes')
             if notes:
-                r_notes.append(format_utils.format_notes(notes))
+                r_notes.append(format_notes(notes))
             actions.add_row([
                 action.get('name'),
                 'action/{}'.format(action.get('id')),
@@ -161,16 +154,9 @@ def gen_action_table(action_list):
     else:
         actions.add_row(['None', '', '', '', '', ''])
 
-    table_string = format_utils.table_get_string(actions)
-
-    if r_notes:
-        note_index = 1
-        for note_list in r_notes:
-            table_string += "\n\n({}):\n\n{}".format(
-                note_index, "\n".join(note_list)
-            )
-            note_index += 1
-    return table_string
+    return "{}\n\n{}".format(
+        format_utils.table_get_string(actions),
+        notes_table("Action", r_notes))
 
 
 def _step_summary(step_list):
@@ -370,13 +356,88 @@ def _site_statuses_switcher(status_type):
 
     return call_func
 
-def gen_detail_notes(dict_with_notes):
+
+def gen_detail_notes(title, dict_with_notes):
     """Generates a standard formatted section of notes
 
+    :param title: the title for the notes section. E.g.: "Step"
     :param dict_with_notes: a dictionary with a possible notes field.
     :returns: string of notes or empty string if there were no notes
     """
-    n_strings = format_utils.format_notes(dict_with_notes.get('notes', []))
+    n_strings = format_notes(dict_with_notes.get('notes', []))
     if n_strings:
-        return "Notes:\n{}".format("\n".join(n_strings))
+        return "{} Notes:\n{}".format(title, "\n".join(n_strings))
     return ""
+
+
+def notes_table(title, notes_list):
+    """Format a table of notes
+
+    :param title: the header for the table. e.g.: "Step"
+    :param list notes_list: a list of lists of formatted notes:
+        e.g.:[[note1,note2],[note3]]
+        The notes ideally have been pre-formatted by "format_notes"
+
+    :returns: string of a table e.g.:
+
+    Step Notes  Note
+    (1)         > note1
+                  - Info avail...
+                > note2
+    (2)         > note3
+
+    If notes_list is empty, returns an empty string.
+    """
+    if not notes_list:
+        return ""
+    headers = ["{} Footnotes".format(title), "Note"]
+    rows = []
+    index = 1
+    for notes in notes_list:
+        rows.append(["({})".format(index), "\n".join(notes)])
+        index += 1
+    return format_utils.table_get_string(
+        format_utils.table_factory(headers, rows))
+
+
+def format_notes(notes):
+    """Formats a list of notes.
+
+    :param list notes: The list of note dictionaries to display
+    :returns: a list of note strings
+
+    Assumed note dictionary example:
+    {
+        'assoc_id': "action/12345678901234567890123456,
+        'subject': "12345678901234567890123456",
+        'sub_type': "action",
+        'note_val': "message",
+        'verbosity': 1,
+        'note_id': "09876543210987654321098765",
+        'note_timestamp': "2018-10-08 14:23:53.346534",
+        'resolved_url_value': \
+            "Details at notedetails/09876543210987654321098765"
+    }
+
+    Resulting in:
+
+    > action:12345678901234567890123456(2018-10-08 14:23:53.346534): message
+      - Info available with 'describe notedetails/09876543210987654321098765'
+    """
+    nl = []
+    for n in notes:
+        try:
+            s = "> {}:{}({}): {}".format(
+                n['sub_type'],
+                n['subject'],
+                n['note_timestamp'],
+                n['note_val']
+            )
+            if n['resolved_url_value']:
+                s += ("\n  - Info available with "
+                      "'describe notedetails/{}'".format(n['note_id']))
+        except KeyError:
+            s = "!!! Unparseable Note: {}".format(n)
+
+        nl.append(s)
+    return nl

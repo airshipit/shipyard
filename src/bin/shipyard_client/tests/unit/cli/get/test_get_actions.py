@@ -104,7 +104,9 @@ def test_get_actions(*args):
     assert 'Lifecycle' in response
     assert '2/1/0' in response
     assert 'This is a note for the concurrency check' not in response
-    assert '>>> Your lucky numbers are 1, 3, 5, and Q' in response
+    assert "Action Footnotes" in response
+    assert ("  - Info available with 'describe notedetails/"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYA'") in response
 
 
 GET_ACTIONS_API_RESP_UNPARSEABLE_NOTE = """

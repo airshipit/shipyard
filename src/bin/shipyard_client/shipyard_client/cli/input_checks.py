@@ -31,13 +31,13 @@ def check_control_action(ctx, action):
         ctx.fail('Invalid action.  Please enter pause, unpause, or stop.')
 
 
-def check_id(ctx, action_id):
+def check_id(ctx, ulid_id):
     """Verifies a ULID id is in a valid format"""
-    if action_id is None:
+    if ulid_id is None:
         ctx.fail('Invalid ID. None is not a valid action ID.')
-    if len(action_id) != 26:
+    if len(ulid_id) != 26:
         ctx.fail('Invalid ID. ID can only be 26 characters.')
-    if not action_id.isalnum():
+    if not ulid_id.isalnum():
         ctx.fail('Invalid ID. ID can only contain letters and numbers.')
 
 

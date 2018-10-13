@@ -19,6 +19,7 @@ import click
 from click_default_group import DefaultGroup
 
 from shipyard_client.cli.describe.actions import DescribeAction
+from shipyard_client.cli.describe.actions import DescribeNotedetails
 from shipyard_client.cli.describe.actions import DescribeStep
 from shipyard_client.cli.describe.actions import DescribeValidation
 from shipyard_client.cli.describe.actions import DescribeWorkflow
@@ -29,7 +30,7 @@ from shipyard_client.cli.input_checks import check_id, check_workflow_id
 @click.pass_context
 def describe(ctx):
     """
-    Describe the action, step, or validation. \n
+    Describe the action, step, note details or validation. \n
     For more information on describe commands
     please enter the describe command followed by '--help' \n
     Example: shipyard describe action --help \n
@@ -41,7 +42,8 @@ def describe(ctx):
         FORMAT: shipyard describe <namespace item> \n
         EXAMPLE: shipyard describe action/01BTG32JW87G0YKA1K29TKNAFX | shipyard
     describe step/01BTG32JW87G0YKA1K29TKNAFX/preflight | shipyard describe
-    validation/01BTG32JW87G0YKA1K29TKNAFX/01BTG3PKBS15KCKFZ56XXXBGF2
+    validation/01BTG32JW87G0YKA1K29TKNAFX/01BTG3PKBS15KCKFZ56XXXBGF2 | shipyard
+    describe notedetails/01BTG32JW87G0YKA1KA9AKAAB3
     """
 
 
@@ -64,8 +66,11 @@ def describe_default_command(ctx, namespace_item):
         elif namespace[0] == 'workflow':
             ctx.invoke(
                 describe_workflow,
-                workflow_id=namespace[1]
-            )
+                workflow_id=namespace[1])
+        elif namespace[0] == 'notedetails':
+            ctx.invoke(
+                describe_notedetails,
+                note_id=namespace[1])
         else:
             raise Exception('Invalid namespaced describe action')
     except Exception:
@@ -74,7 +79,8 @@ def describe_default_command(ctx, namespace_item):
                  "action: action/action id\n"
                  "step: step/action id/step id\n"
                  "validation: validation/validation id/action id\n"
-                 "workflow: workflow/workflow id")
+                 "workflow: workflow/workflow id\n"
+                 "notedetails: notedetails/note_id")
 
 
 DESC_ACTION = """
@@ -100,6 +106,32 @@ def describe_action(ctx, action_id):
     check_id(ctx, action_id)
 
     click.echo(DescribeAction(ctx, action_id).invoke_and_return_resp())
+
+
+DESC_NOTEDETAILS = """
+COMMAND: describe notedetials \n
+DESCRIPTION: Retrieves the detailed information that is associated with the
+specified note id. \n
+FORMAT: shipyard describe notedetails <note id> \n
+EXAMPLE: shipyard describe notedetails 01BTG32JW87G0YKA1KA9AKAAB3
+"""
+
+SHORT_DESC_NOTEDETAILS = (
+    "Retrieves the detailed information about the supplied action id.")
+
+
+@describe.command('notedetails',
+    help=DESC_NOTEDETAILS, short_help=SHORT_DESC_NOTEDETAILS)
+@click.argument('note_id')
+@click.pass_context
+def describe_notedetails(ctx, note_id):
+
+    if not note_id:
+        ctx.fail("A note id argument must be passed.")
+
+    check_id(ctx, note_id)
+
+    click.echo(DescribeNotedetails(ctx, note_id).invoke_and_return_resp())
 
 
 DESC_STEP = """

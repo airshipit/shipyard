@@ -34,6 +34,7 @@ class ApiPaths(enum.Enum):
     GET_STEP_DETAIL = _BASE_URL + 'actions/{}/steps/{}'
     GET_STEP_LOG = _BASE_URL + 'actions/{}/steps/{}/logs'
     POST_CONTROL_ACTION = _BASE_URL + 'actions/{}/control/{}'
+    GET_NOTEDETAILS = _BASE_URL + 'notedetails/{}'
     GET_WORKFLOWS = _BASE_URL + 'workflows'
     GET_DAG_DETAIL = _BASE_URL + 'workflows/{}'
     GET_SITE_STATUSES = _BASE_URL + 'site_statuses'
@@ -224,6 +225,15 @@ class ShipyardClient(BaseClient):
         url = ApiPaths.POST_CONTROL_ACTION.value.format(
             self.get_endpoint(), action_id, control_verb)
         return self.post_resp(url)
+
+    def get_note_details(self, note_id):
+        """Retrieve note details from a note's associated information
+
+        :param note_id: The ID of the note having additional information
+        """
+        url = ApiPaths.GET_NOTEDETAILS.value.format(
+            self.get_endpoint(), note_id)
+        return self.get_resp(url)
 
     def get_workflows(self, since=None):
         """

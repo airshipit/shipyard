@@ -42,3 +42,28 @@ class NotesStorageError(NotesError):
     Raised when there is an error attempting to store a note.
     """
     pass
+
+
+class NoteNotFoundError(NotesRetrievalError):
+    """NoteNotFoundError
+
+    Raised when a note is looked up directly and not found
+    """
+    pass
+
+
+class NoteURLNotSpecifiedError(NotesRetrievalError):
+    """NoteURLNotSpecifiedError
+
+    Raised when a note's url info is requested for a note that has no URL
+    """
+    pass
+
+
+class NoteURLRetrievalError(NotesRetrievalError):
+    """NoteURLRetrievalError
+
+    Raised when there is an error retrieving the URL information for a note
+    that has a URL specified.
+    """
+    pass

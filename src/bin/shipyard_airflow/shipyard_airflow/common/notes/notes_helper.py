@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from enum import Enum
 import logging
 
 from .notes import MAX_VERBOSITY
@@ -20,41 +21,105 @@ from .notes import Query
 
 LOG = logging.getLogger(__name__)
 
-# Constants and magic numbers for actions:
-# [7:33] to slice a string like:
-#
-# Text:      action/12345678901234567890123456
-#                  |                         |
-# Position: 0....5.|..1....1....2....2....3..|.3
-#                  |  0    5    0    5    0  | 5
-#                  |                         |
-#           (7) ACTION_ID_START              |
-#                                      (33) ACTION_ID_END
-#
-# matching the patterns in this helper.
-#
-ACTION_KEY_PATTERN = "action/{}"
-ACTION_LOOKUP_PATTERN = "action/"
-ACTION_ID_START = 7
-ACTION_ID_END = 33
 
-# Constants and magic numbers for steps:
-# [32:] to slice a step name pattern
-#     step/{action_id}/{step_name}
-#
-# Text:      step/12345678901234567890123456/my_step
-# Position: 0....5....1....1....2....2....3||..3....4
-#                |    0    5    0    5    0||  5    0
-#                |                         |\
-#           (5) STEP_ACTION_ID_START       | \
-#                                          | (32) STEP_ID_START
-#                               (31) STEP_ACTION_ID_END
-#
-STEP_KEY_PATTERN = "step/{}/{}"
-STEP_LOOKUP_PATTERN = "step/{}"
-STEP_ACTION_ID_START = 5
-STEP_ACTION_ID_END = 31
-STEP_ID_START = 32
+class _NoteType:
+    """Define the patterns and pertinent positions of information for a note
+
+    :param root: the string used as the initial identifier for the type
+    :param key_pattern_count: the number of variable positions in the key.
+        E.g.: a value of 3, and a root of "tacos" would generate a key_pattern
+        of "tacos/{}/{}/{}", while a value of 0 would generate "tacos".
+        The lookup_pattern for a type is also drived from the key_pattern_count
+        by subtracting 1 (minimum 0), such that a value of 3 and a root of
+        "tacos" would generate a lookup_pattern of "tacos/{}/{}/
+    :param id_start: the start location in the assoc_id of a note of this type
+        where the id of the item it is associated with appears.
+    :param id_end: the optional end location in the assoc_id for locating the
+        id from the assoc_id of a note of this type. This is only valid for
+        items that have a fixed length key.
+    :param default_subtype: the default sub_type specified upon creation of a
+        note of this type.
+    """
+
+    def __init__(self, root, key_pattern_count, id_start,
+                 id_end=None, default_subtype="metadata"):
+        self.root = root
+        self.base_pattern = "{}/".format(root)
+        self.kp_count = key_pattern_count
+        self.key_pattern = "{}{}".format(root, "/{}" * self.kp_count)
+        self.lp_count = self.kp_count - 1 if self.kp_count > 0 else 0
+        self.lookup_pattern = "{}/{}".format(root, "{}/" * self.lp_count)
+        self.id_start = id_start
+        self.id_end = id_end
+        self.default_subtype = default_subtype
+
+
+class NoteType(Enum):
+
+    # Action
+    #
+    # Text:      action/12345678901234567890123456
+    #                  |                         |
+    # Position: 0....5.|..1....1....2....2....3..|.3
+    #                  |  0    5    0    5    0  | 5
+    #                  |                         |
+    #           (7) ACTION_ID_START              |
+    #                                      (33) ACTION_ID_END
+    ACTION = _NoteType(
+        root="action",
+        key_pattern_count=1,
+        id_start=7,
+        id_end=33,
+        default_subtype="action metadata")
+
+    # Step
+    #
+    # Text:      step/12345678901234567890123456/my_step
+    #                |                         ||
+    # Position: 0....5....1....1....2....2....3||..3....4
+    #                |    0    5    0    5    0||  5    0
+    #                |                         |\
+    #           (5) STEP_ACTION_ID_START       | \
+    #                                          | (32) STEP_ID_START
+    #                               (31) STEP_ACTION_ID_END
+    STEP = _NoteType(
+        root="step",
+        key_pattern_count=2,
+        id_start=32,
+        default_subtype="step metadata")
+
+    OTHER = _NoteType(root="", key_pattern_count=0, id_start=0)
+
+    @property
+    def base_pattern(self):
+        return self.value.base_pattern
+
+    @property
+    def key_pattern(self):
+        return self.value.key_pattern
+
+    @property
+    def lookup_pattern(self):
+        return self.value.lookup_pattern
+
+    @property
+    def id_start(self):
+        return self.value.id_start
+
+    @property
+    def id_end(self):
+        return self.value.id_end
+
+    @property
+    def default_subtype(self):
+        return self.value.default_subtype
+
+    @classmethod
+    def get_type(cls, note):
+        for tp in cls:
+            if note.assoc_id.startswith(tp.value.base_pattern):
+                return tp
+        return cls.OTHER
 
 
 class NotesHelper:
@@ -68,7 +133,7 @@ class NotesHelper:
 
     def _failsafe_make_note(self, assoc_id, subject, sub_type, note_val,
                             verbosity=MIN_VERBOSITY, link_url=None,
-                            is_auth_link=None):
+                            is_auth_link=None, note_timestamp=None):
         """LOG and continue on any note creation failure"""
         try:
             self.nm.create(
@@ -79,6 +144,7 @@ class NotesHelper:
                 verbosity=verbosity,
                 link_url=link_url,
                 is_auth_link=is_auth_link,
+                note_timestamp=note_timestamp
             )
         except Exception as ex:
             LOG.warn(
@@ -106,12 +172,44 @@ class NotesHelper:
         return []
 
     #
+    # Retrieve notes by note ID
+    #
+
+    def get_note(self, note_id):
+        """Return a single note looked up by the specified note_id
+
+        :param note_id: the ULID of the note to retrieve.
+        :raises NoteNotFoundError: if there is no note matching the requested
+            note_id
+        """
+        return self.nm.retrieve_by_id(note_id)
+
+    def get_note_details(self, note):
+        """Return the note details for the specified note
+
+        :param note: the Note object with additional details to retrieve.
+        """
+        return self.nm.get_note_url_info(note)
+
+    def get_note_assoc_id_type(self, note):
+        """Return the type of note based on the assoc_id
+
+        :param note: The note to examine
+
+        The purpose of this method is to use the standard formats (e.g.:
+        action and step) supported by this helper to get the type of note.
+        This value can be used by a client to enforce access rules to the note
+        based on the item it is related to.
+        """
+        return NoteType.get_type(note)
+
+    #
     # Action notes helper methods
     #
 
     def make_action_note(self, action_id, note_val, subject=None,
                          sub_type=None, verbosity=MIN_VERBOSITY, link_url=None,
-                         is_auth_link=None):
+                         is_auth_link=None, note_timestamp=None):
         """Creates an action note using a convention for the note's assoc_id
 
         :param action_id: the ULID id of an action
@@ -127,12 +225,14 @@ class NotesHelper:
         :param is_auth_link: optional, defaults to False, indicating if there
             is a need to send a Shipyard service account token with the
             request to the optional URL
+        :param note_timestamp: the parseable string timestamp to associate with
+            this note. Optional, defaults to the creation time of the note.
         """
-        assoc_id = ACTION_KEY_PATTERN.format(action_id)
+        assoc_id = NoteType.ACTION.key_pattern.format(action_id)
         if subject is None:
             subject = action_id
         if sub_type is None:
-            sub_type = "action metadata"
+            sub_type = NoteType.ACTION.default_subtype
 
         self._failsafe_make_note(
             assoc_id=assoc_id,
@@ -142,6 +242,7 @@ class NotesHelper:
             verbosity=verbosity,
             link_url=link_url,
             is_auth_link=is_auth_link,
+            note_timestamp=note_timestamp
         )
 
     def get_all_action_notes(self, verbosity=MIN_VERBOSITY):
@@ -150,19 +251,17 @@ class NotesHelper:
         :param verbosity: optional integer, 0-5, the maximum verbosity level
             to retrieve, defaults to 1 (most summary level)
             if set to less than 1, returns {}, skipping any retrieval
-
-        Warning: if there are a lot of URL links in notes, this could take a
-        long time. The default verbosity of 1 attempts to avoid this as there
-        is less expectation of URL links on summary notes.
         """
         notes = self._failsafe_get_notes(
-            assoc_id_pattern=ACTION_LOOKUP_PATTERN,
+            assoc_id_pattern=NoteType.ACTION.lookup_pattern,
             verbosity=verbosity,
             exact_match=False
         )
         note_dict = {}
+        id_s = NoteType.ACTION.id_start
+        id_e = NoteType.ACTION.id_end
         for n in notes:
-            action_id = n.assoc_id[ACTION_ID_START:ACTION_ID_END]
+            action_id = n.assoc_id[id_s:id_e]
             if action_id not in note_dict:
                 note_dict[action_id] = []
             note_dict[action_id].append(n)
@@ -178,7 +277,7 @@ class NotesHelper:
 
         """
         return self._failsafe_get_notes(
-            assoc_id_pattern=ACTION_KEY_PATTERN.format(action_id),
+            assoc_id_pattern=NoteType.ACTION.key_pattern.format(action_id),
             verbosity=verbosity,
             exact_match=True
         )
@@ -189,7 +288,7 @@ class NotesHelper:
 
     def make_step_note(self, action_id, step_id, note_val, subject=None,
                        sub_type=None, verbosity=MIN_VERBOSITY, link_url=None,
-                       is_auth_link=None):
+                       is_auth_link=None, note_timestamp=None):
         """Creates an action note using a convention for the note's assoc_id
 
         :param action_id: the ULID id of the action containing the note
@@ -206,12 +305,14 @@ class NotesHelper:
         :param is_auth_link: optional, defaults to False, indicating if there
             is a need to send a Shipyard service account token with the
             request to the optional URL
+        :param note_timestamp: the parseable string timestamp to associate with
+            this note. Optional, defaults to the creation time of the note.
         """
-        assoc_id = STEP_KEY_PATTERN.format(action_id, step_id)
+        assoc_id = NoteType.STEP.key_pattern.format(action_id, step_id)
         if subject is None:
             subject = step_id
         if sub_type is None:
-            sub_type = "step metadata"
+            sub_type = NoteType.STEP.default_subtype
 
         self._failsafe_make_note(
             assoc_id=assoc_id,
@@ -221,6 +322,7 @@ class NotesHelper:
             verbosity=verbosity,
             link_url=link_url,
             is_auth_link=is_auth_link,
+            note_timestamp=note_timestamp
         )
 
     def get_all_step_notes_for_action(self, action_id,
@@ -233,13 +335,14 @@ class NotesHelper:
             if set to less than 1, returns {}, skipping any retrieval
         """
         notes = self._failsafe_get_notes(
-            assoc_id_pattern=STEP_LOOKUP_PATTERN.format(action_id),
+            assoc_id_pattern=NoteType.STEP.lookup_pattern.format(action_id),
             verbosity=verbosity,
             exact_match=False
         )
         note_dict = {}
+        id_s = NoteType.STEP.id_start
         for n in notes:
-            step_id = n.assoc_id[STEP_ID_START:]
+            step_id = n.assoc_id[id_s:]
             if step_id not in note_dict:
                 note_dict[step_id] = []
             note_dict[step_id].append(n)
@@ -256,7 +359,8 @@ class NotesHelper:
 
         """
         return self._failsafe_get_notes(
-            assoc_id_pattern=STEP_KEY_PATTERN.format(action_id, step_id),
+            assoc_id_pattern=NoteType.STEP.key_pattern.format(
+                action_id, step_id),
             verbosity=verbosity,
             exact_match=True
         )

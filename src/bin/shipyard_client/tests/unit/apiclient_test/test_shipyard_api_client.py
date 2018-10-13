@@ -199,6 +199,17 @@ def test_post_control(*args):
 @mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
 @mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
 @mock.patch.object(BaseClient, 'get_endpoint', replace_get_endpoint)
+def test_get_note_details(*args):
+    shipyard_client = get_api_client()
+    note_id = "ABC123ABC123ZZABC123ABC123"
+    result = shipyard_client.get_note_details(note_id)
+    assert result['url'] == '{}/notedetails/{}'.format(
+        shipyard_client.get_endpoint(), note_id)
+
+
+@mock.patch.object(BaseClient, 'post_resp', replace_post_rep)
+@mock.patch.object(BaseClient, 'get_resp', replace_get_resp)
+@mock.patch.object(BaseClient, 'get_endpoint', replace_get_endpoint)
 def test_get_workflows(*args):
     shipyard_client = get_api_client()
     since_mode = 'TestSince'

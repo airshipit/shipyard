@@ -62,6 +62,11 @@
 # GET  /api/v1.0/workflows/{id}
 #"workflow_orchestrator:get_workflow": "rule:admin_required"
 
+# Retrieve the details for a note. Further authorization is required
+# depending on the topic of the note
+# GET  /api/v1.0/notedetails/{note_id}
+#"workflow_orchestrator:get_notedetails": "rule:admin_required"
+
 # Retrieve the statuses for the site
 # GET  /api/v1.0/site_statuses
 #"workflow_orchestrator:get_site_statuses": "rule:admin_required"

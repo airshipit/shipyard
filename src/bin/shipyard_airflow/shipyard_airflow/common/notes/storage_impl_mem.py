@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 """Implementations of the NotesStorage base class"""
+from .errors import NoteNotFoundError
 from .notes import NotesStorage
 
 
@@ -41,4 +42,11 @@ class MemoryNotesStorage(NotesStorage):
                 if (note.assoc_id.startswith(pat) and
                         note.verbosity <= max_verb):
                     notes.append(note)
+        notes.sort(key=lambda x: x.note_timestamp)
         return notes
+
+    def retrieve_by_id(self, note_id):
+        note = self.storage.get(note_id)
+        if not note:
+            raise NoteNotFoundError()
+        return note

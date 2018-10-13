@@ -30,6 +30,8 @@ from requests.exceptions import HTTPError
 from requests.exceptions import RequestException
 import ulid
 
+from .errors import NoteURLNotSpecifiedError
+from .errors import NoteURLRetrievalError
 from .errors import NotesInitializationError
 from .errors import NotesRetrievalError
 from .errors import NotesStorageError
@@ -93,8 +95,9 @@ class NotesManager:
             immediately upon creation, if true
         """
         n = Note(assoc_id, subject, sub_type, note_val,
-                 verbosity=None, link_url=None, is_auth_link=None,
-                 note_id=None, note_timestamp=None)
+                 verbosity=verbosity, link_url=link_url,
+                 is_auth_link=is_auth_link, note_id=note_id,
+                 note_timestamp=note_timestamp)
         if store:
             return self.store(n)
         else:
@@ -122,6 +125,8 @@ class NotesManager:
         """Retrieve a list of notes
 
         :param query: a query object to retrieve notes
+        :returns: a list of notes matchin the query, or [] if there are no
+            notes matching the query.
         """
         try:
             notes = list(self.storage.retrieve(query))
@@ -132,45 +137,41 @@ class NotesManager:
             raise NotesRetrievalError(
                 "Unhandled error during retrieval of notes"
             )
-        # Get the auth token once per retrieve, not once per note.
-        if notes:
-            auth_token = self.get_token()
-            # resolve the note urls
-            # TODO: threaded?
-            for note in notes:
-                self._resolve_note_url(note, auth_token)
+        for note in notes:
+            if note.link_url:
+                note.resolved_url_value = (
+                    "Details at notedetails/{}".format(note.note_id))
         return notes
 
-    def _resolve_note_url(self, note, auth_token):
-        """Resolve and set the value obtained from the URL for a Note.
+    def retrieve_by_id(self, note_id):
+        """Return a single note looked up by the specified note_id
 
-        :param note: the Note object to retreive and set the value for.
-        :param auth_token: the authorization token set as a header for the URL
-            request if one is indicated as needed by the note.
-
-        If there is data retrieved at the note's url, set the
-        resolved_url_value with those contents.
-
-        If there is no url for the note, return, with resolved_url_value as
-        None
-
-        If there is no data retrieved, resolved_url_value for the note remains
-        None
-
-        If there is an error related to retreiving the note's url value, the
-        resolved_url_value is set to a placeholder value indicating that the
-        value could not be obtained.
+        :param note_id: the ULID of the note to retrieve.
+        :raises NoteNotFoundError: if there is no note matching the requested
+            note_id
         """
+        return self.storage.retrieve_by_id(note_id)
+
+    def get_note_url_info(self, note):
+        """Resolve and return the value obtained from the URL for a Note.
+
+        :param note: the note object or id of the note to retreive and set the
+           value for.
+        :returns: The contents retrieved from the note's URL.
+        :raises NoteNotFoundError: when the note (id) specified does not match
+            a known note
+        :raises NoteURLNotSpecifiedError: when the note has no url specified
+        :raises NoteURLRetrievalError: when there is an error using the
+            note's specified URL.
+        """
+        # if the note is not a note, try to fetch it like an ID
         if not isinstance(note, Note):
-            LOG.debug(
-                "Note is None or not a Note object. URL will not be resolved"
-            )
-            return
-
+            note = self.retrieve_by_id(note)
         if not note.link_url:
-            LOG.debug("Note %s has no link to resolve", note.note_id)
-            return
+            LOG.debug("Note %s has no URL to resolve.", note.note_id)
+            raise NoteURLNotSpecifiedError()
 
+        auth_token = self.get_token()
         contents = None
         try:
             headers = {}
@@ -186,32 +187,11 @@ class NotesManager:
             response.raise_for_status()
 
             # Set the valid response text to the note
-            note.resolved_url_value = response.text
+            return response.text
 
-        except HTTPError as he:
-            # A bad status code - don't stop, but log and indicate in note.
-            LOG.info(
-                "Note %s has a url returning a bad status code: %s",
-                note.note_id, response.status_code
-            )
-            note.resolved_url_value = (
-                "Note contents could not be retrieved. URL lookup failed "
-                "with status code: {}"
-            ).format(response.status_code)
-        except RequestException as rex:
-            # A more serious exception; log and indicate in the note
-            LOG.exception(rex)
-            note.resolved_url_value = (
-                "Note contents could not be retrieved. URL lookup was unable "
-                "to complete"
-            )
-        except Exception as ex:
-            # Whatever's left, log and indicate in the note
-            LOG.exception(ex)
-            note.resolved_url_value = (
-                "Note contents could not be retrieved due to unexpected "
-                "circumstances"
-            )
+        except (HTTPError, RequestException) as lookup_err:
+            LOG.exception(lookup_err)
+            raise NoteURLRetrievalError()
 
 
 class Note:
@@ -314,5 +294,17 @@ class NotesStorage(metaclass=abc.ABCMeta):
         :raises NotesRetrievalError: when there is a failure to retrieve notes,
             however an empty list is expected to be returned in the case of no
             results.
+        """
+        pass
+
+    @abc.abstractmethod
+    def retrieve_by_id(self, note_id):
+        """Lookup a note by note_id
+
+        :param note_id: The ID of the note to retrieve
+        :returns: a single Note object matching the id or None if there is no
+            note matching the ID.
+        :raises NotesRetrievalError: if there is a failure to retrieve the
+            note
         """
         pass

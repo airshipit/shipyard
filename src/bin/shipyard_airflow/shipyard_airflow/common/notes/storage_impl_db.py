@@ -34,6 +34,7 @@ from sqlalchemy.orm import sessionmaker
 
 from .notes import Note
 from .notes import NotesStorage
+from .errors import NoteNotFoundError
 from .errors import NotesError
 from .errors import NotesInitializationError
 
@@ -128,18 +129,26 @@ class ShipyardSQLNotesStorage(NotesStorage):
                         TNote.assoc_id == a_id_pat,
                         TNote.verbosity <= max_verb
                     )
-                )
+                ).order_by(TNote.note_timestamp)
             else:
                 n_qry = session.query(TNote).filter(
                     and_(
                         TNote.assoc_id.like(a_id_pat + '%'),
                         TNote.verbosity <= max_verb
                     )
-                )
+                ).order_by(TNote.note_timestamp)
             db_notes = n_qry.all()
             for tn in db_notes:
                 r_notes.append(self._map(tn, Note))
         return r_notes
+
+    def retrieve_by_id(self, note_id):
+        with self.session_scope() as session:
+            note = session.query(TNote).filter(
+                TNote.note_id == note_id).one_or_none()
+            if not note:
+                raise NoteNotFoundError()
+            return self._map(note, Note)
 
     def _map(self, src, target_type):
         """Maps a Note object to/from a TNote object.

@@ -383,6 +383,10 @@ Retrieves the detailed information about the supplied namespaced item
           Equivalent to:
         shipyard describe action 01BTG32JW87G0YKA1K29TKNAFX
 
+        shipyard describe notedetails/01BTG32JW87G0YKA1KA9TBNA32
+          Equivalent to:
+        shipyard describe notedetails 01BTG32JW87G0YKA1KA9TBNA32
+
         shipyard describe step/01BTG32JW87G0YKA1K29TKNAFX/preflight
           Equivalent to:
         shipyard describe step preflight --action=01BTG32JW87G0YKA1K29TKNAFX
@@ -413,7 +417,6 @@ Retrieves the detailed information about the supplied action id.
 Sample
 ^^^^^^
 
-
 ::
 
     $ shipyard describe action/01BZZK07NF04XPC5F4SCTHNPKN
@@ -426,7 +429,7 @@ Sample
     Context Marker:        71d4112e-8b6d-44e8-9617-d9587231ffba
     User:                  shipyard
 
-    Steps                                                              Index        State     Notes
+    Steps                                                              Index        State     Footnotes
     step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom                        1            success
     step/01BZZK07NF04XPC5F4SCTHNPKN/dag_concurrency_check              2            success
     step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        3            failed    (1)
@@ -435,17 +438,39 @@ Sample
     step/01BZZK07NF04XPC5F4SCTHNPKN/deckhand_get_design_version        6            failed
     step/01BZZK07NF04XPC5F4SCTHNPKN/drydock_build                      7            None
 
-    (1):
-
-    step metadata: deckhand_get_design_version(2017-11-27 20:34:34.443053): Unable to determine version
+    Step Footnotes        Note
+    (1)                   > step metadata: deckhand_get_design_version(2017-11-27 20:34:34.443053): Unable to determine version
+                            - Info available with 'describe notedetails/09876543210987654321098765'
 
     Commands        User            Datetime
     invoke          shipyard        2017-11-27 20:34:34.443053+00:00
 
     Validations: None
 
-    Notes:
-    action metadata: 01BZZK07NF04XPC5F4SCTHNPKN(2017-11-27 20:34:24.610604): Invoked using revision 3
+    Action Notes:
+    > action metadata: 01BZZK07NF04XPC5F4SCTHNPKN(2017-11-27 20:34:24.610604): Invoked using revision 3
+
+describe notedetails
+~~~~~~~~~~~~~~~~~~~~
+Retrieves extended information related to a note.
+
+::
+
+    shipyard describe notedetails <note_id>
+
+    Example:
+        shipyard describe notedetails/01BTG32JW87G0YKA1KA9TBNA32
+
+<note_id>
+  The id of the note referenced as having more details in a separate response
+
+Sample
+^^^^^^
+
+::
+
+    $ shipyard describe notedetails/01BTG32JW87G0YKA1KA9TBNA32
+    <a potentially large amount of data as returned by the source of info>
 
 describe step
 ~~~~~~~~~~~~~
@@ -469,7 +494,6 @@ Retrieves the step details associated with an action and step.
 Sample
 ^^^^^^
 
-
 ::
 
     $ shipyard describe step/01BZZK07NF04XPC5F4SCTHNPKN/action_xcom
@@ -482,6 +506,10 @@ Sample
     Duration:          0.214837
     Try Number:        1
     Operator:          PythonOperator
+
+    Step Notes:
+    > step metadata: deckhand_get_design_version(2017-11-27 20:34:34.443053): Unable to determine version
+      - Info available with 'describe notedetails/09876543210987654321098765'
 
 describe validation
 ~~~~~~~~~~~~~~~~~~~
@@ -508,7 +536,6 @@ validation id
 Sample
 ^^^^^^
 
-
 ::
 
     TBD
@@ -532,7 +559,6 @@ workflow engine.
 
 Sample
 ^^^^^^
-
 
 ::
 
@@ -590,17 +616,13 @@ Sample
 ::
 
     $ shipyard get actions
-    Name               Action                                   Lifecycle        Execution Time             Step Succ/Fail/Oth        Notes
-    deploy_site        action/01BTP9T2WCE1PAJR2DWYXG805V        Failed           2017-09-23T02:42:12        12/1/3                     (1)
-    update_site        action/01BZZKMW60DV2CJZ858QZ93HRS        Processing       2017-09-23T04:12:21        6/0/10                     (2)
+    Name               Action                                   Lifecycle        Execution Time             Step Succ/Fail/Oth        Footnotes
+    deploy_site        action/01BTP9T2WCE1PAJR2DWYXG805V        Failed           2017-09-23T02:42:12        12/1/3                    (1)
+    update_site        action/01BZZKMW60DV2CJZ858QZ93HRS        Processing       2017-09-23T04:12:21        6/0/10                    (2)
 
-    (1):
-
-    action metadata:01BTP9T2WCE1PAJR2DWYXG805V(2017-09-23 02:42:23.346534): Invoked with revision 3
-
-    (2):
-
-    action metadata:01BZZKMW60DV2CJZ858QZ93HRS(2017-09-23 04:12:31.465342): Invoked with revision 4
+    Action Footnotes        Note
+    (1)                     > action metadata:01BTP9T2WCE1PAJR2DWYXG805V(2017-09-23 02:42:23.346534): Invoked with revision 3
+    (2)                     > action metadata:01BZZKMW60DV2CJZ858QZ93HRS(2017-09-23 04:12:31.465342): Invoked with revision 4
 
 
 get configdocs
@@ -653,8 +675,8 @@ differences between the 'committed' and 'buffer' revision (default behavior).
   prior commit. If no documents have been loaded into the buffer for this
   collection, this will return an empty response (default)
 
-Samples
-^^^^^^^
+Sample
+^^^^^^
 
 ::
 
@@ -877,7 +899,6 @@ is an optional parameter.
 Sample
 ^^^^^^
 
-
 ::
 
     $ shipyard logs step/01C9VVQSCFS7V9QB5GBS3WFVSE/action_xcom
@@ -927,7 +948,6 @@ Provides topical help for shipyard.
 
 Sample
 ^^^^^^
-
 
 ::
 

@@ -42,6 +42,7 @@ from shipyard_airflow.control.middleware.common_params import \
     CommonParametersMiddleware
 from shipyard_airflow.control.middleware.context import ContextMiddleware
 from shipyard_airflow.control.middleware.logging_mw import LoggingMiddleware
+from shipyard_airflow.control.notes.notedetails_api import NoteDetailsResource
 from shipyard_airflow.control.status.status_api import StatusResource
 from shipyard_airflow.errors import (AppError, default_error_serializer,
                                      default_exception_handler)
@@ -78,6 +79,7 @@ def start_api():
         ('/configdocs', ConfigDocsStatusResource()),
         ('/configdocs/{collection_id}', ConfigDocsResource()),
         ('/commitconfigdocs', CommitConfigDocsResource()),
+        ('/notedetails/{note_id}', NoteDetailsResource()),
         ('/renderedconfigdocs', RenderedConfigDocsResource()),
         ('/workflows', WorkflowResource()),
         ('/workflows/{workflow_id}', WorkflowIdResource()),

@@ -20,7 +20,10 @@ import responses
 from shipyard_airflow.common.notes.errors import (
     NotesInitializationError,
     NotesRetrievalError,
-    NotesStorageError
+    NotesStorageError,
+    NoteNotFoundError,
+    NoteURLNotSpecifiedError,
+    NoteURLRetrievalError
 )
 from shipyard_airflow.common.notes.notes import (
     Note,
@@ -42,12 +45,18 @@ class NotesStorageErrorImpl(NotesStorage):
     def retrieve(self, query):
         raise Exception("Outta Nowhere")
 
+    def retrieve_by_id(self, note_id):
+        raise Exception("No warning")
+
 
 class NotesStorageExpectedErrorImpl(NotesStorage):
     def store(self, note):
         raise NotesStorageError("Expected")
 
     def retrieve(self, query):
+        raise NotesRetrievalError("Expected")
+
+    def retrieve_by_id(self, note_id):
         raise NotesRetrievalError("Expected")
 
 
@@ -191,23 +200,8 @@ class TestNotesManager:
         n_list = nm.retrieve(Query("test1/11111/aaa", exact_match=True))
         assert len(n_list) == 1
 
-    @responses.activate
-    def test_store_retrieve_urls(self):
-        responses.add(
-            method="GET",
-            url="http://test.test",
-            body="Hello from testland",
-            status=200,
-            content_type="text/plain"
-        )
-        responses.add(
-            method="GET",
-            url="http://test.test2",
-            body="Hello from testland2",
-            status=200,
-            content_type="text/plain"
-        )
-
+    def test_store_retrieve_url_refs(self):
+        """Tests that notes retrieved as a list have notedetails refs"""
         nm = NotesManager(MemoryNotesStorage(), get_token)
         nm.store(Note(
             assoc_id="test1/11111/aaa",
@@ -226,7 +220,46 @@ class TestNotesManager:
         n_list = nm.retrieve(Query("test1"))
         assert len(n_list) == 2
         for n in n_list:
-            assert n.resolved_url_value.startswith("Hello from testland")
+            assert n.resolved_url_value == (
+                "Details at notedetails/" + n.note_id)
+
+    @responses.activate
+    def test_store_retrieve_urls(self):
+        responses.add(
+            method="GET",
+            url="http://test.test",
+            body="Hello from testland",
+            status=200,
+            content_type="text/plain"
+        )
+        responses.add(
+            method="GET",
+            url="http://test.test2",
+            body="Hello from testland2",
+            status=200,
+            content_type="text/plain"
+        )
+        nm = NotesManager(MemoryNotesStorage(), get_token)
+        nm.store(Note(
+            assoc_id="test1/11111/aaa",
+            subject="store_retrieve3",
+            sub_type="test",
+            note_val="this is my note 1",
+            link_url="http://test.test/"
+        ))
+        nm.store(Note(
+            assoc_id="test1/11111/bbb",
+            subject="store_retrieve3",
+            sub_type="test",
+            note_val="this is my note 2",
+            link_url="http://test.test2/"
+        ))
+        n_list = nm.retrieve(Query("test1"))
+        assert len(n_list) == 2
+        for n in n_list:
+            assert n.resolved_url_value.startswith("Details at notedetails/")
+            assert nm.get_note_url_info(n.note_id).startswith(
+                "Hello from testland")
         with pytest.raises(KeyError):
             auth_hdr = responses.calls[0].request.headers['X-Auth-Token']
 
@@ -265,10 +298,14 @@ class TestNotesManager:
         n_list = nm.retrieve(Query("test1"))
         assert len(n_list) == 2
         for n in n_list:
+            assert n.resolved_url_value == (
+                "Details at notedetails/" + n.note_id)
             if n.assoc_id == "test1/11111/aaa":
-                assert "failed with status code: 404" in n.resolved_url_value
+                with pytest.raises(NoteURLRetrievalError):
+                    nd = nm.get_note_url_info(n.note_id)
             else:
-                assert n.resolved_url_value.startswith("Hello from testland")
+                nd = nm.get_note_url_info(n.note_id)
+                assert nd.startswith("Hello from testland")
 
     @responses.activate
     def test_store_retrieve_url_does_not_exist(self):
@@ -299,9 +336,33 @@ class TestNotesManager:
         assert len(n_list) == 2
         for n in n_list:
             if n.assoc_id == "test1/11111/aaa":
-                assert "URL lookup was unable" in n.resolved_url_value
+                with pytest.raises(NoteURLRetrievalError):
+                    nd = nm.get_note_url_info(n.note_id)
             else:
-                assert n.resolved_url_value.startswith("Hello from testland")
+                nd = nm.get_note_url_info(n.note_id)
+                assert nd.startswith("Hello from testland")
+
+    def test_store_retrieve_url_not_specified(self):
+        nm = NotesManager(MemoryNotesStorage(), get_token)
+        nm.store(Note(
+            assoc_id="test1/11111/aaa",
+            subject="store_retrieve3",
+            sub_type="test",
+            note_val="this is my note 1",
+            link_url=""
+        ))
+        nm.store(Note(
+            assoc_id="test1/11111/bbb",
+            subject="store_retrieve3",
+            sub_type="test",
+            note_val="this is my note 2",
+            link_url=None
+        ))
+        n_list = nm.retrieve(Query("test1"))
+        assert len(n_list) == 2
+        for n in n_list:
+            with pytest.raises(NoteURLNotSpecifiedError):
+                nd = nm.get_note_url_info(n.note_id)
 
     @responses.activate
     def test_store_retrieve_with_auth(self):
@@ -325,7 +386,8 @@ class TestNotesManager:
         n_list = nm.retrieve(Query("test1"))
         assert len(n_list) == 1
         for n in n_list:
-            assert n.resolved_url_value == "Hello from testland2"
+            nd = nm.get_note_url_info(n.note_id)
+            assert nd == "Hello from testland2"
         auth_hdr = responses.calls[0].request.headers['X-Auth-Token']
         assert 'token' == auth_hdr
 

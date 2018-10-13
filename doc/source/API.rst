@@ -26,6 +26,7 @@ Shipyard functionality:
 3. Airflow Monitoring
 4. Site Statuses
 5. Logs Retrieval
+6. Notes Handling
 
 Standards used by the API
 -------------------------
@@ -1204,6 +1205,69 @@ Example
     [2018-04-11 07:30:43,892] {{cli.py:374}} INFO - Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
     [2018-04-11 07:30:43,945] {{base_task_runner.py:98}} INFO - Subtask: [2018-04-11 07:30:43,944] {{python_operator.py:90}} INFO - Done. Returned value was: None
     [2018-04-11 07:30:43,992] {{base_task_runner.py:98}} INFO - Subtask:   """)
+
+Notes Handling API
+------------------
+The notes facilities of Shipyard are primarily interwoven in other APIs. This
+endpoint adds the ability to retrieve additional information associated with a
+note. The first use case for this API is the retrieval of builddata from
+Drydock, which can be many hundreds of kilobytes of text.
+
+/v1.0/notedetails/{note_id}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Retrieves the note details that are associated via URL with a note at the time
+of note creation. Unlike some responses from Shipyard, this API returns the
+remote information as-is, as the response body, without any further wrapping in
+a JSON structure.
+
+Entity Structure
+^^^^^^^^^^^^^^^^
+Raw text of the note's associated information.
+
+GET /v1.0/notedetails/{node_id}
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Looks up the specified note and follows the associated URL to retrieve
+information related to the note.
+
+Query parameters
+''''''''''''''''
+
+N/A
+
+Responses
+'''''''''
+
+200 OK
+
+  Accompanied by the text looked up from the note's associated URL
+
+400 Bad Request
+
+  When the note_id is not a valid ULID value.
+
+404 Not Found
+
+  When the note does not exist, or the note does not have a URL associated.
+
+500 Internal Server Error
+
+  When the remote source of the information cannot be accessed, or if there is
+  a misconfiguration of the type of note preventing appropriate authorization
+  checking.
+
+Example
+'''''''
+
+::
+
+    curl -D - \
+        -X GET $URL/api/v1.0/notedetails/01CASSSZT7CP1F0NKHCAJBCJGR \
+        -H "X-Auth-Token:$TOKEN"
+
+    HTTP/1.1 200 OK
+    x-shipyard-req: 49f74418-22b3-4629-8ddb-259bdfccf2fd
+
+    Potentially a lot of information here
 
 
 .. _API Conventions: https://airshipit.readthedocs.io/en/latest/api-conventions.html
