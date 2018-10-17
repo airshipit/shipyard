@@ -22,8 +22,8 @@ class CreateAction(CliAction):
         super().__init__(ctx)
         self.logger.debug(
             "CreateAction action initialized with action command "
-            "%s, parameters %s and allow-intermediate-commits=%s",
-            action_name, param, allow_intermediate_commits)
+            "%s, parameters %s and allow-intermediate-commits=%s", action_name,
+            param, allow_intermediate_commits)
         self.action_name = action_name
         self.param = param
         self.allow_intermediate_commits = allow_intermediate_commits
@@ -57,27 +57,34 @@ class CreateAction(CliAction):
 class CreateConfigdocs(CliAction):
     """Action to Create Configdocs"""
 
-    def __init__(self, ctx, collection, buffer, data, filename):
+    def __init__(self, ctx, collection, buffer_mode, empty_collection, data,
+                 filenames):
         """Sets parameters."""
         super().__init__(ctx)
-        self.logger.debug("CreateConfigdocs action initialized with "
-                          "collection=%s,buffer=%s, "
-                          "Processed Files=" % (collection, buffer))
-        for file in filename:
+        self.logger.debug(
+            "CreateConfigdocs action initialized with collection: %s, "
+            "buffer mode: %s, empty collection: %s, data length: %s. "
+            "Processed Files:", collection, buffer_mode, empty_collection,
+            len(data))
+        for file in filenames:
             self.logger.debug(file)
-        self.logger.debug("data=%s" % str(data))
         self.collection = collection
-        self.buffer = buffer
+        self.buffer_mode = buffer_mode
+        self.empty_collection = empty_collection
         self.data = data
 
     def invoke(self):
         """Calls API Client and formats response from API Client"""
         self.logger.debug("Calling API Client post_configdocs.")
+
+        # Only send data payload if not empty_collection
+        data_to_send = "" if self.empty_collection else self.data
+
         return self.get_api_client().post_configdocs(
             collection_id=self.collection,
-            buffer_mode=self.buffer,
-            document_data=self.data
-        )
+            buffer_mode=self.buffer_mode,
+            empty_collection=self.empty_collection,
+            document_data=data_to_send)
 
     # Handle 409 with default error handler for cli.
     cli_handled_err_resp_codes = [409]
@@ -94,5 +101,4 @@ class CreateConfigdocs(CliAction):
         """
         outfmt_string = "Configuration documents added.\n{}"
         return outfmt_string.format(
-            format_utils.cli_format_status_handler(response)
-        )
+            format_utils.cli_format_status_handler(response))

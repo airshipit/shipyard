@@ -116,6 +116,7 @@ def test_create_configdocs(*args):
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
+                                False,
                                 document_data,
                                 file_list).invoke_and_return_resp()
     assert 'Configuration documents added.'
@@ -145,6 +146,7 @@ def test_create_configdocs_201_with_val_fails(*args):
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
+                                False,
                                 document_data,
                                 file_list).invoke_and_return_resp()
     assert 'Configuration documents added.' in response
@@ -175,8 +177,51 @@ def test_create_configdocs_409(*args):
     response = CreateConfigdocs(stubs.StubCliContext(),
                                 'design',
                                 'append',
+                                False,
                                 document_data,
                                 file_list).invoke_and_return_resp()
     assert 'Error: Invalid collection' in response
     assert 'Reason: Buffermode : append' in response
     assert 'Buffer is either not...' in response
+
+
+@responses.activate
+@mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
+@mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
+def test_create_configdocs_empty(*args):
+    def validating_callback(request):
+        # a request that has empty_collection should have no body.
+        assert request.body is None
+        resp_body = stubs.gen_err_resp(
+            message='Validations succeeded',
+            sub_error_count=0,
+            sub_info_count=0,
+            reason='Validation',
+            code=200)
+        return (201, {}, resp_body)
+
+    responses.add_callback(
+        responses.POST,
+        'http://shiptest/configdocs/design',
+        callback=validating_callback,
+        content_type='application/json')
+
+    filename = 'tests/unit/cli/create/sample_yaml/sample.yaml'
+    document_data = yaml.dump_all(filename)
+    file_list = (filename, )
+
+    # pass data and empty_collection = True - should init with data, but
+    # not send the data on invoke
+    action = CreateConfigdocs(
+        stubs.StubCliContext(),
+        collection='design',
+        buffer_mode='append',
+        empty_collection=True,
+        data=document_data,
+        filenames=file_list)
+
+    assert action.data == document_data
+    assert action.empty_collection == True
+
+    response = action.invoke_and_return_resp()
+    assert response.startswith("Configuration documents added.")

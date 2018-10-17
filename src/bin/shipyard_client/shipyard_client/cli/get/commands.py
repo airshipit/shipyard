@@ -77,25 +77,25 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
 @click.option(
     '--committed',
     '-c',
-    flag_value='committed',
+    is_flag=True,
     help='Retrieve the documents that have last been committed for this '
     'collection')
 @click.option(
     '--buffer',
     '-b',
-    flag_value='buffer',
+    is_flag=True,
     help='Retrieve the documents that have been loaded into Shipyard since '
     'the prior commit. If no documents have been loaded into the buffer for '
     'this collection, this will return an empty response (default)')
 @click.option(
     '--last-site-action',
     '-l',
-    flag_value='last_site_action',
+    is_flag=True,
     help='Holds the revision information for the most recent site action')
 @click.option(
     '--successful-site-action',
     '-s',
-    flag_value='successful_site_action',
+    is_flag=True,
     help='Holds the revision information for the most recent successfully '
     'executed site action.')
 @click.option(
@@ -150,23 +150,23 @@ SHORT_DESC_RENDEREDCONFIGDOCS = (
 @click.option(
     '--committed',
     '-c',
-    flag_value='committed',
+    is_flag=True,
     help='Retrieve the documents that have last been committed.')
 @click.option(
     '--buffer',
     '-b',
-    flag_value='buffer',
+    is_flag=True,
     help='Retrieve the documents that have been loaded into Shipyard since the'
     ' prior commit. (default)')
 @click.option(
     '--last-site-action',
     '-l',
-    flag_value='last_site_action',
+    is_flag=True,
     help='Holds the revision information for the most recent site action')
 @click.option(
     '--successful-site-action',
     '-s',
-    flag_value='successful_site_action',
+    is_flag=True,
     help='Holds the revision information for the most recent successfully '
     'executed site action.')
 @click.option(

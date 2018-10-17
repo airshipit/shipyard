@@ -293,7 +293,7 @@ or one or more directory options must be specified.
 
     shipyard create configdocs
         <collection>
-        [--append | --replace]
+        [--append | --replace] [--empty-collection]
         --filename=<filename>    (repeatable)
             |
         --directory=<directory>  (repeatable)
@@ -308,8 +308,8 @@ or one or more directory options must be specified.
 
 .. note::
 
-  Either --filename or --directory must be specified, but both may not be
-  specified for the same invocation of shipyard.
+  --filename and/or --directory must be specified unless --empty-collection
+  is used.
 
 <collection>
   The collection to load.
@@ -321,17 +321,22 @@ or one or more directory options must be specified.
 \--replace
   Clear the shipyard buffer and replace it with the specified contents.
 
+\--empty-collection
+  Indicate to Shipyard that the named collection should be made empty (contain
+  no documents). If --empty-collection is specified, the files named by
+  --filename or --directory will be ignored.
+
 \--filename=<filename>
   The file name to use as the contents of the collection. (repeatable) If
   any documents specified fail basic validation, all of the documents will
-  be rejected. Use of filename parameters may not be used in conjunction
+  be rejected. Use of ``filename`` parameters may not be used in conjunction
   with the directory parameter.
 
 \--directory=<directory>
   A directory containing documents that will be joined and loaded as a
-  collection. (Repeatable) Any documents that fail basic validation will reject the
-  whole set. Use of the directory parameter may not be used with the
-  filename parameter.
+  collection. (Repeatable) Any documents that fail basic validation will
+  reject the whole set. Use of the ``directory`` parameter may not be used
+  with the ``filename`` parameter.
 
 \--recurse
   Recursively search through all directories for sub-directories that

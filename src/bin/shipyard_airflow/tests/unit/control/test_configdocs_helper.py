@@ -61,6 +61,8 @@ REV_BUFFER_DICT = {
 }
 
 DIFF_BUFFER_DICT = {'mop': 'unmodified', 'chum': 'created', 'slop': 'deleted'}
+UNMOD_BUFFER_DICT = {'mop': 'unmodified', 'chum': 'unmodified'}
+EMPTY_BUFFER_DICT = {}
 
 ORDERED_VER = ['committed', 'buffer']
 REV_NAME_ID = ('committed', 'buffer', 3, 5)
@@ -183,21 +185,41 @@ def test_get_buffer_mode():
     assert ConfigdocsHelper.get_buffer_mode('hippopotomus') is None
 
 
-def test_is_buffer_emtpy():
+def test_is_buffer_empty():
     """
     Test the method to check if the configdocs buffer is empty
     """
     helper = ConfigdocsHelper(CTX)
-    helper._get_revision_dict = lambda: REV_BUFFER_DICT
-    assert not helper.is_buffer_empty()
 
+    # BUFFER revision is none, short circuit case (no buffer revision)
+    # buffer is empty.
     helper._get_revision_dict = lambda: REV_BUFF_EMPTY_DICT
     assert helper.is_buffer_empty()
 
-    helper._get_revision_dict = lambda: REV_NO_COMMIT_DICT
+    # BUFFER revision is none, also a short circuit case (no revisions at all)
+    # buffer is empty
+    helper._get_revision_dict = lambda: REV_EMPTY_DICT
+    assert helper.is_buffer_empty()
+
+    # BUFFER revision is not none, collections have been modified
+    # buffer is NOT empty.
+    helper._get_revision_dict = lambda: REV_BUFFER_DICT
+    helper.deckhand.get_diff = (
+        lambda old_revision_id, new_revision_id: DIFF_BUFFER_DICT)
     assert not helper.is_buffer_empty()
 
-    helper._get_revision_dict = lambda: REV_EMPTY_DICT
+    # BUFFER revision is not none, all collections unmodified
+    # buffer is empty.
+    helper._get_revision_dict = lambda: REV_NO_COMMIT_DICT
+    helper.deckhand.get_diff = (
+        lambda old_revision_id, new_revision_id: UNMOD_BUFFER_DICT)
+    assert helper.is_buffer_empty()
+
+    # BUFFER revision is not none, no collections listed (deleted, rollback 0)
+    # buffer is empty.
+    helper._get_revision_dict = lambda: REV_NO_COMMIT_DICT
+    helper.deckhand.get_diff = (
+        lambda old_revision_id, new_revision_id: EMPTY_BUFFER_DICT)
     assert helper.is_buffer_empty()
 
 

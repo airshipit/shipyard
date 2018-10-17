@@ -19,13 +19,18 @@ from shipyard_client.api_client.base_client import BaseClient
 from shipyard_client.cli.commit.actions import CommitConfigdocs
 from tests.unit.cli import stubs
 
+# TODO: refactor these tests to use responses callbacks (or other features)
+#     so that query parameter passing can be validated.
+#     moving to responses > 0.8 (e.g. 0.10.2) changed how URLS for responses
+#     seem to operate.
+
 
 @responses.activate
 @mock.patch.object(BaseClient, 'get_endpoint', lambda x: 'http://shiptest')
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_commit_configdocs(*args):
     responses.add(responses.POST,
-                  'http://shiptest/commitconfigdocs?force=false',
+                  'http://shiptest/commitconfigdocs',
                   body=None,
                   status=200)
     response = CommitConfigdocs(stubs.StubCliContext(),
@@ -44,7 +49,7 @@ def test_commit_configdocs_409(*args):
                                   reason='Conflicts reason',
                                   code=409)
     responses.add(responses.POST,
-                  'http://shiptest/commitconfigdocs?force=false',
+                  'http://shiptest/commitconfigdocs',
                   body=api_resp,
                   status=409)
     response = CommitConfigdocs(stubs.StubCliContext(),
@@ -65,7 +70,7 @@ def test_commit_configdocs_forced(*args):
                                   reason='Conflicts reason',
                                   code=200)
     responses.add(responses.POST,
-                  'http://shiptest/commitconfigdocs?force=true',
+                  'http://shiptest/commitconfigdocs',
                   body=api_resp,
                   status=200)
     response = CommitConfigdocs(stubs.StubCliContext(),
@@ -80,7 +85,7 @@ def test_commit_configdocs_forced(*args):
 @mock.patch.object(BaseClient, 'get_token', lambda x: 'abc')
 def test_commit_configdocs_dryrun(*args):
     responses.add(responses.POST,
-                  'http://shiptest/commitconfigdocs?force=false',
+                  'http://shiptest/commitconfigdocs',
                   body=None,
                   status=200)
     response = CommitConfigdocs(stubs.StubCliContext(),
