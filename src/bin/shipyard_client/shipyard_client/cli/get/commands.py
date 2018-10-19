@@ -100,7 +100,6 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
     'executed site action.')
 @click.option(
     '--cleartext-secrets',
-    '-t',
     help='Returns cleartext secrets in documents',
     is_flag=True)
 @click.pass_context
@@ -170,14 +169,19 @@ SHORT_DESC_RENDEREDCONFIGDOCS = (
     flag_value='successful_site_action',
     help='Holds the revision information for the most recent successfully '
     'executed site action.')
+@click.option(
+    '--cleartext-secrets',
+    help='Returns cleartext secrets in encrypted documents',
+    is_flag=True)
 @click.pass_context
 def get_renderedconfigdocs(ctx, buffer, committed, last_site_action,
-                           successful_site_action):
+                           successful_site_action, cleartext_secrets):
     # Get version
     _version = get_version(ctx, buffer, committed, last_site_action,
                            successful_site_action)
 
-    click.echo(GetRenderedConfigdocs(ctx, _version).invoke_and_return_resp())
+    click.echo(GetRenderedConfigdocs(ctx, _version,
+                                     cleartext_secrets).invoke_and_return_resp())
 
 
 DESC_WORKFLOWS = """

@@ -43,11 +43,19 @@ class RenderedConfigDocsResource(BaseResource):
         Returns the whole set of rendered documents
         """
         version = (req.params.get('version') or 'buffer')
+        cleartext_secrets = req.get_param_as_bool('cleartext-secrets') or False
         self._validate_version_parameter(version)
         helper = ConfigdocsHelper(req.context)
+
+        # Check access to cleartext_secrets
+        if cleartext_secrets:
+            policy.check_auth(req.context,
+                              policy.GET_RENDEREDCONFIGDOCS_CLRTXT)
+
         resp.body = self.get_rendered_configdocs(
             helper=helper,
-            version=version
+            version=version,
+            cleartext_secrets=cleartext_secrets
         )
         resp.append_header('Content-Type', 'application/x-yaml')
         resp.status = falcon.HTTP_200
@@ -64,8 +72,9 @@ class RenderedConfigDocsResource(BaseResource):
                 retry=False,
             )
 
-    def get_rendered_configdocs(self, helper, version='buffer'):
+    def get_rendered_configdocs(self, helper, version='buffer',
+                                cleartext_secrets=False):
         """
         Get and return the rendered configdocs from the helper/Deckhand
         """
-        return helper.get_rendered_configdocs(version)
+        return helper.get_rendered_configdocs(version, cleartext_secrets)

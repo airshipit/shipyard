@@ -52,7 +52,7 @@ def test_get_rendered_configdocs():
         helper = ConfigdocsHelper(CTX)
         rcdr.get_rendered_configdocs(helper, version='buffer')
 
-    mock_method.assert_called_once_with('buffer')
+    mock_method.assert_called_once_with('buffer', False)
 
 
 def test_get_rendered_last_site_action_configdocs():
@@ -68,7 +68,7 @@ def test_get_rendered_last_site_action_configdocs():
         helper = ConfigdocsHelper(CTX)
         rcdr.get_rendered_configdocs(helper, version='last_site_action')
 
-    mock_method.assert_called_once_with('last_site_action')
+    mock_method.assert_called_once_with('last_site_action', False)
 
 
 def test_get_rendered_successful_site_action_configdocs():
@@ -84,4 +84,4 @@ def test_get_rendered_successful_site_action_configdocs():
         helper = ConfigdocsHelper(CTX)
         rcdr.get_rendered_configdocs(helper, version='successful_site_action')
 
-    mock_method.assert_called_once_with('successful_site_action')
+    mock_method.assert_called_once_with('successful_site_action', False)
