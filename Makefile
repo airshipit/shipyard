@@ -29,7 +29,7 @@ PROXY                      ?= http://proxy.foo.com:8000
 NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
 USE_PROXY                  ?= false
 
-PYTHON_BASE_IMAGE          ?= python:3.5
+PYTHON_BASE_IMAGE          ?= python:3.6
 UBUNTU_BASE_IMAGE          ?= ubuntu:16.04
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
