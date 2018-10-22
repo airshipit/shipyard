@@ -372,7 +372,7 @@ conf:
     workflow_orchestrator:get_renderedconfigdocs: rule:admin_read_access
     workflow_orchestrator:list_workflows: rule:admin_read_access
     workflow_orchestrator:get_workflow: rule:admin_read_access
-    workflow_orchestrator:get_notedetails: rule: admin_read_access
+    workflow_orchestrator:get_notedetails: rule:admin_read_access
     workflow_orchestrator:get_site_statuses: rule:admin_read_access
     workflow_orchestrator:action_deploy_site: rule:admin_create
     workflow_orchestrator:action_update_site: rule:admin_create
