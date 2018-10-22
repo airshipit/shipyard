@@ -55,10 +55,14 @@ RUN pip3 install -r /home/shipyard/api_requirements.txt
 COPY ${ctx_base}/shipyard_client/requirements.txt /home/shipyard/client_requirements.txt
 RUN pip3 install -r /home/shipyard/client_requirements.txt
 
+# Setting the version explicitly for PBR
+ENV PBR_VERSION 0.1a1
+
 # Shipyard source and installation
 COPY ${ctx_base}/shipyard_client /home/shipyard/shipyard_client/
 RUN cd /home/shipyard/shipyard_client \
     && python3 setup.py install
+
 COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
 RUN cd /home/shipyard/shipyard \
     && python3 setup.py install

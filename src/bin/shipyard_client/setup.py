@@ -15,25 +15,5 @@
 import setuptools
 
 setuptools.setup(
-    name='shipyard_client',
-    version='0.1a1',
-    description='CLI for Shipyard',
-    url='https://github.com/openstack/airship-shipyard',
-    author='The Airship Authors',
-    license='Apache 2.0',
-    packages=setuptools.find_packages(),
-    entry_points={
-        'console_scripts':
-        'shipyard = shipyard_client.cli.commands:shipyard'
-    },
-    classifiers=[
-        'Intended Audience :: Information Technology',
-        'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-    ],
-)
+    setup_requires=['pbr>=2.0.0'],
+    pbr=True)
