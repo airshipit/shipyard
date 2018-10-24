@@ -18,7 +18,9 @@ BUILD_CTX                  ?= src/bin
 IMAGE_PREFIX               ?= airshipit
 IMAGE_TAG                  ?= untagged
 IMAGE_NAME                 := airflow shipyard
-COMMIT                     ?= commit-id
+# use this variable for image labels added in internal build process
+LABEL                      ?= com.internal
+COMMIT                     ?= $(shell git rev-parse HEAD)
 
 DOCKER_REGISTRY            ?= quay.io
 PUSH_IMAGE                 ?= false
@@ -83,7 +85,7 @@ run:
 .PHONY: build_airflow
 build_airflow:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) \
+	docker build --network host -t $(IMAGE) --label $(LABEL) \
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
@@ -97,7 +99,7 @@ ifeq ($(USE_PROXY), true)
 		--build-arg NO_PROXY=$(NO_PROXY) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) \
+	docker build --network host -t $(IMAGE) --label $(LABEL) \
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
@@ -112,7 +114,7 @@ endif
 .PHONY: build_shipyard
 build_shipyard:
 ifeq ($(USE_PROXY), true)
-	docker build --network host -t $(IMAGE) \
+	docker build --network host -t $(IMAGE) --label $(LABEL) \
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
@@ -126,7 +128,7 @@ ifeq ($(USE_PROXY), true)
 		--build-arg NO_PROXY=$(NO_PROXY) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 else
-	docker build --network host -t $(IMAGE) \
+	docker build --network host -t $(IMAGE) --label $(LABEL) \
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
