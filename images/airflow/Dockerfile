@@ -97,6 +97,9 @@ COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
+# Setting the version explicitly for PBR
+ENV PBR_VERSION 0.1a1
+
 # Shipyard
 #
 # Shipyard provides core functionality used by the airflow plugins/operators
