@@ -13,6 +13,8 @@
 - project:
     templates:
       - docs-on-readthedocs
+      - openstack-python35-jobs
+      - openstack-python36-jobs
     vars:
       rtd_webhook_id: '38576'
     check:
@@ -21,7 +23,6 @@
         - airship-shipyard-linter
         - airship-shipyard-ubuntu:
             voting: false
-        - airship-shipyard-tox-py35
         - airship-shipyard-image
     gate:
       jobs:
@@ -33,7 +34,6 @@
         #       - ^.*\.rst$
         #       - ^doc/.*$
         #       - ^releasenotes/.*$
-        - airship-shipyard-tox-py35
         - airship-shipyard-image
     post:
       jobs:
@@ -74,36 +74,6 @@
     name: airship-shipyard-ubuntu
     parent: airship-shipyard-base
     run: tools/gate/playbooks/airship-shipyard-check.yaml
-
-
-- job:
-    name: airship-shipyard-tox-base
-    description: |
-      Base job for running airship-shipyard tests. Runs tests
-      against Docker image generated from source code.
-    roles:
-      - zuul: openstack/openstack-helm-infra
-    timeout: 3600
-    pre-run:
-      - tools/gate/playbooks/osh-infra-upgrade-host.yaml
-      - tools/gate/playbooks/osh-infra-deploy-docker.yaml
-    run: tools/gate/playbooks/run-tests.yaml
-    required-projects:
-      - openstack/openstack-helm-infra
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^releasenotes/.*$
-
-- job:
-    name: airship-shipyard-tox-py35
-    description: |
-      Run tox-based tests for the Airship Shipyard project under
-      cPython version 3.5.
-    parent: airship-shipyard-tox-base
-    nodeset: airship-shipyard-single-node
-    vars:
-      tox_envlist: py35
 
 - job:
     name: airship-shipyard-image-base
