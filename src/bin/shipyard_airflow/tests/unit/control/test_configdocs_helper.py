@@ -769,7 +769,7 @@ results:
                    return_value=yaml.safe_load(FK_VAL_RESP.text))
 def test__get_deckhand_validation_errors(mock_client):
     """
-    Tets the functionality of processing a response from deckhand
+    Test the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
     assert len(helper._get_deckhand_validation_errors(5)) == 2
@@ -798,7 +798,7 @@ results:
                    return_value=yaml.safe_load(FK_VAL_RESP_EMPTY.text))
 def test__get_deckhand_validations_empty_errors(mock_client):
     """
-    Tets the functionality of processing a response from deckhand
+    Test the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
     assert len(helper._get_deckhand_validation_errors(5)) == 0
@@ -820,7 +820,7 @@ results: []
                    return_value=yaml.safe_load(FK_VAL_RESP_EMPTY.text))
 def test__get_deckhand_validation_errors_empty_results(mock_client):
     """
-    Tets the functionality of processing a response from deckhand
+    Test the functionality of processing a response from deckhand
     """
     helper = ConfigdocsHelper(CTX)
     assert len(helper._get_deckhand_validation_errors(5)) == 0
