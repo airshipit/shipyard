@@ -503,7 +503,7 @@ def test_get_collection_docs():
     """
     helper = ConfigdocsHelper(CTX)
     helper.deckhand.get_docs_from_revision = (
-        lambda revision_id, bucket_id: "{'yaml': 'yaml'}")
+        lambda revision_id, bucket_id, cleartext_secrets: "{'yaml': 'yaml'}")
     helper._get_revision_dict = lambda: REV_EMPTY_DICT
     helper.deckhand.get_diff = (
         lambda old_revision_id, new_revision_id: DIFF_EMPTY_DICT)

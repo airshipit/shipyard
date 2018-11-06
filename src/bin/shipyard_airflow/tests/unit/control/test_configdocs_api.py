@@ -96,7 +96,7 @@ class TestConfigDocsResource():
             helper = ConfigdocsHelper(CTX)
             cdr.get_collection(helper, 'apples')
 
-        mock_method.assert_called_once_with('buffer', 'apples')
+        mock_method.assert_called_once_with('buffer', 'apples', False)
 
     @patch.object(ConfigdocsHelper, 'is_collection_in_buffer',
                   lambda x, y: True)

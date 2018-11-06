@@ -68,7 +68,8 @@ class ShipyardClient(BaseClient):
         )
         return self.post_resp(url, query_params, document_data)
 
-    def get_configdocs(self, collection_id=None, version='buffer'):
+    def get_configdocs(self, collection_id=None, version='buffer',
+                       cleartext_secrets=False):
         """
         Get the collection of documents from deckhand specified by
         collection id
@@ -78,6 +79,8 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"version": version}
+        if cleartext_secrets is True:
+            query_params['cleartext-secrets'] = 'true'
         url = ApiPaths.POST_GET_CONFIG.value.format(
             self.get_endpoint(),
             collection_id)

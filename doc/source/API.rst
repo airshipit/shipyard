@@ -220,8 +220,11 @@ Returns the source documents for a collection of documents
 
 Query Parameters
 ''''''''''''''''
-version=committed | last_site_action | successful_site_action | **buffer**
+- version=committed | last_site_action | successful_site_action | **buffer**
   Return the documents for the version specified - buffer by default.
+- cleartext-secrets=true/**false**
+  If true then returns cleartext secrets in encrypted documents, otherwise
+  those values are redacted.
 
 Responses
 '''''''''

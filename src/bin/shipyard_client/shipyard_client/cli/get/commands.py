@@ -98,16 +98,22 @@ SHORT_DESC_CONFIGDOCS = ("Retrieve documents loaded into Shipyard, either "
     flag_value='successful_site_action',
     help='Holds the revision information for the most recent successfully '
     'executed site action.')
+@click.option(
+    '--cleartext-secrets',
+    '-t',
+    help='Returns cleartext secrets in documents',
+    is_flag=True)
 @click.pass_context
 def get_configdocs(ctx, collection, buffer, committed, last_site_action,
-                   successful_site_action):
+                   successful_site_action, cleartext_secrets):
     if collection:
         # Get version
         _version = get_version(ctx, buffer, committed, last_site_action,
                                successful_site_action)
 
         click.echo(
-            GetConfigdocs(ctx, collection, _version).invoke_and_return_resp())
+            GetConfigdocs(ctx, collection, _version,
+                          cleartext_secrets).invoke_and_return_resp())
 
     else:
         compare_versions = check_reformat_versions(ctx,

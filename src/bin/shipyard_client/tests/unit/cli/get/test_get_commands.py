@@ -58,7 +58,7 @@ def test_get_configdocs_with_passing_collection(*args):
     with patch.object(GetConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'configdocs',
                                  '--collection=design'])
-    mock_method.assert_called_once_with(ANY, 'design', 'buffer')
+    mock_method.assert_called_once_with(ANY, 'design', 'buffer', False)
 
 
 def test_get_configdocs_without_passing_collection(*args):

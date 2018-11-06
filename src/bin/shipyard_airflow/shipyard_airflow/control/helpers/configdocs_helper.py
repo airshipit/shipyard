@@ -318,18 +318,21 @@ class ConfigdocsHelper(object):
         rev = self._get_revision_dict().get(target_revision)
         return rev['id'] if rev else None
 
-    def get_collection_docs(self, version, collection_id):
+    def get_collection_docs(self, version, collection_id,
+                            cleartext_secrets=False):
         """
         Returns the requested collection of docs based on the version
         specifier. The default is set as buffer.
         """
         LOG.info('Retrieving collection %s from %s', collection_id, version)
         if version in [COMMITTED, LAST_SITE_ACTION, SUCCESSFUL_SITE_ACTION]:
-            return self._get_target_docs(collection_id, version)
+            return self._get_target_docs(collection_id, version,
+                                         cleartext_secrets)
 
-        return self._get_doc_from_buffer(collection_id)
+        return self._get_doc_from_buffer(collection_id,
+                                         cleartext_secrets=cleartext_secrets)
 
-    def _get_doc_from_buffer(self, collection_id):
+    def _get_doc_from_buffer(self, collection_id, cleartext_secrets=False):
         """
         Returns the collection if it exists in the buffer.
         If the buffer contains the collection, the latest
@@ -343,7 +346,8 @@ class ConfigdocsHelper(object):
             # revision exists
             buffer_id = self.get_revision_id(BUFFER)
             return self.deckhand.get_docs_from_revision(
-                revision_id=buffer_id, bucket_id=collection_id)
+                revision_id=buffer_id, bucket_id=collection_id,
+                cleartext_secrets=cleartext_secrets)
         raise ApiError(
             title='No documents to retrieve',
             description=('The Shipyard buffer is empty or does not contain '
@@ -351,7 +355,8 @@ class ConfigdocsHelper(object):
             status=falcon.HTTP_404,
             retry=False)
 
-    def _get_target_docs(self, collection_id, target_rev):
+    def _get_target_docs(self, collection_id, target_rev,
+                         cleartext_secrets=False):
         """
         Returns the collection if it exists as committed, last_site_action
         or successful_site_action.
@@ -360,7 +365,8 @@ class ConfigdocsHelper(object):
 
         if revision_id:
             return self.deckhand.get_docs_from_revision(
-                revision_id=revision_id, bucket_id=collection_id)
+                revision_id=revision_id, bucket_id=collection_id,
+                cleartext_secrets=cleartext_secrets)
 
         raise ApiError(
             title='No documents to retrieve',
