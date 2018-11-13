@@ -778,7 +778,7 @@ This includes processes that may not have been started as an action
         shipyard get workflows --since=2017-01-01T12:34:56.123456
 
 \--since=<date>
-  The historical cutoff date to limit the results of of this response.
+  The historical cutoff date to limit the results of this response.
 
 Sample
 ^^^^^^
