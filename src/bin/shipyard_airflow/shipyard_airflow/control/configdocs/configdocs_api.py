@@ -101,6 +101,11 @@ class ConfigDocsResource(BaseResource):
         cleartext_secrets = req.get_param_as_bool('cleartext-secrets') or False
         self._validate_version_parameter(version)
         helper = ConfigdocsHelper(req.context)
+
+        # Check access to cleartext_secrets
+        if cleartext_secrets:
+            policy.check_auth(req.context, policy.GET_CONFIGDOCS_CLRTXT)
+
         # Not reformatting to JSON or YAML since just passing through
         resp.body = self.get_collection(
             helper=helper, collection_id=collection_id, version=version,

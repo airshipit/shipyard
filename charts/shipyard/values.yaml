@@ -368,9 +368,10 @@ conf:
     workflow_orchestrator:get_configdocs_status: rule:admin_read_access
     workflow_orchestrator:create_configdocs: rule:admin_create
     workflow_orchestrator:get_configdocs: rule:admin_read_access
+    workflow_orchestrator:get_configdocs_cleartext: rule:admin_create
     workflow_orchestrator:commit_configdocs: rule:admin_create
     workflow_orchestrator:get_renderedconfigdocs: rule:admin_read_access
-    workflow_orchestrator:get_renderedconfigdocs_cleartext: rule:admin_read_access
+    workflow_orchestrator:get_renderedconfigdocs_cleartext: rule:admin_create
     workflow_orchestrator:list_workflows: rule:admin_read_access
     workflow_orchestrator:get_workflow: rule:admin_read_access
     workflow_orchestrator:get_notedetails: rule:admin_read_access
