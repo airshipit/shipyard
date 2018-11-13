@@ -385,6 +385,14 @@
 # Read timeout for a note source URL (in seconds) (integer value)
 #notes_read_timeout = 10
 
+# Connect timeout used for connecting to Drydock using the Drydock client (in
+# seconds) (integer value)
+#drydock_client_connect_timeout = 20
+
+# Read timeout used for responses from Drydock using the Drydock client (in
+# seconds) (integer value)
+#drydock_client_read_timeout = 300
+
 
 [shipyard]
 

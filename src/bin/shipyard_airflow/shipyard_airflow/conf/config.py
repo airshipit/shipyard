@@ -245,6 +245,18 @@ SECTIONS = [
                 default=10,
                 help='Read timeout for a note source URL (in seconds)'
             ),
+            cfg.IntOpt(
+                'drydock_client_connect_timeout',
+                default=20,
+                help=('Connect timeout used for connecting to Drydock using '
+                      'the Drydock client (in seconds)')
+            ),
+            cfg.IntOpt(
+                'drydock_client_read_timeout',
+                default=300,
+                help=('Read timeout used for responses from Drydock using '
+                      'the Drydock client (in seconds)')
+            ),
         ]
     ),
     ConfigSection(

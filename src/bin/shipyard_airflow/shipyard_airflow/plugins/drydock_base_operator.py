@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import configparser
 import copy
 import pprint
 import logging
@@ -88,6 +89,8 @@ class DrydockBaseOperator(UcpBaseOperator):
                                          'container': 'drydock-api'}],
                   *args, **kwargs)
         self.drydock_client = drydock_client
+        self.drydock_client_connect_timeout = None
+        self.drydock_client_read_timeout = None
         self.drydock_task_id = drydock_task_id
         self.node_filter = node_filter
         self.redeploy_server = redeploy_server
@@ -103,6 +106,15 @@ class DrydockBaseOperator(UcpBaseOperator):
         LOG.debug("Drydock Operator for action %s", self.action_id)
         # if continue processing is false, don't bother setting up things.
         if self._continue_processing_flag():
+            # Retrieve config values from shipyard configuration.
+            config = configparser.ConfigParser()
+            config.read(self.shipyard_conf)
+            self.drydock_client_connect_timeout = int(config.get(
+                'requests_config', 'drydock_client_connect_timeout'))
+            self.drydock_client_read_timeout = int(config.get(
+                'requests_config', 'drydock_client_read_timeout'))
+
+            # Setup the drydock client
             self._setup_drydock_client()
 
     def _continue_processing_flag(self):
@@ -137,9 +149,12 @@ class DrydockBaseOperator(UcpBaseOperator):
         # information.
         # The DrydockSession will care for TCP connection pooling
         # and header management
-        dd_session = session.DrydockSession(drydock_url.hostname,
-                                            port=drydock_url.port,
-                                            auth_gen=self._auth_gen)
+        dd_session = session.DrydockSession(
+            drydock_url.hostname,
+            port=drydock_url.port,
+            auth_gen=self._auth_gen,
+            timeout=(self.drydock_client_connect_timeout,
+                     self.drydock_client_read_timeout))
 
         # Raise Exception if we are not able to set up the session
         if not dd_session:

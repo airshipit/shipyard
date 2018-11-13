@@ -14,13 +14,15 @@
 """Generates clients and client-like objects and functions"""
 from urllib.parse import urlparse
 
+from oslo_config import cfg
 from deckhand.client import client as dh_client
 import drydock_provisioner.drydock_client.client as dd_client
 import drydock_provisioner.drydock_client.session as dd_session
 
-
 from shipyard_airflow.control.service_endpoints import Endpoints
 from shipyard_airflow.control import service_endpoints as svc_endpoints
+
+CONF = cfg.CONF
 
 
 #
@@ -44,7 +46,10 @@ def drydock_client():
     # Setup the drydock session
     endpoint = svc_endpoints.get_endpoint(Endpoints.DRYDOCK)
     dd_url = urlparse(endpoint)
-    session = dd_session.DrydockSession(dd_url.hostname,
-                                        port=dd_url.port,
-                                        auth_gen=_auth_gen)
+    session = dd_session.DrydockSession(
+        dd_url.hostname,
+        port=dd_url.port,
+        auth_gen=_auth_gen,
+        timeout=(CONF.requests_config.drydock_client_connect_timeout,
+                 CONF.requests_config.drydock_client_read_timeout))
     return dd_client.DrydockClient(session)

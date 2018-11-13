@@ -420,6 +420,8 @@ conf:
       validation_read_timeout: 300
       notes_connect_timeout: 5
       notes_read_timeout: 10
+      drydock_client_connect_timeout: 20
+      drydock_client_read_timeout: 300
     airflow:
       worker_endpoint_scheme: 'http'
       worker_port: 8793
