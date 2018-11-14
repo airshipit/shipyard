@@ -232,7 +232,8 @@ class DeckhandClient(object):
                                     response.text))})
         return errors
 
-    def get_rendered_docs_from_revision(self, revision_id, bucket_id=None):
+    def get_rendered_docs_from_revision(self, revision_id, bucket_id=None,
+                                        cleartext_secrets=False):
         """
         Returns the full set of rendered documents for a revision
         """
@@ -240,9 +241,11 @@ class DeckhandClient(object):
             DeckhandPaths.RENDERED_REVISION_DOCS
         ).format(revision_id)
 
-        query = None
+        query = {}
         if bucket_id is not None:
             query = {'status.bucket': bucket_id}
+        if cleartext_secrets is True:
+            query['cleartext-secrets'] = 'true'
         response = self._get_request(url, params=query)
         self._handle_bad_response(response)
         return response.text

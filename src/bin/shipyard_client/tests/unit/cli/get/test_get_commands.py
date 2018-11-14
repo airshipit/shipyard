@@ -88,7 +88,7 @@ def test_get_renderedconfigdocs(*args):
     runner = CliRunner()
     with patch.object(GetRenderedConfigdocs, '__init__') as mock_method:
         runner.invoke(shipyard, [auth_vars, 'get', 'renderedconfigdocs'])
-    mock_method.assert_called_once_with(ANY, 'buffer')
+    mock_method.assert_called_once_with(ANY, 'buffer', False)
 
 
 def test_get_renderedconfigdocs_negative(*args):

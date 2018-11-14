@@ -38,6 +38,7 @@ CREATE_CONFIGDOCS = 'workflow_orchestrator:create_configdocs'
 GET_CONFIGDOCS = 'workflow_orchestrator:get_configdocs'
 COMMIT_CONFIGDOCS = 'workflow_orchestrator:commit_configdocs'
 GET_RENDEREDCONFIGDOCS = 'workflow_orchestrator:get_renderedconfigdocs'
+GET_RENDEREDCONFIGDOCS_CLRTXT = 'workflow_orchestrator:get_renderedconfigdocs_cleartext'  # noqa
 LIST_WORKFLOWS = 'workflow_orchestrator:list_workflows'
 GET_WORKFLOW = 'workflow_orchestrator:get_workflow'
 GET_NOTEDETAILS = 'workflow_orchestrator:get_notedetails'
@@ -182,6 +183,16 @@ class ShipyardPolicy(object):
             RULE_ADMIN_REQUIRED,
             ('Retrieve the configuration documents rendered by Deckhand into '
              'a complete design'),
+            [{
+                'path': '/api/v1.0/renderedconfigdocs',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            GET_RENDEREDCONFIGDOCS_CLRTXT,
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve the configuration documents with cleartext secrets '
+             'rendered by Deckhand into a complete design'),
             [{
                 'path': '/api/v1.0/renderedconfigdocs',
                 'method': 'GET'

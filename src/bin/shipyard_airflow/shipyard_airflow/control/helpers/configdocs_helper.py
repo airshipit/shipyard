@@ -375,7 +375,7 @@ class ConfigdocsHelper(object):
             status=falcon.HTTP_404,
             retry=False)
 
-    def get_rendered_configdocs(self, version=BUFFER):
+    def get_rendered_configdocs(self, version=BUFFER, cleartext_secrets=False):
         """
         Returns the rendered configuration documents for the specified
         revision (by name BUFFER, COMMITTED, LAST_SITE_ACTION,
@@ -397,6 +397,7 @@ class ConfigdocsHelper(object):
 
             try:
                 return self.deckhand.get_rendered_docs_from_revision(
+                    cleartext_secrets=cleartext_secrets,
                     revision_id=revision_id)
             except DeckhandError as de:
                 raise ApiError(

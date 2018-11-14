@@ -726,6 +726,7 @@ applying Deckhand layering and substitution.
 
     shipyard get renderedconfigdocs
         [--committed | --last-site-action | --successful-site-action | --buffer]
+        [--cleartext-secrets]
 
     Example:
         shipyard get renderedconfigdocs
@@ -742,6 +743,10 @@ applying Deckhand layering and substitution.
 \--buffer
   Retrieve the documents that have been loaded into Shipyard since the
   prior commit. (default)
+
+\--cleartext-secrets
+  Returns secrets as cleartext for encrypted documents if the user has the appropriate
+  permissions in the target environment.
 
 Sample
 ^^^^^^

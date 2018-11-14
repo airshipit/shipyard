@@ -98,7 +98,7 @@ class ConfigDocsResource(BaseResource):
         Returns a collection of documents
         """
         version = (req.params.get('version') or 'buffer')
-        cleartext_secrets = req.get_param_as_bool('cleartext-secrets')
+        cleartext_secrets = req.get_param_as_bool('cleartext-secrets') or False
         self._validate_version_parameter(version)
         helper = ConfigdocsHelper(req.context)
         # Not reformatting to JSON or YAML since just passing through

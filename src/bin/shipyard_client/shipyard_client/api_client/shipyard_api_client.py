@@ -96,7 +96,7 @@ class ShipyardClient(BaseClient):
         url = ApiPaths.GET_CONFIGDOCS.value.format(self.get_endpoint())
         return self.get_resp(url, query_params)
 
-    def get_rendereddocs(self, version='buffer'):
+    def get_rendereddocs(self, version='buffer', cleartext_secrets=False):
         """
         :param str version: committed|buffer|last_site_action|
                             successful_site_action
@@ -104,6 +104,8 @@ class ShipyardClient(BaseClient):
         :rtype: Response object
         """
         query_params = {"version": version}
+        if cleartext_secrets is True:
+            query_params['cleartext-secrets'] = 'true'
         url = ApiPaths.GET_RENDERED.value.format(
             self.get_endpoint()
         )
