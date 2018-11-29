@@ -3,7 +3,7 @@ pytest==3.4
 pytest-cov==2.5.1
 responses==0.8.1
 testfixtures==5.1.1
-apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.0
+apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.1
 
 # TODO(bryan-strassner) Pin to version for airflow when added to the
 # requirements.txt in the airflow images directory
