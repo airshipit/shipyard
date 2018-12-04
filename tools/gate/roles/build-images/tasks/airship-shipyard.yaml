@@ -97,6 +97,8 @@
 
 - name: Publish images
   block:
+    - pip:
+        name: docker-py
     - docker_login:
         username: "{{ airship_shipyard_quay_creds.username }}"
         password: "{{ airship_shipyard_quay_creds.password }}"
