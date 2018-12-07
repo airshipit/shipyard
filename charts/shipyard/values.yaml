@@ -448,8 +448,9 @@ conf:
       encrypt_s3_logs: "False"
       logging_level: "INFO"
       fab_logging_level: "WARN"
-      # TODO(bryan-strassner) Use this for custom log formatting!
-      logging_config_class: ""
+      # See image-bundled log_config.py.
+      # Adds console logging of task/step logs.
+      logging_config_class: log_config.LOGGING_CONFIG
       # NOTE: Airflow 1.10 introduces extra newline characters between log
       #     records. Version 1.10.1 should resolve this issue
       #     https://issues.apache.org/jira/browse/AIRFLOW-1917
@@ -467,26 +468,29 @@ conf:
       simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
       log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
       log_processor_filename_template: "{{ filename }}.log"
+      dag_processor_manager_log_location: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
       hostname_callable: "socket:getfqdn"
       default_timezone: "utc"
       executor: "CeleryExecutor"
       # sql_alchemy_conn is extracted from endpoints by the configmap template
+      sql_engine_encoding: "utf-8"
       sql_alchemy_pool_enabled: "True"
       sql_alchemy_pool_size: 5
       sql_alchemy_pool_recycle: 1800
       sql_alchemy_reconnect_timeout: 30
+      sql_alchemy_schema: ""
       parallelism: 32
-      dag_concurrency: 16
+      dag_concurrency: 8
       dags_are_paused_at_creation: "False"
       non_pooled_task_slot_count: 128
-      max_active_runs_per_dag: 16
+      max_active_runs_per_dag: 8
       load_examples: "False"
       plugins_folder: /usr/local/airflow/plugins
       fernet_key: fKp7omMJ4QlTxfZzVBSiyXVgeCK-6epRjGgMpEIsjvs=
       donot_pickle: "False"
       dagbag_import_timeout: 30
-      # NOTE: Versions after 1.10 will change this to StandardTaskRunner
       task_runner: "BashTaskRunner"
+      # task_runner: "StandardTaskRunner"  -- coming soon?
       default_impersonation: ""
       security: ""
       secure_mode: "True"
@@ -495,6 +499,7 @@ conf:
       enable_xcom_pickling: "False"
       killed_task_cleanup_time: 60
       dag_run_conf_overrides_params: "False"
+      worker_precheck: "False"
     cli:
       api_client: airflow.api.client.local_client
       # endpoint_url is extracted from endpoints by the configmap template
@@ -511,7 +516,7 @@ conf:
       username: ""
       password: ""
     operators:
-      default_owner: "Airflow"
+      default_owner: "airflow"
       default_cpus: 1
       default_ram: 512
       default_disk: 512
@@ -528,8 +533,8 @@ conf:
       web_server_master_timeout: 120
       web_server_worker_timeout: 120
       worker_refresh_batch_size: 1
-      worker_refresh_interval: 30
-      secret_key: "temporary_key"
+      worker_refresh_interval: 120
+      secret_key: "{SECRET_KEY}"
       workers: 4
       worker_class: "sync"
       access_logfile: "-"
@@ -541,12 +546,13 @@ conf:
       dag_default_view: "tree"
       dag_orientation: "LR"
       demo_mode: "False"
-      log_fetch_timeout_sec: 10
+      log_fetch_timeout_sec: 20
       hide_paused_dags_by_default: "False"
       page_size: 100
       rbac: "False"
       navbar_color: "#007A87"
       default_dag_run_display_number: 25
+      enable_proxy_fix: "False"
     email:
       # Shipyard is not using this
       email_backend: airflow.utils.send_email_smtp
@@ -561,14 +567,23 @@ conf:
       smtp_mail_from: airflow@airflow.local
     celery:
       celery_app_name: airflow.executors.celery_executor
-      worker_concurrency: 16
+      # The concurrency that will be used when starting workers with the
+      # "airflow worker" command. This defines the number of task instances
+      # that a worker will take, so size up your workers based on the resources
+      # on your worker box and the nature of your tasks
+      worker_concurrency: 4
       worker_log_server_port: 8793
       # broker_url is extracted from endpoints by the configmap template
       # result_backend is extracted from endpoints by the configmap template
       flower_host: 0.0.0.0
-      flower_url_prefix:
+      flower_url_prefix: ""
       flower_port: 5555
+      flower_basic_auth: ""
       default_queue: "default"
+      # How many processes CeleryExecutor uses to sync task state.
+      # 0 means to use max(1, number of cores - 1) processes.
+      # set to 1 for low-volume use
+      sync_parallelism: 1
       celery_config_options: airflow.config_templates.default_celery.DEFAULT_CELERY_CONFIG
       # TODO: Enable this for security
       ssl_active: "False"
@@ -584,14 +599,17 @@ conf:
       tls_cert: ""
       tls_key: ""
     scheduler:
-      job_heartbeat_sec: 5
-      scheduler_heartbeat_sec: 5
+      # Task instances listen for external kill signal (when you clear tasks
+      # from the CLI or the UI), this defines the frequency at which they
+      # should listen (in seconds).
+      job_heartbeat_sec: 10
+      # The scheduler constantly tries to trigger new tasks (look at the
+      # scheduler section in the docs for more information). This defines
+      # how often the scheduler should run (in seconds).
+      scheduler_heartbeat_sec: 10
       run_duration: -1
-      # Check for pending tasks no more than every 5 seconds
-      min_file_process_interval: 5
-      # This is part of 1.10, but disabled in 1.10.1 (pending) See:
-      # https://github.com/apache/incubator-airflow/blob/master/UPDATING.md#min_file_parsing_loop_time-config-option-temporarily-disabled
-      min_file_parsing_loop_time: 1
+      # Check for pending dag runs no more than every 10 seconds
+      min_file_process_interval: 10
       dag_dir_list_interval: 300
       # Stats for the scheduler are minimally useful - every 5 mins is enough
       print_stats_interval: 300
@@ -606,6 +624,9 @@ conf:
       # Shipyard's use of Airflow is low volume. 1 Thread is probably enough.
       max_threads: 1
       authenticate: "False"
+      # Turn off scheduler use of cron intervals by setting this to False.
+      # DAGs submitted manually in the web UI or with trigger_dag will still run.
+      use_job_schedule: "False"
     ldap:
       # Shipyard is not using this
       uri: ""

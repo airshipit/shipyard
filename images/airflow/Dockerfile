@@ -91,8 +91,10 @@ RUN pip3 install -r /tmp/requirements.txt \
     && pip3 uninstall -y snakebite || true
 
 # Copy scripts used in the container:
-#   entrypoint.sh, airflow_start_service.sh and airflow_logrotate.sh
 COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
+
+# Copy configuration (e.g. logging config for Airflow):
+COPY images/airflow/config/*.py ${AIRFLOW_HOME}/config/
 
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME}
