@@ -19,7 +19,7 @@ IMAGE_PREFIX               ?= airshipit
 IMAGE_TAG                  ?= untagged
 IMAGE_NAME                 := airflow shipyard
 # use this variable for image labels added in internal build process
-LABEL                      ?= com.internal
+LABEL                      ?= org.airshipit.build=community
 COMMIT                     ?= $(shell git rev-parse HEAD)
 
 DOCKER_REGISTRY            ?= quay.io
