@@ -23,6 +23,8 @@ import requests
 from shipyard_client.api_client.client_error import ClientError
 from shipyard_client.api_client.client_error import UnauthenticatedClientError
 from shipyard_client.api_client.client_error import UnauthorizedClientError
+from shipyard_client.api_client.client_error import ShipyardBufferError
+from shipyard_client.api_client.client_error import InvalidCollectionError
 
 
 class BaseClient(metaclass=abc.ABCMeta):
@@ -99,6 +101,10 @@ class BaseClient(metaclass=abc.ABCMeta):
                 raise UnauthenticatedClientError()
             if response.status_code == 403:
                 raise UnauthorizedClientError()
+            if response.status_code == 400:
+                raise InvalidCollectionError(response.text)
+            if response.status_code == 409:
+                raise ShipyardBufferError(response.text)
             return response
         except requests.exceptions.RequestException as e:
             self.error(str(e))

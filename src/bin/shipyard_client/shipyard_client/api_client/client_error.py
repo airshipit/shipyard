@@ -23,3 +23,11 @@ class UnauthorizedClientError(ClientError):
 
 class UnauthenticatedClientError(ClientError):
     pass
+
+
+class ShipyardBufferError(ClientError):
+    pass
+
+
+class InvalidCollectionError(ClientError):
+    pass
