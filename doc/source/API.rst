@@ -104,9 +104,9 @@ collections, rather than individually. At any point in time, there will
 be several versions of documents in a site that are accessible via this API:
 
 - The "Committed Documents" version, which represents the last version of
-  documents that were successfully commited with a commit_configdocs action.
+  documents that were successfully committed with a commit_configdocs action.
 - The "Shipyard Buffer" version, which represents the collection of documents
-  that have been ingested by this API since the last commited version. Note
+  that have been ingested by this API since the last committed version. Note
   that only one set of documents maybe posted to the buffer at a time by
   default. (This behavior can be overridden by query parameters issued by the
   user of Shipyard)
