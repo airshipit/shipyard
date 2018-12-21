@@ -14,6 +14,8 @@
 """
 Resources representing the configdocs API for shipyard
 """
+import logging
+
 import falcon
 from oslo_config import cfg
 
@@ -26,6 +28,7 @@ from shipyard_airflow.control.helpers.configdocs_helper import (
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 VERSION_VALUES = ['buffer',
                   'committed',
                   'last_site_action',
@@ -59,23 +62,17 @@ class ConfigDocsResource(BaseResource):
         """
         Ingests a collection of documents
         """
-        content_length = req.content_length or 0
-        if (content_length == 0):
-            raise ApiError(
-                title=('Content-Length is a required header'),
-                description='Content Length is 0 or not specified',
-                status=falcon.HTTP_400,
-                error_list=[{
-                    'message': (
-                        'The Content-Length specified is 0 or not set. Check '
-                        'that a valid payload is included with this request '
-                        'and that your client is properly including a '
-                        'Content-Length header. Note that a newline character '
-                        'in a prior header can trigger subsequent headers to '
-                        'be ignored and trigger this failure.')
-                }],
-                retry=False, )
-        document_data = req.stream.read(content_length)
+        # Determine if this request is clearing the collection's contents.
+        empty_coll = req.get_param_as_bool('empty-collection') or False
+        if empty_coll:
+            document_data = ""
+            LOG.debug("Collection %s is being emptied", collection_id)
+        else:
+            # Note, a newline in a prior header can trigger subsequent
+            # headers to be "missing" (and hence cause this code to think
+            # that the content length is missing)
+            content_length = self.validate_content_length(req.content_length)
+            document_data = req.stream.read(content_length)
 
         buffer_mode = req.get_param('buffermode')
 
@@ -84,13 +81,38 @@ class ConfigDocsResource(BaseResource):
             helper=helper,
             collection_id=collection_id,
             document_data=document_data,
-            buffer_mode_param=buffer_mode)
+            buffer_mode_param=buffer_mode,
+            empty_collection=empty_coll)
 
         resp.status = falcon.HTTP_201
         if validations and validations['status'] == 'Success':
             validations['code'] = resp.status
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
         resp.body = self.to_json(validations)
+
+    def validate_content_length(self, content_length):
+        """Validates that the content length header is valid
+
+        :param content_length: the value of the content-length header.
+        :returns: the validate content length value
+        """
+        content_length = content_length or 0
+        if (content_length == 0):
+            raise ApiError(
+                title=('Content-Length is a required header'),
+                description='Content Length is 0 or not specified',
+                status=falcon.HTTP_400,
+                error_list=[{
+                    'message': (
+                        "The Content-Length specified is 0 or not set. To "
+                        "clear a collection's contents, please specify "
+                        "the query parameter 'empty-collection=true'."
+                        "Otherwise, a non-zero length payload and "
+                        "matching Content-Length header is required to "
+                        "post a collection.")
+                }],
+                retry=False, )
+        return content_length
 
     @policy.ApiEnforcer(policy.GET_CONFIGDOCS)
     def on_get(self, req, resp, collection_id):
@@ -132,7 +154,8 @@ class ConfigDocsResource(BaseResource):
                         helper,
                         collection_id,
                         document_data,
-                        buffer_mode_param=None):
+                        buffer_mode_param=None,
+                        empty_collection=False):
         """
         Ingest the collection after checking preconditions
         """
@@ -141,23 +164,28 @@ class ConfigDocsResource(BaseResource):
         if helper.is_buffer_valid_for_bucket(collection_id, buffer_mode):
             buffer_revision = helper.add_collection(collection_id,
                                                     document_data)
-            if helper.is_collection_in_buffer(collection_id):
-                return helper.get_deckhand_validation_status(buffer_revision)
-            else:
+            if not (empty_collection or helper.is_collection_in_buffer(
+                    collection_id)):
+                # raise an error if adding the collection resulted in no new
+                # revision (meaning it was unchanged) and we're not explicitly
+                # clearing the collection
                 raise ApiError(
                     title=('Collection {} not added to Shipyard '
                            'buffer'.format(collection_id)),
-                    description='Collection empty or resulted in no revision',
+                    description='Collection created no new revision',
                     status=falcon.HTTP_400,
                     error_list=[{
-                        'message': (
-                            'Empty collections are not supported. After '
-                            'processing, the collection {} added no new '
-                            'revision, and has been rejected as invalid '
-                            'input'.format(collection_id))
+                        'message':
+                        ('The collection {} added no new revision, and has '
+                         'been rejected as invalid input. This likely '
+                         'means that the collection already exists and '
+                         'was reloaded with the same contents'.format(
+                             collection_id))
                     }],
                     retry=False,
                 )
+            else:
+                return helper.get_deckhand_validation_status(buffer_revision)
         else:
             raise ApiError(
                 title='Invalid collection specified for buffer',

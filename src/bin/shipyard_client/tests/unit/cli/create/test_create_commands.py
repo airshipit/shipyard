@@ -66,8 +66,93 @@ def test_create_configdocs():
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--filename=' + filename
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append',
-                                        ANY, file_list)
+    mock_method.assert_called_once_with(ctx=ANY, collection=collection,
+        buffer_mode='append', empty_collection=False, data=ANY,
+        filenames=file_list)
+
+
+def test_create_configdocs_empty():
+    """test create configdocs with the --empty-collection flag"""
+
+    collection = 'design'
+    filename = 'tests/unit/cli/create/sample_yaml/sample.yaml'
+    directory = 'tests/unit/cli/create/sample_yaml'
+    runner = CliRunner()
+    tests = [
+        {
+            # replace mode, no file, no data, empty collection
+            'kwargs': {
+                'buffer_mode': 'replace',
+                'empty_collection': True,
+                'filenames': [],
+                'data': ""
+            },
+            'args': [
+                '--replace',
+                '--empty-collection',
+            ],
+        },
+        {
+            # Append mode, no file, no data, empty collection
+            'kwargs': {
+                'buffer_mode': 'append',
+                'empty_collection': True,
+                'filenames': [],
+                'data': ""
+            },
+            'args': [
+                '--append',
+                '--empty-collection',
+            ],
+        },
+        {
+            # No buffer mode specified, empty collection
+            'kwargs': {
+                'buffer_mode': None,
+                'empty_collection': True,
+                'filenames': [],
+                'data': ""
+            },
+            'args': [
+                '--empty-collection',
+            ],
+        },
+        {
+            # Filename should be ignored and not passed, empty collection
+            'kwargs': {
+                'buffer_mode': None,
+                'empty_collection': True,
+                'filenames': [],
+                'data': ""
+            },
+            'args': [
+                '--empty-collection',
+                '--filename={}'.format(filename)
+            ],
+        },
+        {
+            # Directory should be ignored and not passed, empty collection
+            'kwargs': {
+                'buffer_mode': None,
+                'empty_collection': True,
+                'filenames': [],
+                'data': ""
+            },
+            'args': [
+                '--empty-collection',
+                '--directory={}'.format(directory)
+            ],
+        },
+    ]
+
+    for tc in tests:
+        with patch.object(CreateConfigdocs, '__init__') as mock_method:
+            runner.invoke(shipyard, [
+                auth_vars, 'create', 'configdocs', collection, *tc['args']
+            ])
+
+        mock_method.assert_called_once_with(ctx=ANY, collection=collection,
+            **tc['kwargs'])
 
 
 def test_create_configdocs_directory():
@@ -82,7 +167,11 @@ def test_create_configdocs_directory():
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--directory=' + directory
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
+    # TODO(bryan-strassner) Make this test useful to show directory parsing
+    #     happened.
+    mock_method.assert_called_once_with(ctx=ANY, collection=collection,
+        buffer_mode='append', empty_collection=False, data=ANY,
+        filenames=ANY)
 
 
 def test_create_configdocs_directory_empty():
@@ -114,11 +203,15 @@ def test_create_configdocs_multi_directory():
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--directory=' + dir1, '--directory=' + dir2
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
+    # TODO(bryan-strassner) Make this test useful to show multiple directories
+    #     were actually traversed.
+    mock_method.assert_called_once_with(ctx=ANY, collection=collection,
+        buffer_mode='append', empty_collection=False, data=ANY,
+        filenames=ANY)
 
 
 def test_create_configdocs_multi_directory_recurse():
-    """test create configdocs with multiple directories"""
+    """test create configdocs with multiple directories recursively"""
 
     collection = 'design'
     dir1 = 'tests/unit/cli/create/sample_yaml/'
@@ -130,7 +223,11 @@ def test_create_configdocs_multi_directory_recurse():
             auth_vars, 'create', 'configdocs', collection, '--' + append,
             '--directory=' + dir1, '--directory=' + dir2, '--recurse'
         ])
-    mock_method.assert_called_once_with(ANY, collection, 'append', ANY, ANY)
+    # TODO(bryan-strassner) Make this test useful to show multiple directories
+    #     were actually traversed and recursed.
+    mock_method.assert_called_once_with(ctx=ANY, collection=collection,
+        buffer_mode='append', empty_collection=False, data=ANY,
+        filenames=ANY)
 
 
 def test_create_configdocs_negative():

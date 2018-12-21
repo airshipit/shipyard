@@ -105,8 +105,23 @@ class ConfigdocsHelper(object):
         return BufferMode.REJECTONCONTENTS
 
     def is_buffer_empty(self):
-        """ Check if the buffer is empty. """
-        return self._get_revision(BUFFER) is None
+        """ Check if the buffer is empty.
+
+        This can occur if there is no buffer revision, or if the buffer
+        revision is unchanged since the last committed version (or version 0)
+        """
+        if self._get_revision(BUFFER) is None:
+            return True
+        # Get the "diff" of the collctions for Buffer vs. Committed (or 0)
+        collections = self.get_configdocs_status()
+        # If there are no collections or they are all unmodified, return True
+        # Deleted, created, or modified means there's something in the buffer.
+        if not collections:
+            return True
+        for c in collections:
+            if c['new_status'] != 'unmodified':
+                return False
+        return True
 
     def is_collection_in_buffer(self, collection_id):
         """

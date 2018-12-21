@@ -158,10 +158,9 @@ Deckhand
 
 POST /v1.0/configdocs/{collection_id}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Ingests a collection of documents. Synchronous. POSTing an empty body
-indicates that the specified collection should be deleted when the
-Shipyard Buffer is committed. If a POST to the commitconfigdocs is in
-progress, this POST should be rejected with a 409 error.
+Ingests a collection of documents. Synchronous. If a POST to the
+commitconfigdocs is already in progress, this POST should be rejected with a
+409 error.
 
 .. note::
 
@@ -182,6 +181,10 @@ Query Parameters
       Conflict will be returned.
    -  replace: Clear the Shipyard Buffer before adding the specified
       collection.
+
+-  empty-collection: Set to true to indicate that this collection should be
+   made empty and effectively deleted when the Shipyard Buffer is committed.
+   If this parameter is specified, the POST body will be ignored.
 
 Responses
 '''''''''

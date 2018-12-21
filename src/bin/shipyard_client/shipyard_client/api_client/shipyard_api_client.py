@@ -52,16 +52,21 @@ class ShipyardClient(BaseClient):
     def post_configdocs(self,
                         collection_id=None,
                         buffer_mode='rejectoncontents',
+                        empty_collection=False,
                         document_data=None):
         """
         Ingests a collection of documents
         :param str collection_id: identifies a collection of docs.Bucket_id
         :param str buffermode: append|replace|rejectOnContents
+        :param empty_collection: True if the collection is empty. Document
+            data will be ignored if this flag is set to True. Default: False
         :param str document_data: data in a format understood by Deckhand(YAML)
         :returns: diff from last committed revision to new revision
         :rtype: Response object
         """
         query_params = {"buffermode": buffer_mode}
+        if empty_collection:
+            query_params['empty-collection'] = True
         url = ApiPaths.POST_GET_CONFIG.value.format(
             self.get_endpoint(),
             collection_id

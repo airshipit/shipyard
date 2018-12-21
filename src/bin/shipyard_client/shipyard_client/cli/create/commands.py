@@ -59,7 +59,7 @@ SHORT_DESC_ACTION = (
 @click.option(
     '--allow-intermediate-commits',
     'allow_intermediate_commits',
-    flag_value=True,
+    is_flag=True,
     help="Allow site action to go through even though there are prior commits "
     "that have not been used as part of a site action.")
 @click.pass_context
@@ -82,6 +82,7 @@ DESC_CONFIGDOCS = """
 COMMAND: configdocs \n
 DESCRIPTION: Load documents into the Shipyard Buffer. \n
 FORMAT: shipyard create configdocs <collection> [--append | --replace]
+[--empty-collection]
 [--filename=<filename> (repeatable) | --directory=<directory>] (repeatable)
  --recurse\n
 EXAMPLE: shipyard create configdocs design --append
@@ -96,15 +97,16 @@ SHORT_DESC_CONFIGDOCS = "Load documents into the Shipyard Buffer."
 @click.argument('collection')
 @click.option(
     '--append',
-    flag_value=True,
+    is_flag=True,
     help='Add the collection to the Shipyard Buffer. ')
 @click.option(
     '--replace',
-    flag_value=True,
+    is_flag=True,
     help='Clear the Shipyard Buffer and replace it with the specified '
     'contents. ')
 @click.option(
     '--filename',
+    'filenames',
     multiple=True,
     type=click.Path(exists=True),
     help='The file name to use as the contents of the collection. '
@@ -117,59 +119,89 @@ SHORT_DESC_CONFIGDOCS = "Load documents into the Shipyard Buffer."
     'a collection. (Repeatable).')
 @click.option(
     '--recurse',
-    flag_value=True,
+    is_flag=True,
     help='Recursively search through directories for yaml files.'
 )
+# The --empty-collection flag is explicit to prevent a user from accidentally
+# loading an empty file and deleting things. This requires the user to clearly
+# state their intention.
+@click.option(
+    '--empty-collection',
+    is_flag=True,
+    help='Creates a version of the specified collection with no contents. '
+    'This option is the method by which a collection can be effectively '
+    'deleted. Any file and directory parameters will be ignored if this '
+    'option is used.'
+)
 @click.pass_context
-def create_configdocs(ctx, collection, filename, directory, append,
-                      replace, recurse):
+def create_configdocs(ctx, collection, filenames, directory, append, replace,
+                      recurse, empty_collection):
     if (append and replace):
         ctx.fail('Either append or replace may be selected but not both')
-    if (not filename and not directory) or (filename and directory):
-        ctx.fail('Please specify one or more filenames using '
-                 '--filename="<filename>" OR one or more directories using '
-                 '--directory="<directory>"')
 
     if append:
-        create_buffer = 'append'
+        buffer_mode = 'append'
     elif replace:
-        create_buffer = 'replace'
+        buffer_mode = 'replace'
     else:
-        create_buffer = None
+        buffer_mode = None
 
-    if directory:
-        for dir in directory:
-            if recurse:
-                for path, dirs, files in os.walk(dir):
-                    filename += tuple(
-                        [os.path.join(path, name) for name in files
-                         if name.endswith('.yaml')])
-            else:
-                filename += tuple(
-                    [os.path.join(dir, each) for each in os.listdir(dir)
-                     if each.endswith('.yaml')])
+    if empty_collection:
+        # Use an empty string as the document payload, and indicate no files.
+        data = ""
+        filenames = []
+    else:
+        # Validate that appropriate file/directory params were specified.
+        if (not filenames and not directory) or (filenames and directory):
+            ctx.fail('Please specify one or more filenames using '
+                     '--filename="<filename>" OR one or more directories '
+                     'using --directory="<directory>"')
+        # Scan and parse the input directories and files
+        if directory:
+            for _dir in directory:
+                if recurse:
+                    for path, dirs, files in os.walk(_dir):
+                        filenames += tuple([
+                            os.path.join(path, name) for name in files
+                            if is_yaml(name)
+                        ])
+                else:
+                    filenames += tuple([
+                        os.path.join(_dir, each) for each in os.listdir(_dir)
+                        if is_yaml(each)
+                    ])
 
-        if not filename:
-            # None or empty list should raise this error
-            ctx.fail('The directory does not contain any YAML files. '
-                     'Please enter one or more YAML files or a '
-                     'directory that contains one or more YAML files.')
+            if not filenames:
+                # None or empty list should raise this error
+                ctx.fail('The directory does not contain any YAML files. '
+                         'Please enter one or more YAML files or a '
+                         'directory that contains one or more YAML files.')
 
-    docs = []
-    for file in filename:
-        with open(file, 'r') as stream:
-            if file.endswith(".yaml"):
-                try:
-                    docs += list(yaml.safe_load_all(stream))
-                except yaml.YAMLError as exc:
-                    ctx.fail('YAML file {} is invalid because {}'
-                             .format(file, exc))
-            else:
-                ctx.fail('The file {} is not a YAML file.  Please enter '
-                         'only YAML files.'.format(file))
+        docs = []
+        for _file in filenames:
+            with open(_file, 'r') as stream:
+                if is_yaml(_file):
+                    try:
+                        docs += list(yaml.safe_load_all(stream))
+                    except yaml.YAMLError as exc:
+                        ctx.fail('YAML file {} is invalid because {}'.format(
+                            _file, exc))
+                else:
+                    ctx.fail('The file {} is not a YAML file.  Please enter '
+                             'only YAML files.'.format(_file))
 
-    data = yaml.safe_dump_all(docs)
+        data = yaml.safe_dump_all(docs)
 
     click.echo(
-        CreateConfigdocs(ctx, collection, create_buffer, data, filename)
-        .invoke_and_return_resp())
+        CreateConfigdocs(
+            ctx=ctx,
+            collection=collection,
+            buffer_mode=buffer_mode,
+            empty_collection=empty_collection,
+            data=data,
+            filenames=filenames).invoke_and_return_resp())
+
+
+def is_yaml(filename):
+    """Test if the filename should be regarded as a yaml file"""
+    return filename.endswith(".yaml") or filename.endswith(".yml")

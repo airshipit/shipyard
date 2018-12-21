@@ -47,11 +47,11 @@ SHORT_DESC_CONFIGDOCS = ("Attempts to commit the Shipyard Buffer documents, "
 @click.option(
     '--force',
     '-f',
-    flag_value=True,
+    is_flag=True,
     help='Force the commit to occur, even if validations fail.')
 @click.option(
     '--dryrun',
-    flag_value=True,
+    is_flag=True,
     help='Retrieve validation status for the contents of the buffer without '
     'committing.')
 @click.pass_context
