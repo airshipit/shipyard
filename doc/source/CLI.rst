@@ -682,8 +682,10 @@ differences between the 'committed' and 'buffer' revision (default behavior).
   collection, this will return an empty response (default)
 
 \--cleartext-secrets
-  Returns cleartext secrets in encrypted documents, otherwise those values
-  are redacted. Only impacts returned documents, not lists of documents.
+  Returns secrets as cleartext for encrypted documents if the user has the
+  appropriate permissions in the target environment.  If the user does not
+  have the appropriate permissions and sets this flag to true an error is
+  returned.  Only impacts returned documents, not lists of documents.
 
 Sample
 ^^^^^^
@@ -750,8 +752,10 @@ applying Deckhand layering and substitution.
   prior commit. (default)
 
 \--cleartext-secrets
-  Returns secrets as cleartext for encrypted documents if the user has the appropriate
-  permissions in the target environment.
+  Returns secrets as cleartext for encrypted documents if the user has the
+  appropriate permissions in the target environment.  If the user does not
+  have the appropriate permissions and sets this flag to true an error is
+  returned.
 
 Sample
 ^^^^^^

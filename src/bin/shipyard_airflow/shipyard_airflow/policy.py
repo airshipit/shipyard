@@ -36,6 +36,7 @@ INVOKE_ACTION_CONTROL = 'workflow_orchestrator:invoke_action_control'
 GET_CONFIGDOCS_STATUS = 'workflow_orchestrator:get_configdocs_status'
 CREATE_CONFIGDOCS = 'workflow_orchestrator:create_configdocs'
 GET_CONFIGDOCS = 'workflow_orchestrator:get_configdocs'
+GET_CONFIGDOCS_CLRTXT = 'workflow_orchestrator:get_configdocs_cleartext'
 COMMIT_CONFIGDOCS = 'workflow_orchestrator:commit_configdocs'
 GET_RENDEREDCONFIGDOCS = 'workflow_orchestrator:get_renderedconfigdocs'
 GET_RENDEREDCONFIGDOCS_CLRTXT = 'workflow_orchestrator:get_renderedconfigdocs_cleartext'  # noqa
@@ -162,7 +163,18 @@ class ShipyardPolicy(object):
         policy.DocumentedRuleDefault(
             GET_CONFIGDOCS,
             RULE_ADMIN_REQUIRED,
-            'Retrieve a collection of configuration documents',
+            ('Retrieve a collection of configuration documents with redacted '
+             'secrets'),
+            [{
+                'path': '/api/v1.0/configdocs/{collection_id}',
+                'method': 'GET'
+            }]
+        ),
+        policy.DocumentedRuleDefault(
+            GET_CONFIGDOCS_CLRTXT,
+            RULE_ADMIN_REQUIRED,
+            ('Retrieve a collection of configuration documents with cleartext '
+             'secrets.'),
             [{
                 'path': '/api/v1.0/configdocs/{collection_id}',
                 'method': 'GET'
