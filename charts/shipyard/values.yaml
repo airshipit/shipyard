@@ -37,6 +37,7 @@ images:
     shipyard_db_init: docker.io/postgres:9.5
     shipyard_db_sync: quay.io/airshipit/shipyard:latest
     airflow_db_init: docker.io/postgres:9.5
+    rabbit_init: docker.io/rabbitmq:3.7-management
     airflow_db_sync: quay.io/airshipit/airflow:latest
     ks_user: docker.io/openstackhelm/heat:ocata
     ks_service: docker.io/openstackhelm/heat:ocata
@@ -105,6 +106,10 @@ dependencies:
       services:
         - service: postgresql_airflow_db
           endpoint: internal
+    rabbit_init:
+      services:
+        - service: oslo_messaging
+          endpoint: internal
     airflow_db_sync:
       jobs:
         - airflow-db-init
@@ -143,6 +148,7 @@ dependencies:
           endpoint: internal
     airflow_server:
       jobs:
+        - airflow-rabbit-init
         - airflow-db-init
         - airflow-db-sync
       services:
@@ -316,17 +322,22 @@ endpoints:
   oslo_messaging:
     auth:
       user:
+        username: airflow
+        password: password
+      admin:
         username: rabbitmq
         password: password
     hosts:
       default: rabbitmq
     host_fqdn_override:
       default: null
-    path: /
+    path: /airflow
     scheme: amqp
     port:
       amqp:
         default: 5672
+      http:
+        default: 15672
   oslo_cache:
     hosts:
       default: memcached
@@ -340,6 +351,9 @@ secrets:
   identity:
     admin: shipyard-keystone-admin
     shipyard: shipyard-keystone-user
+  oslo_messaging:
+    admin: airflow-rabbitmq-admin
+    airflow: airflow-rabbitmq-user
   postgresql_shipyard_db:
     admin: shipyard-db-admin
     user: shipyard-db-user
@@ -381,6 +395,17 @@ conf:
     workflow_orchestrator:action_update_software: rule:admin_create
     workflow_orchestrator:action_redeploy_server: rule:admin_create
     workflow_orchestrator:action_relabel_nodes: rule:admin_create
+  rabbitmq:
+    # adding rmq policy to mirror messages from celery queues
+    policies:
+      - vhost: "/"
+        name: "ha_celery"
+        definition:
+          ha-mode: "all"
+          ha-sync-mode: "automatic"
+        priority: 0
+        apply-to: all
+        pattern: 'celery.*'
   paste:
     app:shipyard-api:
       paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
@@ -785,6 +810,13 @@ pod:
         memory: "128Mi"
         cpu: "100m"
     jobs:
+      rabbit_init:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+        requests:
+          memory: "128Mi"
+          cpu: "500m"
       airflow_db_init:
         limits:
           memory: "128Mi"
@@ -864,6 +896,7 @@ manifests:
   ingress_shipyard_api: true
   job_shipyard_db_init: true
   job_shipyard_db_sync: true
+  job_rabbit_init: true
   job_airflow_db_init: true
   job_airflow_db_sync: true
   job_ks_endpoints: true
@@ -873,6 +906,7 @@ manifests:
   secret_shipyard_db: true
   secret_ingress_tls: true
   secret_keystone: true
+  secret_rabbitmq: true
   service_airflow_ingress: true
   service_airflow_flower: true
   service_shipyard: true
