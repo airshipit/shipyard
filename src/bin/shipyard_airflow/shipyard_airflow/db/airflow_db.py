@@ -246,7 +246,7 @@ class AirflowDbAccess(DbAccess):
 
     def check_dag_run_state(self, dag_id, execution_date, expected_state):
         """
-        Examines a dag_run for state. Throws execption if it's not right
+        Examines a dag_run for state. Throws exception if it's not right
         """
         dag_run_list = self.get_dag_runs_by_id(
             dag_id=dag_id, execution_date=execution_date)

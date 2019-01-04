@@ -127,7 +127,7 @@ def default_error_serializer(req, resp, exception):
 
 def default_exception_handler(ex, req, resp, params):
     """
-    Catch-all execption handler for standardized output.
+    Catch-all exception handler for standardized output.
     If this is a standard falcon HTTPError, rethrow it for handling
     """
     if isinstance(ex, falcon.HTTPError):
