@@ -71,10 +71,6 @@ network:
     ingress:
       public: true
       proxy_read_timeout: 600
-    flower:
-      name: airflow-flower
-      port: 5555
-      enable_node_port: false
     web:
       name: airflow-web
       port: 8080
@@ -93,8 +89,6 @@ dependencies:
         - airflow-db-sync
       services:
         - service: postgresql_shipyard_db
-          endpoint: internal
-        - service: airflow_flower
           endpoint: internal
         - service: airflow_web
           endpoint: internal
@@ -140,8 +134,6 @@ dependencies:
         - shipyard-ks-user
         - shipyard-ks-endpoints
       services:
-        - service: airflow_flower
-          endpoint: internal
         - service: airflow_web
           endpoint: internal
         - service: identity
@@ -233,19 +225,6 @@ endpoints:
       airflow_web:
         default: 8080
         public: 80
-    path:
-     default: /
-    scheme:
-      default: http
-    host_fqdn_override:
-      default: null
-  airflow_flower:
-    name: airflow-flower
-    hosts:
-      default: airflow-flower
-    port:
-      airflow_flower:
-        default: 5555
     path:
      default: /
     scheme:
@@ -725,15 +704,14 @@ pod:
     dag_path: /home/ubuntu/workbench/dags
     plugin_path: /home/ubuntu/workbench/plugins
     log_path: /home/ubuntu/workbench/logs
-    airflow_flower:
-      init_container: null
-      airflow_flower:
     airflow_scheduler:
-      init_container: null
+      # TODO: This is only used if the standalone scheduler is enabled.
       airflow_scheduler:
+      init_container: null
     airflow_worker:
       init_container: null
       airflow_worker:
+      airflow_scheduler:
     airflow_web:
       init_container: null
       airflow_web:
@@ -752,7 +730,6 @@ pod:
     airflow:
       web: 2
       worker: 2
-      flower: 2
       scheduler: 2
   lifecycle:
     upgrades:
@@ -770,13 +747,6 @@ pod:
   resources:
     enabled: false
     airflow:
-      flower:
-        limits:
-          memory: "128Mi"
-          cpu: "100m"
-        requests:
-          memory: "128Mi"
-          cpu: "100m"
       logrotate:
         limits:
           memory: "128Mi"
@@ -890,7 +860,8 @@ manifests:
   configmap_shipyard_etc: true
   configmap_airflow_bin: true
   configmap_airflow_etc: true
-  deployment_airflow_flower: true
+  # TODO: Set this to false only if a new deployment, or if the worker pod is
+  #   running the scheduler
   deployment_airflow_scheduler: true
   deployment_shipyard: true
   deployment_airflow_web: true
@@ -911,7 +882,6 @@ manifests:
   secret_keystone: true
   secret_rabbitmq: true
   service_airflow_ingress: true
-  service_airflow_flower: true
   service_shipyard: true
   service_shipyard_ingress: true
   service_airflow_web: true

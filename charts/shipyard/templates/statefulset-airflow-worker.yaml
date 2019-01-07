@@ -111,6 +111,40 @@ spec:
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
 {{- end }}
       containers:
+        - name: airflow-scheduler
+          image: {{ .Values.images.tags.airflow }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.airflow.scheduler | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
+            valueFrom:
+                secretKeyRef:
+                    name: {{ .Values.secrets.postgresql_airflow_db.user }}
+                    key: AIRFLOW_DATABASE_URI
+          # Set to -1 to stop scheduler from going into crash loops
+          args: ["scheduler", "-n", "-1" ]
+          volumeMounts:
+            - name: airflow-etc
+              mountPath: {{ .Values.conf.airflow_config_file.path }}
+              subPath: airflow.cfg
+              readOnly: true
+{{- if .Values.prod_environment }}
+            - name: shipyard-etc
+              mountPath: /usr/local/airflow/plugins/shipyard.conf
+              subPath: shipyard.conf
+              readOnly: true
+            - name: pod-shipyard-share-airflow-dags
+              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
+            - name: pod-shipyard-share-airflow-plugins
+              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
+{{ else }}
+            - name: airflow-dags
+              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
+            - name: airflow-plugins
+              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
+{{- end }}
+            - name: airflow-logs
+              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
         - name: airflow-worker
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}

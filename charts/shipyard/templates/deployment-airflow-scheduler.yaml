@@ -13,6 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTE: This is a "standalone" scheduler definition.
+# TODO: Remove this template after it is no longer needed. Until the worker
+#   statefulset contains the scheduler, this scheduler pod needs to be
+#   available to provide continuity of a software/site/update. Once
+#   Shipyard/Airflow is running with the Scheduler/Worker combo, this
+#   scheduler pod can be disabled by turning off the
+#   manifests.deployment_airflow_scheduler value.
+#
+
 {{- if .Values.manifests.deployment_airflow_scheduler }}
 {{- $envAll := . }}
 {{- $serviceAccountName := "airflow-scheduler" }}
