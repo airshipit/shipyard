@@ -395,6 +395,7 @@ conf:
     workflow_orchestrator:action_update_software: rule:admin_create
     workflow_orchestrator:action_redeploy_server: rule:admin_create
     workflow_orchestrator:action_relabel_nodes: rule:admin_create
+    workflow_orchestrator:action_test_site: rule:admin_create
   rabbitmq:
     # adding rmq policy to mirror messages from celery queues
     policies:
