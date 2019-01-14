@@ -21,19 +21,11 @@
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-linter
-        - airship-shipyard-ubuntu:
-            voting: false
         - airship-shipyard-image
     gate:
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-linter
-        # NOTE(portdirect): enable when voting enabled.
-        # - airship-shipyard-ubuntu:
-        #     irrelevant-files:
-        #       - ^.*\.rst$
-        #       - ^doc/.*$
-        #       - ^releasenotes/.*$
         - airship-shipyard-image
     post:
       jobs:
@@ -51,29 +43,6 @@
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
     nodeset: airship-shipyard-single-node
-
-- job:
-    name: airship-shipyard-base
-    roles:
-      - zuul: openstack/openstack-helm-infra
-    vars:
-      zuul_osh_infra_relative_path: ../openstack-helm-infra/
-    timeout: 7200
-    pre-run:
-      - tools/gate/playbooks/osh-infra-upgrade-host.yaml
-    post-run: tools/gate/playbooks/osh-infra-collect-logs.yaml
-    required-projects:
-      - openstack/openstack-helm-infra
-    nodeset: airship-shipyard-single-node
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^releasenotes/.*$
-
-- job:
-    name: airship-shipyard-ubuntu
-    parent: airship-shipyard-base
-    run: tools/gate/playbooks/airship-shipyard-check.yaml
 
 - job:
     name: airship-shipyard-image-base
