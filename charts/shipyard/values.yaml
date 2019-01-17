@@ -15,9 +15,6 @@
 
 # This file provides defaults for shipyard and airflow
 
-# Indicate whether it is production or development environment
-prod_environment: true
-
 labels:
   job:
     node_selector_key: ucp-control-plane
@@ -701,9 +698,6 @@ conf:
     # End of Airflow config options
 pod:
   mounts:
-    dag_path: /home/ubuntu/workbench/dags
-    plugin_path: /home/ubuntu/workbench/plugins
-    log_path: /home/ubuntu/workbench/logs
     airflow_scheduler:
       # TODO: This is only used if the standalone scheduler is enabled.
       airflow_scheduler:

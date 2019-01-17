@@ -104,7 +104,7 @@ ENV PBR_VERSION 0.1a1
 
 # Shipyard
 #
-# Shipyard provides core functionality used by the airflow plugins/operators
+# Shipyard provides core functionality used by the Airflow plugins/operators
 # Since Shipyard and Airflow are built together as images, this should prevent
 # stale or out-of-date code between these parts.
 # Shipyard requirements, source and installation
@@ -114,6 +114,20 @@ RUN pip3 install -r /tmp/api_requirements.txt
 COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
 RUN cd /tmp/shipyard \
     && python3 setup.py install
+
+# Note: The value for the dags and plugins directories that are sourced
+# from the values.yaml of the Shipyard Helm chart need to align with these
+# directories. If they do not, airflow will not find the intended dags and
+# plugins.
+#
+# Note: In the case of building images using the provided Makefile, a test is
+# run against the built-in dags provided with Airflow. Since there is no Helm
+# chart to reconfigure the airflow.cfg with these directories, these dags and
+# plugins are not known to Airflow during the image test.
+#
+# Copy the plugins and dags that will be used by this Airflow image:
+COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/plugins ${AIRFLOW_HOME}/plugins/
+COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/dags ${AIRFLOW_HOME}/dags/
 
 # Set work directory
 USER airflow

@@ -79,22 +79,6 @@ spec:
         {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
       initContainers:
 {{ tuple $envAll "airflow_server" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
-{{- if .Values.prod_environment }}
-        - name: airflow-shipyard-init
-          image: {{ .Values.images.tags.shipyard }}
-          imagePullPolicy: {{ .Values.images.pull_policy }}
-{{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          command:
-            - /tmp/airflow-shipyard-init.sh
-          volumeMounts:
-            - name: airflow-bin
-              mountPath: /tmp/airflow-shipyard-init.sh
-              subPath: airflow-shipyard-init.sh
-              readOnly: true
-            - name: pod-shipyard-share-airflow-dags
-              mountPath: /tmp/airflow/dags/
-            - name: pod-shipyard-share-airflow-plugins
-              mountPath: /tmp/airflow/plugins/
         - name: worker-perms
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
@@ -109,7 +93,6 @@ spec:
           volumeMounts:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
-{{- end }}
       containers:
         - name: airflow-scheduler
           image: {{ .Values.images.tags.airflow }}
@@ -128,21 +111,10 @@ spec:
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
               readOnly: true
-{{- if .Values.prod_environment }}
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
               subPath: shipyard.conf
               readOnly: true
-            - name: pod-shipyard-share-airflow-dags
-              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
-            - name: pod-shipyard-share-airflow-plugins
-              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
-{{ else }}
-            - name: airflow-dags
-              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
-            - name: airflow-plugins
-              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
-{{- end }}
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
         - name: airflow-worker
@@ -166,30 +138,12 @@ spec:
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
               readOnly: true
-{{- if .Values.prod_environment }}
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
               subPath: shipyard.conf
               readOnly: true
-            - name: pod-shipyard-share-airflow-dags
-              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
-            - name: pod-shipyard-share-airflow-plugins
-              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
-{{ else }}
-            - name: airflow-dags
-              mountPath: {{ .Values.conf.airflow.core.dags_folder }}
-            - name: airflow-plugins
-              mountPath: {{ .Values.conf.airflow.core.plugins_folder }}
-            - name: docker
-              mountPath: /var/run
-              readOnly: false
-            - name: pod-var-lib-docker
-              mountPath: /var/lib/docker
-              readOnly: false
-{{- end }}
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
-{{- if .Values.prod_environment }}
         - name: airflow-logrotate
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
@@ -214,13 +168,11 @@ spec:
           volumeMounts:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
-{{- end }}
       volumes:
         - name: airflow-etc
           configMap:
             name: airflow-etc
             defaultMode: 0444
-{{- if .Values.prod_environment }}
         - name: shipyard-etc
           configMap:
             name: shipyard-etc
@@ -229,10 +181,6 @@ spec:
           configMap:
             name: airflow-bin
             defaultMode: 0555
-        - name: pod-shipyard-share-airflow-dags
-          emptyDir: {}
-        - name: pod-shipyard-share-airflow-plugins
-          emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: airflow-logs
@@ -242,21 +190,4 @@ spec:
         requests:
           storage: {{ .Values.volume_worker.size }}
       storageClassName: {{ .Values.volume_worker.class_name }}
-{{ else }}
-        - name: airflow-dags
-          hostPath:
-            path: {{ .Values.pod.mounts.dag_path }}
-        - name: airflow-plugins
-          hostPath:
-            path: {{ .Values.pod.mounts.plugin_path }}
-        - name: airflow-logs
-          hostPath:
-            path: {{ .Values.pod.mounts.log_path }}
-        - name: docker
-          hostPath:
-            path: /var/run
-        - name: pod-var-lib-docker
-          hostPath:
-            path: /var/lib/docker
-{{- end }}
 {{- end }}
