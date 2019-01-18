@@ -40,9 +40,15 @@
 # POST  /api/v1.0/configdocs/{collection_id}
 #"workflow_orchestrator:create_configdocs": "rule:admin_required"
 
-# Retrieve a collection of configuration documents
+# Retrieve a collection of configuration documents with redacted
+# secrets
 # GET  /api/v1.0/configdocs/{collection_id}
 #"workflow_orchestrator:get_configdocs": "rule:admin_required"
+
+# Retrieve a collection of configuration documents with cleartext
+# secrets.
+# GET  /api/v1.0/configdocs/{collection_id}
+#"workflow_orchestrator:get_configdocs_cleartext": "rule:admin_required"
 
 # Move documents from the Shipyard buffer to the committed documents
 # POST  /api/v1.0/commitconfigdocs
@@ -52,6 +58,11 @@
 # complete design
 # GET  /api/v1.0/renderedconfigdocs
 #"workflow_orchestrator:get_renderedconfigdocs": "rule:admin_required"
+
+# Retrieve the configuration documents with cleartext secrets rendered
+# by Deckhand into a complete design
+# GET  /api/v1.0/renderedconfigdocs
+#"workflow_orchestrator:get_renderedconfigdocs_cleartext": "rule:admin_required"
 
 # Retrieve the list of workflows (DAGs) that have been invoked in
 # Airflow, whether via Shipyard or scheduled

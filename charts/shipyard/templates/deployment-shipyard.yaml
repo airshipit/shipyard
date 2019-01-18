@@ -15,9 +15,10 @@
 
 {{- if .Values.manifests.deployment_shipyard }}
 {{- $envAll := . }}
+{{- $serviceAccountName := "shipyard" }}
 {{- $mounts_shipyard := .Values.pod.mounts.shipyard.shipyard }}
 {{- $mounts_shipyard_init := .Values.pod.mounts.shipyard.init_container }}
-{{- $serviceAccountName := "shipyard" }}
+
 {{ tuple $envAll "shipyard" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: apps/v1beta1
@@ -34,8 +35,10 @@ spec:
       labels:
 {{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
       annotations:
-        configmap-bin-hash: {{ tuple "configmap-shipyard-bin.yaml" . | include "helm-toolkit.utils.hash" }}
-        configmap-etc-hash: {{ tuple "configmap-shipyard-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+        shipyard-configmap-bin-hash: {{ tuple "configmap-shipyard-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        shipyard-configmap-etc-hash: {{ tuple "configmap-shipyard-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+        airflow-configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        airflow-configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
@@ -88,6 +91,28 @@ spec:
             - name: tmp-profiles
               mountPath: /tmp/profiles
 {{ end }}
+        - name: airflow-web
+          image: {{ .Values.images.tags.airflow }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.airflow.web | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          env:
+          - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgresql_airflow_db.user }}
+                key: AIRFLOW_DATABASE_URI
+          args: ["webserver"]
+          volumeMounts:
+            - name: airflow-etc
+              mountPath: {{ .Values.conf.airflow_config_file.path }}
+              subPath: airflow.cfg
+              readOnly: true
+            - name: shipyard-etc
+              mountPath: /usr/local/airflow/plugins/shipyard.conf
+              subPath: shipyard.conf
+              readOnly: true
+            - name: airflow-logs
+              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
 {{ if $mounts_shipyard.volumeMounts }}{{ toYaml $mounts_shipyard.volumeMounts | indent 12 }}{{ end }}
       volumes:
 {{ if .Values.conf.shipyard.base.profiler }}
@@ -100,5 +125,15 @@ spec:
           configMap:
             name: shipyard-etc
             defaultMode: 0444
+        - name: airflow-etc
+          configMap:
+            name: airflow-etc
+            defaultMode: 0444
+        - name: airflow-bin
+          configMap:
+            name: airflow-bin
+            defaultMode: 0555
+        - name: airflow-logs
+          emptyDir: {}
 {{ if $mounts_shipyard.volumes }}{{ toYaml $mounts_shipyard.volumes | indent 8 }}{{ end }}
 {{- end }}
