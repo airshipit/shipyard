@@ -47,11 +47,7 @@ def cli_format_status_handler(response, is_error=False):
         standard error format
     :is_error: toggles the use of status or error verbiage
     :returns: a generically formatted error response formulated from the
-        client_repsonse.  The response will be in the format:
-
-    [Error|Status]: {{message}}
-    Reason: {{Reason}}
-    Additional: {{details message list messages}}
+        client_repsonse.
     ...
     """
     formatted = "Error: {}\nReason: {}" if is_error \
@@ -59,43 +55,67 @@ def cli_format_status_handler(response, is_error=False):
     try:
         if response.text:
             resp_j = response.json()
-            resp = formatted.format(resp_j.get('message', 'Not specified'),
-                                    resp_j.get('reason', 'Not specified'))
-            # lvl_counts must have a matching number of values as the
-            # _LEVEL_KEYS below + 1 for sentinel.
-            lvl_counts = [0, 0, 0, 0]
-            if resp_j.get('details'):
-                mlist = resp_j['details'].get('messageList', [])
-                # Decorate messages with level number and sortkey
-                for message in mlist:
-                    message['lnum'], message['sortkey'] = _lvl_key(
-                        message.get('level'),
-                        message.get('error', False)
-                    )
-                # Sort and formulate the messages
-                for message in sorted(mlist, key=lambda m: m['sortkey']):
-                    lnum = message['lnum']
-                    lvl_counts[lnum] = lvl_counts[lnum] + 1
-                    if message.get('kind') == 'ValidationMessage':
-                        resp = resp + _format_validation_message(message)
-                    else:
-                        resp = resp + _format_basic_message(message)
-                    if message.get('source'):
-                        resp = resp + "\n{}Source: {}".format(
-                            _INDENT,
-                            message['source']
-                        )
-                # Append a count summary
-                resp = resp + ("\n\n####  Errors: {},"
-                               " Warnings: {},"
-                               " Infos: {},"
-                               " Other: {}  ####".format(*lvl_counts))
-            return resp
+            return cli_format_response(formatted, resp_j)
         else:
             return ''
     except ValueError:
         return "Error: Unable to decode response. Value: {}".format(
             response.text)
+
+def cli_format_exception_handler(exc_msg):
+    """ Formatter for custom error raised by Shipyard """
+    try:
+        formatted = "Error: {}\nReason: {}"
+        # Convert exception message to dict from string
+        exc_dict = json.loads(str(exc_msg))
+        return cli_format_response(formatted, exc_dict)
+    except Exception:
+        return "Error: Unable to decode response. Value: {}".format(
+            exc_msg)
+
+def cli_format_response(formatted, response):
+    """ Handler for Shipyard status and error responses
+
+    :param formatted: structure to be used for response
+    :param response: client response to be formatted
+
+    The response will be in the format:
+    [Error|Status]: {{message}}
+    Reason: {{Reason}}
+    Additional: {{details message list messages}}
+    """
+    resp = formatted.format(response.get('message', 'Not specified'),
+                            response.get('reason', 'Not specified'))
+    # lvl_counts must have a matching number of values as the
+    # _LEVEL_KEYS below + 1 for sentinel.
+    lvl_counts = [0, 0, 0, 0]
+    if response.get('details'):
+        mlist = response['details'].get('messageList', [])
+        # Decorate messages with level number and sortkey
+        for message in mlist:
+            message['lnum'], message['sortkey'] = _lvl_key(
+                message.get('level'),
+                message.get('error', False)
+            )
+        # Sort and formulate the messages
+        for message in sorted(mlist, key=lambda m: m['sortkey']):
+            lnum = message['lnum']
+            lvl_counts[lnum] = lvl_counts[lnum] + 1
+            if message.get('kind') == 'ValidationMessage':
+                resp = resp + _format_validation_message(message)
+            else:
+                resp = resp + _format_basic_message(message)
+            if message.get('source'):
+                resp = resp + "\n{}Source: {}".format(
+                    _INDENT,
+                    message['source']
+                )
+        # Append a count summary
+        resp = resp + ("\n\n####  Errors: {},"
+                       " Warnings: {},"
+                       " Infos: {},"
+                       " Other: {}  ####".format(*lvl_counts))
+    return resp
 
 
 # Map of levels by severity. Extra values are included in this map but valid

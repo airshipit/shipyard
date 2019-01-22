@@ -19,6 +19,8 @@ import logging
 from shipyard_client.api_client.client_error import ClientError
 from shipyard_client.api_client.client_error import UnauthenticatedClientError
 from shipyard_client.api_client.client_error import UnauthorizedClientError
+from shipyard_client.api_client.client_error import ShipyardBufferError
+from shipyard_client.api_client.client_error import InvalidCollectionError
 from shipyard_client.api_client.shipyard_api_client import ShipyardClient
 from shipyard_client.api_client.shipyardclient_context import \
     ShipyardClientContext
@@ -134,6 +136,10 @@ class CliAction(AbstractCliAction):
                              "Check credential values")
         except UnauthorizedClientError:
             self.resp_txt = "Error: Unauthorized to perform this action."
+        except ShipyardBufferError as ex:
+            self.resp_txt = format_utils.cli_format_exception_handler(ex)
+        except InvalidCollectionError as ex:
+            self.resp_txt = format_utils.cli_format_exception_handler(ex)
         except ClientError as ex:
             self.resp_txt = "Error: Client Error: {}".format(str(ex))
         except Exception as ex:
