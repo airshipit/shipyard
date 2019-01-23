@@ -32,23 +32,34 @@ For information of the following topics, run shipyard help <topic>
 
 def actions():
     return '''ACTIONS
-The workflow actions that may be invoked using Shipyard
+Workflow actions that may be invoked using Shipyard.
 
-deploy_site: Triggers the initial deployment of a site using the latest
-             committed configuration documents.
+deploy_site
+    Triggers the initial deployment of a site using the latest committed
+    configdocs.
 
-update_site: Triggers the update to a deployment of a site, using the latest
-             committed configuration documents.
+update_site
+    Triggers the update to a deployment of a site, using the latest committed
+    configdocs.
 
-update_software: Starts an update that only exercises the software portion of
-                 the committed configuration documents.
+update_software
+    Starts an update that only exercises the software portion of the committed
+    configdocs.
 
-redeploy_server: Using parameters to indicate which server(s), triggers a
-                 redeployment of servers to the last committed design and
-                 secrets.
+redeploy_server
+    Using the --param="target_nodes=node1,node2" parameter to target server(s),
+    triggers a redeployment of servers using the last committed configdocs.
 
-relabel_nodes: Using parameters to indicate which server(s), updates the
-               labels for those servers.
+relabel_nodes
+    Using the --param="target_nodes=node1,node2" parameter to target server(s),
+    updates the Kubernetes node labels for the nodes on those servers.
+
+test_site
+    Triggers the Helm tests for the site, using parameters to control the
+    tests:
+    --param="cleanup=true" to delete the test pods immediately after execution
+    --param="release=release-name" to target a specific Helm release instead of
+        all releases (the default if this parameter is not specified).
     '''
 
 

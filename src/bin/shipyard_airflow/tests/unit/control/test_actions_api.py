@@ -23,6 +23,7 @@ from falcon import testing
 from oslo_config import cfg
 import pytest
 import responses
+import yaml
 
 from shipyard_airflow.common.notes.notes import NotesManager
 from shipyard_airflow.common.notes.notes_helper import NotesHelper
@@ -46,6 +47,23 @@ DESIGN_VERSION = 1
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+
+
+def _get_actions_list():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    a_path = dir_path.split('src/bin')[0] + "src/bin/supported_actions.yaml"
+    with open(a_path, 'r') as stream:
+        try:
+            action_list = yaml.safe_load(stream)['actions']
+            if not action_list:
+                raise FileNotFoundError("Action list is empty")
+        except Exception as e:
+            print(e)
+            print("This test requires that the file at '{}' is a valid yaml "
+                    "file containing a list of action names at a key of "
+                    "'actions'".format(a_path))
+            assert False
+    return action_list
 
 
 def get_token():
@@ -236,6 +254,19 @@ def conf_fixture(request):
 
 
 context = ShipyardRequestContext()
+
+
+def test_actions_all_in_list():
+    """Test that all actions are in alignment with supported list
+    Compares the action mappings structure with the externalized list of
+    supported actions, allowing for better alignment with the client
+    """
+    mappings = actions_api._action_mappings()
+    actions = _get_actions_list()
+    for action in actions:
+        assert action in mappings
+    for action in mappings.keys():
+        assert action in actions
 
 
 @mock.patch.object(ShipyardPolicy, 'authorize', return_value=True)

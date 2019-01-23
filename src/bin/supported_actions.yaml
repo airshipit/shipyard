@@ -1,0 +1,14 @@
+# This file contains a list of supported actions that exists outside the
+# scope of both the client and API. This is tested in both the client and
+# the API to ensure that the actions in the API match the actions supported
+# in the help of the client. Because of this, it becomes another place that
+# has to be updated, but since it's tied to tests, the reminders to fix it
+# should be outweighed by the benefit.
+actions:
+  - deploy_site
+  - update_site
+  - update_software
+  - redeploy_server
+  - relabel_nodes
+  - test_site
+...

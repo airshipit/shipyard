@@ -11,10 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
 from click.testing import CliRunner
+import yaml
 
 from shipyard_client.cli.help.commands import help
+
+def _get_actions_list():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    a_path = dir_path.split('src/bin')[0] + "src/bin/supported_actions.yaml"
+    with open(a_path, 'r') as stream:
+        try:
+            action_list = yaml.safe_load(stream)['actions']
+            if not action_list:
+                raise FileNotFoundError("Action list is empty")
+        except Exception as e:
+            print(e)
+            print("This test requires that the file at '{}' is a valid yaml "
+                    "file containing a list of action names at a key of "
+                    "'actions'".format(a_path))
+            assert False
+    return action_list
 
 
 def test_help():
@@ -27,6 +45,10 @@ def test_help():
     topic = 'actions'
     result = runner.invoke(help, [topic])
     assert 'ACTIONS' in result.output
+    actions = _get_actions_list()
+    for action in actions:
+        # Assert that actions each have headers
+        assert "\n{}\n".format(action) in result.output
 
     topic = 'configdocs'
     result = runner.invoke(help, [topic])
