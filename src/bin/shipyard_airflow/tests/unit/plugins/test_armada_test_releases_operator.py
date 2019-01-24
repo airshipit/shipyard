@@ -45,8 +45,7 @@ class TestArmadaTestReleasesOperator:
     @mock.patch.object(ArmadaBaseOperator, 'armada_client', create=True)
     @mock.patch.object(ArmadaBaseOperator, 'get_releases',
         return_value=RELEASES)
-    @mock.patch.object(ArmadaBaseOperator, 'get_tiller_info')
-    def test_do_execute(self, mock_tiller_info, mock_releases, mock_client,
+    def test_do_execute(self, mock_releases, mock_client,
                         mock_logs):
         op = ArmadaTestReleasesOperator(main_dag_name='main',
                                         shipyard_conf=CONF_FILE,
@@ -69,8 +68,7 @@ class TestArmadaTestReleasesOperator:
 
     @mock.patch('shipyard_airflow.plugins.armada_test_releases.LOG.info')
     @mock.patch.object(ArmadaBaseOperator, 'armada_client', create=True)
-    @mock.patch.object(ArmadaBaseOperator, 'get_tiller_info')
-    def test_do_execute_with_params(self, mock_tiller, mock_client, mock_logs):
+    def test_do_execute_with_params(self, mock_client, mock_logs):
         op = ArmadaTestReleasesOperator(main_dag_name='main',
                                         shipyard_conf=CONF_FILE,
                                         task_id='t1')
@@ -91,9 +89,8 @@ class TestArmadaTestReleasesOperator:
     @mock.patch.object(ArmadaBaseOperator, 'armada_client', create=True)
     @mock.patch.object(ArmadaBaseOperator, 'get_releases',
         return_value=RELEASES)
-    @mock.patch.object(ArmadaBaseOperator, 'get_tiller_info')
     @mock.patch.object(UcpBaseOperator, 'get_k8s_logs')
-    def test_do_execute_fail(self, mock_k8s_logs, mock_tiller_info,
+    def test_do_execute_fail(self, mock_k8s_logs,
                              mock_releases, mock_client):
         mock_client.get_test_release.return_value = None
 

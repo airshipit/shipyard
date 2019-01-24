@@ -38,9 +38,6 @@ class ArmadaGetStatusOperator(ArmadaBaseOperator):
 
     def do_execute(self):
 
-        # Retrieve Tiller Information
-        self.get_tiller_info(pods_ip_port={})
-
         # Retrieve read timeout
         timeout = self.dc['armada.get_status_timeout']
 

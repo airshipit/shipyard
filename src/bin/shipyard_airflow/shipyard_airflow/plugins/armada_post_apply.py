@@ -47,9 +47,6 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         self.dc = self.xcom_puller.get_deployment_configuration()
         self.target_manifest = self.dc['armada.manifest']
 
-        # Retrieve Tiller Information
-        self.get_tiller_info(pods_ip_port={})
-
         # Update query dict with information of target_manifest
         self.query['target_manifest'] = self.target_manifest
 
