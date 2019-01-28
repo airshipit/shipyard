@@ -493,7 +493,7 @@ conf:
       # NOTE: Updated from default to match Shipyard logging as much as
       #     possible without more aggressive techniques
       #
-      log_format: "%%(asctime)s %%(levelname)-8s %%(module)s(%%(lineno)d) %%(funcName)s - %%(message)s"
+      log_format: "%%(asctime)s %%(levelname)-8s %%(filename)s:%%(lineno)3d:%%(funcName)s %%(module)s %%(message)s"
       simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
       log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
       log_processor_filename_template: "{{ filename }}.log"
