@@ -20,13 +20,15 @@
     check:
       jobs:
         - openstack-tox-pep8
-        - airship-shipyard-linter
-        - airship-shipyard-image
+        - airship-shipyard-chart-build-gate
+        - airship-shipyard-whitespace-lint-gate
+        - airship-shipyard-image-gate
     gate:
       jobs:
         - openstack-tox-pep8
-        - airship-shipyard-linter
-        - airship-shipyard-image
+        - airship-shipyard-chart-build-gate
+        - airship-shipyard-whitespace-lint-gate
+        - airship-shipyard-image-gate
     post:
       jobs:
         - airship-shipyard-docker-build-post
@@ -38,7 +40,15 @@
         label: ubuntu-xenial
 
 - job:
-    name: airship-shipyard-linter
+    name: airship-shipyard-chart-build-gate
+    timeout: 900
+    run: tools/gate/playbooks/build-charts.yaml
+    nodeset: airship-shipyard-single-node
+    files:
+      - ^charts/.*$
+
+- job:
+    name: airship-shipyard-whitespace-lint-gate
     description: |
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
@@ -57,7 +67,7 @@
       - ^releasenotes/.*$
 
 - job:
-    name: airship-shipyard-image
+    name: airship-shipyard-image-gate
     description: |
       Run shipyard-image build.
     parent: airship-shipyard-image-base
