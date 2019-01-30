@@ -34,6 +34,7 @@ class LoggingMiddleware(object):
         request_logging.set_logvar('req_id', req.context.request_id)
         request_logging.set_logvar('external_ctx', req.context.external_marker)
         request_logging.set_logvar('user', req.context.user)
+        request_logging.set_logvar('user_id', req.context.user_id)
         if not req.url.endswith(HEALTH_URL):
             # Log requests other than the health check.
             LOG.info("Request %s %s", req.method, req.url)

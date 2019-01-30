@@ -85,11 +85,14 @@ class ArmadaBaseOperator(UcpBaseOperator):
         # Set up armada client
         self.armada_client = self._init_armada_client(
             self.endpoints.endpoint_by_name(service_endpoint.ARMADA),
-            self.svc_token
+            self.svc_token,
+            self.context_marker,
+            self.user
         )
 
     @staticmethod
-    def _init_armada_client(armada_svc_endpoint, svc_token):
+    def _init_armada_client(armada_svc_endpoint, svc_token,
+                            ext_marker, end_user):
 
         LOG.info("Armada endpoint is %s", armada_svc_endpoint)
 
@@ -103,7 +106,8 @@ class ArmadaBaseOperator(UcpBaseOperator):
                                           port=armada_url.port,
                                           scheme='http',
                                           token=svc_token,
-                                          marker=None)
+                                          marker=ext_marker,
+                                          end_user=end_user)
 
         # Raise Exception if we are not able to set up the session
         if a_session:

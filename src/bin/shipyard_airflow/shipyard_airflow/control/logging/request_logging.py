@@ -39,7 +39,7 @@ except ImportError:
 # logging - these fields need not be set up independently as opposed to the
 # additional_fields parameter used below, which allows for more fields beyond
 # this default set.
-BASE_ADDL_FIELDS = ['req_id', 'external_ctx', 'user']
+BASE_ADDL_FIELDS = ['req_id', 'external_ctx', 'user', 'user_id']
 LOG = logging.getLogger(__name__)
 
 

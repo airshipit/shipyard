@@ -25,10 +25,13 @@ from airflow.utils.decorators import apply_defaults
 
 try:
     from deckhand_client_factory import DeckhandClientFactory
+    from xcom_puller import XcomPuller
 except ImportError:
     from shipyard_airflow.plugins.deckhand_client_factory import (
         DeckhandClientFactory
     )
+    from shipyard_airflow.plugins.xcom_puller import XcomPuller
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
 
@@ -90,6 +93,7 @@ class DeploymentConfigurationOperator(BaseOperator):
         super(DeploymentConfigurationOperator, self).__init__(*args, **kwargs)
         self.main_dag_name = main_dag_name
         self.shipyard_conf = shipyard_conf
+        self.action_info = {}
 
     def execute(self, context):
         """Perform Deployment Configuration extraction"""
@@ -104,13 +108,12 @@ class DeploymentConfigurationOperator(BaseOperator):
         """Get the revision id from xcom"""
         if task_instance:
             LOG.debug("task_instance found, extracting design version")
+            # Get XcomPuller instance
+            self.xcom_puller = XcomPuller(self.main_dag_name, task_instance)
             # Set the revision_id to the revision on the xcom
-            action_info = task_instance.xcom_pull(
-                task_ids='action_xcom',
-                dag_id=self.main_dag_name,
-                key='action')
+            self.action_info = self.xcom_puller.get_action_info()
 
-            revision_id = action_info['committed_rev_id']
+            revision_id = self.action_info['committed_rev_id']
 
             if revision_id:
                 LOG.info("Revision is set to: %s for deployment configuration",
@@ -132,8 +135,21 @@ class DeploymentConfigurationOperator(BaseOperator):
             "schema": "shipyard/DeploymentConfiguration/v1",
             "metadata.name": "deployment-configuration"
         }
+
+        # Create additional headers dict to pass context marker
+        # and end user
+        addl_headers = None
+        if self.action_info:
+            context_marker = self.action_info['context_marker']
+            end_user = self.action_info['user']
+            addl_headers = {
+                CustomHeaders.CONTEXT_MARKER.value: context_marker,
+                CustomHeaders.END_USER.value: end_user
+            }
+
         try:
-            dhclient = DeckhandClientFactory(self.shipyard_conf).get_client()
+            dhclient = DeckhandClientFactory(
+                self.shipyard_conf).get_client(addl_headers=addl_headers)
             LOG.info("Deckhand Client acquired")
             doc = dhclient.revisions.documents(revision_id,
                                                rendered=True,

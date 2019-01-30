@@ -41,7 +41,7 @@ class LoggingConfig():
 
     _default_log_format = (
         "%(asctime)s %(levelname)-8s %(req_id)s %(external_ctx)s %(user)s "
-        "%(module)s(%(lineno)d) %(funcName)s - %(message)s")
+        "%(user_id)s %(module)s(%(lineno)d) %(funcName)s - %(message)s")
 
     def __init__(self,
                  level,

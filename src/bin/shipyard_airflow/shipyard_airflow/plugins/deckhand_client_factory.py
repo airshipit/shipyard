@@ -36,7 +36,7 @@ class DeckhandClientFactory(object):
         self.config = configparser.ConfigParser()
         self.config.read(shipyard_conf)
 
-    def get_client(self):
+    def get_client(self, addl_headers=None):
         """Retrieve a deckhand client"""
 
         """
@@ -57,7 +57,8 @@ class DeckhandClientFactory(object):
 
         # Set up keystone session
         auth = keystone_v3.Password(**keystone_auth)
-        sess = keystone_session.Session(auth=auth)
+        sess = keystone_session.Session(auth=auth,
+                                        additional_headers=addl_headers)
 
         LOG.info("Setting up Deckhand client with parameters")
         for attr in keystone_auth:

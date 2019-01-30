@@ -160,6 +160,8 @@ class UcpBaseOperator(BaseOperator):
         self.task_id = self.task_instance.task_id
         self.revision_id = self.action_info['committed_rev_id']
         self.action_params = self.action_info.get('parameters', {})
+        self.context_marker = self.action_info['context_marker']
+        self.user = self.action_info['user']
         self.design_ref = self._deckhand_design_ref()
         self._setup_target_nodes()
 

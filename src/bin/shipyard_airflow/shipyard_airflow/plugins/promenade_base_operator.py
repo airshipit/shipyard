@@ -24,6 +24,7 @@ except ImportError:
     from shipyard_airflow.plugins import service_endpoint
     from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
 
@@ -64,9 +65,17 @@ class PromenadeBaseOperator(UcpBaseOperator):
         # Logs uuid of Shipyard action
         LOG.info("Executing Shipyard Action %s", self.action_id)
 
+        # Create additional headers dict to pass context marker
+        # and end user
+        addl_headers = {
+            CustomHeaders.CONTEXT_MARKER.value: self.context_marker,
+            CustomHeaders.END_USER.value: self.user
+        }
+
         # Retrieve promenade endpoint
         self.promenade_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.PROMENADE
+            service_endpoint.PROMENADE,
+            addl_headers=addl_headers
         )
 
         LOG.info("Promenade endpoint is %s", self.promenade_svc_endpoint)

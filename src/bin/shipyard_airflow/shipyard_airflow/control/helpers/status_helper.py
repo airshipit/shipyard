@@ -130,7 +130,9 @@ class StatusHelper(object):
 
         # get Drydock client
         if not self.drydock:
-            self.drydock = sc.drydock_client()
+            self.drydock = sc.drydock_client(
+                context_marker=self.ctx.request_id,
+                end_user=self.ctx.user)
 
         statuses = {}
         # iterate through filters to invoke required fun

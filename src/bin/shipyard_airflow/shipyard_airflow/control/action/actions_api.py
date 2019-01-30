@@ -145,6 +145,8 @@ class ActionsResource(BaseResource):
         action['user'] = context.user
         # add current timestamp (UTC) to the action.
         action['timestamp'] = str(datetime.utcnow())
+        # add external marker that is the passed with request context
+        action['context_marker'] = context.request_id
         # validate that action is supported.
         LOG.info("Attempting action: %s", action['name'])
         action_mappings = _action_mappings()
@@ -187,10 +189,11 @@ class ActionsResource(BaseResource):
         action['dag_execution_date'] = dag_execution_date
         action['dag_status'] = 'SCHEDULED'
 
-        # context_marker is the uuid from the request context
-        action['context_marker'] = context.request_id
-
         # insert the action into the shipyard db
+        # TODO(b-str): When invoke_airflow_dag triggers a DAG but fails to
+        #    respond properly, no record is inserted, so there is a running
+        #    process with no tracking in the Shipyard database. This is not
+        #    ideal.
         self.insert_action(action=action)
         notes_helper.make_action_note(
             action_id=action['id'],

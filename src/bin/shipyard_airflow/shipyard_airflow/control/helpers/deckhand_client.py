@@ -24,6 +24,7 @@ import yaml
 from shipyard_airflow.control.service_endpoints import (Endpoints,
                                                         get_endpoint,
                                                         get_token)
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -49,11 +50,12 @@ class DeckhandClient(object):
     """
     A rudimentary client for deckhand in lieu of a provided client
     """
-    def __init__(self, context_marker):
+    def __init__(self, context_marker, end_user=None):
         """
         Sets up this Deckhand client with the supplied context marker
         """
         self.context_marker = context_marker
+        self.end_user = end_user
 
     _deckhand_svc_url = None
 
@@ -294,6 +296,17 @@ class DeckhandClient(object):
     # content-type: application/x-yaml
     # X-Context-Marker: {the context marker}
     # X-Auth-Token: {a current auth token}
+    # X-End-User: {current Shipyard user}
+
+    def _get_headers(self):
+        # Populate HTTP headers
+        headers = {
+            CustomHeaders.CONTEXT_MARKER.value: self.context_marker,
+            CustomHeaders.END_USER.value: self.end_user,
+            'X-Auth-Token': get_token()
+        }
+
+        return headers
 
     @staticmethod
     def _log_request(method, url, params=None):
@@ -310,10 +323,8 @@ class DeckhandClient(object):
         # invokes a PUT against the specified URL with the
         # supplied document_data body
         try:
-            headers = {
-                'X-Context-Marker': self.context_marker,
-                'X-Auth-Token': get_token()
-            }
+            headers = self._get_headers()
+
             if document_data is not None:
                 headers['content-type'] = 'application/x-yaml'
 
@@ -338,11 +349,8 @@ class DeckhandClient(object):
     def _get_request(self, url, params=None):
         # invokes a GET against the specified URL
         try:
-            headers = {
-                'content-type': 'application/x-yaml',
-                'X-Context-Marker': self.context_marker,
-                'X-Auth-Token': get_token()
-            }
+            headers = self._get_headers()
+            headers['content-type'] = 'application/x-yaml'
 
             if not params:
                 params = None
@@ -368,10 +376,8 @@ class DeckhandClient(object):
         # invokes a POST against the specified URL with the
         # supplied document_data body
         try:
-            headers = {
-                'X-Context-Marker': self.context_marker,
-                'X-Auth-Token': get_token()
-            }
+            headers = self._get_headers()
+
             if document_data is not None:
                 headers['content-type'] = 'application/x-yaml'
 
@@ -396,10 +402,7 @@ class DeckhandClient(object):
     def _delete_request(self, url, params=None):
         # invokes a DELETE against the specified URL
         try:
-            headers = {
-                'X-Context-Marker': self.context_marker,
-                'X-Auth-Token': get_token()
-            }
+            headers = self._get_headers()
 
             DeckhandClient._log_request('DELETE', url, params)
             response = requests.delete(

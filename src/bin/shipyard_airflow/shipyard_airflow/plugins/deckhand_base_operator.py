@@ -28,6 +28,7 @@ except ImportError:
     from shipyard_airflow.plugins import service_endpoint
     from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
 
@@ -95,10 +96,21 @@ class DeckhandBaseOperator(UcpBaseOperator):
         LOG.info("Executing Shipyard Action %s",
                  self.action_id)
 
+        # Create additional headers dict to pass context marker
+        # and end user
+        addl_headers = {
+            CustomHeaders.CONTEXT_MARKER.value: self.context_marker,
+            CustomHeaders.END_USER.value: self.user
+        }
+
         # Retrieve Endpoint Information
         self.deckhand_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.DECKHAND
+            service_endpoint.DECKHAND,
+            addl_headers=addl_headers
         )
+
+        # update additional headers
+        self.svc_session.additional_headers.update(addl_headers)
 
         LOG.info("Deckhand endpoint is %s",
                  self.deckhand_svc_endpoint)

@@ -22,7 +22,7 @@ from keystoneauth1.identity import v3 as keystone_v3
 from keystoneauth1 import session as keystone_session
 
 
-def ucp_keystone_session(shipyard_conf):
+def ucp_keystone_session(shipyard_conf, additional_headers=None):
 
     # Read and parse shiyard.conf
     config = configparser.ConfigParser()
@@ -46,7 +46,8 @@ def ucp_keystone_session(shipyard_conf):
         # Set up keystone session
         logging.info("Get Keystone Session")
         auth = keystone_v3.Password(**keystone_auth)
-        sess = keystone_session.Session(auth=auth)
+        sess = keystone_session.Session(auth=auth,
+                                        additional_headers=additional_headers)
 
         # Retry if we fail to get keystone session
         if sess:

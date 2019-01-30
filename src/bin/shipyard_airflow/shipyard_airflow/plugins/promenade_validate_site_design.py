@@ -24,6 +24,7 @@ try:
 except ImportError:
     from shipyard_airflow.plugins.promenade_base_operator import \
         PromenadeBaseOperator
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
 
@@ -48,7 +49,9 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
         # Define Headers and Payload
         headers = {
             'Content-Type': 'application/json',
-            'X-Auth-Token': self.svc_token
+            'X-Auth-Token': self.svc_token,
+            CustomHeaders.CONTEXT_MARKER.value: self.context_marker,
+            CustomHeaders.END_USER.value: self.user
         }
 
         payload = {

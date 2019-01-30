@@ -78,7 +78,8 @@ class ConfigdocsHelper(object):
         Sets up this Configdocs helper with the supplied
         request context
         """
-        self.deckhand = DeckhandClient(context.external_marker)
+        self.deckhand = DeckhandClient(context.request_id,
+                                       end_user=context.user)
         self.ctx = context
         # The revision_dict indicates the revisions that are
         # associated with the buffered and committed doc sets. There

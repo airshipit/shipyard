@@ -28,9 +28,13 @@ CONF = cfg.CONF
 #
 # Deckhand Client
 #
-def deckhand_client():
+def deckhand_client(addl_headers=None):
     """Retrieve a Deckhand client"""
-    return dh_client.Client(session=svc_endpoints.get_session(),
+    session = svc_endpoints.get_session()
+    if addl_headers:
+        session.additional_headers.update(addl_headers)
+
+    return dh_client.Client(session=session,
                             endpoint_type='internal')
 
 
@@ -41,7 +45,7 @@ def _auth_gen():
     return [('X-Auth-Token', svc_endpoints.get_token())]
 
 
-def drydock_client():
+def drydock_client(context_marker=None, end_user=None):
     """Retreive a Drydock client"""
     # Setup the drydock session
     endpoint = svc_endpoints.get_endpoint(Endpoints.DRYDOCK)
@@ -50,6 +54,8 @@ def drydock_client():
         dd_url.hostname,
         port=dd_url.port,
         auth_gen=_auth_gen,
+        marker=context_marker,
+        end_user=end_user,
         timeout=(CONF.requests_config.drydock_client_connect_timeout,
                  CONF.requests_config.drydock_client_read_timeout))
     return dd_client.DrydockClient(session)

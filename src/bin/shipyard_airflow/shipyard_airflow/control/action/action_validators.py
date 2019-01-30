@@ -29,8 +29,32 @@ from shipyard_airflow.control.validators.validate_target_nodes import \
     ValidateTargetNodes
 from shipyard_airflow.control.validators.validate_test_cleanup import \
     ValidateTestCleanup
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
+
+
+addl_headers_map = {
+    'context_marker': CustomHeaders.CONTEXT_MARKER.value,
+    'user': CustomHeaders.END_USER.value
+}
+
+
+def _get_additional_headers(action):
+    """
+    Populates additional headers from action dict. The headers sets
+    context_marker and end_user for audit trace logging
+    :param dict action: action info available
+    :returns: dict additional_headers
+    """
+    addl_headers = {}
+
+    for key, header in addl_headers_map.items():
+        header_value = action.get(key)
+        if header_value:
+            addl_headers.update({header: header_value})
+
+    return addl_headers
 
 
 def validate_committed_revision(action, **kwargs):
@@ -50,8 +74,9 @@ def validate_deployment_action_full(action, **kwargs):
           - If the deployment strategy is specified, but is missing, error.
           - Check that there are no cycles in the groups
     """
+    addl_headers = _get_additional_headers(action)
     validator = ValidateDeploymentAction(
-        dh_client=service_clients.deckhand_client(),
+        dh_client=service_clients.deckhand_client(addl_headers=addl_headers),
         action=action,
         full_validation=True
     )
@@ -65,8 +90,9 @@ def validate_deployment_action_basic(action, **kwargs):
       - The deployment configuration from Deckhand using the design version
           - If the deployment configuration is missing, error
     """
+    addl_headers = _get_additional_headers(action)
     validator = ValidateDeploymentAction(
-        dh_client=service_clients.deckhand_client(),
+        dh_client=service_clients.deckhand_client(addl_headers=addl_headers),
         action=action,
         full_validation=False
     )

@@ -32,14 +32,15 @@ PROMENADE = 'promenade'
 LOG = logging.getLogger(__name__)
 
 
-def _ucp_service_endpoint(shipyard_conf, svc_type):
+def _ucp_service_endpoint(shipyard_conf, svc_type, addl_headers=None):
 
     # Initialize variables
     retry = 0
     int_endpoint = None
 
     # Retrieve Keystone Session
-    sess = ucp_keystone_session(shipyard_conf)
+    sess = ucp_keystone_session(shipyard_conf,
+                                additional_headers=addl_headers)
 
     # We will allow 1 retry in getting the Keystone Endpoint with a
     # backoff interval of 10 seconds in case there is a temporary
@@ -78,7 +79,7 @@ class ServiceEndpoints():
         self.config = configparser.ConfigParser()
         self.config.read(self.shipyard_conf)
 
-    def endpoint_by_name(self, svc_name):
+    def endpoint_by_name(self, svc_name, addl_headers=None):
         """Return the service endpoint for the named service.
 
         :param svc_name: name of the service from which the service type will
@@ -86,7 +87,12 @@ class ServiceEndpoints():
             module provide names that can be used with an expectation that they
             work with a standard/complete configuration file.
             E.g.: service_endpoint.DRYDOCK
+        :param dict addl_headers: Additional headers that should be attached
+            to every request passing through the session.
+            Headers of the same name specified per request will take priority.
         """
         LOG.info("Looking up service endpoint for: %s", svc_name)
         svc_type = self.config.get(svc_name, 'service_type')
-        return _ucp_service_endpoint(self.shipyard_conf, svc_type)
+        return _ucp_service_endpoint(self.shipyard_conf,
+                                     svc_type,
+                                     addl_headers=addl_headers)

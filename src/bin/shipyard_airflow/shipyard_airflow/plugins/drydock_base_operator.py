@@ -153,6 +153,8 @@ class DrydockBaseOperator(UcpBaseOperator):
             drydock_url.hostname,
             port=drydock_url.port,
             auth_gen=self._auth_gen,
+            marker=self.context_marker,
+            end_user=self.user,
             timeout=(self.drydock_client_connect_timeout,
                      self.drydock_client_read_timeout))
 
