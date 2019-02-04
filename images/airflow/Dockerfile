@@ -51,7 +51,6 @@ RUN set -ex && \
     apt-get -y install \
     ca-certificates \
     curl \
-    gcc \
     git \
     g++ \
     libffi-dev \
@@ -87,7 +86,7 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Note - removing snakebite (python 2 vs. 3). See:
 #    https://github.com/puckel/docker-airflow/issues/77
 COPY images/airflow/requirements.txt /tmp/
-RUN pip3 install -r /tmp/requirements.txt \
+RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
     && pip3 uninstall -y snakebite || true
 
 # Copy scripts used in the container:
@@ -109,7 +108,7 @@ ENV PBR_VERSION 0.1a1
 # stale or out-of-date code between these parts.
 # Shipyard requirements, source and installation
 COPY ${ctx_base}/shipyard_airflow/requirements.txt /tmp/api_requirements.txt
-RUN pip3 install -r /tmp/api_requirements.txt
+RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir
 
 COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
 RUN cd /tmp/shipyard \

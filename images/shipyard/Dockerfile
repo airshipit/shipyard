@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG FROM=python:3.6
+ARG FROM=ubuntu:16.04
 FROM ${FROM}
 
 LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode'
@@ -26,6 +26,8 @@ ENV container docker
 ENV PORT 9000
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
+# Setting the version explicitly for PBR
+ENV PBR_VERSION 0.1a1
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
@@ -33,9 +35,24 @@ ARG ctx_base=src/bin
 # Expose port 9000 for application
 EXPOSE $PORT
 
-# Execute entrypoint
-ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
-CMD ["server"]
+RUN set -ex && \
+    apt-get -qq update && \
+    apt-get -y install \
+    ca-certificates \
+    curl \
+    netbase \
+    python3-dev \
+    python3-setuptools \
+    --no-install-recommends \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/man \
+        /usr/share/doc \
+        /usr/share/doc-base
 
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard \
@@ -48,24 +65,43 @@ COPY ${ctx_base}/shipyard_airflow/entrypoint.sh /home/shipyard/entrypoint.sh
 RUN chown -R shipyard: /home/shipyard \
     && chmod +x /home/shipyard/entrypoint.sh
 
-# Requirements
+# Requirements and Shipyard source
 COPY ${ctx_base}/shipyard_airflow/requirements.txt /home/shipyard/api_requirements.txt
-RUN pip3 install -r /home/shipyard/api_requirements.txt
-
 COPY ${ctx_base}/shipyard_client/requirements.txt /home/shipyard/client_requirements.txt
-RUN pip3 install -r /home/shipyard/client_requirements.txt
-
-# Setting the version explicitly for PBR
-ENV PBR_VERSION 0.1a1
-
-# Shipyard source and installation
 COPY ${ctx_base}/shipyard_client /home/shipyard/shipyard_client/
-RUN cd /home/shipyard/shipyard_client \
-    && python3 setup.py install
-
 COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
-RUN cd /home/shipyard/shipyard \
-    && python3 setup.py install
 
+# Build
+ RUN set -ex \
+    && buildDeps=' \
+      gcc \
+      git \
+      libssl-dev \
+      make \
+      python3-pip \
+    ' \
+    && apt-get -qq update \
+    && apt-get -y install -y $buildDeps --no-install-recommends \
+    && python3 -m pip install -U pip \
+    && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
+    && cd /home/shipyard/shipyard_client \
+    && python3 setup.py install \
+    && pip3 install -r /home/shipyard/api_requirements.txt --no-cache-dir \
+    && cd /home/shipyard/shipyard \
+    && python3 setup.py install \
+    && apt-get purge -y --auto-remove $buildDeps \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/man \
+        /usr/share/doc \
+        /usr/share/doc-base
+
+# Entrypoint
+ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
+CMD ["server"]
 # Set user to shipyard
 USER shipyard
