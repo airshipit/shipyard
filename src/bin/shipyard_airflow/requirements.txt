@@ -39,6 +39,6 @@ uwsgi==2.0.17
 Werkzeug==0.14.1
 
 # Dependencies for other UCP components
-git+https://git.openstack.org/openstack/airship-deckhand@0b5aa2e98a1ab5ab8a58c9dec3c1f88ef00d17a9#egg=deckhand
-git+https://git.openstack.org/openstack/airship-drydock.git@b1d24ad254c04cdbb4dc4e06f2bfe92c266aad70#egg=drydock_provisioner&subdirectory=python
-git+https://git.openstack.org/openstack/airship-armada.git@90618f549c1f6d7741b11dc5c4898f3c6d536895#egg=armada
+git+https://git.openstack.org/openstack/airship-deckhand@0aae9dc1776bd97ab8f4152a51baedb24eb61396#egg=deckhand
+git+https://git.openstack.org/openstack/airship-drydock.git@d93d6d5a0a370ced536180612d1ade708e29cd47#egg=drydock_provisioner&subdirectory=python
+git+https://git.openstack.org/openstack/airship-armada.git@269083c0c063efa50bd5e88374dbd89abb3921c3#egg=armada
