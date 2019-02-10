@@ -32,6 +32,7 @@ images:
     shipyard: quay.io/airshipit/shipyard:latest
     dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
     shipyard_db_init: docker.io/postgres:9.5
+    shipyard_db_auxiliary: docker.io/postgres:9.5
     shipyard_db_sync: quay.io/airshipit/shipyard:latest
     airflow_db_init: docker.io/postgres:9.5
     rabbit_init: docker.io/rabbitmq:3.7-management
@@ -75,6 +76,7 @@ dependencies:
     shipyard_db_init:
       jobs:
         - airflow-db-init
+        - shipyard-db-auxiliary
         - airflow-db-sync
       services:
         - service: postgresql_shipyard_db
@@ -116,6 +118,7 @@ dependencies:
     shipyard:
       jobs:
         - shipyard-db-init
+        - shipyard-db-auxiliary
         - shipyard-db-sync
         - shipyard-ks-endpoints
         - shipyard-ks-user
@@ -691,6 +694,9 @@ pod:
     shipyard_db_init:
       init_container: null
       shipyard_db_init:
+    shipyard_db_auxiliary:
+      init_container: null
+      shipyard_db_auxiliary:
     shipyard_db_sync:
       init_container: null
       shipyard_db_sync:
@@ -801,6 +807,13 @@ pod:
         requests:
           memory: "128Mi"
           cpu: "500m"
+      shipyard_db_auxiliary:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+        requests:
+          memory: "128Mi"
+          cpu: "500m"
       shipyard_db_sync:
         limits:
           memory: "128Mi"
@@ -829,6 +842,7 @@ manifests:
   statefulset_airflow_worker: true
   ingress_shipyard_api: true
   job_shipyard_db_init: true
+  job_shipyard_db_auxiliary: true
   job_shipyard_db_sync: true
   job_rabbit_init: true
   job_airflow_db_init: true

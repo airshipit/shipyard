@@ -15,42 +15,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if .Values.manifests.job_shipyard_db_init }}
+{{- if .Values.manifests.job_shipyard_db_auxiliary }}
 {{- $envAll := . }}
-{{- $mounts_shipyard_db_init := .Values.pod.mounts.shipyard_db_init.shipyard_db_init }}
-{{- $mounts_shipyard_db_init_init := .Values.pod.mounts.shipyard_db_init.init_container }}
-{{- $serviceAccountName := "shipyard-db-init" }}
-{{ tuple $envAll "shipyard_db_init" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{- $mounts_shipyard_db_auxiliary := .Values.pod.mounts.shipyard_db_auxiliary.shipyard_db_auxiliary }}
+{{- $mounts_shipyard_db_auxiliary_init := .Values.pod.mounts.shipyard_db_auxiliary.init_container }}
+{{- $serviceAccountName := "shipyard-db-auxiliary" }}
+{{ tuple $envAll "shipyard_db_auxiliary" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: shipyard-db-init
+  name: shipyard-db-auxiliary
   annotations:
     {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   template:
     metadata:
       labels:
-{{ tuple $envAll "shipyard" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ tuple $envAll "shipyard" "db-auxiliary" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
         {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
       initContainers:
-{{ tuple $envAll "shipyard_db_init" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll "shipyard_db_auxiliary" list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       containers:
-        - name: shipyard-db-init
-          image: {{ .Values.images.tags.shipyard_db_init | quote }}
+        - name: shipyard-db-auxiliary
+          image: {{ .Values.images.tags.shipyard_db_auxiliary | quote }}
           imagePullPolicy: {{ .Values.images.pull_policy | quote }}
-{{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_init | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_auxiliary | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_HOST
+                  key: SHIPYARD_DATABASE_URI
             - name: USER_DB_NAME
               valueFrom:
                 secretKeyRef:
@@ -61,11 +61,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secrets.postgresql_shipyard_db.user }}
                   key: SHIPYARD_DATABASE_USERNAME
-            - name: USER_DB_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_PASSWORD
             - name: DB_ADMIN_USER
               valueFrom:
                 secretKeyRef:
@@ -89,29 +84,17 @@ spec:
             - name: SHIPYARD_AUXILIARY_CONFIG
               value: "True"
           command:
-            - /tmp/shipyard-db-init.sh
+            - /tmp/shipyard-db-auxiliary.sh
           volumeMounts:
             - name: shipyard-bin
-              mountPath: /tmp/shipyard-db-init.sh
-              subPath: shipyard-db-init.sh
+              mountPath: /tmp/shipyard-db-auxiliary.sh
+              subPath: shipyard-db-auxiliary.sh
               readOnly: true
-            - name: etc-shipyard
-              mountPath: /etc/shipyard
-            - name: shipyard-etc
-              mountPath: /etc/shipyard/shipyard.conf
-              subPath: shipyard.conf
-              readOnly: true
-{{ if $mounts_shipyard_db_init.volumeMounts }}{{ toYaml $mounts_shipyard_db_init.volumeMounts | indent 10 }}{{ end }}
+{{ if $mounts_shipyard_db_auxiliary.volumeMounts }}{{ toYaml $mounts_shipyard_db_auxiliary.volumeMounts | indent 10 }}{{ end }}
       volumes:
-        - name: etc-shipyard
-          emptyDir: {}
-        - name: shipyard-etc
-          configMap:
-            name: shipyard-etc
-            defaultMode: 0444
         - name: shipyard-bin
           configMap:
             name: shipyard-bin
             defaultMode: 0555
-{{ if $mounts_shipyard_db_init.volumes }}{{ toYaml $mounts_shipyard_db_init.volumes | indent 6 }}{{ end }}
+{{ if $mounts_shipyard_db_auxiliary.volumes }}{{ toYaml $mounts_shipyard_db_auxiliary.volumes | indent 6 }}{{ end }}
 {{- end }}
