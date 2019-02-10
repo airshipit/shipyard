@@ -28,7 +28,9 @@ data:
   ks-domain-user.sh: |
 {{- include "helm-toolkit.scripts.keystone_domain_user" . | indent 4 }}
   shipyard-db-init.sh: |+
-{{ tuple "bin/_shipyard-db-init.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{-  include "helm-toolkit.scripts.pg_db_init" . | indent 4 }}
   shipyard-db-sync.sh: |+
 {{ tuple "bin/_shipyard-db-sync.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  shipyard-db-auxiliary.sh: |+
+{{ tuple "bin/_shipyard-db-auxiliary.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
 {{- end }}
