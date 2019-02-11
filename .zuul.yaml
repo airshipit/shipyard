@@ -23,17 +23,20 @@
         - airship-shipyard-chart-build-gate
         - airship-shipyard-chart-build-latest-htk
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate
         - airship-shipyard-airskiff-deployment
+        - airship-shipyard-image-gate-ubuntu
+        - airship-shipyard-image-gate-opensuse
     gate:
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate
+        - airship-shipyard-image-gate-ubuntu
+        - airship-shipyard-image-gate-opensuse
     post:
       jobs:
-        - airship-shipyard-docker-build-post
+        - airship-shipyard-docker-build-post-ubuntu
+        - airship-shipyard-docker-build-post-opensuse
 
 - nodeset:
     name: airship-shipyard-single-node
@@ -78,12 +81,13 @@
       - ^releasenotes/.*$
 
 - job:
-    name: airship-shipyard-image-gate
+    name: airship-shipyard-image-gate-ubuntu
     description: |
-      Run shipyard-image build.
+      Run shipyard-image build for ubuntu.
     parent: airship-shipyard-image-base
     vars:
       publish: false
+      distro: ubuntu_xenial
       tags:
         dynamic:
           patch_set: true
@@ -114,7 +118,19 @@
       - ^releasenotes/.*$
 
 - job:
-    name: airship-shipyard-docker-build-post
+    name: airship-shipyard-image-gate-opensuse
+    description: |
+      Run shipyard-image build for opensuse.
+    parent: airship-shipyard-image-base
+    vars:
+      publish: false
+      distro: opensuse_15
+      tags:
+        dynamic:
+          patch_set: true
+
+- job:
+    name: airship-shipyard-docker-build-post-ubuntu
     timeout: 1800
     run: tools/gate/playbooks/run-image.yaml
     nodeset: airship-shipyard-single-node
@@ -126,6 +142,28 @@
       - airship_shipyard_quay_creds
     vars:
       publish: true
+      distro: ubuntu_xenial
+      tags:
+        dynamic:
+          branch: true
+          commit: true
+        static:
+          - latest
+
+- job:
+    name: airship-shipyard-docker-build-post-opensuse
+    timeout: 1800
+    run: tools/gate/playbooks/run-image.yaml
+    nodeset: airship-shipyard-single-node
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+    secrets:
+      - airship_shipyard_quay_creds
+    vars:
+      publish: true
+      distro: opensuse_15
       tags:
         dynamic:
           branch: true

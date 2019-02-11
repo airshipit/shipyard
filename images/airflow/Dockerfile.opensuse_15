@@ -13,13 +13,13 @@
 # limitations under the License.
 
 # Docker image to run Airflow on Kubernetes
-ARG FROM=ubuntu:16.04
+ARG FROM=opensuse/leap:15.0
 FROM ${FROM}
 
 LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode'
 LABEL org.opencontainers.image.url='https://airshipit.org'
 LABEL org.opencontainers.image.documentation='https://airship-shipyard.readthedocs.org'
-LABEL org.opencontainers.image.source='https://git.openstack.org/openstack/airship-shipyard'
+LABEL org.opencontainers.image.source='https://opendev.org/airship/shipyard'
 LABEL org.opencontainers.image.vendor='The Airship Authors'
 LABEL org.opencontainers.image.licenses='Apache-2.0'
 
@@ -40,45 +40,46 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
-ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
 # Kubectl version
 ARG KUBECTL_VERSION=1.10.2
 
 RUN set -ex && \
-    apt-get -qq update && \
-    apt-get -y install \
-    ca-certificates \
-    curl \
-    git \
-    g++ \
-    libffi-dev \
-    libssl-dev \
-    libpq-dev \
-    locales \
-    netcat \
-    netbase \
-    python3 \
-    python3-setuptools \
-    python3-pip \
-    python3-dev \
-    python3-dateutil \
-    make \
-    --no-install-recommends \
+    zypper -q update -y ;\
+    zypper --non-interactive install --no-recommends \
+        ca-certificates \
+        curl \
+        git-core \
+        gcc-c++ \
+        libffi-devel \
+        libopenssl-devel \
+        libpqxx-devel \
+        gcc-locale \
+        netcat-openbsd \
+        netcfg \
+        which \
+        python3 \
+        python3-setuptools \
+        python3-pip \
+        python3-devel \
+        python3-python-dateutil \
+        make \
     && python3 -m pip install -U pip \
-    && apt-get clean \
+    && zypper clean -a \
     && rm -rf \
-        /var/lib/apt/lists/* \
         /tmp/* \
         /var/tmp/* \
+        /var/log/* \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
 
+# Explicitly need to create usergroup with same name in suse
+RUN useradd -U -ms /bin/bash -d ${AIRFLOW_HOME} airflow
+
 # Things that change mostly infrequently
-RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
-    && curl -L -o /usr/local/bin/kubectl \
+RUN curl -L -o /usr/local/bin/kubectl \
        https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
 
@@ -96,7 +97,7 @@ COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
 COPY images/airflow/config/*.py ${AIRFLOW_HOME}/config/
 
 # Change permissions
-RUN chown -R airflow: ${AIRFLOW_HOME}
+RUN chown -R airflow:airflow ${AIRFLOW_HOME}
 
 # Setting the version explicitly for PBR
 ENV PBR_VERSION 0.1a1

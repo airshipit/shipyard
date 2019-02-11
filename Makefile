@@ -31,9 +31,10 @@ PROXY                      ?= http://proxy.foo.com:8000
 NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
 USE_PROXY                  ?= false
 
-UBUNTU_BASE_IMAGE          ?=
+DISTRO_BASE_IMAGE          ?=
+DISTRO                     ?= ubuntu_xenial
 
-IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}
+IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
 IMAGE_DIR:=images/$(IMAGE_NAME)
 
 .PHONY: images
@@ -45,8 +46,8 @@ images: $(IMAGE_NAME)
 $(IMAGE_NAME):
 	@echo
 	@echo "===== Processing [$@] image ====="
-	@make build IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} IMAGE_DIR=images/$@ IMAGE_NAME=$@
-	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG} SCRIPT=./tools/$@_image_run.sh
+	@make build IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG}-${DISTRO} IMAGE_DIR=images/$@ IMAGE_NAME=$@
+	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG}-${DISTRO} SCRIPT=./tools/$@_image_run.sh
 
 # Build all docker images for this project
 
@@ -81,7 +82,7 @@ tests:
 run:
 	USE_PROXY=$(USE_PROXY) PROXY=$(PROXY) $(SCRIPT) $(IMAGE)
 
-_BASE_IMAGE_ARG := $(if $(UBUNTU_BASE_IMAGE),--build-arg FROM="${UBUNTU_BASE_IMAGE}" ,)
+_BASE_IMAGE_ARG := $(if $(DISTRO_BASE_IMAGE),--build-arg FROM="${DISTRO_BASE_IMAGE}" ,)
 
 .PHONY: build
 build:
@@ -90,7 +91,7 @@ ifeq ($(USE_PROXY), true)
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
-		-f $(IMAGE_DIR)/Dockerfile \
+		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
@@ -104,7 +105,7 @@ else
 		--label "org.opencontainers.image.revision=$(COMMIT)" \
 		--label "org.opencontainers.image.created=$(shell date --rfc-3339=seconds --utc)" \
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
-		-f $(IMAGE_DIR)/Dockerfile \
+		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 endif

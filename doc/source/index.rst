@@ -32,6 +32,7 @@ control plane life-cycle management, and is part of the `Airship`_ platform.
    client-user-guide
    deployment-guide
    policy-enforcement
+   multi-distro-support
 
 Building this Documentation
 ---------------------------
