@@ -50,7 +50,7 @@ run_action () {
     # Note that deploy and update site do not require additional parameter
     # to be passed in while redeploy_server requires user to indicate which
     # servers to redeploy
-    if ! [[ ${server} ]] && [[ ${action} ]]; then
+    if ! [[ ${servers} ]] && [[ ${action} ]]; then
         ${base_docker_command} ${SHIPYARD_IMAGE} create action ${action}
     elif [[ ${action} == 'redeploy_server' && ${servers} ]]; then
         ${base_docker_command} ${SHIPYARD_IMAGE} create action redeploy_server --param="target_nodes=${servers}"
