@@ -18,7 +18,7 @@ set -ex
 # We will need to pass the name of the site/collection as well as the
 # path of the directory where the YAMLs are stored when we execute the
 # script. It is mandatory to do so and the script will exit with exception
-# if these parameters are missing. For instance, we can excute the script
+# if these parameters are missing. For instance, we can execute the script
 # in the following manner:
 #
 # $ ./deckhand_load_yaml.sh site1 '/home/ubuntu/site1'

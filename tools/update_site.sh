@@ -15,7 +15,7 @@
 
 set -ex
 
-# We can excute the script in the following manner:
+# We can execute the script in the following manner:
 #
 # $ ./update_site.sh
 #
