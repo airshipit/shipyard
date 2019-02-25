@@ -40,6 +40,7 @@ spec:
         airflow-configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         airflow-configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+{{ dict "envAll" $envAll "application" "shipyard" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       nodeSelector:
         {{ .Values.labels.shipyard.node_selector_key }}: {{ .Values.labels.shipyard.node_selector_value }}
@@ -57,6 +58,7 @@ spec:
           image: {{ .Values.images.tags.shipyard }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "shipyard" "container" "shipyard_api" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           ports:
             - containerPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           livenessProbe:
@@ -95,6 +97,7 @@ spec:
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.web | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "shipyard" "container" "airflow_web" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
