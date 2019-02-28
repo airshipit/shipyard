@@ -32,7 +32,7 @@ run_action () {
 
     # Define Variables
     action=$1
-    servers=$2
+    action_args="${@:2}"
 
     # Define Color
     NC='\033[0m'
@@ -47,17 +47,7 @@ run_action () {
     # Execute action
     echo -e "Execute ${action} Dag...\n"
 
-    # Note that deploy and update site do not require additional parameter
-    # to be passed in while redeploy_server requires user to indicate which
-    # servers to redeploy
-    if ! [[ ${servers} ]] && [[ ${action} ]]; then
-        ${base_docker_command} ${SHIPYARD_IMAGE} create action ${action}
-    elif [[ ${action} == 'redeploy_server' && ${servers} ]]; then
-        ${base_docker_command} ${SHIPYARD_IMAGE} create action redeploy_server --param="target_nodes=${servers}"
-    else
-        echo "Invalid Input!"
-        exit 1
-    fi
+    ${base_docker_command} ${SHIPYARD_IMAGE} create action ${action} ${action_args}
 
     # The status or lifecycle phase of an action can be
     #

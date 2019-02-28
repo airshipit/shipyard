@@ -34,4 +34,4 @@ servers=$1
 source set_env
 
 # Execute shipyard action for redeploy_server
-bash execute_shipyard_action.sh 'redeploy_server' ${servers}
+bash execute_shipyard_action.sh 'redeploy_server' --param="target_nodes=${servers}"
