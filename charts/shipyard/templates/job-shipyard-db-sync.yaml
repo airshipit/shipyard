@@ -46,28 +46,8 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.shipyard_db_sync | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
-            - name: SHIPYARD_DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_URI
             - name: SHIPYARD_CONFIG_FILE
               value: /etc/shipyard/shipyard.conf
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_NAME
-            - name: DB_SERVICE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_USERNAME
-            - name: DB_SERVICE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.postgresql_shipyard_db.user }}
-                  key: SHIPYARD_DATABASE_PASSWORD
           command:
             - /tmp/shipyard-db-sync.sh
           volumeMounts:
