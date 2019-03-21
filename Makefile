@@ -16,7 +16,7 @@ BUILD_DIR                  := $(shell mktemp -d)
 BUILD_CTX                  ?= src/bin
 
 IMAGE_PREFIX               ?= airshipit
-IMAGE_TAG                  ?= untagged
+IMAGE_TAG                  ?= latest
 IMAGE_NAME                 := airflow shipyard
 # use this variable for image labels added in internal build process
 LABEL                      ?= org.airshipit.build=community
