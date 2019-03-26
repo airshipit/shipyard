@@ -17,6 +17,8 @@
 #
 HELM=$1
 
+HTK_STABLE_COMMIT=${HTK_COMMIT:-"200b5e902b3a176fbfbe669b6a10a254c9b50f5d"}
+
 set -x
 
 function helm_serve {
@@ -46,7 +48,8 @@ mkdir -p build
 cd build
 git clone --depth 1 https://git.openstack.org/openstack/openstack-helm-infra.git || true
 cd openstack-helm-infra
-git pull
+git reset --hard "${HTK_STABLE_COMMIT}"
+
 helm_serve
 
 if [[ ${HELM} != "helm" ]]
