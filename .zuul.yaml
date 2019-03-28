@@ -21,6 +21,7 @@
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-chart-build-gate
+        - airship-shipyard-chart-build-latest-htk
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-image-gate
     gate:
@@ -41,11 +42,20 @@
 
 - job:
     name: airship-shipyard-chart-build-gate
+    description: Build charts using pinned Helm toolkit.
     timeout: 900
     run: tools/gate/playbooks/build-charts.yaml
     nodeset: airship-shipyard-single-node
-    files:
-      - ^charts/.*$
+
+- job:
+    name: airship-shipyard-chart-build-latest-htk
+    description: Build charts using latest Helm toolkit.
+    timeout: 900
+    voting: false
+    run: tools/gate/playbooks/build-charts.yaml
+    nodeset: airship-shipyard-single-node
+    vars:
+      HTK_COMMIT: master
 
 - job:
     name: airship-shipyard-whitespace-lint-gate
