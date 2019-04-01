@@ -23,13 +23,11 @@ import armada.common.session as session
 from armada.exceptions import api_exceptions as errors
 
 try:
-    from get_k8s_pod_port_ip import get_pod_port_ip
     import service_endpoint
     from service_token import shipyard_service_token
     from ucp_base_operator import UcpBaseOperator
     from xcom_pusher import XcomPusher
 except ImportError:
-    from shipyard_airflow.plugins.get_k8s_pod_port_ip import get_pod_port_ip
     from shipyard_airflow.plugins import service_endpoint
     from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
@@ -90,11 +88,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
             self.svc_token
         )
 
-        # Retrieve Tiller Information
-        # TODO(@drewwalters96): This should be explicit. Refactor in
-        # conjunction with `get_pod_port_ip` decorator.
-        self.get_tiller_info(pods_ip_port={})
-
     @staticmethod
     def _init_armada_client(armada_svc_endpoint, svc_token):
 
@@ -143,14 +136,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
             # Dump logs from Armada pods
             self.get_k8s_logs()
             raise AirflowException(client_error)
-
-    @get_pod_port_ip('tiller', namespace='kube-system')
-    def get_tiller_info(self, pods_ip_port={}):
-
-        # Assign value to the 'query' dictionary so that we can pass
-        # it via the Armada Client
-        self.query['tiller_host'] = pods_ip_port['tiller']['ip']
-        self.query['tiller_port'] = pods_ip_port['tiller']['port']
 
 
 class ArmadaBaseOperatorPlugin(AirflowPlugin):
