@@ -25,4 +25,4 @@ kubernetes>=6.0.0
 # Dependencies for other UCP components
 git+https://git.openstack.org/openstack/airship-deckhand@0aae9dc1776bd97ab8f4152a51baedb24eb61396#egg=deckhand
 git+https://git.openstack.org/openstack/airship-drydock.git@d93d6d5a0a370ced536180612d1ade708e29cd47#egg=drydock_provisioner&subdirectory=python
-git+https://git.openstack.org/openstack/airship-armada.git@269083c0c063efa50bd5e88374dbd89abb3921c3#egg=armada
+git+https://git.openstack.org/openstack/airship-armada.git@af8a9ffd0873c2fbc915794e235dbd357f2adab1#egg=armada
