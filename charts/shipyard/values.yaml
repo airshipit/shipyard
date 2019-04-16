@@ -680,6 +680,16 @@ conf:
       #Shipyard is not using this
     # End of Airflow config options
 pod:
+  security_context:
+    shipyard:
+      pod:
+        runAsUser: 1000
+      container:
+        shipyard_api:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        airflow_web:
+          allowPrivilegeEscalation: false
   mounts:
     airflow_scheduler:
       # TODO: This is only used if the standalone scheduler is enabled.
