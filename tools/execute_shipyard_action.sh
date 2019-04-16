@@ -105,8 +105,9 @@ run_action () {
     while true;
     do
         # Get Current State of Action Lifecycle
-        describe_action=`${base_docker_command} ${SHIPYARD_IMAGE} describe ${action_id}`
-        action_lifecycle=`echo ${describe_action} | awk '{print $8}'`
+        describe_action=$(${base_docker_command} ${SHIPYARD_IMAGE} describe "${action_id}")
+        action_lifecycle=$(echo "${describe_action}" | grep -i "Lifecycle" | awk '{print $2}')
+        action_steps=$(echo "${describe_action}" | grep -i "step/" | awk '{print $3}')
 
         if [[ $action_lifecycle == "Complete" ]]; then
             echo -e '\nSuccessfully performed' ${action}
@@ -135,10 +136,18 @@ run_action () {
     # Return exit code so that we can use it to determine the final
     # state of the workflow
     if [[ $action_lifecycle == "Complete" ]]; then
+        # Return the error if any of the steps failed to execute.
+        for step in ${action_steps}; do
+            if [ "${step}" == "failed" ]; then
+                exit 1
+            fi
+        done
+
+        # None of the steps failed to execute, success.
         exit 0
-    else
-        exit 1
     fi
+
+    exit 1
 }
 
 # Calls 'run_action' function
