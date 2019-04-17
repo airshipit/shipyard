@@ -63,7 +63,8 @@ do
     cd "${0%/*}"
 
     # Get current state of dag using Airflow CLI
-    check_dag_state=`airflow dag_state ${dag_id} ${dag_execution_date}`
+    # Use grep to remove logging messages that can pollute the status response
+    check_dag_state=`airflow dag_state ${dag_id} ${dag_execution_date} | grep -vE "DEBUG|INFO|WARN|ERROR"`
     echo -e ${check_dag_state} >> /usr/local/airflow/upgrade_airflow_worker.log
 
     # We will need to extract the last word in the 'check_dag_state'
