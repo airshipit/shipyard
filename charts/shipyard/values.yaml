@@ -354,7 +354,7 @@ conf:
   rabbitmq:
     # adding rmq policy to mirror messages from celery queues
     policies:
-      - vhost: "/"
+      - vhost: "airflow"
         name: "ha_celery"
         definition:
           ha-mode: "all"
