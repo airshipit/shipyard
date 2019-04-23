@@ -39,17 +39,21 @@ set -e
 SHIPYARD_HOSTPATH=${SHIPYARD_HOSTPATH:-"/target"}
 NAMESPACE="${NAMESPACE:-ucp}"
 SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master}"
+# set default value for OS_PASSWORD if it's not set
+# this doesn't actually get exported to environment
+# unless the script is sourced
+export OS_PASSWORD=${OS_PASSWORD:-password}
 
 # Define Base Docker Command
 base_docker_command=$(cat << EndOfCommand
-sudo docker run -t --rm --net=host
+sudo -E docker run -t --rm --net=host
 -e http_proxy=${HTTP_PROXY}
 -e https_proxy=${HTTPS_PROXY}
 -e no_proxy=${NO_PROXY:-127.0.0.1,localhost,.svc.cluster.local}
 -e OS_AUTH_URL=${OS_AUTH_URL:-http://keystone.${NAMESPACE}.svc.cluster.local:80/v3}
 -e OS_USERNAME=${OS_USERNAME:-shipyard}
 -e OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME:-default}
--e OS_PASSWORD=${OS_PASSWORD:-password}
+-e OS_PASSWORD
 -e OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME:-default}
 -e OS_PROJECT_NAME=${OS_PROJECT_NAME:-service}
 EndOfCommand
