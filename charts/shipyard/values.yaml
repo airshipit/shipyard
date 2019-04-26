@@ -146,6 +146,7 @@ volume_worker:
 
 logrotate:
   days_before_deletion: 30
+  percent_max_log_fs_usage: 80
 
 # typically overriden by environmental
 # values, but should include all endpoints

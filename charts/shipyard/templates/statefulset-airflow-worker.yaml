@@ -149,6 +149,8 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.logrotate | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           env:
+          - name: PERCENT_MAX_LOG_FS_USAGE
+            value: {{ .Values.logrotate.percent_max_log_fs_usage | quote }}
           - name: DAYS_BEFORE_LOG_DELETION
             value: {{ .Values.logrotate.days_before_deletion | quote }}
           - name: LOGROTATE_PATH
