@@ -361,7 +361,7 @@ conf:
           ha-sync-mode: "automatic"
         priority: 0
         apply-to: all
-        pattern: 'celery.*'
+        pattern: 'celery|default'
   paste:
     app:shipyard-api:
       paste.app_factory: shipyard_airflow.shipyard_api:paste_start_shipyard
