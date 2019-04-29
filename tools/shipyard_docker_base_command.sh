@@ -23,14 +23,14 @@ SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master}"
 
 # Define Base Docker Command
 base_docker_command=$(cat << EndOfCommand
-sudo docker run -t --rm --net=host
+sudo -E docker run -t --rm --net=host
 -e http_proxy=${HTTP_PROXY}
 -e https_proxy=${HTTPS_PROXY}
 -e no_proxy=${NO_PROXY}
 -e OS_AUTH_URL=${OS_AUTH_URL:-http://keystone.${NAMESPACE}.svc.cluster.local:80/v3}
 -e OS_USERNAME=${OS_USERNAME:-shipyard}
 -e OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME:-default}
--e OS_PASSWORD=${OS_PASSWORD:-password}
+-e OS_PASSWORD
 -e OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME:-default}
 -e OS_PROJECT_NAME=${OS_PROJECT_NAME:-service}
 EndOfCommand
