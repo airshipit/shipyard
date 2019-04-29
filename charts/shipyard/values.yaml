@@ -415,6 +415,16 @@ conf:
       # If non-existent rule is used, the request should be denied. The
       # deny_all rule is hard coded in the policy.py code to allow no access.
       policy_default_rule: deny_all
+    document_info:
+      # The name of the deployment configuration document that Shipyard expects
+      # and validates
+      deployment_configuration_name: deployment-configuration
+      # The schema of the deployment configuration document that Shipyard
+      # expects and validates
+      deployment_configuration_schema: shipyard/DeploymentConfiguration/v1
+      # The schema of the deployment strategy document that Shipyard expects
+      # and validates.
+      deployment_strategy_schema: shipyard/DeploymentStrategy/v1
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
   airflow:

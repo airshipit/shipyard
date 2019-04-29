@@ -37,6 +37,11 @@ of the Armada manifest that will be used during the deployment/update.
 
 A `sample deployment-configuration`_ shows a completely specified example.
 
+Note that the name and schema Shipyard expects the deployment configuration
+document to have is conifgurable via the document_info section in the
+:ref:`Shipyard configuration <sample-configuration>`, but should be left
+defaulted in most cases.
+
 `Default configuration values`_ are provided for most values.
 
 Supported values
@@ -178,6 +183,11 @@ document for the site. Example::
    the success criteria are not met.
 -  The success criteria indicates that all nodes must be succssful to consider
    the group a success.
+
+Note that the schema Shipyard expects the deployment strategy document to have
+is conifgurable via the document_info section in the
+:ref:`Shipyard configuration <sample-configuration>`, but should be left
+defaulted in most cases.
 
 In short, the default behavior is to deploy everything all at once, and halt
 if there are any failures.

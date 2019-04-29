@@ -84,6 +84,27 @@
 #service_type = deckhand
 
 
+[document_info]
+
+#
+# From shipyard_api
+#
+
+# The name of the deployment-configuration document that Shipyard expects and
+# validates (string value)
+#deployment_configuration_name = deployment-configuration
+
+# The schema of the deployment-configuration document that Shipyard expects and
+# validates (string value)
+#deployment_configuration_schema = shipyard/DeploymentConfiguration/v1
+
+# The schema of the deployment strategy document that Shipyard expects and
+# validates. Note that the name of this document is not configurable, because
+# it is controlled by a field in the deployment configuration document. (string
+# value)
+#deployment_strategy_schema = shipyard/DeploymentStrategy/v1
+
+
 [drydock]
 
 #

@@ -53,6 +53,7 @@ except ImportError:
     )
 
 LOG = logging.getLogger(__name__)
+DOCUMENT_INFO = 'document_info'
 
 
 class DrydockNodesOperator(DrydockBaseOperator):
@@ -287,10 +288,12 @@ class DrydockNodesOperator(DrydockBaseOperator):
             strat_name = self.dc['physical_provisioner.deployment_strategy']
             if strat_name:
                 # if there is a deployment strategy specified, use it
-                strategy = self.get_unique_doc(
-                    name=strat_name,
-                    schema="shipyard/DeploymentStrategy/v1"
-                )
+                schema_fallback = 'shipyard/DeploymentStrategy/v1'
+                schema = self.config.get(DOCUMENT_INFO,
+                                         'deployment_strategy_schema',
+                                         fallback=schema_fallback)
+
+                strategy = self.get_unique_doc(name=strat_name, schema=schema)
             else:
                 # The default behavior is to deploy all nodes, and fail if
                 # any nodes fail to deploy.

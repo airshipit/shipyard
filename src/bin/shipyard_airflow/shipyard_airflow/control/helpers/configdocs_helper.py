@@ -525,7 +525,7 @@ class ConfigdocsHelper(object):
                 service_clients.deckhand_client(),
                 revision_id,
                 [(ValidateDeploymentConfigurationFull,
-                  'deployment-configuration')]
+                  CONF.document_info.deployment_configuration_name)]
             )
             return sy_val_mgr.validate()
         except Exception as ex:

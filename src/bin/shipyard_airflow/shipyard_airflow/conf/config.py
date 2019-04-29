@@ -286,6 +286,34 @@ SECTIONS = [
             ),
         ]
     ),
+    ConfigSection(
+        name='document_info',
+        title=('Information about some of the documents Shipyard needs to '
+               'handle'),
+        options=[
+            cfg.StrOpt(
+                'deployment_configuration_name',
+                default='deployment-configuration',
+                help=('The name of the deployment-configuration document that '
+                      'Shipyard expects and validates')
+            ),
+            cfg.StrOpt(
+                'deployment_configuration_schema',
+                default='shipyard/DeploymentConfiguration/v1',
+                help=('The schema of the deployment-configuration document '
+                      'that Shipyard expects and validates')
+            ),
+            cfg.StrOpt(
+                'deployment_strategy_schema',
+                default='shipyard/DeploymentStrategy/v1',
+                help=('The schema of the deployment strategy document that '
+                      'Shipyard expects and validates. Note that the name of '
+                      'this document is not configurable, because it is '
+                      'controlled by a field in the deployment configuration '
+                      'document.')
+            ),
+        ]
+    ),
 ]
 
 
