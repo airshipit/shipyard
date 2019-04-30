@@ -62,6 +62,8 @@ def get_doc_returner(style, ds_name):
                 return [dc]
             elif doc == 'dep-strat':
                 return [strategy]
+            elif doc == 'deployment-version':
+                return [MagicMock()]
         return []
     return doc_returner
 

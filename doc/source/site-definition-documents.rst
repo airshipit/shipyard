@@ -38,7 +38,7 @@ of the Armada manifest that will be used during the deployment/update.
 A `sample deployment-configuration`_ shows a completely specified example.
 
 Note that the name and schema Shipyard expects the deployment configuration
-document to have is conifgurable via the document_info section in the
+document to have is configurable via the document_info section in the
 :ref:`Shipyard configuration <sample-configuration>`, but should be left
 defaulted in most cases.
 
@@ -185,7 +185,7 @@ document for the site. Example::
    the group a success.
 
 Note that the schema Shipyard expects the deployment strategy document to have
-is conifgurable via the document_info section in the
+is configurable via the document_info section in the
 :ref:`Shipyard configuration <sample-configuration>`, but should be left
 defaulted in most cases.
 
@@ -625,6 +625,43 @@ An Example of CLI `describe action` command output, with failed processing::
     step/01BZZK07NF04XPC5F4SCTHNPKN/drydock_nodes                      6            failed
 
 
+Deployment Version
+-------------------
+A deployment version document is a Pegleg_-generated document that captures
+information about the repositories used to generate the site defintion. The
+presence of this document is optional by default, but Shipyard can be
+:ref:`configured <sample-configuration>` to ensure this document exists, and
+issue a warning or error if it is absent from a configdocs collection.
+Document example::
+
+  ---
+  schema: pegleg/DeploymentData/v1
+  metadata:
+  schema: metadata/Document/v1
+  name: deployment-version
+  layeringDefinition:
+    abstract: false
+    layer: global
+  storagePolicy: cleartext
+  data:
+    documents:
+      site-repository:
+        commit: 37260deff6a213e30897fc284a993c791336a99d
+        tag: master
+        dirty: false
+      repository-of-secrets:
+        commit: 23e7265aee4843301807d649036f8e860fda0cda
+        tag: master
+        dirty: false
+
+Currently, Shipyard does not use this document for anything. Use of this
+document's data will be added to a future version of Shipyard/Airship.
+
+Note, the name and schema Shipyard expects this document to have can be
+configured via the document_info section in the
+:ref:`Shipyard configuration <sample-configuration>`.
+
+.. _Pegleg: https://git.airshipit.org/cgit/airship-pegleg
 .. _`Armada manifest document`: https://airship-armada.readthedocs.io/en/latest/operations/guide-build-armada-yaml.html?highlight=manifest
 .. _`Default configuration values`: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/plugins/deployment_configuration_operator.py
 .. _DeploymentConfiguration: https://git.airshipit.org/cgit/airship-shipyard/tree/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentConfiguration.yaml
