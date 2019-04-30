@@ -24,7 +24,7 @@ from shipyard_airflow.control.api_lock import (api_lock, ApiLockType)
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.helpers import configdocs_helper
 from shipyard_airflow.control.helpers.configdocs_helper import (
-    ConfigdocsHelper)
+    ConfigdocsHelper, add_messages_to_validation_status)
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
@@ -33,6 +33,8 @@ VERSION_VALUES = ['buffer',
                   'committed',
                   'last_site_action',
                   'successful_site_action']
+DEPLOYMENT_DATA_DOC = {'name': CONF.document_info.deployment_version_name,
+                       'schema': CONF.document_info.deployment_version_schema}
 
 
 class ConfigDocsStatusResource(BaseResource):
@@ -155,16 +157,56 @@ class ConfigDocsResource(BaseResource):
         return helper.get_collection_docs(version, collection_id,
                                           cleartext_secrets)
 
+    def _validate_deployment_version(self, helper, document_data):
+        """
+        Validate that the received documents include a deployment version doc.
+        This function should only be called if needed, and will not do any
+        checking to see if shipyard is configured to skip this check.
+        Return True if the deployment version doc is present, False otherwise.
+        """
+        LOG.info("Validating deployment data")
+        LOG.debug("Searching for schema: %s and name: %s",
+                  DEPLOYMENT_DATA_DOC['schema'], DEPLOYMENT_DATA_DOC['name'])
+        return helper.check_for_document(document_data,
+                                         DEPLOYMENT_DATA_DOC['name'],
+                                         DEPLOYMENT_DATA_DOC['schema'])
+
     def post_collection(self,
                         helper,
                         collection_id,
                         document_data,
                         buffer_mode_param=None,
                         empty_collection=False):
-        """
-        Ingest the collection after checking preconditions
-        """
+        """Ingest the collection after checking preconditions"""
+        extra_messages = {'warning': [], 'info': []}
+        validation_status = None
         buffer_mode = ConfigdocsHelper.get_buffer_mode(buffer_mode_param)
+
+        # Validate that a deployment version document was provided, unless we
+        # were told to skip this check
+        ver_validation_cfg = CONF.validations.deployment_version_create.lower()
+        if empty_collection or ver_validation_cfg == 'skip':
+            LOG.debug('Skipping deployment version document validation')
+        else:
+            if not self._validate_deployment_version(helper, document_data):
+                title = 'Deployment version document missing from collection'
+                error_msg = ('Expected document to be present with schema: {} '
+                             'and name: {}').format(
+                    DEPLOYMENT_DATA_DOC['schema'],
+                    DEPLOYMENT_DATA_DOC['name'])
+
+                if ver_validation_cfg in ['info', 'warning']:
+                    extra_messages[ver_validation_cfg].append('{}. {}'.format(
+                        title, error_msg))
+                else:  # Error
+                    raise ApiError(
+                        title=title,
+                        description=('Collection rejected due to missing '
+                                     'deployment data document'),
+                        status=falcon.HTTP_400,
+                        error_list=[{'message': error_msg}],
+                        retry=False,
+                    )
 
         if helper.is_buffer_valid_for_bucket(collection_id, buffer_mode):
             buffer_revision = helper.add_collection(collection_id,
@@ -190,7 +232,8 @@ class ConfigDocsResource(BaseResource):
                     retry=False,
                 )
             else:
-                return helper.get_deckhand_validation_status(buffer_revision)
+                validation_status = helper.get_deckhand_validation_status(
+                    buffer_revision)
         else:
             raise ApiError(
                 title='Invalid collection specified for buffer',
@@ -204,6 +247,13 @@ class ConfigDocsResource(BaseResource):
                 }],
                 retry=False,
             )
+
+        for level, messages in extra_messages.items():
+            if len(messages):
+                add_messages_to_validation_status(validation_status,
+                                                  messages,
+                                                  level)
+        return validation_status
 
 
 class CommitConfigDocsResource(BaseResource):

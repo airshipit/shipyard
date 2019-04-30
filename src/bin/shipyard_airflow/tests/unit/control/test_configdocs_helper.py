@@ -20,11 +20,12 @@ import pytest
 import responses
 import yaml
 
+import falcon
 from .fake_response import FakeResponse
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.control.helpers import configdocs_helper
 from shipyard_airflow.control.helpers.configdocs_helper import (
-    BufferMode, ConfigdocsHelper)
+    BufferMode, ConfigdocsHelper, add_messages_to_validation_status)
 from shipyard_airflow.control.helpers.deckhand_client import (
     DeckhandClient, DeckhandResponseError,
     NoRevisionsExistError)
@@ -1057,3 +1058,143 @@ def test_check_intermediate_commit():
     assert not helper_no_revs.check_intermediate_commit()
     assert not helper_no_intermidiate_commits.check_intermediate_commit()
     assert helper_with_intermidiate_commits.check_intermediate_commit()
+
+def test_parse_received_doc_data():
+    helper = ConfigdocsHelper(CTX)
+    yaml = """
+---
+document1:
+    - a
+    - b
+    - c
+---
+document2:
+    - 1
+    - 2
+    - 3
+...
+"""
+    parsed = helper.parse_received_doc_data(yaml)
+    assert type(parsed) == list
+    assert len(parsed) == 2
+
+def test_parse_received_doc_data_bad_yaml():
+    helper = ConfigdocsHelper(CTX)
+    yaml = "--- asdfjklsemicolon:"
+    parsed = helper.parse_received_doc_data(yaml)
+    assert type(parsed) == list
+    assert len(parsed) == 0
+
+def test_get_doc_names_and_schemas():
+    helper = ConfigdocsHelper(CTX)
+    yaml = """
+---
+doc_that_does_not_have_a: name or schema
+---
+schema: mycool/Document/v1
+metadata:
+  schema: metadata/Document/v1
+  name: cool-doc
+  storagePolicy: cleartext
+  layeringDefinition:
+    abstract: false
+    layer: global
+data:
+  hello world
+---
+schema: notascool/Document/v1
+metadata:
+  schema: metadata/Document/v1
+  name: average-document
+  storagePolicy: cleartext
+  layeringDefinition:
+    abstract: false
+    layer: global
+data:
+  goodbye space
+...
+"""
+    names_and_schemas = helper.get_doc_names_and_schemas(yaml)
+    assert type(names_and_schemas) == list
+    assert len(names_and_schemas) == 3
+    assert type(names_and_schemas[0]) == tuple
+    assert names_and_schemas[0][0] == ''
+    assert names_and_schemas[0][1] == ''
+    assert names_and_schemas[1][0] == 'cool-doc'
+    assert names_and_schemas[1][1] == 'mycool/Document/v1'
+    assert names_and_schemas[2][0] == 'average-document'
+    assert names_and_schemas[2][1] == 'notascool/Document/v1'
+
+def test_check_for_document():
+    helper = ConfigdocsHelper(CTX)
+    yaml = """
+---
+schema: mycool/Document/v1
+metadata:
+  schema: metadata/Document/v1
+  name: cool-doc
+  storagePolicy: cleartext
+  layeringDefinition:
+    abstract: false
+    layer: global
+data:
+  hello world
+...
+"""
+    assert helper.check_for_document(yaml, 'cool-doc', 'mycool/Document/v1')
+    assert not helper.check_for_document(yaml, 'cool-doc', 'nope')
+    assert not helper.check_for_document(yaml, 'nope', 'mycool/Document/v1')
+    assert not helper.check_for_document(yaml, 'nope', 'nope')
+
+def test_add_messages_to_validation_status():
+    helper = ConfigdocsHelper(CTX)
+    status = {
+        "kind": "Status",
+        "apiVersion": "v1.0",
+        "metadata": {},
+        "status": "Success",
+        "message": "Validations succeeded",
+        "reason": "Validation",
+        "details": {
+            "errorCount": 0,
+            "messageList": [],
+        },
+        "code": falcon.HTTP_200
+    }
+    info_messages = ['message 1', 'message 2']
+    warn_messages = ['message 3']
+    error_messages = ['message 4', 'message 5']
+
+    add_messages_to_validation_status(status, info_messages, 'info')
+    assert status['details']['errorCount'] == 0
+    assert len(status['details']['messageList']) == 2
+    assert type(status['details']['messageList'][0]) == dict
+    assert status['details']['messageList'][0]['code'] == falcon.HTTP_200
+    assert status['details']['messageList'][0]['message'] == 'message 1'
+    assert status['details']['messageList'][0]['status'] == 'Info'
+    assert status['details']['messageList'][0]['level'] == 'info'
+    assert status["status"] == "Success"
+    assert status["message"] == "Validations succeeded"
+    assert status["code"] == falcon.HTTP_200
+
+    add_messages_to_validation_status(status, warn_messages, 'warning')
+    assert status['details']['errorCount'] == 0
+    assert len(status['details']['messageList']) == 3
+    assert status['details']['messageList'][2]['code'] == falcon.HTTP_200
+    assert status['details']['messageList'][2]['message'] == 'message 3'
+    assert status['details']['messageList'][2]['status'] == 'Warning'
+    assert status['details']['messageList'][2]['level'] == 'warning'
+    assert status["status"] == "Success"
+    assert status["message"] == "Validations succeeded"
+    assert status["code"] == falcon.HTTP_200
+
+    add_messages_to_validation_status(status, error_messages, 'error')
+    assert status['details']['errorCount'] == 2
+    assert len(status['details']['messageList']) == 5
+    assert status['details']['messageList'][3]['code'] == falcon.HTTP_400
+    assert status['details']['messageList'][3]['message'] == 'message 4'
+    assert status['details']['messageList'][3]['status'] == 'Error'
+    assert status['details']['messageList'][3]['level'] == 'error'
+    assert status["status"] == "Failure"
+    assert status["message"] == "Validations failed"
+    assert status["code"] == falcon.HTTP_400
