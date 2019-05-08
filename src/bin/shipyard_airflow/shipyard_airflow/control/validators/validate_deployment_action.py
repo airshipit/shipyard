@@ -14,6 +14,7 @@
 import logging
 
 import falcon
+from oslo_config import cfg
 
 from .validate_deployment_configuration \
     import ValidateDeploymentConfigurationBasic
@@ -24,6 +25,7 @@ from shipyard_airflow.common.document_validators.document_validator_manager \
 from shipyard_airflow.errors import ApiError
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 class ValidateDeploymentAction:
@@ -40,7 +42,7 @@ class ValidateDeploymentAction:
                 dh_client,
                 self.doc_revision,
                 [(ValidateDeploymentConfigurationFull,
-                  'deployment-configuration')]
+                  CONF.document_info.deployment_configuration_name)]
             )
         else:
             # Perform a basic validation only
@@ -48,7 +50,7 @@ class ValidateDeploymentAction:
                 dh_client,
                 self.doc_revision,
                 [(ValidateDeploymentConfigurationBasic,
-                  'deployment-configuration')]
+                  CONF.document_info.deployment_configuration_name)]
             )
 
     def validate(self):

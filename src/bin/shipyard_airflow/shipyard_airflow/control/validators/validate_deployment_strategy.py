@@ -18,6 +18,8 @@ is performed by Deckhand on Shipyard's behalf.
 """
 import logging
 
+from oslo_config import cfg
+
 from shipyard_airflow.common.deployment_group.deployment_group_manager import (
     DeploymentGroupManager
 )
@@ -35,6 +37,7 @@ from shipyard_airflow.control.helpers.design_reference_helper import (
     DesignRefHelper
 )
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 def _get_node_lookup(revision_id):
@@ -56,7 +59,7 @@ class ValidateDeploymentStrategy(DocumentValidator):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    schema = "shipyard/DeploymentStrategy/v1"
+    schema = CONF.document_info.deployment_strategy_schema
     missing_severity = "Error"
 
     def do_validate(self):

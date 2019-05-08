@@ -253,10 +253,7 @@ class UcpBaseOperator(BaseOperator):
         if revision_id is None:
             revision_id = self.revision_id
 
-        LOG.info(
-            "Retrieve shipyard/DeploymentConfiguration/v1, "
-            "deployment-configuration from Deckhand"
-        )
+        LOG.info("Retrieve {}, {} from Deckhand".format(schema, name))
         try:
             return self.doc_utils.get_unique_doc(revision_id=revision_id,
                                                  name=name,

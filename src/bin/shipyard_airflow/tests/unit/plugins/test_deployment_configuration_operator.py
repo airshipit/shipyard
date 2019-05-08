@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from configparser import ConfigParser
 from unittest import mock
 
 import pytest
@@ -40,11 +41,13 @@ ACTION_INFO_NO_COMMIT = {
 
 try:
     from deployment_configuration_operator import (
-        DeploymentConfigurationOperator
+        DeploymentConfigurationOperator,
+        DOCUMENT_INFO
     )
 except ImportError:
     from shipyard_airflow.plugins.deployment_configuration_operator import (
-        DeploymentConfigurationOperator
+        DeploymentConfigurationOperator,
+        DOCUMENT_INFO
     )
 
 try:
@@ -53,6 +56,21 @@ except ImportError:
     from shipyard_airflow.plugins.deckhand_client_factory import (
         DeckhandClientFactory
     )
+
+
+def make_fake_config():
+    """Make/return a fake config using configparser that we can use for testing
+
+    :returns: A fake configuration object
+    :rtype: ConfigParser
+    """
+    cfg = ConfigParser()
+    cfg.add_section(DOCUMENT_INFO)
+    cfg.set(DOCUMENT_INFO, 'deployment_configuration_name',
+            'deployment-configuration')
+    cfg.set(DOCUMENT_INFO, 'deployment_configuration_schema',
+            'shipyard/DeploymentConfiguration/v1')
+    return cfg
 
 
 def test_execute_exception():
@@ -67,18 +85,21 @@ def test_execute_exception():
     assert ("Design_revision is not set. Cannot proceed with retrieval"
             " of the design configuration") in str(expected_exc)
 
-
+@mock.patch.object(DeploymentConfigurationOperator, '_read_config')
 @mock.patch.object(DeploymentConfigurationOperator, 'get_revision_id',
                    return_value=99)
-def test_execute_no_client(*args):
+def test_execute_no_client(get_revision_id, read_config):
     # no keystone authtoken present in configuration
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
+    dco.config = make_fake_config()
     with pytest.raises(AirflowException) as expected_exc:
-        dco.execute(context={})
-    assert ("Failed to retrieve deployment configuration yaml") in str(
+        dco.execute(context={'task_instance': 'asdf'})
+    assert ("Failed to retrieve deployment-configuration yaml") in str(
         expected_exc)
+    get_revision_id.assert_called_once_with('asdf')
+    read_config.assert_called_once_with()
 
 
 @mock.patch.object(airflow.models.TaskInstance, 'xcom_pull',
@@ -113,6 +134,7 @@ def test_get_doc_no_deckhand():
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
+    dco.config = make_fake_config()
     with pytest.raises(AirflowException) as expected_exc:
         dco.get_doc(99)
     assert "Failed to retrieve deployment" in str(expected_exc)
@@ -134,7 +156,7 @@ def test_get_doc_mock_deckhand(*args):
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
-
+    dco.config = make_fake_config()
     doc = dco.get_doc(99)
     assert doc == 'abcdefg'
 
@@ -146,6 +168,7 @@ def test_get_doc_mock_deckhand_invalid(*args):
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
+    dco.config = make_fake_config()
 
     with pytest.raises(AirflowException) as airflow_ex:
         dco.get_doc(99)
