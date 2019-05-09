@@ -365,7 +365,7 @@ def test__get_revision_dict_no_commit():
     with a buffer version, but no committed revision
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand.get_revision_list = lambda: yaml.load("""
+    helper.deckhand.get_revision_list = lambda: yaml.safe_load("""
 ---
   - id: 1
     url: https://deckhand/api/v1.0/revisions/1
@@ -420,7 +420,7 @@ def test__get_revision_dict_commit_no_buff():
     with a committed and no buffer revision
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand.get_revision_list = lambda: yaml.load("""
+    helper.deckhand.get_revision_list = lambda: yaml.safe_load("""
 ---
   - id: 1
     url: https://deckhand/api/v1.0/revisions/1
@@ -457,7 +457,7 @@ def test__get_revision_dict_commit_and_buff():
     with a committed and a buffer revision
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand.get_revision_list = lambda: yaml.load("""
+    helper.deckhand.get_revision_list = lambda: yaml.safe_load("""
 ---
   - id: 1
     url: https://deckhand/api/v1.0/revisions/1
@@ -879,7 +879,7 @@ def test_get_revision_dict_last_site_action_and_successful_site_action():
     for last_site_action and successful_site_action revision
     """
     helper = ConfigdocsHelper(CTX)
-    helper.deckhand.get_revision_list = lambda: yaml.load("""
+    helper.deckhand.get_revision_list = lambda: yaml.safe_load("""
 ---
   - id: 1
     url: https://deckhand/api/v1.0/revisions/1
@@ -1026,7 +1026,7 @@ def test_check_intermediate_commit():
     helper_no_revs.deckhand.get_revision_list = lambda: []
 
     helper_no_intermidiate_commits = ConfigdocsHelper(CTX)
-    revs = yaml.load("""
+    revs = yaml.safe_load("""
 ---
   - id: 1
     url: https://deckhand/api/v1.0/revisions/1
