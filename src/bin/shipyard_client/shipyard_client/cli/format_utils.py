@@ -178,11 +178,10 @@ def _format_basic_message(message):
 
     Returns a single string with embedded newlines
     """
+    level = str(message.get('level', 'Info')).capitalize()
     if message.get('error', False):
-        resp = '\n- Error: {}'.format(message.get('message'))
-    else:
-        resp = '\n- Info: {}'.format(message.get('message'))
-    return resp
+        level = 'Error'  # Force showing "Error"
+    return '\n- {}: {}'.format(level, message.get('message'))
 
 
 def raw_format_response_handler(response):

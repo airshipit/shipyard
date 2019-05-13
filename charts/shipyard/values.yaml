@@ -431,6 +431,10 @@ conf:
       deployment_strategy_schema: shipyard/DeploymentStrategy/v1
     validations:
       # Control the severity of the deployment-version document validation
+      # that Shipyard performs during create configdocs.
+      # Possible values are Skip, Info, Warning, and Error
+      deployment_version_create: Skip
+      # Control the severity of the deployment-version document validation
       # that Shipyard performs during commit configdocs.
       # Possible values are Skip, Info, Warning, and Error
       deployment_version_commit: Skip

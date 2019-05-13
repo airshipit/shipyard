@@ -331,10 +331,25 @@ SECTIONS = [
         title='Validation Configurations',
         options=[
             cfg.StrOpt(
+                'deployment_version_create',
+                default='Skip',
+                help=('Control the severity of the deployment-version '
+                      'validation during create configdocs.'),
+                ignore_case=True,
+                choices=[('Skip', 'Skip the validation altogether'),
+                         ('Info', 'Print an Info level message if the '
+                                  'validation fails'),
+                         ('Warning', 'Print a Warning level message if the '
+                                     'validation fails'),
+                         ('Error', 'Return an error when the validation fails '
+                                   'and prevent the configdocs create from '
+                                   'proceeding')]
+            ),
+            cfg.StrOpt(
                 'deployment_version_commit',
                 default='Skip',
                 help=('Control the severity of the deployment-version '
-                      'validation validation during commit configdocs. '),
+                      'validation validation during commit configdocs.'),
                 ignore_case=True,
                 choices=[('Skip', 'Skip the validation altogether'),
                          ('Info', 'Print an Info level message if the '

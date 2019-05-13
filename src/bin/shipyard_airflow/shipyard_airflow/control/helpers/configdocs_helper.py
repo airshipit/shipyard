@@ -19,6 +19,7 @@ bucket for Shipyard
 import enum
 import logging
 import threading
+import yaml
 
 import falcon
 from oslo_config import cfg
@@ -57,25 +58,21 @@ ROLLBACK_COMMIT = 'rollback_commit'
 
 
 class BufferMode(enum.Enum):
-    """
-    Enumeration of the valid values for BufferMode
-    """
+    """Enumeration of the valid values for BufferMode"""
     REJECTONCONTENTS = 'rejectoncontents'
     APPEND = 'append'
     REPLACE = 'replace'
 
 
 class ConfigdocsHelper(object):
-    """
-    ConfigdocsHelper provides a layer to represent the buffer and committed
+    """ConfigdocsHelper provides a layer to represent the buffer and committed
     versions of design documents.
     A new configdocs_helper is intended to be used for each invocation of the
     service.
     """
 
     def __init__(self, context):
-        """
-        Sets up this Configdocs helper with the supplied
+        """Sets up this Configdocs helper with the supplied
         request context
         """
         self.deckhand = DeckhandClient(context.request_id,
@@ -125,9 +122,7 @@ class ConfigdocsHelper(object):
         return True
 
     def is_collection_in_buffer(self, collection_id):
-        """
-        Returns if the collection is represented in the buffer
-        """
+        """Returns if the collection is represented in the buffer"""
         if self.is_buffer_empty():
             return False
 
@@ -152,8 +147,7 @@ class ConfigdocsHelper(object):
                 retry=False, )
 
     def is_buffer_valid_for_bucket(self, collection_id, buffermode):
-        """
-        Indicates if the buffer as it currently is, may be written to
+        """Indicates if the buffer as it currently is, may be written to
         for the specified collection, based on the buffermode.
         """
         # can always write if buffer is empty.
@@ -179,6 +173,52 @@ class ConfigdocsHelper(object):
             else:
                 self.deckhand.rollback(committed_rev_id)
             return True
+
+    def parse_received_doc_data(self, document_data):
+        """Parse and return the document data shipyard receives
+        document_data should be a "bytes" type of one or more yaml documents
+        Return the parsed documents as a list. If bad YAML was provided log a
+        warning and return an empty list
+        """
+        try:
+            yaml_doc_list = list(yaml.safe_load_all(document_data))
+            LOG.debug('Loaded %s YAML documents from provided data',
+                      len(yaml_doc_list))
+        except yaml.YAMLError as exc:
+            yaml_doc_list = []
+            LOG.warning(('Invalid YAML provided to Shipyard. Syntax error(s): '
+                         '{}').format(exc))
+
+        return yaml_doc_list
+
+    def get_doc_names_and_schemas(self, document_data):
+        """Given the document_data shipyard receives, return a list of tuples
+        denoting each documents' name and schema (name, schema)
+        """
+        parsed_docs = self.parse_received_doc_data(document_data)
+        names_and_schemas = []
+
+        for doc in parsed_docs:
+            try:
+                schema = doc['schema']
+            except (TypeError, KeyError):
+                schema = ''
+                LOG.warning('Document recevied with no schema')
+            try:
+                name = doc['metadata']['name']
+            except (TypeError, KeyError):
+                name = ''
+                LOG.warning('Document recevied with no name')
+
+            names_and_schemas.append((name, schema))
+        return names_and_schemas
+
+    def check_for_document(self, document_data, name, schema):
+        """Given the document data shipyard recevies, see if the given
+        name/schmea combination exists in the list of documents
+        Return True if the document exists, False otherwise
+        """
+        return (name, schema) in self.get_doc_names_and_schemas(document_data)
 
     def get_configdocs_status(self, versions=None):
         """
@@ -244,8 +284,7 @@ class ConfigdocsHelper(object):
         return configdocs_status
 
     def _get_revision_dict(self):
-        """
-        Returns a dictionary with values representing the revisions in
+        """Returns a dictionary with values representing the revisions in
         Deckhand that Shipyard cares about - committed, buffer, latest,
         last_site_action and successful_site_action, as well as a count
         of revisions.
@@ -326,7 +365,7 @@ class ConfigdocsHelper(object):
         return self.revision_dict
 
     def _get_revision(self, target_revision):
-        # Helper to drill down to the target revision
+        """Helper to drill down to the target revision"""
         return self._get_revision_dict().get(target_revision)
 
     def get_revision_id(self, target_revision):
@@ -336,8 +375,7 @@ class ConfigdocsHelper(object):
 
     def get_collection_docs(self, version, collection_id,
                             cleartext_secrets=False):
-        """
-        Returns the requested collection of docs based on the version
+        """Returns the requested collection of docs based on the version
         specifier. The default is set as buffer.
         """
         LOG.info('Retrieving collection %s from %s', collection_id, version)
@@ -349,8 +387,7 @@ class ConfigdocsHelper(object):
                                          cleartext_secrets=cleartext_secrets)
 
     def _get_doc_from_buffer(self, collection_id, cleartext_secrets=False):
-        """
-        Returns the collection if it exists in the buffer.
+        """Returns the collection if it exists in the buffer.
         If the buffer contains the collection, the latest
         representation is what we want.
         """
@@ -373,8 +410,7 @@ class ConfigdocsHelper(object):
 
     def _get_target_docs(self, collection_id, target_rev,
                          cleartext_secrets=False):
-        """
-        Returns the collection if it exists as committed, last_site_action
+        """Returns the collection if it exists as committed, last_site_action
         or successful_site_action.
         """
         revision_id = self.get_revision_id(target_rev)
@@ -392,8 +428,7 @@ class ConfigdocsHelper(object):
             retry=False)
 
     def get_rendered_configdocs(self, version=BUFFER, cleartext_secrets=False):
-        """
-        Returns the rendered configuration documents for the specified
+        """Returns the rendered configuration documents for the specified
         revision (by name BUFFER, COMMITTED, LAST_SITE_ACTION,
         SUCCESSFUL_SITE_ACTION)
         """
@@ -519,7 +554,7 @@ class ConfigdocsHelper(object):
         return _format_validations_to_status(resp_msgs, error_count)
 
     def _get_shipyard_validations(self, revision_id):
-        # Run Shipyard's own validations.
+        """Run Shipyard's own validations."""
         try:
             sy_val_mgr = DocumentValidationManager(
                 service_clients.deckhand_client(),
@@ -564,9 +599,7 @@ class ConfigdocsHelper(object):
         return resp_msgs
 
     def tag_buffer(self, tag):
-        """
-        Convenience method to tag the buffer version.
-        """
+        """Convenience method to tag the buffer version."""
         buffer_rev_id = self.get_revision_id(BUFFER)
         if buffer_rev_id is None:
             raise AppError(
@@ -578,14 +611,11 @@ class ConfigdocsHelper(object):
         self.tag_revision(buffer_rev_id, tag)
 
     def tag_revision(self, revision_id, tag):
-        """
-        Tags the specified revision with the specified tag
-        """
+        """Tags the specified revision with the specified tag"""
         self.deckhand.tag_revision(revision_id=revision_id, tag=tag)
 
     def add_collection(self, collection_id, document_string):
-        """
-        Triggers a call to Deckhand to add a collection(bucket)
+        """Triggers a call to Deckhand to add a collection(bucket)
         Documents are assumed to be a string input, not a
         collection.
         Returns the id of the buffer version.
@@ -653,7 +683,7 @@ class ConfigdocsHelper(object):
         return False
 
     def _get_ordered_versions(self, versions=None):
-        """returns a list of ordered versions"""
+        """Returns a list of ordered versions"""
 
         # Default ordering
         def_order = [SUCCESSFUL_SITE_ACTION,
@@ -744,8 +774,30 @@ class ConfigdocsHelper(object):
 # functions for module.
 #
 
+def add_messages_to_validation_status(status, msgs, level):
+    """Given a status retrieved from _format_validations_to_status and a list
+    of messages at a given level (Error, Warning, Info), add messages to the
+    status
+    """
+    code = falcon.HTTP_200
+    if str(level).lower() == 'error':
+        code = falcon.HTTP_400
+        status['status'] = 'Failure'
+        status['message'] = 'Validations failed'
+        status['code'] = code
+        status['details']['errorCount'] += len(msgs)
+
+    formatted_messages = []
+    for msg in msgs:
+        formatted_messages.append({'code': code,
+                                   'message': msg,
+                                   'status': str(level).capitalize(),
+                                   'level': str(level).lower()})
+    status['details']['messageList'] += formatted_messages
+
+
 def _get_validation_endpoints():
-    # returns the list of validation endpoint supported
+    """Returns the list of validation endpoint supported"""
     val_ep = '{}/validatedesign'
     return [
         {
@@ -764,7 +816,7 @@ def _get_validation_endpoints():
 
 
 def _get_validation_threads(validation_endpoints, ctx, design_ref):
-    # create a list of validation threads from the endpoints
+    """Create a list of validation threads from the endpoints"""
     validation_threads = []
     for endpoint in validation_endpoints:
         # create a holder for things we need back from the threads
@@ -798,7 +850,7 @@ def _get_validation_threads(validation_endpoints, ctx, design_ref):
 def _get_validations_for_component(url, design_reference, response,
                                    exception, context_marker, thread_name,
                                    **kwargs):
-    # Invoke the POST for validation
+    """Invoke the POST for validation"""
     try:
         headers = {
             'X-Context-Marker': context_marker,
@@ -840,11 +892,12 @@ def _get_validations_for_component(url, design_reference, response,
 
 
 def _generate_dh_val_msg(msg, dh_result_name):
-    # Maps a deckhand validation response to a ValidationMessage.
-    # Result name is used if the msg doesn't specify a name field.
-    # Deckhand may provide the following fields:
-    # 'validation_schema', 'schema_path', 'name', 'schema', 'path',
-    # 'error_section', 'message'
+    """Maps a deckhand validation response to a ValidationMessage.
+    Result name is used if the msg doesn't specify a name field.
+    Deckhand may provide the following fields:
+    'validation_schema', 'schema_path', 'name', 'schema', 'path',
+    'error_section', 'message'
+    """
     not_spec = 'not specified'
     if 'diagnostic' not in msg:
         # format path, error_section, validation_schema, and schema_path
@@ -871,12 +924,13 @@ def _generate_dh_val_msg(msg, dh_result_name):
 
 
 def _generate_validation_message(msg, **kwargs):
-    # Special note about kwargs: the values provided via kwargs are used
-    # as defaults, not overrides. Values in the msg will take precedence.
-    #
-    # Using a compatible message, transform it into a ValidationMessage.
-    # By combining it with the default values passed via kwargs. The values
-    # used from kwargs match the fields listed below.
+    """Special note about kwargs: the values provided via kwargs are used
+    as defaults, not overrides. Values in the msg will take precedence.
+
+    Using a compatible message, transform it into a ValidationMessage.
+    By combining it with the default values passed via kwargs. The values
+    used from kwargs match the fields listed below.
+    """
 
     fields = ['message', 'error', 'name', 'documents', 'level', 'diagnostic',
               'source']
@@ -894,7 +948,7 @@ def _generate_validation_message(msg, **kwargs):
 
 
 def _error_to_level(error):
-    """Convert a boolean error field to 'Error' or 'Info' """
+    """Convert a boolean error field to 'Error' or 'Info'"""
     if error:
         return 'Error'
     else:
@@ -902,9 +956,9 @@ def _error_to_level(error):
 
 
 def _format_validations_to_status(val_msgs, error_count):
-    # Using a list of validation messages and an error count,
-    # formulates and returns a status response dict
-
+    """Using a list of validation messages and an error count,
+    formulates and returns a status response dict
+    """
     status = 'Success'
     message = 'Validations succeeded'
     code = falcon.HTTP_200

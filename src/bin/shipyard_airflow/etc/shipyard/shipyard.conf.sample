@@ -441,8 +441,18 @@
 # From shipyard_api
 #
 
+# Control the severity of the deployment-version validation during create
+# configdocs. (string value)
+# Possible values:
+# Skip - Skip the validation altogether
+# Info - Print an Info level message if the validation fails
+# Warning - Print a Warning level message if the validation fails
+# Error - Return an error when the validation fails and prevent the configdocs
+# create from proceeding
+#deployment_version_create = Skip
+
 # Control the severity of the deployment-version validation validation during
-# commit configdocs.  (string value)
+# commit configdocs. (string value)
 # Possible values:
 # Skip - Skip the validation altogether
 # Info - Print an Info level message if the validation fails
