@@ -24,6 +24,7 @@ from shipyard_airflow.common.document_validators.document_validator import (
     DocumentValidator
 )
 from .validate_deployment_strategy import ValidateDeploymentStrategy
+from .validate_deployment_version import ValidateDeploymentVersion
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class ValidateDeploymentConfigurationFull(
         ValidateDeploymentConfigurationBasic):
     """Validates the DeploymentConfiguration
 
-    Includes a triggered check for DeploymentStrategy
+    Includes triggered checks for DeploymentStrategy and DeploymentVersion
     """
     def do_validate(self):
         try:
@@ -75,5 +76,10 @@ class ValidateDeploymentConfigurationFull(
             LOG.info("No deployment strategy document specified, "
                      "'all-at-once' is assumed, and deployment strategy will "
                      "not be further validated")
+
+        if CONF.validations.deployment_version_commit.lower() != 'skip':
+            self.add_triggered_validation(
+                ValidateDeploymentVersion,
+                CONF.document_info.deployment_version_name)
 
         super().do_validate()

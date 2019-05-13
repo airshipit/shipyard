@@ -90,6 +90,14 @@
 # From shipyard_api
 #
 
+# The name of the deployment version document that Shipyard validates (string
+# value)
+#deployment_version_name = deployment-version
+
+# The schema of the deployment version document that Shipyard validates (string
+# value)
+#deployment_version_schema = pegleg/DeploymentData/v1
+
 # The name of the deployment-configuration document that Shipyard expects and
 # validates (string value)
 #deployment_configuration_name = deployment-configuration
@@ -425,3 +433,20 @@
 # type is used to perform the service lookup in the Keystone service catalog.
 # (string value)
 #service_type = shipyard
+
+
+[validations]
+
+#
+# From shipyard_api
+#
+
+# Control the severity of the deployment-version validation validation during
+# commit configdocs.  (string value)
+# Possible values:
+# Skip - Skip the validation altogether
+# Info - Print an Info level message if the validation fails
+# Warning - Print a Warning level message if the validation fails
+# Error - Return an error when the validation fails and prevent the commit from
+# proceeding
+#deployment_version_commit = Skip

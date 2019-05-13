@@ -203,6 +203,7 @@ Responses
     with no contents.
   - The request has no new/changed contents for the collection.
   - The request is missing a Content-Length header.
+  - The provided document(s) fail Shipyard/Deckhand validations.
 
 409 Conflict
   A condition in the system is blocking this document ingestion

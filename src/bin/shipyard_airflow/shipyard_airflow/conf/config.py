@@ -292,6 +292,18 @@ SECTIONS = [
                'handle'),
         options=[
             cfg.StrOpt(
+                'deployment_version_name',
+                default='deployment-version',
+                help=('The name of the deployment version document that '
+                      'Shipyard validates')
+            ),
+            cfg.StrOpt(
+                'deployment_version_schema',
+                default='pegleg/DeploymentData/v1',
+                help=('The schema of the deployment version document that '
+                      'Shipyard validates')
+            ),
+            cfg.StrOpt(
                 'deployment_configuration_name',
                 default='deployment-configuration',
                 help=('The name of the deployment-configuration document that '
@@ -311,6 +323,26 @@ SECTIONS = [
                       'this document is not configurable, because it is '
                       'controlled by a field in the deployment configuration '
                       'document.')
+            ),
+        ]
+    ),
+    ConfigSection(
+        name='validations',
+        title='Validation Configurations',
+        options=[
+            cfg.StrOpt(
+                'deployment_version_commit',
+                default='Skip',
+                help=('Control the severity of the deployment-version '
+                      'validation validation during commit configdocs. '),
+                ignore_case=True,
+                choices=[('Skip', 'Skip the validation altogether'),
+                         ('Info', 'Print an Info level message if the '
+                                  'validation fails'),
+                         ('Warning', 'Print a Warning level message if the '
+                                     'validation fails'),
+                         ('Error', 'Return an error when the validation fails '
+                                   'and prevent the commit from proceeding')]
             ),
         ]
     ),
