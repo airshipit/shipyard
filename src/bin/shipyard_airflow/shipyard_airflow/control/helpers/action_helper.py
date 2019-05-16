@@ -17,7 +17,11 @@ import falcon
 import logging
 
 from shipyard_airflow.common.notes.notes import MIN_VERBOSITY
+from shipyard_airflow.control.helpers.design_reference_helper import (
+    DesignRefHelper
+)
 from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
+from shipyard_airflow.dags.dag_names import CRITICAL_DAG_STEPS
 from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 
@@ -87,6 +91,73 @@ def format_step(action_id, step, index, notes):
         'id': step.get('task_id'),
         'index': index,
         'notes': notes
+    }
+
+
+def get_deployment_status(action, force_completed=False):
+    """Given a set of action data, make/return a set of deployment status data
+
+    :param dict action: A dictionary of data about an action.
+                        The keys of the dict should include:
+                            - committed_rev_id
+                            - context_marker
+                            - dag_status
+                            - id
+                            - timestamp
+                            - user
+                        Any missing key will result in a piece of the
+                        deployment status being "unknown"
+    :param bool force_completed: optional. If True the status will be forced
+                                 to "completed". This will be useful when the
+                                 last step of the DAG wants to get the status
+                                 of the deployment, and knows that the
+                                 DAG/deployment/action really is completed even
+                                 though it does not appear to be.
+    :returns: A dict of deployment status data
+    :rtype: dict
+    """
+    # Create a URL to get the documents in Deckhand, using the Deckhand
+    # revision ID associated with the action
+    document_url = DesignRefHelper().get_design_reference_href(
+        action.get('committed_rev_id', 'unknown'))
+
+    # Create the "status" and "result" of the deployment
+    dag_status = action.get('dag_status', '').upper()
+    status = 'running'
+    result = 'unknown'
+    status_result_map = {
+        'FAILED': 'failed',
+        'UPSTREAM_FAILED': 'failed',
+        'SKIPPED': 'failed',
+        'REMOVED': 'failed',
+        'SHUTDOWN': 'failed',
+        'SUCCESS': 'successful'
+    }
+    if dag_status in status_result_map:
+        # We don't need to check anything else, we know the status of the
+        # deployment is completed and we can map directly to a result
+        status = 'completed'
+        result = status_result_map[dag_status]
+    else:
+        # The DAG could still be running, or be in some other state, so we
+        # need to dig into the DAG to determine what the result really is
+        # Use an ActionsHelper to check all the DAG steps
+        helper = ActionsHelper(action.get('id'))
+        result = helper.get_result_from_dag_steps()
+
+    # Check to see if we need to override the status to "completed"
+    if force_completed:
+        status = "completed"
+
+    # Return the dictionary of data
+    return {
+        'status': status,
+        'results': result,
+        'context-marker': action.get('context_marker', 'unknown'),
+        'action': action.get('id', 'unknown'),
+        'document_url': document_url,
+        'user': action.get('user', 'unknown'),
+        'date': action.get('timestamp', 'unknown')
     }
 
 
@@ -163,6 +234,78 @@ class ActionsHelper(object):
             LOG.debug(steps)
 
             return steps
+
+    def _get_latest_steps(self):
+        """Get all the steps for the action, and return the latest try on each
+
+        :returns: All dictionary of task_id (a string name) to step details
+        :rtype: dict
+        """
+        latest_steps = {}
+        for step in self._get_all_steps():
+            task_id = step['task_id']
+            if task_id in latest_steps:
+                # We already have this step, see if this one is more recent
+                # than the one we already have
+                if step['try_number'] > latest_steps[task_id]['try_number']:
+                    latest_steps[task_id] = step
+            else:
+                # Step we have not seen yet
+                latest_steps[task_id] = step
+
+        return latest_steps
+
+    def get_result_from_dag_steps(self):
+        """Look up the DAG steps, and create a result string based on the state
+        of the DAG steps
+
+        We will only check "critical" steps, as these are what's most
+        important, and won't even run if other steps fail in the first place
+        If any critical steps have a state that falls under our success states
+        and no other critical steps have a state that falls under the failed or
+        running states, result will be "successful"
+        If any critical steps have a state that fall under our failed states,
+        result will be "failed"
+        If any critical steps have a state that fall under our running states,
+        result will be "pending"
+        If no critical steps have states that fall under any of the state sets,
+        result will be "unknown"
+
+        :returns: The result of the DAG based on the DAG's steps
+        :rtype: str
+        """
+        result = 'unknown'
+        running_states = [
+            None,
+            'None',
+            'scheduled',
+            'queued',
+            'running',
+            'up_for_retry',
+            'up_for_reschedule'
+        ]
+        failed_states = ['shutdown', 'failed', 'upstream_failed']
+        success_states = ['skipped', 'success']
+        latest_steps = self._get_latest_steps()
+        for step_id in CRITICAL_DAG_STEPS:
+            if step_id in latest_steps:
+                state = latest_steps[step_id]['state']
+                if state in success_states and result == 'unknown':
+                    result = 'successful'
+                elif state in failed_states:
+                    result = 'failed'
+                    break
+                elif state in running_states:
+                    result = 'pending'
+                elif state not in success_states:
+                    # The state we are looking at doesn't fall under any of our
+                    # known states
+                    LOG.warning('Found DAG step with unexpected state: {}'.
+                                format(state))
+                    result = 'unknown'
+                    break
+
+        return result
 
     def get_step(self, step_id, try_number=None):
         """

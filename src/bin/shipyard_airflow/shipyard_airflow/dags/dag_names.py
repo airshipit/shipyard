@@ -31,3 +31,12 @@ GET_RENDERED_DOC = 'get_rendered_doc'
 SKIP_UPGRADE_AIRFLOW = 'skip_upgrade_airflow'
 UPGRADE_AIRFLOW = 'upgrade_airflow'
 DESTROY_SERVER = 'destroy_nodes'
+
+# Define a list of critical steps, used to determine successfulness of a
+# still-running DAG
+CRITICAL_DAG_STEPS = [
+    ARMADA_BUILD_DAG_NAME,
+    SKIP_UPGRADE_AIRFLOW,
+    UPGRADE_AIRFLOW,
+    ARMADA_TEST_RELEASES
+]
