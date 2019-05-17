@@ -734,6 +734,12 @@ pod:
     shipyard_db_sync:
       init_container: null
       shipyard_db_sync:
+  affinity:
+    anti:
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      topologyKey:
+        default: kubernetes.io/hostname
   replicas:
     shipyard:
       api: 2

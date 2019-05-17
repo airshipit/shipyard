@@ -42,6 +42,8 @@ spec:
     spec:
 {{ dict "envAll" $envAll "application" "shipyard" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
+      affinity:
+{{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.shipyard.node_selector_key }}: {{ .Values.labels.shipyard.node_selector_value }}
       terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.shipyard.timeout | default "30" }}
