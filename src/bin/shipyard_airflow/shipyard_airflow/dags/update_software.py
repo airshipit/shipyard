@@ -55,11 +55,13 @@ deployment_configuration = step_factory.get_deployment_configuration()
 validate_site_design = step_factory.get_validate_site_design(
     targets=[SOFTWARE]
 )
+deployment_status = step_factory.get_deployment_status()
 armada_build = step_factory.get_armada_build()
 decide_airflow_upgrade = step_factory.get_decide_airflow_upgrade()
 upgrade_airflow = step_factory.get_upgrade_airflow()
 skip_upgrade_airflow = step_factory.get_skip_upgrade_airflow()
 create_action_tag = step_factory.get_create_action_tag()
+finalize_deployment_status = step_factory.get_final_deployment_status()
 
 # DAG Wiring
 deployment_configuration.set_upstream(action_xcom)
@@ -67,6 +69,7 @@ validate_site_design.set_upstream([
     concurrency_check,
     deployment_configuration
 ])
+deployment_status.set_upstream(concurrency_check)
 armada_build.set_upstream(validate_site_design)
 decide_airflow_upgrade.set_upstream(armada_build)
 decide_airflow_upgrade.set_downstream([
@@ -77,3 +80,6 @@ create_action_tag.set_upstream([
     upgrade_airflow,
     skip_upgrade_airflow
 ])
+
+# finalize_deployment_status needs to be downstream of everything
+finalize_deployment_status.set_upstream(create_action_tag)

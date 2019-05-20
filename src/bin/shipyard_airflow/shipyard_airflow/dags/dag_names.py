@@ -32,6 +32,8 @@ GET_RENDERED_DOC = 'get_rendered_doc'
 SKIP_UPGRADE_AIRFLOW = 'skip_upgrade_airflow'
 UPGRADE_AIRFLOW = 'upgrade_airflow'
 DESTROY_SERVER = 'destroy_nodes'
+DEPLOYMENT_STATUS = 'deployment_status'
+FINAL_DEPLOYMENT_STATUS = 'final_deployment_status'
 
 # Define a list of critical steps, used to determine successfulness of a
 # still-running DAG

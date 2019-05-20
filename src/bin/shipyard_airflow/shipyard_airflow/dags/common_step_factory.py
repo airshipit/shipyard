@@ -16,6 +16,7 @@ from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
 
+
 try:
     # Operators are loaded from being registered to airflow.operators
     # in a deployed fashion
@@ -26,6 +27,7 @@ try:
     from airflow.operators import DeckhandCreateSiteActionTagOperator
     from airflow.operators import DrydockDestroyNodeOperator
     from airflow.operators import DrydockRelabelNodesOperator
+    from airflow.operators import DeploymentStatusOperator
 except ImportError:
     # for local testing, they are loaded from their source directory
     from shipyard_airflow.plugins.armada_test_releases import \
@@ -42,6 +44,8 @@ except ImportError:
         DrydockDestroyNodeOperator
     from shipyard_airflow.plugins.drydock_relabel_nodes import \
         DrydockRelabelNodesOperator
+    from shipyard_airflow.plugins.deployment_status_operator import \
+        DeploymentStatusOperator
 
 try:
     # modules reside in a flat directory when deployed with dags
@@ -347,4 +351,35 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             trigger_rule="all_done",
             main_dag_name=self.parent_dag_name,
+            dag=self.dag)
+
+    def get_deployment_status(self, task_id=dn.DEPLOYMENT_STATUS):
+        """Create/update the deployment status ConfigMap
+
+        This will create or update a ConfigMap with the current state of the
+        deployment
+        """
+        return DeploymentStatusOperator(
+            shipyard_conf=config_path,
+            main_dag_name=self.parent_dag_name,
+            task_id=task_id,
+            on_failure_callback=step_failure_handler,
+            dag=self.dag)
+
+    def get_final_deployment_status(self, task_id=dn.FINAL_DEPLOYMENT_STATUS):
+        """Finalize the deployment status ConfigMap
+
+        This will finalize the ConfigMap with the current state of the
+        deployment. Because it is the final step we need to set force_completed
+        to True to mark it as completed, as well as change the trigger_rule to
+        "all_done" so the ConfigMap is always updated even if other steps fail
+        """
+
+        return DeploymentStatusOperator(
+            shipyard_conf=config_path,
+            main_dag_name=self.parent_dag_name,
+            force_completed=True,
+            task_id=task_id,
+            trigger_rule="all_done",
+            on_failure_callback=step_failure_handler,
             dag=self.dag)

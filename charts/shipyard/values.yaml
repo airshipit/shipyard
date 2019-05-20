@@ -410,6 +410,9 @@ conf:
       worker_port: 8793
     k8s_logs:
       ucp_namespace: 'ucp'
+    deployment_status_configmap:
+      name: 'deployment-status'
+      namespace: 'ucp'
     oslo_policy:
       policy_file: /etc/shipyard/policy.yaml
       # If non-existent rule is used, the request should be denied. The
