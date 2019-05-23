@@ -13,6 +13,8 @@
 # limitations under the License.
 import logging
 
+from shipyard_airflow.dags import dag_names
+
 LOG = logging.getLogger(__name__)
 
 
@@ -66,7 +68,7 @@ class XcomPuller(object):
 
     def get_deployment_configuration(self):
         """Retrieve the deployment configuration dictionary"""
-        source_task = 'deployment_configuration'
+        source_task = dag_names.DEPLOYMENT_CONFIGURATION
         source_dag = None
         key = None
         return self._get_xcom(source_task=source_task,
@@ -80,7 +82,7 @@ class XcomPuller(object):
         that contains information about the workflow such as action_id, name
         and other related parameters
         """
-        source_task = 'action_xcom'
+        source_task = dag_names.ACTION_XCOM
         source_dag = None
         key = 'action'
         return self._get_xcom(source_task=source_task,
@@ -89,7 +91,7 @@ class XcomPuller(object):
 
     def get_action_type(self):
         """Retrieve the action type"""
-        source_task = 'action_xcom'
+        source_task = dag_names.ACTION_XCOM
         source_dag = None
         key = 'action_type'
         return self._get_xcom(source_task=source_task,
@@ -98,9 +100,18 @@ class XcomPuller(object):
 
     def get_check_drydock_continue_on_fail(self):
         """Check if 'drydock_continue_on_fail' key exists"""
-        source_task = 'ucp_preflight_check'
+        source_task = dag_names.UCP_PREFLIGHT_NAME
         source_dag = None
         key = 'drydock_continue_on_fail'
+        return self._get_xcom(source_task=source_task,
+                              dag_id=source_dag,
+                              key=key)
+
+    def get_concurrency_status(self):
+        """Retrieve the success status of concurrency_check"""
+        source_task = dag_names.CONCURRENCY_CHECK
+        source_dag = None
+        key = 'concurrency_check_success'
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)

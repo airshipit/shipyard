@@ -20,6 +20,8 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.exceptions import AirflowException
 
 # constants related to the dag_run table.
+from shipyard_airflow.plugins.xcom_pusher import XcomPusher
+
 DAG_RUN_SELECT_RUNNING_SQL = ("select dag_id, execution_date "
                               "from dag_run "
                               "where state='running'")
@@ -58,12 +60,15 @@ class ConcurrencyCheckOperator(BaseOperator):
     def __init__(self, conflicting_dag_set=None, *args, **kwargs):
         super(ConcurrencyCheckOperator, self).__init__(*args, **kwargs)
         self.conflicting_dag_set = conflicting_dag_set
+        self.xcom_push = None
 
     def execute(self, context):
         """
         Run the check to see if this DAG has an concurrency issues with other
         DAGs. Stop the workflow if there is.
         """
+        self.xcom_push = XcomPusher(context['task_instance'])
+        self._xcom_push_status(False)
         if self.conflicting_dag_set is None:
             self.check_dag_id = self.dag.dag_id
             logging.debug('dag_id is %s', self.check_dag_id)
@@ -85,6 +90,7 @@ class ConcurrencyCheckOperator(BaseOperator):
         else:
             self.abort_conflict(
                 dag_name=self.check_dag_id, conflict=conflicting_dag)
+        self._xcom_push_status(True)
 
     def get_executing_dags(self):
         """
@@ -126,6 +132,14 @@ class ConcurrencyCheckOperator(BaseOperator):
             dag_name, conflict)
         logging.error(conflict_string)
         raise AirflowException(conflict_string)
+
+    def _xcom_push_status(self, status):
+        """
+        Push the status of the concurrency check
+        :param status: bool of whether or not this task is successful
+        :return:
+        """
+        self.xcom_push.xcom_push(key="concurrency_check_success", value=status)
 
 
 class ConcurrencyCheckPlugin(AirflowPlugin):

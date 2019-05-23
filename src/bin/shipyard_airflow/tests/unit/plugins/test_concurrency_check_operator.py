@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
 import pytest
 from shipyard_airflow.plugins import concurrency_check_operator as operator
 from shipyard_airflow.plugins.concurrency_check_operator import (
@@ -99,7 +101,8 @@ def test_find_conflicting_dag():
     assert cco.find_conflicting_dag('buffalo') == 'chicken'
 
 
-def test_execute_exception():
+@mock.patch('shipyard_airflow.plugins.concurrency_check_operator.XcomPusher')
+def test_execute_exception(xcom_pusher):
     """
     Run the whole execute function for testing
     """
@@ -110,13 +113,15 @@ def test_execute_exception():
     cco.check_dag_id = 'cow'
     cco.get_executing_dags = get_executing_dags_stub
     try:
-        cco.execute(None)
+        context = {'task_instance': None}
+        cco.execute(context)
         pytest.fail('AirflowException should have been raised')
     except AirflowException as airflow_exception:
         assert 'Aborting run' in airflow_exception.args[0]
 
 
-def test_execute_success():
+@mock.patch('shipyard_airflow.plugins.concurrency_check_operator.XcomPusher')
+def test_execute_success(xcom_pusher):
     """
     Run the whole execute function for testing - successfully!
     """
@@ -128,7 +133,8 @@ def test_execute_success():
     cco.check_dag_id = 'airplane'
     cco.get_executing_dags = get_executing_dags_stub
     try:
-        cco.execute(None)
+        context = {'task_instance': None}
+        cco.execute(context)
         assert True
     except AirflowException:
         pytest.fail('AirflowException should not have been raised')

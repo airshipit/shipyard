@@ -14,6 +14,7 @@
 
 # Subdags
 ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
+UCP_PREFLIGHT_NAME = 'ucp_preflight_check'
 ARMADA_BUILD_DAG_NAME = 'armada_build'
 DESTROY_SERVER_DAG_NAME = 'destroy_server'
 DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
