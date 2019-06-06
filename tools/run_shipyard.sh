@@ -37,7 +37,8 @@ SHIPYARD_HOSTPATH=${SHIPYARD_HOSTPATH:-"/home/shipyard/host"}
 # set default value for OS_PASSWORD if it's not set
 # this doesn't actually get exported to environment
 # unless the script is sourced
-export OS_PASSWORD=${OS_PASSWORD:-password}
+OS_SHIPYARD_PASSWORD=${OS_SHIPYARD_PASSWORD:-${OS_PASSWORD}}
+export OS_PASSWORD=${OS_SHIPYARD_PASSWORD:-password}
 
 # Execute Shipyard CLI
 #

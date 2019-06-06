@@ -42,7 +42,8 @@ SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master}"
 # set default value for OS_PASSWORD if it's not set
 # this doesn't actually get exported to environment
 # unless the script is sourced
-export OS_PASSWORD=${OS_PASSWORD:-password}
+OS_SHIPYARD_PASSWORD=${OS_SHIPYARD_PASSWORD:-${OS_PASSWORD}}
+export OS_PASSWORD=${OS_SHIPYARD_PASSWORD:-password}
 
 # Define Base Docker Command
 base_docker_command=$(cat << EndOfCommand
