@@ -16,12 +16,24 @@
 
 set -ex
 
+get_usage() {
+    df /usr/local/airflow/logs/ --output='pcent' | grep -o '[0-9]*'
+}
+
 while true; do
 
     # Delete logs that are more than 30 days old in the directories
     # under the Airflow log path
     # Delete empty directories under the Airflow log path
     find ${LOGROTATE_PATH} \( -type f -name '*.log' -mtime +${DAYS_BEFORE_LOG_DELETION} -o -type d -empty \) -print -delete
+
+    # Delete oldest logs and empty directories when
+    # the Airflow log path filesystem reaches max usage
+    CURR_USAGE=$(get_usage)
+    while [ $CURR_USAGE -gt ${PERCENT_MAX_LOG_FS_USAGE} ]; do
+      find ${LOGROTATE_PATH} \( -type f -name '*.log' -o -type d -empty \) -printf '%T+ %p\n' | sort | head -n 1 | xargs -r -l1 sh -c 'rm -rf $1'
+      CURR_USAGE=$(get_usage)
+    done
 
     # Sleep for 1 hr between each wait loop
     sleep 3600
