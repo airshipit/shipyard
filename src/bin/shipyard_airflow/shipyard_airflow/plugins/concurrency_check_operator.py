@@ -19,9 +19,9 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.exceptions import AirflowException
 
-# constants related to the dag_run table.
 from shipyard_airflow.plugins.xcom_pusher import XcomPusher
 
+# constants related to the dag_run table.
 DAG_RUN_SELECT_RUNNING_SQL = ("select dag_id, execution_date "
                               "from dag_run "
                               "where state='running'")

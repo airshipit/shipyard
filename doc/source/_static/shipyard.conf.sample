@@ -84,6 +84,19 @@
 #service_type = deckhand
 
 
+[deployment_status_configmap]
+
+#
+# From shipyard_api
+#
+
+# Name of the Deployment Status ConfigMap (string value)
+#name = deployment-status
+
+# Namespace of the Deployment Status ConfigMap (string value)
+#namespace = ucp
+
+
 [document_info]
 
 #
