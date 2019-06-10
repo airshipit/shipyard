@@ -287,6 +287,22 @@ SECTIONS = [
         ]
     ),
     ConfigSection(
+        name='deployment_status_configmap',
+        title='Parameters for Deployment Status ConfigMap',
+        options=[
+            cfg.StrOpt(
+                'name',
+                default='deployment-status',
+                help='Name of the Deployment Status ConfigMap'
+            ),
+            cfg.StrOpt(
+                'namespace',
+                default='ucp',
+                help='Namespace of the Deployment Status ConfigMap'
+            ),
+        ]
+    ),
+    ConfigSection(
         name='document_info',
         title=('Information about some of the documents Shipyard needs to '
                'handle'),
