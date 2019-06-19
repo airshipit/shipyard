@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import abc
+import os
 import logging
 
 from keystoneauth1.exceptions.auth import AuthorizationFailure
@@ -135,10 +136,16 @@ class BaseClient(metaclass=abc.ABCMeta):
             raise ClientError(str(e))
 
     def get_token(self):
+        """Returns the simple token string for a token
+
+        Attempt to read token from environment variable, if present use it.
+        If not, return the token obtained from Keystone.
         """
-        Returns the simple token string for a token acquired from keystone
-        """
-        return self._get_ks_session().get_auth_headers().get('X-Auth-Token')
+        token = os.environ.get('OS_AUTH_TOKEN')
+        if token:
+            return token
+        else:
+            return self._get_ks_session().get_auth_headers().get('X-Auth-Token')
 
     def _get_ks_session(self):
         self.logger.debug('Accessing keystone for keystone session')
