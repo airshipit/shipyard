@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Docker image to run Airflow on Kubernetes
-ARG FROM=opensuse/leap:15.0
+ARG FROM=opensuse/leap:15.1
 FROM ${FROM}
 
 LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode'

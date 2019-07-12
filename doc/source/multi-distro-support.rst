@@ -18,7 +18,7 @@ Multiple Distro Support
 =======================
 
 This project builds images for Shipyard and Airflow components. Currently, it
-supports building images for ubuntu and opensuse ( leap 15.0 as base image).
+supports building images for ubuntu and opensuse ( leap 15.1 as base image).
 
 By default, Ubuntu images are built and are published to public registry
 server. Recently support for publishing opensuse image has also been added.
@@ -28,7 +28,7 @@ can be passed to the *make* command in shipyard repository's root
 directory with *images* as target::
 
     DISTRO: opensuse_15
-    DISTRO_BASE_IMAGE: "opensuse/leap:15.0"
+    DISTRO_BASE_IMAGE: "opensuse/leap:15.1"
     DOCKER_REGISTRY: { your_docker_registry }
     IMAGE_TAG: latest
     IMAGE_NAME: airflow
