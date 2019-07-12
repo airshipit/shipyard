@@ -31,15 +31,15 @@ labels:
 
 images:
   tags:
-    airflow: quay.io/airshipit/airflow:latest
-    shipyard: quay.io/airshipit/shipyard:latest
+    airflow: quay.io/airshipit/airflow:latest-ubuntu_xenial
+    shipyard: quay.io/airshipit/shipyard:latest-ubuntu_xenial
     dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
     shipyard_db_init: docker.io/postgres:9.5
     shipyard_db_auxiliary: docker.io/postgres:9.5
-    shipyard_db_sync: quay.io/airshipit/shipyard:latest
+    shipyard_db_sync: quay.io/airshipit/shipyard:latest-ubuntu_xenial
     airflow_db_init: docker.io/postgres:9.5
     rabbit_init: docker.io/rabbitmq:3.7-management
-    airflow_db_sync: quay.io/airshipit/airflow:latest
+    airflow_db_sync: quay.io/airshipit/airflow:latest-ubuntu_xenial
     ks_user: docker.io/openstackhelm/heat:ocata
     ks_service: docker.io/openstackhelm/heat:ocata
     ks_endpoints: docker.io/openstackhelm/heat:ocata

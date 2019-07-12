@@ -38,7 +38,7 @@ set -e
 # Source Base Docker Command
 SHIPYARD_HOSTPATH=${SHIPYARD_HOSTPATH:-"/target"}
 NAMESPACE="${NAMESPACE:-ucp}"
-SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master}"
+SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master-ubuntu_xenial}"
 # set default value for OS_PASSWORD if it's not set
 # this doesn't actually get exported to environment
 # unless the script is sourced
