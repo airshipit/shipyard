@@ -19,7 +19,7 @@
 # before executing this script if they differ from the default values.
 #
 NAMESPACE="${NAMESPACE:-ucp}"
-SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master}"
+SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master-ubuntu_xenial}"
 
 # Define Base Docker Command
 base_docker_command=$(cat << EndOfCommand
