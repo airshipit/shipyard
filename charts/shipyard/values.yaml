@@ -279,6 +279,9 @@ endpoints:
     host_fqdn_override:
       default: null
   oslo_messaging:
+    statefulset:
+      replicas: 1
+      name: rabbitmq-rabbitmq
     auth:
       user:
         username: airflow

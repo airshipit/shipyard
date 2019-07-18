@@ -1,5 +1,5 @@
 {{/*
-Copyright 2018 The Openstack-Helm Authors.
+Copyright 2017 The Openstack-Helm Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if .Values.manifests.secret_rabbitmq }}
-{{- $envAll := . }}
-{{- $secretName := index $envAll.Values.secrets.oslo_messaging "airflow" }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ $secretName }}
-type: Opaque
-data:
-  RABBITMQ_CONNECTION: {{ tuple "oslo_messaging" "internal" "user" "amqp" $envAll | include "helm-toolkit.endpoints.authenticated_transport_endpoint_uri_lookup" | b64enc }}
-{{- end }}
+{{/*
+abstract: |
+  Joins a list of values into a semicolon separated string
+values: |
+  test:
+    - foo
+    - bar
+usage: |
+  {{ include "shipyard.utils.joinListWithSemicolon" .Values.test }}
+return: |
+  foo;bar
+*/}}
+
+{{- define "shipyard.utils.joinListWithSemicolon" -}}
+{{- $local := dict "first" true -}}
+{{- range $k, $v := . -}}{{- if not $local.first -}};{{- end -}}{{- $v -}}{{- $_ := set $local "first" false -}}{{- end -}}
+{{- end -}}
