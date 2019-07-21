@@ -183,13 +183,23 @@ spec:
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
       volumes:
         - name: airflow-etc
-          configMap:
-            name: airflow-etc
+          projected:
             defaultMode: 0444
+            sources:
+              - configMap:
+                  name: airflow-etc
+                  items:
+                    - key: airflow.cfg
+                      path: airflow.cfg
         - name: shipyard-etc
-          configMap:
-            name: shipyard-etc
+          projected:
             defaultMode: 0444
+            sources:
+              - configMap:
+                  name: shipyard-etc
+                  items:
+                    - key: shipyard.conf
+                      path: shipyard.conf
         - name: airflow-bin
           configMap:
             name: airflow-bin
