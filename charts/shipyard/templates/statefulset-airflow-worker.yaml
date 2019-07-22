@@ -120,11 +120,9 @@ spec:
           volumeMounts:
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
-              subPath: airflow.cfg
               readOnly: true
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
-              subPath: shipyard.conf
               readOnly: true
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
@@ -147,11 +145,9 @@ spec:
           volumeMounts:
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
-              subPath: airflow.cfg
               readOnly: true
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
-              subPath: shipyard.conf
               readOnly: true
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
