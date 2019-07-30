@@ -323,5 +323,5 @@ deploying a site.
 .. _Deckhand: https://git.airshipit.org/cgit/airship-deckhand
 .. _Divingbell: https://git.airshipit.org/cgit/airship-divingbell
 .. _Drydock: https://git.airshipit.org/cgit/airship-drydock
-.. _Keystone: https://developer.openstack.org/api-ref/identity/index.html
+.. _Keystone: https://docs.openstack.org/api-ref/identity/index.html
 .. _Promenade: https://git.airshipit.org/cgit/airship-promenade
