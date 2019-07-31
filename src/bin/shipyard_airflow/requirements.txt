@@ -29,7 +29,7 @@ PasteDeploy==1.5.2
 psycopg2==2.7.4
 python-dateutil==2.7.3
 python-memcached==1.59
-requests==2.19.1
+requests==2.20.0
 setuptools==40.4.1
 SQLAlchemy==1.2.12
 ulid==1.1
