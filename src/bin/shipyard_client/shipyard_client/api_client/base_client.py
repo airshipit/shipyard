@@ -150,7 +150,10 @@ class BaseClient(metaclass=abc.ABCMeta):
     def _get_ks_session(self):
         self.logger.debug('Accessing keystone for keystone session')
         try:
-            auth = v3.Password(**self.context.keystone_auth)
+            if self.context.keystone_auth.get("token"):
+                auth = v3.Token(**self.context.keystone_auth)
+            else:
+                auth = v3.Password(**self.context.keystone_auth)
             return session.Session(auth=auth)
         except AuthorizationFailure as e:
             self.logger.error('Could not authorize against keystone: %s',
