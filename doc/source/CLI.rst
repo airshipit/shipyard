@@ -32,6 +32,8 @@ variables that will be used are as follows:
 
 -  OS_PROJECT_DOMAIN_NAME ("default" if not specified)
 -  OS_USER_DOMAIN_NAME ("default" if not specified)
+-  OS_DOMAIN_NAME
+-  OS_AUTH_TOKEN
 -  OS_PROJECT_NAME
 -  OS_USERNAME
 -  OS_PASSWORD

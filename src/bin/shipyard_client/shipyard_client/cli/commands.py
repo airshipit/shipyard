@@ -46,10 +46,16 @@ from shipyard_client.cli.input_checks import check_control_action, check_id
     type=click.Choice(['format', 'raw', 'cli']),
     default='cli')
 # Supported Environment Variables
+@click.option('--os-auth-token',
+              envvar='OS_AUTH_TOKEN',
+              required=False)
 @click.option('--os-project-domain-name',
               envvar='OS_PROJECT_DOMAIN_NAME',
               required=False,
               default='default')
+@click.option('--os-domain-name',
+              envvar='OS_DOMAIN_NAME',
+              required=False)
 @click.option('--os-user-domain-name',
               envvar='OS_USER_DOMAIN_NAME',
               required=False,
@@ -68,9 +74,9 @@ from shipyard_client.cli.input_checks import check_control_action, check_id
     type=click.IntRange(0, 5),
     default=1)
 @click.pass_context
-def shipyard(ctx, context_marker, debug, os_project_domain_name,
-             os_user_domain_name, os_project_name, os_username, os_password,
-             os_auth_url, output_format, verbosity):
+def shipyard(ctx, context_marker, debug, os_auth_token, os_project_domain_name,
+             os_user_domain_name, os_domain_name, os_project_name, os_username,
+             os_password, os_auth_url, output_format, verbosity):
     """
     COMMAND: shipyard \n
     DESCRIPTION: The base shipyard command supports options that determine
@@ -95,13 +101,26 @@ def shipyard(ctx, context_marker, debug, os_project_domain_name,
     logger.debug('logging for cli initialized')
 
     auth_vars = {
-        'project_domain_name': os_project_domain_name,
         'user_domain_name': os_user_domain_name,
         'project_name': os_project_name,
         'username': os_username,
         'password': os_password,
         'auth_url': os_auth_url
     }
+
+    if os_auth_token:
+        auth_vars = {
+            'token': os_auth_token,
+            'auth_url': os_auth_url
+        }
+
+    # Domain-scoped params
+    if os_domain_name:
+        auth_vars['domain_name'] = os_domain_name
+        auth_vars['project_domain_name'] = None
+    # Project-scoped params
+    else:
+        auth_vars['project_domain_name'] = os_project_domain_name
 
     ctx.obj['API_PARAMETERS'] = {
         'auth_vars': auth_vars,
