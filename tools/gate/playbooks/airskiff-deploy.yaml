@@ -14,17 +14,16 @@
 
 - hosts: primary
   tasks:
-    - name: Install Required Packages
-      shell: |
-        ./tools/deployment/airskiff/developer/000-install-packages.sh
-      args:
-        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
-      become: yes
-
     - name: Clone Required Repositories
       shell: |
         export CLONE_SHIPYARD={{ CLONE_SHIPYARD }}
-        ./tools/deployment/airskiff/developer/005-clone-dependencies.sh
+        ./tools/deployment/airskiff/developer/000-clone-dependencies.sh
+      args:
+        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
+
+    - name: Deploy Kubernetes with Minikube
+      shell: |
+        ./tools/deployment/airskiff/developer/010-deploy-k8s.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
@@ -34,12 +33,6 @@
       args:
         chdir: "{{ zuul.project.src_dir }}"
       become: yes
-
-    - name: Deploy Kubernetes with Minikube
-      shell: |
-        ./tools/deployment/airskiff/developer/010-deploy-k8s.sh
-      args:
-        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
     - name: Setup OpenStack Client
       shell: |
