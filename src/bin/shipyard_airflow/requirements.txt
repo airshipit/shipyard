@@ -36,7 +36,8 @@ ulid==1.1
 uwsgi==2.0.17
 
 # To support profiling in non-prod
-Werkzeug==0.14.1
+Werkzeug>=0.15.0
+marshmallow-sqlalchemy==0.18.0
 
 # Dependencies for other UCP components
 git+https://git.openstack.org/openstack/airship-deckhand@a76ffb66ae809c19281a6cf5c9414ed197d249b7#egg=deckhand

@@ -40,6 +40,7 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.1"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
@@ -85,8 +86,10 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Dependency requirements
 # Note - removing snakebite (python 2 vs. 3). See:
 #    https://github.com/puckel/docker-airflow/issues/77
+# Install Airflow directly to allow overriding source
 COPY images/airflow/requirements.txt /tmp/
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
+    && pip3 install $AIRFLOW_SRC --no-cache-dir \
     && pip3 uninstall -y snakebite || true
 
 # Copy scripts used in the container:

@@ -18,9 +18,11 @@ ndg-httpsclient==0.5.1
 pyasn1==0.4.4
 psycopg2==2.7.5
 docker==3.5.0
-apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.1
+# Airflow is now installed in the Dockerfile directory to allow for
+# overriding where it is sourced from
 python-openstackclient==3.16.1
 kubernetes>=6.0.0
+marshmallow-sqlalchemy==0.18.0
 
 # Dependencies for other UCP components
 git+https://git.openstack.org/openstack/airship-deckhand@a76ffb66ae809c19281a6cf5c9414ed197d249b7#egg=deckhand

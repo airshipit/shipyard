@@ -40,6 +40,7 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.1"
 ARG ctx_base=src/bin
 
 # Kubectl version
@@ -110,7 +111,8 @@ ENV PBR_VERSION 0.1a1
 # stale or out-of-date code between these parts.
 # Shipyard requirements, source and installation
 COPY ${ctx_base}/shipyard_airflow/requirements.txt /tmp/api_requirements.txt
-RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir
+RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir \
+    && pip3 install $AIRFLOW_SRC --no-cache-dir
 
 COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
 RUN cd /tmp/shipyard \

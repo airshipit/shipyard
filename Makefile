@@ -31,6 +31,7 @@ PROXY                      ?= http://proxy.foo.com:8000
 NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
 USE_PROXY                  ?= false
 
+AIRFLOW_SRC                ?=
 DISTRO_BASE_IMAGE          ?=
 DISTRO                     ?= ubuntu_xenial
 
@@ -83,6 +84,9 @@ run:
 	USE_PROXY=$(USE_PROXY) PROXY=$(PROXY) $(SCRIPT) $(IMAGE)
 
 _BASE_IMAGE_ARG := $(if $(DISTRO_BASE_IMAGE),--build-arg FROM="${DISTRO_BASE_IMAGE}" ,)
+ifeq ($(IMAGE_NAME), airflow)
+	_AIRFLOW_SRC_ARG := $(if $(AIRFLOW_SRC),--build-arg AIRFLOW_SRC="${AIRFLOW_SRC}" ,)
+endif
 
 .PHONY: build
 build:
@@ -93,6 +97,7 @@ ifeq ($(USE_PROXY), true)
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
 		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
+		$(_AIRFLOW_SRC_ARG) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
 		--build-arg HTTP_PROXY=$(PROXY) \
@@ -107,6 +112,7 @@ else
 		--label "org.opencontainers.image.title=$(IMAGE_NAME)" \
 		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
+		$(_AIRFLOW_SRC_ARG) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 endif
 ifeq ($(PUSH_IMAGE), true)
