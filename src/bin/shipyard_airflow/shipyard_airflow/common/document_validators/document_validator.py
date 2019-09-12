@@ -118,13 +118,14 @@ class DocumentValidator(metaclass=abc.ABCMeta):
         """
         if self.missing_severity not in ["Error", "Warning", "Info"]:
             LOG.warn("Document Validator for {}, {} does not have a valid "
-                     "value set for missing_severity. Assuming Error".format(
-                         self.schema, self.doc_name
+                     "value set for missing_severity (got {}). "
+                     "Assuming Error".format(
+                         self.schema, self.doc_name, self.missing_severity
                      ))
             self.missing_severity = "Error"
 
         try:
-            LOG.debug("Lookup up document %s: %s from revision %s",
+            LOG.debug("Lookup document %s: %s from revision %s",
                       self.schema,
                       self.doc_name,
                       self.revision)
