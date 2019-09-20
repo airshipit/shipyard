@@ -884,6 +884,18 @@ pod:
           memory: "128Mi"
           cpu: "100m"
 
+network_policy:
+  airflow:
+    ingress:
+      - {}
+    egress:
+      - {}
+  shipyard:
+    ingress:
+      - {}
+    egress:
+      - {}
+
 manifests:
   configmap_shipyard_bin: true
   configmap_shipyard_etc: true
@@ -914,3 +926,4 @@ manifests:
   service_airflow_worker: true
   service_discovery_airflow_worker: true
   test_shipyard_api: true
+  network_policy: false
