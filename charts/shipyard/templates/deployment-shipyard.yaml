@@ -15,13 +15,14 @@
 
 {{- if .Values.manifests.deployment_shipyard }}
 {{- $envAll := . }}
+{{- $labels :=  tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" -}}
 {{- $serviceAccountName := "shipyard" }}
 {{- $mounts_shipyard := .Values.pod.mounts.shipyard.shipyard }}
 {{- $mounts_shipyard_init := .Values.pod.mounts.shipyard.init_container }}
 
 {{ tuple $envAll "shipyard" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: shipyard-api
@@ -29,11 +30,14 @@ metadata:
     {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   replicas: {{ .Values.pod.replicas.shipyard.api }}
+  selector:
+    matchLabels:
+{{ $labels | indent 6 }}
 {{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
   template:
     metadata:
       labels:
-{{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ $labels | indent 8 }}
       annotations:
 {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
         shipyard-configmap-bin-hash: {{ tuple "configmap-shipyard-bin.yaml" . | include "helm-toolkit.utils.hash" }}
