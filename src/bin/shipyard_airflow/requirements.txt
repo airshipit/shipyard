@@ -37,7 +37,9 @@ uwsgi==2.0.17
 
 # To support profiling in non-prod
 Werkzeug>=0.15.0
+# Need to lock marshmellow-sqlalchemy and tabulate for compatibility issues
 marshmallow-sqlalchemy==0.18.0
+tabulate==0.8.03
 
 # Dependencies for other UCP components
 git+https://git.openstack.org/openstack/airship-deckhand@7e5d81f50f1f8c0d58d0973ae0b3065fd5b62451#egg=deckhand
