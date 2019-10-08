@@ -24,12 +24,13 @@
 
 {{- if .Values.manifests.deployment_airflow_scheduler }}
 {{- $envAll := . }}
+{{- $labels :=  tuple $envAll "airflow" "scheduler" | include "helm-toolkit.snippets.kubernetes_metadata_labels" -}}
 {{- $serviceAccountName := "airflow-scheduler" }}
 {{ tuple $envAll "airflow_server" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
 {{- $mounts_airflow_scheduler := .Values.pod.mounts.airflow_scheduler.airflow_scheduler }}
 {{- $mounts_airflow_scheduler_init := .Values.pod.mounts.airflow_scheduler.init_container }}
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: airflow-scheduler
@@ -37,11 +38,14 @@ metadata:
     {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
   replicas: {{ .Values.pod.replicas.airflow.scheduler }}
+  selector:
+    matchLabels:
+{{ $labels | indent 6 }}
 {{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
   template:
     metadata:
       labels:
-{{ tuple $envAll "airflow" "scheduler" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+{{ $labels | indent 8 }}
       annotations:
 {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
         configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
