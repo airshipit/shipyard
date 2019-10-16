@@ -32,6 +32,7 @@ NO_PROXY                   ?= localhost,127.0.0.1,.svc.cluster.local
 USE_PROXY                  ?= false
 
 AIRFLOW_SRC                ?=
+AIRFLOW_HOME               ?=
 DISTRO_BASE_IMAGE          ?=
 DISTRO                     ?= ubuntu_xenial
 
@@ -86,6 +87,7 @@ run:
 _BASE_IMAGE_ARG := $(if $(DISTRO_BASE_IMAGE),--build-arg FROM="${DISTRO_BASE_IMAGE}" ,)
 ifeq ($(IMAGE_NAME), airflow)
 	_AIRFLOW_SRC_ARG := $(if $(AIRFLOW_SRC),--build-arg AIRFLOW_SRC="${AIRFLOW_SRC}" ,)
+	_AIRFLOW_HOME_ARG := $(if $(AIRFLOW_HOME),--build-arg AIRFLOW_HOME="${AIRFLOW_HOME}" ,)
 endif
 
 .PHONY: build
@@ -98,6 +100,7 @@ ifeq ($(USE_PROXY), true)
 		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
 		$(_AIRFLOW_SRC_ARG) \
+		$(_AIRFLOW_HOME_ARG) \
 		--build-arg http_proxy=$(PROXY) \
 		--build-arg https_proxy=$(PROXY) \
 		--build-arg HTTP_PROXY=$(PROXY) \
@@ -113,6 +116,7 @@ else
 		-f $(IMAGE_DIR)/Dockerfile.$(DISTRO) \
 		$(_BASE_IMAGE_ARG) \
 		$(_AIRFLOW_SRC_ARG) \
+		$(_AIRFLOW_HOME_ARG) \
 		--build-arg ctx_base=$(BUILD_CTX) .
 endif
 ifeq ($(PUSH_IMAGE), true)

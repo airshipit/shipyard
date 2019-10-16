@@ -40,11 +40,14 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
-ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.1"
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.4"
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.10.2
+ARG KUBECTL_VERSION=1.16.2
+
+# Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
+ENV AIRFLOW_HOME=${AIRFLOW_HOME}
 
 RUN set -ex && \
     zypper -q update -y ;\

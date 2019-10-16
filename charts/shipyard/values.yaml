@@ -454,7 +454,9 @@ conf:
     # NOTE: Airflow 1.10 introduces a need to declare all config options:
     #     https://issues.apache.org/jira/browse/AIRFLOW-3099
     core:
-      airflow_home: /usr/local/airflow
+      # core.airflow_home is not used in 1.10.3 and later.
+      # Envrionment variable AIRFLOW_HOME is used instead.
+      #airflow_home: /usr/local/airflow
       dags_folder: /usr/local/airflow/dags
       base_log_folder: /usr/local/airflow/logs
       remote_logging: "False"
@@ -497,15 +499,17 @@ conf:
       parallelism: 32
       dag_concurrency: 8
       dags_are_paused_at_creation: "False"
-      non_pooled_task_slot_count: 128
+      # In 1.10.4, non_pooled_task_slot_count and non_pooled_backfill_task_slot_count are
+      # removed in favor of default_pool, which is initialized with 128 slots by default.
+      #non_pooled_task_slot_count: 128
       max_active_runs_per_dag: 8
       load_examples: "False"
       plugins_folder: /usr/local/airflow/plugins
       fernet_key: fKp7omMJ4QlTxfZzVBSiyXVgeCK-6epRjGgMpEIsjvs=
       donot_pickle: "False"
       dagbag_import_timeout: 30
-      task_runner: "BashTaskRunner"
-      # task_runner: "StandardTaskRunner"  -- coming soon?
+      # BashTaskRunner has been renamed to StandardTaskRunner from 1.10.3
+      task_runner: "StandardTaskRunner"
       default_impersonation: ""
       security: ""
       secure_mode: "True"
@@ -683,9 +687,9 @@ conf:
       hide_sensitive_variable_fields: "True"
     elasticsearch:
       # Shipyard is not using this
-      elasticsearch_host: ""
-      elasticsearch_log_id_template: ""
-      elasticsearch_end_of_log_mark: ""
+      host: ""
+      log_id_template: ""
+      end_of_log_mark: ""
     kubernetes:
       # Shipyard is not using this (maybe future for spawning own workers)
       worker_container_repository: ""
