@@ -687,9 +687,9 @@ conf:
       hide_sensitive_variable_fields: "True"
     elasticsearch:
       # Shipyard is not using this
-      host: ""
-      log_id_template: ""
-      end_of_log_mark: ""
+      elasticsearch_host: ""
+      elasticsearch_log_id_template: ""
+      elasticsearch_end_of_log_mark: ""
     kubernetes:
       # Shipyard is not using this (maybe future for spawning own workers)
       worker_container_repository: ""
