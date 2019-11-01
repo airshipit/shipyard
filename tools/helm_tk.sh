@@ -46,7 +46,7 @@ function helm_serve {
 
 mkdir -p build
 cd build
-git clone --depth 1 https://opendev.org/openstack/openstack-helm-infra.git || true
+git clone https://opendev.org/openstack/openstack-helm-infra.git || true
 cd openstack-helm-infra
 git reset --hard "${HTK_STABLE_COMMIT}"
 
