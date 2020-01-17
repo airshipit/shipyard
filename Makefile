@@ -34,7 +34,7 @@ USE_PROXY                  ?= false
 AIRFLOW_SRC                ?=
 AIRFLOW_HOME               ?=
 DISTRO_BASE_IMAGE          ?=
-DISTRO                     ?= ubuntu_xenial
+DISTRO                     ?= ubuntu_bionic
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
 IMAGE_DIR:=images/$(IMAGE_NAME)

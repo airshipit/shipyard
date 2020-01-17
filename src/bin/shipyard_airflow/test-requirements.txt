@@ -1,5 +1,5 @@
 # Testing
-amqp==2.5.1
+amqp==2.5.2
 pytest==3.5.0
 pytest-cov==2.5.1
 responses==0.10.2

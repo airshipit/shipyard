@@ -184,7 +184,7 @@ command. In this example we will execute the ``get actions`` command::
   -e 'OS_PASSWORD=password' -e 'OS_PROJECT_DOMAIN_NAME=default' \
   -e 'OS_PROJECT_NAME=service' -e 'OS_USERNAME=shipyard' \
   -e 'OS_USER_DOMAIN_NAME=default' -e 'OS_IDENTITY_API_VERSION=3' \
-  --rm --net=host airshipit/shipyard:latest-ubuntu_xenial get actions
+  --rm --net=host airshipit/shipyard:latest-ubuntu_bionic get actions
 
 The output will resemble the following::
 
@@ -208,7 +208,7 @@ Definition
 Preparation
   The site is assembled, racking, and wiring is completed, and the hardware is
   readied for operation. The ``Genesis Node`` is preinstalled with an
-  (Ubuntu 16.04) image. Airship is deployed; See
+  (Ubuntu 18.04) image. Airship is deployed; See
   :ref:`shipyard_deployment_guide`
 
   At this point, Airship is ready for use. This is when the Shipyard API is

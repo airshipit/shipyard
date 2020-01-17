@@ -25,18 +25,21 @@
         - airship-shipyard-chart-build-latest-htk
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-airskiff-deployment
-        - airship-shipyard-image-gate-ubuntu
+        - airship-shipyard-image-gate-ubuntu_xenial
+        - airship-shipyard-image-gate-ubuntu_bionic
         - airship-shipyard-image-gate-opensuse
     gate:
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate-ubuntu
+        - airship-shipyard-image-gate-ubuntu_xenial
+        - airship-shipyard-image-gate-ubuntu_bionic
         - airship-shipyard-image-gate-opensuse
     post:
       jobs:
-        - airship-shipyard-docker-build-post-ubuntu
+        - airship-shipyard-docker-build-post-ubuntu_xenial
+        - airship-shipyard-docker-build-post-ubuntu_bionic
         - airship-shipyard-docker-build-post-opensuse
         - shipyard-upload-git-mirror
 
@@ -44,7 +47,7 @@
     name: airship-shipyard-single-node
     nodes:
       - name: primary
-        label: ubuntu-xenial
+        label: ubuntu-bionic
 
 - job:
     name: airship-shipyard-chart-build-gate
@@ -83,13 +86,25 @@
       - ^releasenotes/.*$
 
 - job:
-    name: airship-shipyard-image-gate-ubuntu
+    name: airship-shipyard-image-gate-ubuntu_xenial
     description: |
-      Run shipyard-image build for ubuntu.
+      Run shipyard-image build for ubuntu_xenial.
     parent: airship-shipyard-image-base
     vars:
       publish: false
       distro: ubuntu_xenial
+      tags:
+        dynamic:
+          patch_set: true
+
+- job:
+    name: airship-shipyard-image-gate-ubuntu_bionic
+    description: |
+      Run shipyard-image build for ubuntu_bionic.
+    parent: airship-shipyard-image-base
+    vars:
+      publish: false
+      distro: ubuntu_bionic
       tags:
         dynamic:
           patch_set: true
@@ -110,7 +125,7 @@
       - airship/treasuremap
     vars:
       CLONE_SHIPYARD: false
-    irrelevant-files:
+    irrelevant-files: &irrelevant-files
       - ^.*\.rst$
       - ^doc/.*$
       - ^releasenotes/.*$
@@ -128,19 +143,34 @@
           patch_set: true
 
 - job:
-    name: airship-shipyard-docker-build-post-ubuntu
+    name: airship-shipyard-docker-build-post-ubuntu_xenial
     timeout: 1800
     run: tools/gate/playbooks/run-image.yaml
     nodeset: airship-shipyard-single-node
-    irrelevant-files:
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^releasenotes/.*$
+    irrelevant-files: *irrelevant-files
     secrets:
       - airship_shipyard_quay_creds
     vars:
       publish: true
       distro: ubuntu_xenial
+      tags:
+        dynamic:
+          branch: true
+          commit: true
+        static:
+          - latest
+
+- job:
+    name: airship-shipyard-docker-build-post-ubuntu_bionic
+    timeout: 1800
+    run: tools/gate/playbooks/run-image.yaml
+    nodeset: airship-shipyard-single-node
+    irrelevant-files: *irrelevant-files
+    secrets:
+      - airship_shipyard_quay_creds
+    vars:
+      publish: true
+      distro: ubuntu_bionic
       tags:
         dynamic:
           branch: true
