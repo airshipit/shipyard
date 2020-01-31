@@ -86,6 +86,7 @@ spec:
 {{ $labels | indent 8 }}
       annotations:
 {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
+{{ dict "envAll" $envAll "podName" "airflow-worker" "containerNames" (list "airflow-worker" "airflow-scheduler" "airflow-logrotate") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       affinity:

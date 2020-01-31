@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- hosts: ubuntu-bionic
+- hosts: primary
   tasks:
     # Stop systemd-resolved service before starting docker.
     - name: stop systemd-resolved service
@@ -31,15 +31,15 @@
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
-    - name: Deploy Kubernetes with Minikube
+    - name: Setup AppArmor
       shell: |
-        ./tools/deployment/airskiff/developer/010-deploy-k8s.sh
+        ./tools/deployment/airskiff/developer/009-setup-apparmor.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
-    - name: Setup AppArmor
+    - name: Deploy Kubernetes with Minikube
       shell: |
-        ./tools/deployment/airskiff/developer/015-setup-apparmor.sh
+        ./tools/deployment/airskiff/developer/010-deploy-k8s.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
