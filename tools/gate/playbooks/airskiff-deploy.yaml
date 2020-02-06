@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- hosts: ubuntu-bionic
+- hosts: primary
   tasks:
     # Stop systemd-resolved service before starting docker.
     - name: stop systemd-resolved service
