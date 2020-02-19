@@ -717,6 +717,15 @@ conf:
       #Shipyard is not using this
     # End of Airflow config options
 pod:
+  mandatory_access_control:
+    type: apparmor
+    shipyard-api:
+      shipyard-api: runtime/default
+      airflow-web: runtime/default
+    airflow-worker:
+      airflow-worker: runtime/default
+      airflow-scheduler: runtime/default
+      airflow-logrotate: runtime/default
   security_context:
     shipyard:
       pod:
