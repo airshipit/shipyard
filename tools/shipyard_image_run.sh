@@ -18,19 +18,27 @@ set -x
 IMAGE=$1
 USE_PROXY=${USE_PROXY:-false}
 
-# Collect necessary files and run shipyard image in docker
 mkdir -p build/.tmprun/etc
-cp $PWD/etc/shipyard/api-paste.ini build/.tmprun/etc
-cp $PWD/tools/resources/shipyard.conf build/.tmprun/etc
-docker run \
+docker create \
     -v $PWD/build/.tmprun/etc:/etc/shipyard \
     -p 9000:9000 \
-    --name shipyard_test ${IMAGE} \
-    &
+    --name shipyard_test ${IMAGE}
 
+docker cp $PWD/etc/shipyard/api-paste.ini shipyard_test:/etc/shipyard
+docker cp $PWD/tools/resources/shipyard.conf shipyard_test:/etc/shipyard
+docker start shipyard_test &
 sleep 5
 
+# If the image build pipeline is running in a pod/docker (docker-in-docker),
+# we'll need to exec into the nested container's network namespace to acces the
+# shipyard api.
+GOOD="HTTP/1.1 200 OK"
 RESULT="$(curl -i 'http://127.0.0.1:9000/versions' --noproxy '*' | tr '\r' '\n' | head -1)"
+if [[ "${RESULT}" != "${GOOD}" ]]; then
+  if docker exec -t shipyard_test /bin/bash -c "curl -i 'http://127.0.0.1:9000/versions' --noproxy '*' | tr '\r' '\n' | head -1 | grep 'HTTP/1.1 200 OK'"; then
+    RESULT="${GOOD}"
+  fi
+fi
 
 if [ "${USE_PROXY}" == "true" ]; then
   CLI_RESULT="$(docker run -t --rm --net=host --env HTTP_PROXY="${PROXY}" --env HTTPS_PROXY="${PROXY}" ${IMAGE} help | tr '\r' '\n' | head -1)"
@@ -40,8 +48,7 @@ fi
 
 docker stop shipyard_test
 docker rm shipyard_test
-rm -r build/.tmprun
-GOOD="HTTP/1.1 200 OK"
+rm -rf $PWD/build/.tmprun
 CLI_GOOD="THE SHIPYARD COMMAND"
 if [[ ${RESULT} == ${GOOD} && ${CLI_RESULT} == ${CLI_GOOD} ]]; then
     exit 0

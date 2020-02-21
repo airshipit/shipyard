@@ -26,7 +26,7 @@ networkx==2.1 # common/deployment_group
 oslo.config==6.4.0
 oslo.policy==1.38.1
 PasteDeploy==1.5.2
-psycopg2==2.7.4
+psycopg2-binary==2.8.4
 python-dateutil==2.7.3
 python-memcached==1.59
 requests==2.20.0
@@ -42,6 +42,6 @@ marshmallow-sqlalchemy==0.18.0
 tabulate==0.8.03
 
 # Dependencies for other UCP components
-git+https://opendev.org/airship/deckhand.git@7e5d81f50f1f8c0d58d0973ae0b3065fd5b62451#egg=deckhand
-git+https://opendev.org/airship/drydock.git@22a4f01cb7880828f7b955c56d53603b6170415a#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/deckhand.git@e7ba6828a0a1ca27fae596f6e0ee5a857f28001d#egg=deckhand
+git+https://opendev.org/airship/drydock.git@586bcf8ebed430b4de82edd9a527566ed39704b7#egg=drydock_provisioner&subdirectory=python
 git+https://opendev.org/airship/armada.git@af8a9ffd0873c2fbc915794e235dbd357f2adab1#egg=armada
