@@ -19,6 +19,16 @@ IMAGE=$1
 USE_PROXY=${USE_PROXY:-false}
 NO_PROXY=${NO_PROXY:-}
 
+# clearn up airflow_test leftover from a privous run
+if [ -n "$(docker ps -aq -f name=airflow_test -f status=running)" ]; then
+    docker stop airflow_test
+    sleep 5
+fi
+if [ -n "$(docker ps -aq -f name=airflow_test)" ]; then
+    docker rm -f airflow_test
+    sleep 5
+fi
+
 if [ "${USE_PROXY}" == "true" ]; then
     TEST_RESP="$(docker run \
         -p 8080:8080 \
