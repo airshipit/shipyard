@@ -49,7 +49,7 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         task_id='armada_post_apply',
         shipyard_conf=config_path,
         main_dag_name=parent_dag_name,
-        retries=3,
+        retries=5,
         dag=dag)
 
     # Get Helm Releases
