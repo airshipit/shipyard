@@ -40,7 +40,7 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
-ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.4"
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.5"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
