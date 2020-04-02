@@ -736,6 +736,19 @@ pod:
           allowPrivilegeEscalation: false
         airflow_web:
           allowPrivilegeEscalation: false
+    airflow_worker:
+      pod:
+        runAsUser: 1000
+      container:
+        worker_perms:
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+        airflow_scheduler:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        airflow_logrotate:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
   mounts:
     airflow_scheduler:
       # TODO: This is only used if the standalone scheduler is enabled.

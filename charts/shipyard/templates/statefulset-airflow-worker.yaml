@@ -90,6 +90,7 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       affinity:
+{{ dict "envAll" $envAll "application" "airflow_worker" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
 {{ tuple $envAll "airflow" "worker" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
@@ -98,9 +99,8 @@ spec:
         - name: worker-perms
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
-          securityContext:
-            runAsUser: 0
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.worker | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow_worker" "container" "worker_perms" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           command:
             - chown
             - -R
@@ -114,6 +114,7 @@ spec:
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.scheduler | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow_worker" "container" "airflow_scheduler" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
@@ -123,6 +124,10 @@ spec:
           # Set to -1 to stop scheduler from going into crash loops
           args: ["scheduler", "-n", "-1" ]
           volumeMounts:
+            - name: airflow-usr
+              mountPath: /usr/local/airflow/unittests.cfg
+              subPath: unittests.cfg
+              readOnly: false
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
@@ -164,6 +169,7 @@ spec:
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.logrotate | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow_worker" "container" "airflow_logrotate" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           - name: PERCENT_MAX_LOG_FS_USAGE
             value: {{ .Values.logrotate.percent_max_log_fs_usage | quote }}
@@ -187,6 +193,8 @@ spec:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
       volumes:
+        - name: airflow-usr
+          emptyDir: {}
         - name: airflow-etc
           projected:
             defaultMode: 0444
