@@ -124,13 +124,13 @@ spec:
           # Set to -1 to stop scheduler from going into crash loops
           args: ["scheduler", "-n", "-1" ]
           volumeMounts:
-            - name: airflow-usr
-              mountPath: /usr/local/airflow/unittests.cfg
-              subPath: unittests.cfg
-              readOnly: false
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
+              readOnly: true
+            - name: airflow-usr
+              mountPath: {{ .Values.conf.airflow_unittests_file.path }}
+              subPath: unittests.cfg
               readOnly: true
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
@@ -142,6 +142,7 @@ spec:
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.worker | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow_worker" "container" "airflow_worker" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
@@ -155,9 +156,15 @@ spec:
             tcpSocket:
               port: {{ .Values.network.airflow.worker.port }}
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
+              readOnly: true
+            - name: airflow-usr
+              mountPath: {{ .Values.conf.airflow_unittests_file.path }}
+              subPath: unittests.cfg
               readOnly: true
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
@@ -193,7 +200,7 @@ spec:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
       volumes:
-        - name: airflow-usr
+        - name: pod-tmp
           emptyDir: {}
         - name: airflow-etc
           projected:
@@ -204,6 +211,15 @@ spec:
                   items:
                     - key: airflow.cfg
                       path: airflow.cfg
+        - name: airflow-usr
+          projected:
+            defaultMode: 0444
+            sources:
+              - configMap:
+                  name: airflow-usr
+                  items:
+                    - key: unittests.cfg
+                      path: unittests.cfg
         - name: shipyard-etc
           projected:
             defaultMode: 0444

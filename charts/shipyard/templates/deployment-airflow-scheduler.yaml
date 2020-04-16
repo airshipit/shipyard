@@ -53,6 +53,7 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       affinity:
+{{ dict "envAll" $envAll "application" "airflow_scheduler" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
 {{ tuple $envAll "airflow" "scheduler" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
       nodeSelector:
         {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
@@ -65,6 +66,7 @@ spec:
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.scheduler | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow_scheduler" "container" "airflow_scheduler" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           env:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
@@ -78,6 +80,10 @@ spec:
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
               readOnly: true
+            - name: airflow-usr
+              mountPath: {{ .Values.conf.airflow_unittests_file.path }}
+              subPath: unittests.cfg
+              readOnly: true
             - name: shipyard-etc
               mountPath: /usr/local/airflow/plugins/shipyard.conf
               subPath: shipyard.conf
@@ -89,6 +95,10 @@ spec:
         - name: airflow-etc
           configMap:
             name: airflow-etc
+            defaultMode: 0444
+        - name: airflow-usr
+          configMap:
+            name: airflow-usr
             defaultMode: 0444
         - name: shipyard-etc
           configMap:

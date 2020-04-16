@@ -450,6 +450,8 @@ conf:
       deployment_version_commit: Skip
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
+  airflow_unittests_file:
+    path: /usr/local/airflow/unittests.cfg
   airflow:
     # NOTE: Airflow 1.10 introduces a need to declare all config options:
     #     https://issues.apache.org/jira/browse/AIRFLOW-3099
@@ -736,6 +738,13 @@ pod:
           allowPrivilegeEscalation: false
         airflow_web:
           allowPrivilegeEscalation: false
+    airflow_scheduler:
+      pod:
+        runAsUser: 1000
+      container:
+        airflow_scheduler:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
     airflow_worker:
       pod:
         runAsUser: 1000
@@ -744,6 +753,9 @@ pod:
           runAsUser: 0
           readOnlyRootFilesystem: true
         airflow_scheduler:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        airflow_worker:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         airflow_logrotate:
@@ -923,6 +935,7 @@ manifests:
   configmap_shipyard_etc: true
   configmap_airflow_bin: true
   configmap_airflow_etc: true
+  configmap_airflow_usr: true
   # TODO: Set this to false only if a new deployment, or if the worker pod is
   #   running the scheduler
   deployment_airflow_scheduler: true
