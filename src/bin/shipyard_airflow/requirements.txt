@@ -37,6 +37,7 @@ uwsgi==2.0.17
 
 # To support profiling in non-prod
 Werkzeug==0.16.1
+WTForms~=2.2.1
 # Need to lock marshmellow-sqlalchemy and tabulate for compatibility issues
 marshmallow-sqlalchemy==0.18.0
 tabulate==0.8.03

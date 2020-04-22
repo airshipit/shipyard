@@ -24,6 +24,7 @@ python-openstackclient==3.16.1
 kubernetes>=6.0.0
 # Need to lock marshmellow-sqlalchemy and tabulate for compatibility issues
 marshmallow-sqlalchemy==0.18.0
+WTForms~=2.2.1
 tabulate==0.8.03
 
 # Dependencies for other UCP components
