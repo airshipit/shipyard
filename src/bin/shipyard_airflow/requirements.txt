@@ -16,6 +16,7 @@
 
 alembic==1.0.0
 arrow==0.12.1
+celery~=4.4.2
 configparser==3.5.0
 cryptography==2.3
 falcon==1.4.1
