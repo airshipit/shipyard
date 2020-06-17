@@ -69,7 +69,7 @@
         allow_unauthenticated: True
       with_items:
         - docker-ce
-        - python-pip
+        - python3-pip
     # NOTE(SamYaple): Allow all connections from containers to host so the
     # containers can access the http server for git and wheels
     - iptables:

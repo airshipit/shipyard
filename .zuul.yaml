@@ -18,6 +18,7 @@
     vars:
       rtd_webhook_id: '38576'
       rtd_project_name: 'airship-shipyard'
+      ensure_global_symlinks: true
     check:
       jobs:
         - openstack-tox-pep8
