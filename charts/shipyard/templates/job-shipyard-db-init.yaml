@@ -1,5 +1,4 @@
 {{/*
-Copyright 2017 The Openstack-Helm Authors.
 Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +32,9 @@ spec:
     metadata:
       labels:
 {{ tuple $envAll "shipyard" "db-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+{{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
+{{ dict "envAll" $envAll "podName" "shipyard-db-init" "containerNames" (list "init" "shipyard-db-init") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure

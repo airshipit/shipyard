@@ -1,4 +1,3 @@
-# Copyright 2017 The Openstack-Helm Authors.
 # Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +43,7 @@ spec:
         shipyard-configmap-etc-hash: {{ tuple "configmap-shipyard-etc.yaml" . | include "helm-toolkit.utils.hash" }}
         airflow-configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         airflow-configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
-{{ dict "envAll" $envAll "podName" "shipyard-api" "containerNames" (list "shipyard-api" "airflow-web") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
+{{ dict "envAll" $envAll "podName" "shipyard-api" "containerNames" (list "init" "shipyard-api" "airflow-web") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
     spec:
 {{ dict "envAll" $envAll "application" "shipyard" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}

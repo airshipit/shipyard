@@ -32,6 +32,9 @@ spec:
     metadata:
       labels:
 {{ tuple $envAll "shipyard" "db-auxiliary" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+{{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
+{{ dict "envAll" $envAll "podName" "shipyard-db-auxiliary" "containerNames" (list "init" "shipyard-db-auxiliary") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
