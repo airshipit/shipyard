@@ -783,6 +783,34 @@ pod:
         airflow_logrotate:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+    db_auxiliary:
+      pod:
+        runAsUser: 1000
+      container:
+        shipyard_db_auxiliary:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    db_init:
+      pod:
+        runAsUser: 1000
+      container:
+        shipyard_db_init:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    db_sync:
+      pod:
+        runAsUser: 1000
+      container:
+        shipyard_db_sync:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    api_test:
+      pod:
+        runAsUser: 1000
+      container:
+        shipyard_api_test:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
   mounts:
     airflow_scheduler:
       # TODO: This is only used if the standalone scheduler is enabled.
