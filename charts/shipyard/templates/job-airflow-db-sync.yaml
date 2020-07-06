@@ -36,6 +36,7 @@ spec:
         configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
         configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
     spec:
+{{ dict "envAll" $envAll "application" "db_sync" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       serviceAccountName: {{ $serviceAccountName }}
       restartPolicy: OnFailure
       nodeSelector:
@@ -47,6 +48,7 @@ spec:
           image: {{ .Values.images.tags.airflow_db_sync }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.airflow_db_sync | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "db_sync" "container" "airflow_db_sync" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
           command:
             - /tmp/airflow-db-sync.sh
           volumeMounts:

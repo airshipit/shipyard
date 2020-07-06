@@ -797,12 +797,18 @@ pod:
         shipyard_db_init:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+        airflow_db_init:
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
     db_sync:
       pod:
         runAsUser: 1000
       container:
         shipyard_db_sync:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        airflow_db_sync:
+          readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
     api_test:
       pod:
