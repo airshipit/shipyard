@@ -759,6 +759,7 @@ pod:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         airflow_web:
+          readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
     airflow_scheduler:
       pod:
