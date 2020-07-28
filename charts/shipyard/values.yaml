@@ -328,8 +328,20 @@ secrets:
 
 conf:
   uwsgi:
-    threads: 1
-    workers: 4
+    # for more info about these default overrides please read
+    # https://uwsgi-docs.readthedocs.io/en/latest/ThingsToKnow.html
+    threads: 1                          # Number of threads per worker/process
+    workers: 16                         # maximum number of workers/processes
+    cheaper_algo: busyness              # Use cheaper busyness plugin for dynamic scaling of workers
+    cheaper: 4                          # Minimum number of workers allowed
+    cheaper_initial: 8                  # Workers created at startup
+    cheaper_step: 4                     # How many workers to spawn at a time
+    cheaper_overload: 1                 # Length of a cycle in seconds
+    cheaper_busyness_multiplier: 60     # Cycles to wait before killing workers
+    cheaper_busyness_min: 20            # Below this threshold, kill workers
+    cheaper_busyness_max: 75            # Above this threshold, spawn new workers
+    cheaper_busyness_backlog_alert: 40  # Spawn emergency workers if more than this many requests are waiting in the queue
+    cheaper_busyness_backlog_step: 1    # Emergegency workers to create if there are too many requests in the queue
   policy:
     admin_create: role:admin or role:admin_ucp
     admin_read_access: rule:admin_create or role:admin_ucp_viewer

@@ -62,6 +62,26 @@ spec:
               value: {{ .Values.conf.uwsgi.workers | quote }}
             - name: 'SHIPYARD_API_THREADS'
               value: {{ .Values.conf.uwsgi.threads | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_ALGO'
+              value: {{ .Values.conf.uwsgi.cheaper_algo | quote }}
+            - name: 'SHIPYARD_API_CHEAPER'
+              value: {{ .Values.conf.uwsgi.cheaper | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_INITIAL'
+              value: {{ .Values.conf.uwsgi.cheaper_initial | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_STEP'
+              value: {{ .Values.conf.uwsgi.cheaper_step | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_OVERLOAD'
+              value: {{ .Values.conf.uwsgi.cheaper_overload | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_BUSYNESS_MULTIPLIER'
+              value: {{ .Values.conf.uwsgi.cheaper_busyness_multiplier | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_BUSYNESS_MIN'
+              value: {{ .Values.conf.uwsgi.cheaper_busyness_min | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_BUSYNESS_MAX'
+              value: {{ .Values.conf.uwsgi.cheaper_busyness_max | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_BUSYNESS_BACKLOG_ALERT'
+              value: {{ .Values.conf.uwsgi.cheaper_busyness_backlog_alert | quote }}
+            - name: 'SHIPYARD_API_CHEAPER_BUSYNESS_BACKLOG_STEP'
+              value: {{ .Values.conf.uwsgi.cheaper_busyness_backlog_step | quote }}
           image: {{ .Values.images.tags.shipyard }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.shipyard_api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
