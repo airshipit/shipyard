@@ -245,6 +245,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         """
         self.create_task(task_name)
         result = QueryTaskResult(self.drydock_task_id, task_name)
+        task_dict = self.get_task_dict(self.drydock_task_id)
 
         try:
             self.query_task(interval, timeout)
@@ -252,17 +253,25 @@ class DrydockNodesOperator(DrydockBaseOperator):
             # Task failure may be successful enough based on success criteria.
             # This should not halt the overall flow of this workflow step.
             LOG.warn(
-                "Task %s has failed. Logs contain details of the failure. "
-                "Some nodes may be succesful, processing continues", task_name
+                "Task %s with Drydock task-id: %s has failed. Logs contain "
+                "details of the failure. Some nodes may be succesful, "
+                "processing continues", task_name, self.drydock_task_id
             )
+            LOG.debug(
+                "Current state of failed Drydock task %s: %s",
+                self.drydock_task_id, task_dict)
         except DrydockTaskTimeoutException:
             # Task timeout may be successful enough based on success criteria.
             # This should not halt the overall flow of this workflow step.
             LOG.warn(
-                "Task %s has timed out after %s seconds. Logs contain details "
-                "of the failure. Some nodes may be succesful, processing "
-                "continues", task_name, timeout
+                "Task %s with Drydock task-id: %s has timed out after %s "
+                "seconds. Logs contain details of the failure. Some nodes may "
+                "be succesful, processing continues", task_name,
+                self.drydock_task_id, timeout
             )
+            LOG.debug(
+                "Current state of timed out Drydock task %s: %s",
+                self.drydock_task_id, task_dict)
         # Other AirflowExceptions will fail the whole task - let them do this.
 
         # find successes
