@@ -145,7 +145,8 @@ class BaseClient(metaclass=abc.ABCMeta):
         if token:
             return token
         else:
-            return self._get_ks_session().get_auth_headers().get('X-Auth-Token')
+            return self._get_ks_session().get_auth_headers().\
+                get('X-Auth-Token')
 
     def _get_ks_session(self):
         self.logger.debug('Accessing keystone for keystone session')

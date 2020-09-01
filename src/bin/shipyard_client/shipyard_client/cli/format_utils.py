@@ -62,6 +62,7 @@ def cli_format_status_handler(response, is_error=False):
         return "Error: Unable to decode response. Value: {}".format(
             response.text)
 
+
 def cli_format_exception_handler(exc_msg):
     """ Formatter for custom error raised by Shipyard """
     try:
@@ -72,6 +73,7 @@ def cli_format_exception_handler(exc_msg):
     except Exception:
         return "Error: Unable to decode response. Value: {}".format(
             exc_msg)
+
 
 def cli_format_response(formatted, response):
     """ Handler for Shipyard status and error responses
