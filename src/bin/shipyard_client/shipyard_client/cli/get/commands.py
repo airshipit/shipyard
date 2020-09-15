@@ -180,8 +180,10 @@ def get_renderedconfigdocs(ctx, buffer, committed, last_site_action,
     _version = get_version(ctx, buffer, committed, last_site_action,
                            successful_site_action)
 
-    click.echo(GetRenderedConfigdocs(ctx, _version,
-                                     cleartext_secrets).invoke_and_return_resp())
+    click.echo(GetRenderedConfigdocs(
+        ctx,
+        _version,
+        cleartext_secrets).invoke_and_return_resp())
 
 
 DESC_WORKFLOWS = """

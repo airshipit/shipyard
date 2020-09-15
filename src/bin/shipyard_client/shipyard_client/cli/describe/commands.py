@@ -120,7 +120,8 @@ SHORT_DESC_NOTEDETAILS = (
     "Retrieves the detailed information about the supplied action id.")
 
 
-@describe.command('notedetails',
+@describe.command(
+    'notedetails',
     help=DESC_NOTEDETAILS, short_help=SHORT_DESC_NOTEDETAILS)
 @click.argument('note_id')
 @click.pass_context

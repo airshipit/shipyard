@@ -66,7 +66,7 @@ SHORT_DESC_ACTION = (
 def create_action(ctx, action_name, param, allow_intermediate_commits=False):
     check_action_command(ctx, action_name)
 
-    if not param and action_name is 'redeploy_server':
+    if not param and action_name == 'redeploy_server':
         ctx.fail('At least one parameter must be specified using '
                  '--param="<parameter>" with action redeploy_server')
     else:
