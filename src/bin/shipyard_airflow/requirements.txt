@@ -29,6 +29,7 @@ oslo.config==6.4.0
 oslo.policy==1.38.1
 PasteDeploy==1.5.2
 psycopg2-binary==2.8.4
+pylibyaml~=0.1
 python-dateutil==2.7.3
 python-memcached==1.59
 requests==2.20.0
