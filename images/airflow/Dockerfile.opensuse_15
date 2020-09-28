@@ -40,7 +40,10 @@ EXPOSE $WORKER_PORT
 
 # Set ARG for usage during build
 ARG AIRFLOW_HOME=/usr/local/airflow
-ARG AIRFLOW_SRC="apache-airflow[crypto,celery,postgres,hive,hdfs,jdbc]==1.10.5"
+# Moved celery to images/airflow/requirements.txt as apache-airflow uses a
+# version of celery incompatibile with the version of kombu needed by other
+# Airship components
+ARG AIRFLOW_SRC="apache-airflow[crypto,postgres,hive,hdfs,jdbc]==1.10.5"
 ARG ctx_base=src/bin
 
 # Kubectl version

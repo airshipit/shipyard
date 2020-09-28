@@ -12,22 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+celery==4.3
 pytz==2018.5
+python-dateutil==2.8.1
 pyOpenSSL==18.0.0
 ndg-httpsclient==0.5.1
-pyasn1==0.4.4
+oslo.utils==3.42.1
+oslo.config==7.0.0
+oslo.serialization==2.29.2
+pyasn1<0.5.0,>=0.4.6
 psycopg2-binary==2.8.4
-docker==3.5.0
+docker==3.7.2
 # Airflow is now installed in the Dockerfile directory to allow for
 # overriding where it is sourced from
 python-openstackclient==3.16.1
+python-keystoneclient==3.22.0
 kubernetes>=6.0.0
 # Need to lock marshmellow-sqlalchemy and tabulate for compatibility issues
 marshmallow-sqlalchemy==0.18.0
 WTForms~=2.2.1
 tabulate==0.8.03
+pbr==5.4.5
+setuptools>=40.4.3
+six>=1.15.0
+urllib3==1.25.9
+vine<5.0.0a1,>=1.1.3
 
 # Dependencies for other UCP components
-git+https://opendev.org/airship/deckhand.git@e7ba6828a0a1ca27fae596f6e0ee5a857f28001d#egg=deckhand
-git+https://opendev.org/airship/drydock.git@586bcf8ebed430b4de82edd9a527566ed39704b7#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@af8a9ffd0873c2fbc915794e235dbd357f2adab1#egg=armada
+git+https://opendev.org/airship/deckhand.git@1f0c011a1708c1235a2be65edada7d386cd55d2a#egg=deckhand
+git+https://opendev.org/airship/drydock.git@96db568d4b28f5f163efbf606854243614a6c821#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@0c3aff1ba1f0e836e3dd56de81b2ee560e11c179#egg=armada
