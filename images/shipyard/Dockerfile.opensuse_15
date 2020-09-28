@@ -38,8 +38,13 @@ RUN set -ex && \
     zypper --gpg-auto-import-keys refresh && \
     zypper -q update -y && \
     zypper --non-interactive install --no-recommends \
+        automake \
         ca-certificates \
         curl \
+        gcc-c++ \
+        git \
+        libtool \
+        make \
         netcfg \
         python3 \
         python3-devel \
@@ -51,6 +56,21 @@ RUN set -ex && \
         /usr/share/man \
         /usr/share/doc \
         /usr/share/doc-base
+
+# Install LibYAML
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+ARG LIBYAML_VERSION=0.2.5
+RUN set -ex \
+    && git clone https://github.com/yaml/libyaml.git \
+    && cd libyaml \
+    && git checkout $LIBYAML_VERSION \
+    && ./bootstrap \
+    && ./configure \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -fr libyaml
 
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard \
