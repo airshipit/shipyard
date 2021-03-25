@@ -21,4 +21,4 @@ keystoneauth1>=3.18.0
 requests!=2.20.0,>=2.14.2
 PTable==0.9.2
 pylibyaml==0.1.0
-pyyaml==5.1
+pyyaml==5.4
