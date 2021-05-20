@@ -14,9 +14,23 @@
 
 - hosts: primary
   tasks:
+    - name: ensure pip packages are installed
+      apt:
+        name: "{{ item }}"
+      with_items:
+        - python3-pip
+        - python3-git
+        - python3-requests
+        - python3-yaml
+      become: yes
+
     - name: Overwrite Armada manifest
       shell: |
+        git checkout v1.9
         mv tools/gate/manifests/full-site.yaml \
             type/skiff/manifests/full-site.yaml
+        # Overwrite versions.yaml with the latest Airship charts and xenial images
+        ./tools/updater.py --in-file global/software/config/versions.yaml \
+            --tag-filter ubuntu_xenial --skip mariadb
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"

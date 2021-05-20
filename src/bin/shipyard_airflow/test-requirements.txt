@@ -5,18 +5,14 @@ pytest==3.5.0
 pytest-cov==2.5.1
 responses==0.10.2
 testfixtures==5.1.1
-# Had to upgrade apache-airflow as 1.10.1 requires a version of jinja too old
-# for promenade
-apache-airflow[crypto,celery,hive,hdfs,jdbc]==1.10.2
-# install postgres seperately as apache-airflow 1.10.2 forces postgres to use
+typing-extensions==3.7.2
+# Pin apache-airflow 1.10.5 to align with version in airflow images requirements.txt
+apache-airflow[crypto,celery,hive,hdfs,jdbc]==1.10.5
+# install postgres seperately as apache-airflow 1.10.5 forces postgres to use
 # psycopg2 instead of psycopg2-binary which requires additional apt packages
 # to be installed, i.e. postgres-devel. Otherwise the following error is seen:
 # Error: pg_config executable not found. Only seems to be an issue in xenial
 postgres>=3.0.0
-
-# TODO(bryan-strassner) Pin to version for airflow when added to the
-# requirements.txt in the airflow images directory
-git+https://opendev.org/airship/promenade.git@master#egg=promenade
 
 # Linting
 flake8<3.8.0,>=3.6.0

@@ -58,3 +58,4 @@ tabulate==0.8.03
 git+https://opendev.org/airship/deckhand.git@1f0c011a1708c1235a2be65edada7d386cd55d2a#egg=deckhand
 git+https://opendev.org/airship/drydock.git@96db568d4b28f5f163efbf606854243614a6c821#egg=drydock_provisioner&subdirectory=python
 git+https://opendev.org/airship/armada.git@0c3aff1ba1f0e836e3dd56de81b2ee560e11c179#egg=armada
+git+https://opendev.org/airship/promenade.git@9cd261294bb77c42375ab02606c2f18bff081c26#egg=promenade

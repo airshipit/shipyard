@@ -46,7 +46,6 @@ RUN set -ex && \
     make \
     netbase \
     python3-dev \
-    python3-setuptools \
     --no-install-recommends \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -101,7 +100,8 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
     ' \
     && apt-get -qq update \
     && apt-get -y install -y $buildDeps --no-install-recommends \
-    && python3 -m pip install -U pip \
+    && python3 -m pip install -U 'pip<21.0' \
+    && python3 -m pip install -U setuptools \
     && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard_client \
     && python3 setup.py install \

@@ -15,6 +15,7 @@
 module
 """
 import pytest
+import re
 import yaml
 
 from shipyard_airflow.common.deployment_group.deployment_group import (
@@ -197,13 +198,14 @@ class TestDeploymentGroupManager:
         dgm.mark_group_prepared('compute-nodes-1')
         dgm.mark_group_failed('compute-nodes-2')
         dgm.report_group_summary()
+        ansi_re = re.compile(r'\x1b\[[0-9;]*m')
         assert "=====   Group Summary   =====" in caplog.text
         assert ("Group ntp-node [Critical] ended with stage: "
-                "Stage.NOT_STARTED") in caplog.text
+                "Stage.NOT_STARTED") in re.sub(ansi_re, '', caplog.text)
         caplog.clear()
         dgm.report_node_summary()
-        assert "Nodes Stage.PREPARED: node2" in caplog.text
-        assert "Nodes Stage.FAILED: node3" in caplog.text
+        assert "Nodes Stage.PREPARED: node2" in re.sub(ansi_re, '', caplog.text)
+        assert "Nodes Stage.FAILED: node3" in re.sub(ansi_re, '', caplog.text)
         assert "===== End Node Summary =====" in caplog.text
         assert "It was the best of times" not in caplog.text
 
