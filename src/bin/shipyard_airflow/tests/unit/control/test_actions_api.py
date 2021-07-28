@@ -620,22 +620,21 @@ def test_create_targeted_action_no_committed(basic_val, *args):
 @mock.patch('shipyard_airflow.control.action.action_validators'
             '.validate_target_nodes',
             side_effect=Exception('purposeful'))
-@mock.patch('shipyard_airflow.control.action.action_validators'
-            '.validate_test_cleanup',
-            side_effect=Exception('purposeful'))
 @mock.patch('shipyard_airflow.policy.check_auth')
 def test_auth_alignment(auth, *args):
     action_resource = _gen_action_resource_stubbed()
     for action_name, action_cfg in actions_api._action_mappings().items():
-        with pytest.raises(Exception) as ex:
-            action = action_resource.create_action(
-                action={'name': action_name},
-                context=context,
-                allow_intermediate_commits=False)
-        assert 'purposeful' in str(ex)
-        assert auth.called_with(action_cfg['rbac_policy'])
-        assert (action_cfg['rbac_policy'] ==
-                'workflow_orchestrator:action_{}'.format(action_name))
+        # Only test if validate returns
+        if action_cfg['validators']:
+            with pytest.raises(Exception) as ex:
+                action = action_resource.create_action(
+                    action={'name': action_name},
+                    context=context,
+                    allow_intermediate_commits=False)
+            assert 'purposeful' in str(ex)
+            assert auth.called_with(action_cfg['rbac_policy'])
+            assert (action_cfg['rbac_policy'] ==
+                    'workflow_orchestrator:action_{}'.format(action_name))
 
 
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.'

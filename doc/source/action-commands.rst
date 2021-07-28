@@ -253,22 +253,14 @@ in all namespaces. Steps, conceptually:
 Using test_site
 ```````````````
 
-The ``test_site`` action accepts two optional parameters:
+The ``test_site`` action accepts one optional parameter:
 
-#. cleanup: A boolean value that instructs Armada to delete test pods after
-   test execution. Default value is ``false``. Failure to set this value to
-   ``True`` may require manual intervention to re-execute tests, as test pods
-   will not be deleted.
 #. release: The name of a release to test. When provided, tests are only
    executed for the specified release.
 
-An example of invoking Helm tests with cleanup enabled::
-
-  shipyard create action test_site --param="cleanup=true"
-
 An example of invoking Helm tests for a single release::
 
-  shipyard create action test_site --param="release=keystone"
+  shipyard create action test_site --param="namespace=openstack" --param="release=keystone"
 
 .. _update_labels:
 

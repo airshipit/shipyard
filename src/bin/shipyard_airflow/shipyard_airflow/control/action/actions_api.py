@@ -92,9 +92,7 @@ def _action_mappings():
         'test_site': {
             'dag': 'test_site',
             'rbac_policy': policy.ACTION_TEST_SITE,
-            'validators': [
-                action_validators.validate_test_cleanup,
-            ]
+            'validators': []
         }
     }
 

@@ -57,7 +57,6 @@ relabel_nodes
 test_site
     Triggers the Helm tests for the site, using parameters to control the
     tests:
-    --param="cleanup=true" to delete the test pods immediately after execution
     --param="release=release-name" to target a specific Helm release instead of
         all releases (the default if this parameter is not specified).
     '''

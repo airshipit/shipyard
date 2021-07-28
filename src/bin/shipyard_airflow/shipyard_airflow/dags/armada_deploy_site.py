@@ -16,14 +16,11 @@ from airflow.models import DAG
 
 try:
     from airflow.operators import ArmadaGetReleasesOperator
-    from airflow.operators import ArmadaGetStatusOperator
     from airflow.operators import ArmadaPostApplyOperator
     from config_path import config_path
 except ImportError:
     from shipyard_airflow.plugins.armada_get_releases import \
         ArmadaGetReleasesOperator
-    from shipyard_airflow.plugins.armada_get_status import \
-        ArmadaGetStatusOperator
     from shipyard_airflow.plugins.armada_post_apply import \
         ArmadaPostApplyOperator
     from shipyard_airflow.dags.config_path import config_path
@@ -36,13 +33,6 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
         default_args=args)
-
-    # Get Tiller Status
-    armada_get_status = ArmadaGetStatusOperator(
-        task_id='armada_get_status',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
 
     # Armada Apply
     armada_post_apply = ArmadaPostApplyOperator(
@@ -60,7 +50,6 @@ def deploy_site_armada(parent_dag_name, child_dag_name, args):
         dag=dag)
 
     # Define dependencies
-    armada_post_apply.set_upstream(armada_get_status)
     armada_get_releases.set_upstream(armada_post_apply)
 
     return dag

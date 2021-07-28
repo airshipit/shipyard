@@ -16,7 +16,6 @@
 set -ex
 
 # We will need to pass the name of the helm release to test. It is mandatory.
-# cleanup may also be passed. By default, test pods will be cleaned up.
 # we can execute the script in the following manner:
 #
 # $ ./test_release.sh helm_release
@@ -28,10 +27,9 @@ fi
 
 # Define Variables
 helm_release=$1
-cleanup=${2:-true}
 
 # Source environment variables
 source set_env
 
 # Execute shipyard action for test_site
-bash execute_shipyard_action.sh 'test_site' --param="release=${helm_release}" --param="cleanup=${cleanup}"
+bash execute_shipyard_action.sh 'test_site' --param="release=${helm_release}"

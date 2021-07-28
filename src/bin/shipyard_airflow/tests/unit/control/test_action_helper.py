@@ -184,42 +184,24 @@ def test_get_step():
 
     tasks = yaml.safe_load("""
 ---
-  - task_id: armada_get_status
+  - task_id: armada_post_apply
     dag_id: update_software.armada_build
     execution_date: 2018-09-07 23:18:04
-    start_date: 2018-09-07 23:18:55.950298
-    end_date: 2018-09-07 23:18:58.159597
-    duration: 2.209299
+    start_date: 2018-09-07 23:48:25.884615
+    end_date: 2018-09-07 23:48:50.552757
+    duration: 24.668142
     state: success
     try_number: 1
     hostname: airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
     unixname: airflow
-    job_id: 11
+    job_id: 13
     pool:
     queue: default
-    priority_weight: 3
-    operator: ArmadaGetStatusOperator
+    priority_weight: 2
+    operator: ArmadaPostApplyOperator
     queued_dttm:
-    pid: 249
-    max_tries: 0
-  - task_id: armada_get_status
-    dag_id: update_software.armada_build
-    execution_date: 2018-09-07 23:18:04
-    start_date: 2018-09-07 23:18:55.950298
-    end_date: 2018-09-07 23:18:58.159597
-    duration: 2.209299
-    state: success
-    try_number: 2
-    hostname: airflow-worker-1.airflow-worker-discovery.ucp.svc.cluster.local
-    unixname: airflow
-    job_id: 12
-    pool:
-    queue: default
-    priority_weight: 3
-    operator: ArmadaGetStatusOperator
-    queued_dttm:
-    pid: 249
-    max_tries: 0
+    pid: 329
+    max_tries: 3
   - task_id: armada_post_apply
     dag_id: update_software.armada_build
     execution_date: 2018-09-07 23:18:04
@@ -228,7 +210,7 @@ def test_get_step():
     duration: 24.668142
     state: success
     try_number: 2
-    hostname: airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
+    hostname: airflow-worker-1.airflow-worker-discovery.ucp.svc.cluster.local
     unixname: airflow
     job_id: 13
     pool:
@@ -281,7 +263,7 @@ def test_get_step():
     actions_helper = action_helper.ActionsHelper(action_id=action_id)
 
     # Retrieve step
-    step_id = 'armada_get_status'  # task_id in db
+    step_id = 'armada_post_apply'  # task_id in db
 
     # test backward compatibility with no additional param
     step = actions_helper.get_step(step_id)

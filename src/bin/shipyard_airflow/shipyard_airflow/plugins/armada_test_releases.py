@@ -33,11 +33,6 @@ class ArmadaTestReleasesOperator(ArmadaBaseOperator):
     specified by the "release" parameter.
     """
     def do_execute(self):
-        # Retrieve cleanup flag from action params
-        cleanup = self.action_params.get('cleanup')
-        if cleanup:
-            self.query['cleanup'] = cleanup
-
         release = self.action_params.get('release')
         if release:
             # Invoke Helm tests for specified release
@@ -59,7 +54,6 @@ class ArmadaTestReleasesOperator(ArmadaBaseOperator):
         try:
             armada_test_release = self.armada_client.get_test_release(
                 release=release,
-                query=self.query,
                 timeout=None)
         except errors.ClientError as client_error:
             raise AirflowException(client_error)

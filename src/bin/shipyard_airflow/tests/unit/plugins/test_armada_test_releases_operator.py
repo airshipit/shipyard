@@ -30,7 +30,6 @@ from shipyard_airflow.plugins.ucp_base_operator import \
 CONF_FILE = os.path.join(os.path.dirname(__file__), 'test.conf')
 
 ACTION_PARAMS = {
-    'cleanup': True,
     'release': 'glance'
 }
 
@@ -59,7 +58,6 @@ class TestArmadaTestReleasesOperator:
             for release in release_list:
                 calls.append(mock.call(
                     release=release,
-                    query=dict(),
                     timeout=None))
         mock_client.get_test_release.assert_has_calls(calls, any_order=True)
 
@@ -76,11 +74,9 @@ class TestArmadaTestReleasesOperator:
         op.do_execute()
 
         # Verify Armada client called for single release with action params
-        cleanup = ACTION_PARAMS['cleanup']
         release = ACTION_PARAMS['release']
         mock_client.get_test_release.assert_called_once_with(
             release=release,
-            query=dict(cleanup=cleanup),
             timeout=None)
 
         # Verify test results logged
