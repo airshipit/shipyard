@@ -113,6 +113,7 @@ AUTHORS
 **/*.tgz
 /charts/shipyard/charts
 /charts/shipyard/requirements.lock
+/charts/deps/*/
 .DS_Store
 
 # vscode

@@ -12,50 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Script to setup helm-toolkit and helm dep up the shipyard chart
-#
-HELM=$1
 
+
+set -eux
+
+HTK_REPO=${HTK_REPO:-"https://opendev.org/openstack/openstack-helm-infra.git"}
 HTK_STABLE_COMMIT=${HTK_COMMIT:-"b1a247e7f54ab12d830ab74f7634457b4e43f3ef"}
 
-set -x
+TMP_DIR=$(mktemp -d)
 
-function helm_serve {
-  if [[ -d "$HOME/.helm" ]]; then
-     echo ".helm directory found"
-  else
-     ${HELM} init --client-only --skip-refresh
-  fi
-  if [[ -z $(curl -s 127.0.0.1:8879 | grep 'Helm Repository') ]]; then
-     ${HELM} serve & > /dev/null
-     while [[ -z $(curl -s 127.0.0.1:8879 | grep 'Helm Repository') ]]; do
-        sleep 1
-        echo "Waiting for Helm Repository"
-     done
-  else
-     echo "Helm serve already running"
-  fi
-
-  if ${HELM} repo list | grep -q "^stable" ; then
-     ${HELM} repo remove stable
-  fi
-
-  ${HELM} repo add local http://localhost:8879/charts
+{
+    HTK_REPO_DIR=$TMP_DIR/htk
+    git clone "$HTK_REPO" "$HTK_REPO_DIR"
+    (cd "$HTK_REPO_DIR" && git reset --hard "${HTK_STABLE_COMMIT}")
+    cp -r "${HTK_REPO_DIR}/helm-toolkit" charts/deps/
 }
 
-mkdir -p build
-cd build
-git clone https://opendev.org/openstack/openstack-helm-infra.git || true
-cd openstack-helm-infra
-git reset --hard "${HTK_STABLE_COMMIT}"
-
-helm_serve
-
-if [[ ${HELM} != "helm" ]]
-then
-  export PATH=${PATH}:$(dirname ${HELM})
-fi
-
-make helm-toolkit
-${HELM} dep up ../../charts/shipyard
+rm -rf "${TMP_DIR}"

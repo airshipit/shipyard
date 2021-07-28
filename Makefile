@@ -55,7 +55,7 @@ $(IMAGE_NAME):
 
 # Create tgz of the chart
 .PHONY: charts
-charts: clean helm-init
+charts: clean helm-toolkit
 	$(HELM) dep up charts/shipyard
 	$(HELM) package charts/shipyard
 
@@ -65,7 +65,7 @@ lint: pep8 helm_lint build_docs
 
 # Dry run templating of chart
 .PHONY: dry-run
-dry-run: clean helm-init
+dry-run: clean helm-toolkit
 	$(HELM) template charts/shipyard
 
 .PHONY: security
@@ -136,12 +136,12 @@ pep8:
 	cd $(BUILD_CTX)/shipyard_airflow; tox -e pep8
 
 .PHONY: helm_lint
-helm_lint: clean helm-init
+helm_lint: clean helm-toolkit
 	$(HELM) lint charts/shipyard
 
 # Initialize local helm config
-.PHONY: helm-init
-helm-init: helm-install
+.PHONY: helm-toolkit
+helm-toolkit: helm-install
 	tools/helm_tk.sh $(HELM)
 
 # Install helm binary
