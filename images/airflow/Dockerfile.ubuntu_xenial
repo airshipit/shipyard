@@ -75,7 +75,7 @@ RUN set -ex && \
     make \
     --no-install-recommends \
     && python3 -m pip install -U 'pip<21.0' \
-    && python3 -m pip install -U setuptools \
+    && python3 -m pip install -U 'setuptools<58' \
     && apt-get clean \
     && rm -rf \
         /var/lib/apt/lists/* \
@@ -113,9 +113,9 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 COPY images/airflow/requirements.txt /tmp/
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
     && pip3 install $AIRFLOW_SRC --no-cache-dir \
-    && pip3 uninstall -y snakebite || true \
-    && pip3 uninstall -y psycopg2 || true \
-    && pip3 install --no-cache-dir --force-reinstall $(pip freeze | grep psycopg2-binary) || true
+    && (pip3 uninstall -y snakebite || true) \
+    && (pip3 uninstall -y psycopg2 || true) \
+    && (pip3 install --no-cache-dir --force-reinstall $(pip freeze | grep psycopg2-binary) || true)
 
 # Copy scripts used in the container:
 COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
