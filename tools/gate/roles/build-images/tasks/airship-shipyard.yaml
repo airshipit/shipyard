@@ -26,7 +26,7 @@
         msg: "{{ tags | to_json }}"
 
 - name: Determine tags
-  shell: echo '{{ tags | to_json }}' | python {{ zuul.project.src_dir }}/tools/image_tags.py
+  shell: echo '{{ tags | to_json }}' | python3 {{ zuul.project.src_dir }}/tools/image_tags.py
   environment:
     BRANCH: "{{ zuul.branch | default('') }}"
     CHANGE: "{{ zuul.change | default('') }}"
@@ -70,6 +70,11 @@
       with_items:
         - docker-ce
         - python3-pip
+        - python3-setuptools
+    - pip:
+        name: docker
+        version: 2.7.0
+        executable: pip3
     # NOTE(SamYaple): Allow all connections from containers to host so the
     # containers can access the http server for git and wheels
     - iptables:
@@ -100,8 +105,6 @@
 
 - name: Publish images
   block:
-    - pip:
-        name: docker-py
     - docker_login:
         username: "{{ airship_shipyard_quay_creds.username }}"
         password: "{{ airship_shipyard_quay_creds.password }}"
