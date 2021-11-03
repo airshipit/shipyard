@@ -53,8 +53,8 @@ spec:
     spec:
       serviceAccountName: {{ $serviceAccountName }}
       affinity:
-{{ dict "envAll" $envAll "application" "airflow_scheduler" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
 {{ tuple $envAll "airflow" "scheduler" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+{{ dict "envAll" $envAll "application" "airflow_scheduler" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
       nodeSelector:
         {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
       restartPolicy: Always
