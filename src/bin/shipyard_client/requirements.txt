@@ -14,7 +14,7 @@
 
 # CLI/Client requirements
 
-arrow==0.12.1
+arrow==0.15.1
 click==6.7
 click-default-group==1.2
 keystoneauth1>=3.18.0
