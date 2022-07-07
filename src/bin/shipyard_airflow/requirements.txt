@@ -55,7 +55,7 @@ marshmallow-sqlalchemy==0.18.0
 tabulate==0.8.03
 
 # Dependencies for other UCP components
-git+https://opendev.org/airship/deckhand.git@1f0c011a1708c1235a2be65edada7d386cd55d2a#egg=deckhand
-git+https://opendev.org/airship/drydock.git@96db568d4b28f5f163efbf606854243614a6c821#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@416eff4e52f72169c3ebf49a8ffca36086692b7a#egg=armada
-git+https://opendev.org/airship/promenade.git@59e1f8af83f25bebc07b3545238f89fe4cb7354f#egg=promenade
+git+https://opendev.org/airship/deckhand.git@5cd799cc5d04527ac782270008ff647b3779ff05#egg=deckhand
+git+https://opendev.org/airship/drydock.git@a171f3c7a5f3b60e7a14c92c1d49e12642f1a015#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@ef0ac2f252410cecc8ad107305f7e77437c76d09#egg=armada
+git+https://opendev.org/airship/promenade.git@e207bbe9661716efab8dc017925489072d28a936#egg=promenade
