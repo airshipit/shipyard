@@ -34,7 +34,7 @@ psycopg2-binary==2.8.4
 pylibyaml~=0.1
 oslo.cache==1.38.1
 oslo.log==3.45.2
-oslo.utils==3.42.1
+oslo.utils==4.10.1
 oslo.serialization==2.29.2
 pbr==5.4.5
 python-dateutil==2.8.1
