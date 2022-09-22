@@ -24,6 +24,23 @@
         - python3-yaml
       become: yes
 
+
+    - name: deploy iptables packages
+      include_role:
+        name: deploy-package
+        tasks_from: dist
+      vars:
+        packages:
+          deb:
+            - iptables
+          rpm:
+            - iptables
+    - command: sudo iptables -S
+    - command: sudo iptables -F
+    - command: sudo iptables -P INPUT ACCEPT
+    - command: sudo iptables -S
+      become: yes
+
     - name: Overwrite Armada manifest
       shell: |
         git checkout v1.9
