@@ -15,7 +15,7 @@
 celery==4.3
 pytz==2018.5
 python-dateutil==2.8.1
-pyOpenSSL==18.0.0
+pyOpenSSL==22.0.0
 ndg-httpsclient==0.5.1
 oslo.utils==3.42.1
 oslo.config==7.0.0
