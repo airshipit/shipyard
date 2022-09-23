@@ -99,12 +99,15 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
       python3-pip \
     ' \
     && apt-get -qq update \
-    && apt-get -y install -y $buildDeps --no-install-recommends \
+    && apt-get -y install -y \
+        $buildDeps \
+        python3-openssl \
+        libffi-dev \
+        python3-dev \
+            --no-install-recommends \
     && python3 -m pip install -U 'pip<21.0' \
     && python3 -m pip install -U setuptools \
-    && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
-    && cd /home/shipyard/shipyard_client \
-    && python3 setup.py install \
+    && sed -i "s/pyOpenSSL==.*//" /home/shipyard/client_requirements.txt\
     && pip3 install -r /home/shipyard/api_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard \
     && python3 setup.py install \
