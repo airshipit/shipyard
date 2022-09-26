@@ -47,7 +47,7 @@ ARG AIRFLOW_SRC="apache-airflow[crypto,postgres,hive,hdfs,jdbc]==1.10.5"
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.16.2
+ARG KUBECTL_VERSION=1.24.6
 
 # Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
