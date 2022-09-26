@@ -33,10 +33,10 @@ images:
     airflow: quay.io/airshipit/airflow:latest-ubuntu_bionic
     shipyard: quay.io/airshipit/shipyard:latest-ubuntu_bionic
     dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
-    shipyard_db_init: docker.io/postgres:9.5
-    shipyard_db_auxiliary: docker.io/postgres:9.5
+    shipyard_db_init: docker.io/postgres:14.5
+    shipyard_db_auxiliary: docker.io/postgres:14.5
     shipyard_db_sync: quay.io/airshipit/shipyard:latest-ubuntu_bionic
-    airflow_db_init: docker.io/postgres:9.5
+    airflow_db_init: docker.io/postgres:14.5
     rabbit_init: docker.io/rabbitmq:3.7-management
     airflow_db_sync: quay.io/airshipit/airflow:latest-ubuntu_bionic
     ks_user: docker.io/openstackhelm/heat:ocata
