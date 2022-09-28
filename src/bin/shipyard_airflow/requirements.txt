@@ -56,6 +56,6 @@ tabulate==0.8.03
 
 # Dependencies for other UCP components
 git+https://opendev.org/airship/deckhand.git@5cd799cc5d04527ac782270008ff647b3779ff05#egg=deckhand
-git+https://opendev.org/airship/drydock.git@a171f3c7a5f3b60e7a14c92c1d49e12642f1a015#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@ef0ac2f252410cecc8ad107305f7e77437c76d09#egg=armada
-git+https://opendev.org/airship/promenade.git@e207bbe9661716efab8dc017925489072d28a936#egg=promenade
+git+https://opendev.org/airship/drydock.git@b431f7a2cfacd199fa5587487f372dc5589f9126#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@379c88d6195eed1a0ef61d0465d5746bcfda1a42#egg=armada
+git+https://opendev.org/airship/promenade.git@c10165c144e0a18137596a3c89f1339d6ed30d0c#egg=promenade
