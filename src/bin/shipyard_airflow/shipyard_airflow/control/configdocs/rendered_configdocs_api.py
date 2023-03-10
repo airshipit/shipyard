@@ -52,7 +52,7 @@ class RenderedConfigDocsResource(BaseResource):
             policy.check_auth(req.context,
                               policy.GET_RENDEREDCONFIGDOCS_CLRTXT)
 
-        resp.body = self.get_rendered_configdocs(
+        resp.text = self.get_rendered_configdocs(
             helper=helper,
             version=version,
             cleartext_secrets=cleartext_secrets

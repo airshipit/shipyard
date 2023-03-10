@@ -78,10 +78,11 @@ class DrydockDestroyNodeOperator(DrydockBaseOperator):
                           "destroyed. The report at the end of processing "
                           "this step contains the results", task_name)
         except DrydockTaskTimeoutException:
-            LOG.warn("Task %s has timed out after %s seconds. Some nodes may "
-                     "have been destroyed. The report at the end of "
-                     "processing this step contains the results", task_name,
-                     self.dest_timeout)
+            LOG.warning("Task %s has timed out after %s seconds. "
+                        "Some nodes may "
+                        "have been destroyed. The report at the end of "
+                        "processing this step contains the results", task_name,
+                        self.dest_timeout)
 
     def report_summary(self):
         """Reports the successfully destroyed nodes"""

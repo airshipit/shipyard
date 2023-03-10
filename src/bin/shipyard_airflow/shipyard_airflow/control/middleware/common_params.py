@@ -49,7 +49,10 @@ class CommonParametersMiddleware(object):
 
         try:
             verbosity = req.get_param_as_int(
-                'verbosity', required=False, min=0, max=MAX_VERBOSITY
+                'verbosity',
+                required=False,
+                min_value=0,
+                max_value=MAX_VERBOSITY
             )
             if verbosity is not None:
                 # if not set, retains the context default value.

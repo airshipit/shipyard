@@ -51,7 +51,7 @@ class ActionsStepsLogsResource(BaseResource):
         step_id = ActionsHelper.parse_step_id(**kwargs)
 
         # Retrieve logs for the action step
-        resp.body = self.get_action_step_logs(action_id,
+        resp.text = self.get_action_step_logs(action_id,
                                               step_id,
                                               try_number)
 

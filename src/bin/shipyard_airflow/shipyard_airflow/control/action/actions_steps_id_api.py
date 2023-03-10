@@ -32,7 +32,7 @@ class ActionsStepsResource(BaseResource):
         Return step details for an action step
         :returns: a json object describing a step
         """
-        resp.body = self.to_json(
+        resp.text = self.to_json(
             self.get_action_step(
                 action_id=kwargs['action_id'],
                 step_id=kwargs['step_id'],

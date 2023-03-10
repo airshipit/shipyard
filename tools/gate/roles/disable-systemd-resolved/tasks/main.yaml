@@ -1,4 +1,4 @@
-# Copyright 2018 AT&T Intellectual Property.  All other rights reserved.
+# Copyright 2020 AT&T Intellectual Property.  All other rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- hosts: primary
-  tasks:
-    - name: Overwrite Armada manifest
-      shell: |
-        git checkout v1.9
-        mv tools/gate/manifests/full-site.yaml \
-            type/skiff/manifests/full-site.yaml
-      args:
-        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
+- include: disable-systemd-resolved.yaml

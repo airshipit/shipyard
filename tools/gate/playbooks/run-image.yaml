@@ -18,6 +18,16 @@
   vars_files:
     - vars.yaml
   roles:
+    - bindep
+    - clear-firewall
+    - ensure-python
+    - ensure-pip
+    - ensure-docker
     - build-images
   tags:
+    - bindep
+    - clear-firewall
+    - ensure-python
+    - ensure-pip
+    - ensure-docker
     - build-images

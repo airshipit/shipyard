@@ -404,10 +404,11 @@ class DrydockBaseOperator(UcpBaseOperator):
             task_status = task_dict.get('status', "Not Specified")
             task_result = task_dict.get('result')
             if task_result is None:
-                LOG.warn("Task result is missing for task %s, with status %s."
-                         " Neither successes nor further details can be"
-                         " extracted from this result",
-                         task_id, task_status)
+                LOG.warning("Task result is missing for task %s, "
+                            "with status %s."
+                            " Neither successes nor further details can be"
+                            " extracted from this result",
+                            task_id, task_status)
             else:
                 if extend_success:
                     try:
@@ -429,7 +430,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                                  ", ".join(success_nodes), task_id)
                     except KeyError:
                         # missing key on the path to getting nodes - don't add
-                        LOG.warn(
+                        LOG.warning(
                             "Missing successes field on result of task %s, "
                             "but a success field was expected. No successes"
                             " can be extracted from this result", task_id
@@ -448,8 +449,8 @@ class DrydockBaseOperator(UcpBaseOperator):
         except Exception:
             # since we are reporting task results, if we can't get the
             # results, do not block the processing.
-            LOG.warn("Failed to retrieve a result for task %s. Exception "
-                     "follows:", task_id, exc_info=True)
+            LOG.warning("Failed to retrieve a result for task %s. Exception "
+                        "follows:", task_id, exc_info=True)
 
         # deduplicate and return
         return set(success_nodes)
@@ -507,8 +508,8 @@ class DrydockBaseOperator(UcpBaseOperator):
                         note_timestamp=msg.get('ts'),
                         verbosity=3)
             except Exception as ex:
-                LOG.warn("Error while creating a task result note, "
-                         "processing continues. Source info %s", msg)
+                LOG.warning("Error while creating a task result note, "
+                            "processing continues. Source info %s", msg)
                 LOG.exception(ex)
 
         links = task_result.get('links', [])
@@ -528,8 +529,8 @@ class DrydockBaseOperator(UcpBaseOperator):
                         is_auth_link=True,
                         verbosity=5)
             except Exception as ex:
-                LOG.warn("Error while creating a link-based note, "
-                         "processing continues. Source info: %s", link)
+                LOG.warning("Error while creating a link-based note, "
+                            "processing continues. Source info: %s", link)
                 LOG.exception(ex)
 
 

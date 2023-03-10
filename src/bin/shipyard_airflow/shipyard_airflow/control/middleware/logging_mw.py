@@ -60,7 +60,7 @@ class LoggingMiddleware(object):
             #     have response scrubbing or way to categorize responses in the
             #     future, this may be an appropriate place to utilize it.
             if resp_code >= 400:
-                LOG.debug('Errored Response body: %s', resp.body)
+                LOG.debug('Errored Response body: %s', resp.text)
 
     def _log_headers(self, headers):
         """ Log request headers, while scrubbing sensitive values

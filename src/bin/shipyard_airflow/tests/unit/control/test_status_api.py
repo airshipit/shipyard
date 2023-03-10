@@ -33,4 +33,4 @@ class TestStatusResource():
         assert result.status_code == 200
         assert result.text == json.dumps(common.str_responder(), default=str)
         assert result.headers[
-            'content-type'] == 'application/json; charset=UTF-8'
+            'content-type'] == 'application/json'

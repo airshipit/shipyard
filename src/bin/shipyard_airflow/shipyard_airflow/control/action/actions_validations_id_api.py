@@ -31,7 +31,7 @@ class ActionsValidationsResource(BaseResource):
         Return validation details for an action validation
         :returns: a json object describing a validation
         """
-        resp.body = self.to_json(
+        resp.text = self.to_json(
             self.get_action_validation(kwargs['action_id'],
                                        kwargs['validation_id']))
         resp.status = falcon.HTTP_200

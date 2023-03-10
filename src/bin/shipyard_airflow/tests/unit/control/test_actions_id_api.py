@@ -166,7 +166,7 @@ def test_on_get(mock_authorize, mock_get_action):
     mock_authorize.assert_called_once_with('workflow_orchestrator:get_action',
                                            context)
     mock_get_action.assert_called_once_with(action_id=None, verbosity=1)
-    assert resp.body == '"action_returned"'
+    assert resp.text == '"action_returned"'
     assert resp.status == '200 OK'
 
 @mock.patch('shipyard_airflow.control.helpers.action_helper.notes_helper',

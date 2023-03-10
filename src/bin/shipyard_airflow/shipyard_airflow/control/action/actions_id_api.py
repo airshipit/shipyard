@@ -36,7 +36,7 @@ class ActionsIdResource(BaseResource):
         Return actions that have been invoked through shipyard.
         :returns: a json array of action entities
         """
-        resp.body = self.to_json(self.get_action(
+        resp.text = self.to_json(self.get_action(
             action_id=kwargs['action_id'],
             verbosity=req.context.verbosity
         ))

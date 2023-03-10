@@ -66,7 +66,8 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         try:
             design_validate_response = requests.post(validation_endpoint,
                                                      headers=headers,
-                                                     data=json.dumps(payload))
+                                                     data=json.dumps(payload),
+                                                     timeout=5)
 
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)

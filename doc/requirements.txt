@@ -1,5 +1,6 @@
 #
 # Requirements for creating documentation only.
 #
-sphinx>=1.6.2
-sphinx_rtd_theme==0.2.4
+Sphinx
+sphinx-rtd-theme==0.5.0
+Jinja2<=3.0.3

@@ -121,7 +121,7 @@ Starting attempt 1 of 1
 --------------------------------------------------------------------------------
 
 Executing Task(PythonOperator): action_xcom
-Running: ['bash', '-c', 'airflow run deploy_site action_xcom \
+Running: ['bash', '-c', 'airflow tasks run deploy_site action_xcom \
 2018-04-11T07:30:37 --job_id 2 --raw -sd DAGS_FOLDER/deploy_site.py']
 Running on host airflow-worker-0.airflow-worker-discovery.ucp.svc.cluster.local
 Subtask: [2018-04-11 07:30:43,944] {{python_operator.py:90}} \

@@ -11,19 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from shipyard_airflow.control.base import ShipyardRequestContext
-from shipyard_airflow.control.api import VersionsResource
-from tests.unit.control.common import create_req, create_resp
 
-context = ShipyardRequestContext()
+# CLI/Client requirements
 
-
-class TestVersionsResource():
-    def test_on_get(self):
-        version_resource = VersionsResource()
-        req = create_req(context, None)
-        resp = create_resp()
-        version_resource.on_get(req, resp)
-        assert sorted(resp.text) == sorted(
-            '{"v1.0": {"status": "stable", "path": "/api/v1.0"}}')
-        assert resp.status == '200 OK'
+arrow<=0.17.0
+click==6.7
+click-default-group==1.2
+keystoneauth1<=5.1.1
+requests==2.23.0
+PTable==0.9.2
+pylibyaml==0.1.0
+PyYAML<=5.4.1

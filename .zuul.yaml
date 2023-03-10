@@ -13,7 +13,7 @@
 - project:
     templates:
       - docs-on-readthedocs
-      - openstack-python36-jobs
+      - openstack-python38-jobs
     vars:
       rtd_webhook_id: '38576'
       rtd_project_name: 'airship-shipyard'
@@ -25,22 +25,16 @@
         - airship-shipyard-chart-build-latest-htk
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-airskiff-deployment
-        - airship-shipyard-image-gate-ubuntu_xenial
-        - airship-shipyard-image-gate-ubuntu_bionic
-        - airship-shipyard-image-gate-opensuse
+        - airship-shipyard-image-gate-ubuntu_focal
     gate:
       jobs:
         - openstack-tox-pep8
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate-ubuntu_xenial
-        - airship-shipyard-image-gate-ubuntu_bionic
-        - airship-shipyard-image-gate-opensuse
+        - airship-shipyard-image-gate-ubuntu_focal
     post:
       jobs:
-        - airship-shipyard-docker-build-post-ubuntu_xenial
-        - airship-shipyard-docker-build-post-ubuntu_bionic
-        - airship-shipyard-docker-build-post-opensuse
+        - airship-shipyard-docker-build-post-ubuntu_focal
         - shipyard-upload-git-mirror
 
 - nodeset:
@@ -49,12 +43,18 @@
       - name: primary
         label: ubuntu-bionic
 
+- nodeset:
+    name: airship-shipyard-single-node-focal
+    nodes:
+      - name: primary
+        label: ubuntu-focal
+
 - job:
     name: airship-shipyard-chart-build-gate
     description: Build charts using pinned Helm toolkit.
     timeout: 900
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node
+    nodeset: airship-shipyard-single-node-focal
 
 - job:
     name: airship-shipyard-chart-build-latest-htk
@@ -62,7 +62,7 @@
     timeout: 900
     voting: false
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node
+    nodeset: airship-shipyard-single-node-focal
     vars:
       HTK_COMMIT: master
 
@@ -71,7 +71,7 @@
     description: |
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
-    nodeset: airship-shipyard-single-node
+    nodeset: airship-shipyard-single-node-focal
 
 - job:
     name: airship-shipyard-image-base
@@ -79,44 +79,31 @@
       Base job for running airship-shipyard image related jobs.
     timeout: 3600
     run: tools/gate/playbooks/run-image.yaml
-    nodeset: airship-shipyard-single-node
+    nodeset: airship-shipyard-single-node-focal
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
       - ^releasenotes/.*$
 
 - job:
-    name: airship-shipyard-image-gate-ubuntu_xenial
-    voting: false
+    name: airship-shipyard-image-gate-ubuntu_focal
     description: |
-      Run shipyard-image build for ubuntu_xenial.
+      Run shipyard-image build for ubuntu_focal.
     parent: airship-shipyard-image-base
     vars:
       publish: false
-      distro: ubuntu_xenial
-      tags:
-        dynamic:
-          patch_set: true
-
-- job:
-    name: airship-shipyard-image-gate-ubuntu_bionic
-    description: |
-      Run shipyard-image build for ubuntu_bionic.
-    parent: airship-shipyard-image-base
-    vars:
-      publish: false
-      distro: ubuntu_bionic
+      distro: ubuntu_focal
       tags:
         dynamic:
           patch_set: true
 
 - job:
     name: airship-shipyard-airskiff-deployment
-    nodeset: airship-shipyard-single-node
+    nodeset: airship-shipyard-single-node-focal
     description: |
       Deploy Memcached using Airskiff and submitted Armada changes.
     timeout: 9600
-    voting: false
+    voting: true
     pre-run:
       - tools/gate/playbooks/airskiff-reduce-site.yaml
       - tools/gate/playbooks/git-config.yaml
@@ -144,27 +131,9 @@
         dynamic:
           patch_set: true
 
-- job:
-    name: airship-shipyard-docker-build-post-ubuntu_xenial
-    voting: false
-    timeout: 1800
-    run: tools/gate/playbooks/run-image.yaml
-    nodeset: airship-shipyard-single-node
-    irrelevant-files: *irrelevant-files
-    secrets:
-      - airship_shipyard_quay_creds
-    vars:
-      publish: true
-      distro: ubuntu_xenial
-      tags:
-        dynamic:
-          branch: true
-          commit: true
-        static:
-          - latest
 
 - job:
-    name: airship-shipyard-docker-build-post-ubuntu_bionic
+    name: airship-shipyard-docker-build-post-ubuntu_focal
     timeout: 1800
     run: tools/gate/playbooks/run-image.yaml
     nodeset: airship-shipyard-single-node
@@ -173,7 +142,7 @@
       - airship_shipyard_quay_creds
     vars:
       publish: true
-      distro: ubuntu_bionic
+      distro: ubuntu_focal
       tags:
         dynamic:
           branch: true

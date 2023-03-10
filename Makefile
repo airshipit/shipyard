@@ -34,7 +34,7 @@ USE_PROXY                  ?= false
 AIRFLOW_SRC                ?=
 AIRFLOW_HOME               ?=
 DISTRO_BASE_IMAGE          ?=
-DISTRO                     ?= ubuntu_bionic
+DISTRO                     ?= ubuntu_focal
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
 IMAGE_DIR:=images/$(IMAGE_NAME)
@@ -61,7 +61,7 @@ charts: clean helm-toolkit
 
 # Perform Linting
 .PHONY: lint
-lint: pep8 helm_lint build_docs
+lint: pep8 helm-lint build_docs
 
 # Dry run templating of chart
 .PHONY: dry-run
@@ -129,20 +129,26 @@ clean:
 	rm -rf doc/build
 	cd $(BUILD_CTX)/shipyard_client; rm -rf build
 	cd $(BUILD_CTX)/shipyard_airflow; rm -rf build
+	rm -rf doc/build
+	rm -f charts/*.tgz
+	rm -f charts/*/requirements.lock
+	rm -rf charts/*/charts
+	rm -rf .tox
 
 .PHONY: pep8
 pep8:
 	cd $(BUILD_CTX)/shipyard_client; tox -e pep8
 	cd $(BUILD_CTX)/shipyard_airflow; tox -e pep8
 
-.PHONY: helm_lint
-helm_lint: clean helm-toolkit
+.PHONY: helm-lint
+helm-lint: clean helm-toolkit
+	$(HELM) dep up charts/shipyard
 	$(HELM) lint charts/shipyard
 
 # Initialize local helm config
 .PHONY: helm-toolkit
 helm-toolkit: helm-install
-	tools/helm_tk.sh $(HELM)
+	./tools/helm_tk.sh $(HELM)
 
 # Install helm binary
 .PHONY: helm-install

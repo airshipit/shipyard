@@ -42,5 +42,5 @@ class StatusResource(BaseResource):
         else:
             fltrs = None
         helper = StatusHelper(req.context)
-        resp.body = self.to_json(helper.get_site_statuses(fltrs))
+        resp.text = self.to_json(helper.get_site_statuses(fltrs))
         resp.status = falcon.HTTP_200

@@ -117,11 +117,11 @@ class DocumentValidator(metaclass=abc.ABCMeta):
         Triggers the specific checks after any common checks
         """
         if self.missing_severity not in ["Error", "Warning", "Info"]:
-            LOG.warn("Document Validator for {}, {} does not have a valid "
-                     "value set for missing_severity (got {}). "
-                     "Assuming Error".format(
-                         self.schema, self.doc_name, self.missing_severity
-                     ))
+            LOG.warning("Document Validator for {}, {} does not have a valid "
+                        "value set for missing_severity (got {}). "
+                        "Assuming Error".format(
+                            self.schema, self.doc_name, self.missing_severity
+                        ))
             self.missing_severity = "Error"
 
         try:

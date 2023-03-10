@@ -109,7 +109,7 @@ class ActionsResource(BaseResource):
         Return actions that have been invoked through shipyard.
         :returns: a json array of action entities
         """
-        resp.body = self.to_json(self.get_all_actions(
+        resp.text = self.to_json(self.get_all_actions(
             verbosity=req.context.verbosity)
         )
         resp.status = falcon.HTTP_200
@@ -133,7 +133,7 @@ class ActionsResource(BaseResource):
         LOG.info("Id %s generated for action %s", action['id'], action['name'])
         # respond with the action and location for checking status
         resp.status = falcon.HTTP_201
-        resp.body = self.to_json(action)
+        resp.text = self.to_json(action)
         resp.location = '/api/v1.0/actions/{}'.format(action['id'])
 
     def create_action(self, action, context, allow_intermediate_commits=False):

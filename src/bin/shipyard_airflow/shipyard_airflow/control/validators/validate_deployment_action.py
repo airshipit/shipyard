@@ -57,8 +57,9 @@ class ValidateDeploymentAction:
         results = self.doc_val_mgr.validate()
         if self.doc_val_mgr.errored:
             if self.cont_on_fail:
-                LOG.warn("Validation failures occured, but 'continue-on-fail' "
-                         "is set to true. Processing continues")
+                LOG.warning("Validation failures occured, "
+                            "but 'continue-on-fail' "
+                            "is set to true. Processing continues")
             else:
                 raise ApiError(
                     title='Document validation failed',

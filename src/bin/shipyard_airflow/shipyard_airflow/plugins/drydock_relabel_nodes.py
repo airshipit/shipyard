@@ -81,10 +81,11 @@ class DrydockRelabelNodesOperator(DrydockBaseOperator):
                           "relabeled. The report at the end of processing "
                           "this step contains the results", task_name)
         except DrydockTaskTimeoutException:
-            LOG.warn("Task %s has timed out after %s seconds. Some nodes may "
-                     "have been relabeled. The report at the end of "
-                     "processing this step contains the results", task_name,
-                     self.task_timeout)
+            LOG.warning("Task %s has timed out after %s seconds. "
+                        "Some nodes may "
+                        "have been relabeled. The report at the end of "
+                        "processing this step contains the results", task_name,
+                        self.task_timeout)
 
     def report_summary(self):
         """Reports the successfully relabeled nodes"""

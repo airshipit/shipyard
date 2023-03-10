@@ -147,7 +147,7 @@ class NotesHelper:
                 note_timestamp=note_timestamp
             )
         except Exception as ex:
-            LOG.warn(
+            LOG.warning(
                 "Creating note for {} encountered a problem, exception info "
                 "follows, but processing is not halted for notes.",
                 assoc_id
@@ -163,7 +163,7 @@ class NotesHelper:
             q = Query(assoc_id_pattern, verbosity, exact_match)
             return self.nm.retrieve(q)
         except Exception as ex:
-            LOG.warn(
+            LOG.warning(
                 "Note retrieval for {} encountered a problem, exception "
                 "info follows, but processing is not halted for notes.",
                 assoc_id_pattern

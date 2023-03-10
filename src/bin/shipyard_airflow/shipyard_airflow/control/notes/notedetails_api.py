@@ -47,7 +47,7 @@ class NoteDetailsResource(BaseResource):
         note_id = kwargs['note_id']
         self.validate_note_id(note_id)
         note = self.get_note_with_access_check(req.context, note_id)
-        resp.body = self.get_note_details(note)
+        resp.text = self.get_note_details(note)
         resp.status = falcon.HTTP_200
 
     def validate_note_id(self, note_id):

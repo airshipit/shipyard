@@ -33,7 +33,7 @@ class BaseResource(object):
     """
     def on_options(self, req, resp, **kwargs):
         """Handle options requests"""
-        method_map = routing.create_http_method_map(self)
+        method_map = routing.map_http_methods(self)
         for method in method_map:
             if method_map.get(method).__name__ != 'method_not_allowed':
                 resp.append_header('Allow', method)

@@ -48,7 +48,7 @@ class ConfigDocsStatusResource(BaseResource):
         """Returns a list of the configdocs and their statuses"""
         versions = req.params.get('versions') or None
         helper = ConfigdocsHelper(req.context)
-        resp.body = self.to_json(helper.get_configdocs_status(versions))
+        resp.text = self.to_json(helper.get_configdocs_status(versions))
         resp.status = falcon.HTTP_200
 
 
@@ -90,7 +90,7 @@ class ConfigDocsResource(BaseResource):
         if validations and validations['status'] == 'Success':
             validations['code'] = resp.status
         resp.location = '/api/v1.0/configdocs/{}'.format(collection_id)
-        resp.body = self.to_json(validations)
+        resp.text = self.to_json(validations)
 
     def validate_content_length(self, content_length):
         """Validates that the content length header is valid
@@ -131,7 +131,7 @@ class ConfigDocsResource(BaseResource):
             policy.check_auth(req.context, policy.GET_CONFIGDOCS_CLRTXT)
 
         # Not reformatting to JSON or YAML since just passing through
-        resp.body = self.get_collection(
+        resp.text = self.get_collection(
             helper=helper, collection_id=collection_id, version=version,
             cleartext_secrets=cleartext_secrets)
         resp.append_header('Content-Type', 'application/x-yaml')
@@ -277,7 +277,7 @@ class CommitConfigDocsResource(BaseResource):
         dryrun = req.get_param_as_bool(name='dryrun') or False
         helper = ConfigdocsHelper(req.context)
         validations = self.commit_configdocs(helper, force, dryrun)
-        resp.body = self.to_json(validations)
+        resp.text = self.to_json(validations)
         resp.status = validations.get('code', falcon.HTTP_200)
 
     def commit_configdocs(self, helper, force, dryrun):

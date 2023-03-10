@@ -80,12 +80,12 @@ def create_req(ctx, body):
     env = testing.create_environ(
         path='/',
         query_string='',
-        protocol='HTTP/1.1',
+        http_version='1.1',
         scheme='http',
         host='falconframework.org',
         port=None,
         headers={'Content-Type': 'application/json'},
-        app='',
+        root_path='',
         body=body,
         method='POST',
         wsgierrors=None,
@@ -284,7 +284,7 @@ def test_on_get(mock_get_all_actions, mock_authorize):
     mock_authorize.assert_called_once_with(
         'workflow_orchestrator:list_actions', context)
     assert mock_get_all_actions.call_count == 1
-    assert resp.body is not None
+    assert resp.text is not None
     assert resp.status == '200 OK'
 
 
@@ -318,7 +318,7 @@ def test_on_post(mock_info, mock_create_action, mock_authorize, *args):
     mock_info.assert_called_with("Id %s generated for action %s", 'test_id',
                                  'test_name')
     assert resp.status == '201 Created'
-    assert resp.body is not None
+    assert resp.text is not None
     assert '/api/v1.0/actions/' in resp.location
 
 

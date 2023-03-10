@@ -180,8 +180,12 @@
 # and will be removed in the S  release.
 #auth_uri = <None>
 
-# API version of the admin Identity API endpoint. (string value)
+# API version of the Identity API endpoint. (string value)
 #auth_version = <None>
+
+# Interface to use for the Identity API endpoint. Valid values are "public",
+# "internal" (default) or "admin". (string value)
+#interface = internal
 
 # Do not handle authorization requests within the middleware, but delegate the
 # authorization decision to downstream WSGI components. (boolean value)
@@ -217,14 +221,6 @@
 # The region in which the identity server can be found. (string value)
 #region_name = <None>
 
-# DEPRECATED: Directory used to cache files related to PKI tokens. This option
-# has been deprecated in the Ocata release and will be removed in the P
-# release. (string value)
-# This option is deprecated for removal since Ocata.
-# Its value may be silently ignored in the future.
-# Reason: PKI token format is no longer supported.
-#signing_dir = <None>
-
 # Optionally specify a list of memcached server(s) to use for caching. If left
 # undefined, tokens will instead be cached in-process. (list value)
 # Deprecated group/name - [keystone_authtoken]/memcache_servers
@@ -234,16 +230,6 @@
 # caches previously-seen tokens for a configurable duration (in seconds). Set
 # to -1 to disable caching completely. (integer value)
 #token_cache_time = 300
-
-# DEPRECATED: Determines the frequency at which the list of revoked tokens is
-# retrieved from the Identity service (in seconds). A high number of revocation
-# events combined with a low cache duration may significantly reduce
-# performance. Only valid for PKI tokens. This option has been deprecated in
-# the Ocata release and will be removed in the P release. (integer value)
-# This option is deprecated for removal since Ocata.
-# Its value may be silently ignored in the future.
-# Reason: PKI token format is no longer supported.
-#revocation_cache_time = 10
 
 # (Optional) If defined, indicate whether token data should be authenticated or
 # authenticated and encrypted. If MAC, token data is authenticated (with HMAC)
@@ -280,9 +266,9 @@
 # client connection from the pool. (integer value)
 #memcache_pool_conn_get_timeout = 10
 
-# (Optional) Use the advanced (eventlet safe) memcached client pool. The
-# advanced pool will only work under python 2.x. (boolean value)
-#memcache_use_advanced_pool = false
+# (Optional) Use the advanced (eventlet safe) memcached client pool. (boolean
+# value)
+#memcache_use_advanced_pool = true
 
 # (Optional) Indicate whether to set the X-Service-Catalog header. If False,
 # middleware will not ask for service catalog on token validation and will not
@@ -298,27 +284,6 @@
 # (string value)
 #enforce_token_bind = permissive
 
-# DEPRECATED: If true, the revocation list will be checked for cached tokens.
-# This requires that PKI tokens are configured on the identity server. (boolean
-# value)
-# This option is deprecated for removal since Ocata.
-# Its value may be silently ignored in the future.
-# Reason: PKI token format is no longer supported.
-#check_revocations_for_cached = false
-
-# DEPRECATED: Hash algorithms to use for hashing PKI tokens. This may be a
-# single algorithm or multiple. The algorithms are those supported by Python
-# standard hashlib.new(). The hashes will be tried in the order given, so put
-# the preferred one first for performance. The result of the first hash will be
-# stored in the cache. This will typically be set to multiple values only while
-# migrating from a less secure algorithm to a more secure one. Once all the old
-# tokens are expired this option should be set to a single value for better
-# performance. (list value)
-# This option is deprecated for removal since Ocata.
-# Its value may be silently ignored in the future.
-# Reason: PKI token format is no longer supported.
-#hash_algorithms = md5
-
 # A choice of roles that must be present in a service token. Service tokens are
 # allowed to request that an expired token can be used and so this check should
 # tightly control that only actual services should be sending this token. Roles
@@ -332,6 +297,10 @@
 # will become the default in a future release and should be enabled if
 # possible. (boolean value)
 #service_token_roles_required = false
+
+# The name or type of the service as it appears in the service catalog. This is
+# used to validate tokens that have restricted access rules. (string value)
+#service_type = <None>
 
 # Authentication type to load (string value)
 # Deprecated group/name - [keystone_authtoken]/auth_plugin

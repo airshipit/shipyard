@@ -57,7 +57,7 @@ def start_api():
         LoggingMiddleware(),
         CommonParametersMiddleware()
     ]
-    control_api = falcon.API(
+    control_api = falcon.App(
         request_type=ShipyardRequest, middleware=middlewares)
 
     control_api.add_route('/versions', VersionsResource())
@@ -113,7 +113,7 @@ class VersionsResource(BaseResource):
     """
 
     def on_get(self, req, resp):
-        resp.body = self.to_json({
+        resp.text = self.to_json({
             'v1.0': {
                 'path': '/api/v1.0',
                 'status': 'stable'

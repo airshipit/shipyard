@@ -1,14 +1,14 @@
 # Testing
-pyflakes>=2.1.1
-amqp~=2.6.0
+pyflakes==2.2.0
+amqp==2.6.1
 pytest==3.5.0
 pytest-cov==2.5.1
 responses==0.10.2
 testfixtures==5.1.1
 
 # Linting
-flake8<3.8.0,>=3.6.0
+flake8==3.8.4
 
 # Security scanning
-bandit>=1.1.0 # Apache-2.0
+bandit==1.6.0 # Apache-2.0
 

@@ -38,7 +38,7 @@ class WorkflowResource(BaseResource):
         """
         since_date = req.params.get('since')
         helper = WorkflowHelper(req.context.external_marker)
-        resp.body = self.to_json(
+        resp.text = self.to_json(
             self.get_all_workflows(helper=helper, since_date=since_date)
         )
         resp.status = falcon.HTTP_200
@@ -67,7 +67,7 @@ class WorkflowIdResource(BaseResource):
         :returns: a json object of a workflow entity
         """
         helper = WorkflowHelper(req.context.external_marker)
-        resp.body = self.to_json(
+        resp.text = self.to_json(
             self.get_workflow_detail(helper=helper, workflow_id=workflow_id)
         )
         resp.status = falcon.HTTP_200

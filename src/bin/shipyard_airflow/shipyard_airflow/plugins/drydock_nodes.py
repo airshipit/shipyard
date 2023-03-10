@@ -252,7 +252,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         except DrydockTaskFailedException:
             # Task failure may be successful enough based on success criteria.
             # This should not halt the overall flow of this workflow step.
-            LOG.warn(
+            LOG.warning(
                 "Task %s with Drydock task-id: %s has failed. Logs contain "
                 "details of the failure. Some nodes may be succesful, "
                 "processing continues", task_name, self.drydock_task_id
@@ -263,7 +263,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         except DrydockTaskTimeoutException:
             # Task timeout may be successful enough based on success criteria.
             # This should not halt the overall flow of this workflow step.
-            LOG.warn(
+            LOG.warning(
                 "Task %s with Drydock task-id: %s has timed out after %s "
                 "seconds. Logs contain details of the failure. Some nodes may "
                 "be succesful, processing continues", task_name,
