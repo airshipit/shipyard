@@ -112,10 +112,10 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
     && python3 -m pip install -U pip \
     && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard_client \
-    && pip3 install $(pwd) --use-pep517 \
+    && python3 setup.py install \
     && pip3 install -r /home/shipyard/api_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard \
-    && pip3 install $(pwd) --use-pep517 \
+    && python3 setup.py install \
     && apt-get purge -y --auto-remove $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -125,7 +125,9 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
         /var/tmp/* \
         /usr/share/man \
         /usr/share/doc \
-        /usr/share/doc-base
+        /usr/share/doc-base \
+    && python3 -m pip install -U pip
+
 
 # Entrypoint
 ENTRYPOINT ["/home/shipyard/entrypoint.sh"]

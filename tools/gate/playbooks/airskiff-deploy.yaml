@@ -22,6 +22,7 @@
     - ensure-docker
 
   tasks:
+
     - name: Clone Required Repositories
       shell: |
         export CLONE_SHIPYARD={{ CLONE_SHIPYARD }}
@@ -45,15 +46,23 @@
     - name: Build Shipyard and Airflow with submitted changes
       shell: |
         make
+        docker pull quay.io/airshipit/shipyard:latest-ubuntu_bionic
+        docker rm quay.io/airshipit/shipyard:latest-ubuntu_bionic
+        docker tag quay.io/airshipit/shipyard:latest-ubuntu_focal quay.io/airshipit/shipyard:latest-ubuntu_bionic
+        docker pull quay.io/airshipit/airflow:latest-ubuntu_bionic
+        docker rm quay.io/airshipit/airflow:latest-ubuntu_bionic
+        docker tag quay.io/airshipit/airflow:latest-ubuntu_focal quay.io/airshipit/airflow:latest-ubuntu_bionic
       args:
         chdir: "{{ zuul.project.src_dir }}"
       become: yes
 
-    - name: Setup clients
+    - name: Build all charts locally
       shell: |
-        ./tools/deployment/airskiff/developer/020-setup-client.sh
+        set -ex
+        ./tools/deployment/airskiff/developer/015-make-all-charts.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
+      become: yes
 
     - name: Deploy Airship components using Armada
       shell: |

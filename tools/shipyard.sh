@@ -38,7 +38,7 @@ set -e
 # Source Base Docker Command
 SHIPYARD_HOSTPATH=${SHIPYARD_HOSTPATH:-"/target"}
 NAMESPACE="${NAMESPACE:-ucp}"
-DISTRO="${DISTRO:-ubuntu_bionic}"
+DISTRO="${DISTRO:-ubuntu_focal}"
 SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master-${DISTRO}}"
 # set default value for OS_PASSWORD if it's not set
 # this doesn't actually get exported to environment

@@ -43,7 +43,7 @@ ARG AIRFLOW_HOME=/usr/local/airflow
 # Moved celery to images/airflow/requirements.txt as apache-airflow uses a
 # version of celery incompatibile with the version of kombu needed by other
 # Airship components
-ARG AIRFLOW_SRC="apache-airflow[crypto,postgres,hive,hdfs]==1.10.15"
+ARG AIRFLOW_SRC="apache-airflow[crypto,postgres,hive,hdfs,jdbc]==1.10.5"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
@@ -53,30 +53,39 @@ ARG KUBECTL_VERSION=1.26.3
 # Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
 
-RUN set -ex && \
-    apt-get -qq update && \
-    apt-get -y install \
-    automake \
-    ca-certificates \
-    curl \
-    git \
-    g++ \
-    libkrb5-dev \
-    libffi-dev \
-    libssl-dev \
-    libpq-dev \
-    libtool \
-    libsasl2-dev \
-    locales \
-    netcat \
-    netbase \
-    python3 \
-    python3-setuptools \
-    python3-pip \
-    python3-dev \
-    python3-dateutil \
-    make \
-    --no-install-recommends \
+RUN set -ex \
+    && apt-get update \
+    && apt-get install -y wget curl \
+        apt-transport-https ca-certificates gnupg \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && curl -o /etc/apt/trusted.gpg.d/postgresql_release_signing_key.asc 'https://www.postgresql.org/media/keys/ACCC4CF8.asc' \
+    && apt update \
+    && apt -y install \
+        automake \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        g++ \
+        libkrb5-dev \
+        libffi-dev \
+        libssl-dev \
+        libpq-dev \
+        libpq5 \
+        libtool \
+        libsasl2-dev \
+        locales \
+        netcat \
+        netbase \
+        postgresql-client \
+        postgresql-common \
+        python3 \
+        python3-setuptools \
+        python3-pip \
+        python3-dev \
+        python3-dateutil \
+        make \
+        --no-install-recommends \
     && python3 -m pip install -U pip \
     && apt-get clean \
     && rm -rf \
@@ -102,6 +111,7 @@ RUN set -ex \
     && cd .. \
     && rm -fr libyaml
 
+
 # Things that change mostly infrequently
 RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
     && curl -L -o /usr/local/bin/kubectl \
@@ -114,11 +124,11 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Install Airflow directly to allow overriding source
 # COPY images/airflow/requirements.txt /tmp/
 COPY ${ctx_base}/shipyard_airflow/requirements-frozen.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
-    && pip3 install $AIRFLOW_SRC --no-cache-dir \
-    && (pip3 uninstall -y snakebite || true) \
-    && (pip3 uninstall -y psycopg2 || true) \
-    && (pip3 install --no-cache-dir --force-reinstall $(pip freeze | grep psycopg2-binary) || true)
+RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
+    # && pip3 install $AIRFLOW_SRC --no-cache-dir
+    # && (pip3 uninstall -y snakebite || true) \
+    # && (pip3 uninstall -y psycopg2 || true) \
+    # && (pip3 install --no-cache-dir --force-reinstall $(pip freeze | grep psycopg2-binary) || true)
 
 # Copy scripts used in the container:
 COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
@@ -143,7 +153,7 @@ RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir
 
 COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
 RUN cd /tmp/shipyard \
-    && pip3 install $(pwd)
+    && pip3 install $(pwd) --use-pep517
 
 # Note: The value for the dags and plugins directories that are sourced
 # from the values.yaml of the Shipyard Helm chart need to align with these

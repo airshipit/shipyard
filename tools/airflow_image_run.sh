@@ -47,6 +47,7 @@ fi
 docker stop airflow_test
 docker rm airflow_test
 
+
 if [ ${TEST_RESP:(-7)} == "success" ]; then
     exit 0
 else

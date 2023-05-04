@@ -41,9 +41,9 @@ elif [[ $cmd == *scheduler* ]]; then
 elif [[ $cmd == 'quicktest' ]]; then
     ${python3_path} ${airflow_path} initdb
     ${python3_path} ${airflow_path} webserver -p 8080 &
-    airflow tasks run example_bash_operator runme_0 2018-01-01
+    airflow run example_bash_operator runme_0 2018-01-01
     airflow backfill example_bash_operator -s 2018-01-01 -e 2018-01-02
-    airflow dags state example_bash_operator 2018-01-01
+    airflow dag_state example_bash_operator 2018-01-01
 else
      echo "Invalid Command!"
      exit 1

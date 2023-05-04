@@ -187,7 +187,7 @@ def test_create_configdocs_directory_empty():
             '--directory=' + dir1
         ])
     _method.assert_not_called()
-    assert b'directory does not contain any YAML files' in result.output_bytes
+    assert b'directory does not contain any YAML files' in result.stdout_bytes
 
 
 def test_create_configdocs_multi_directory():
