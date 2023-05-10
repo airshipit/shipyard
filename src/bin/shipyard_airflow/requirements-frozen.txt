@@ -4,7 +4,7 @@ amqp==2.6.1
 apache-airflow==1.10.5
 apispec==1.3.3
 argcomplete==3.0.8
-Armada @ git+https://opendev.org/airship/armada.git@a6dcf17d178a89bad626b0e5ef6fafc428dca7e4
+Armada @ git+https://opendev.org/airship/armada.git@b778f9faf890dce74c3e5650fb3a196b5d25628b
 arrow==0.17.0
 attrs==23.1.0
 autopage==0.5.1
@@ -29,7 +29,7 @@ coverage==5.3
 croniter==0.3.37
 cryptography==3.4.8
 debtcollector==2.5.0
-Deckhand @ git+https://opendev.org/airship/deckhand.git@13c5199f18664d66ccdd3a1e54bb40ad2c293d1a
+Deckhand @ git+https://opendev.org/airship/deckhand.git@e4cf0c17df103683b971b07f6b29d58f1ae681c0
 decorator==5.1.1
 deepdiff==5.8.1
 defusedxml==0.7.1
@@ -38,7 +38,7 @@ distlib==0.3.6
 dnspython==2.3.0
 docutils==0.17
 dogpile.cache==1.2.0
-drydock-provisioner @ git+https://opendev.org/airship/drydock.git@d00eaf0303f50478d6503c2c2096e931134189ac#subdirectory=python
+drydock-provisioner @ git+https://opendev.org/airship/drydock.git@375abedb8aa3a413ca70a47aef467f39d65e1aee#subdirectory=python
 dulwich==0.21.5
 dumb-init==1.2.5.post1
 eventlet==0.33.3
@@ -137,9 +137,9 @@ platformdirs==3.5.0
 ply==3.11
 prettytable==3.7.0
 prison==0.1.0
-promenade @ git+https://opendev.org/airship/promenade.git@5602e85fb936eeafdc3e4699fd3afbe1576078bc
+promenade @ git+https://opendev.org/airship/promenade.git@2e8f6642f446e4ea6af2d6854b0f87564ce0fe60
 prometheus-client==0.8.0
-protobuf==4.22.4
+protobuf==4.23.0
 psutil==5.9.5
 psycopg2-binary==2.8.4
 py==1.11.0

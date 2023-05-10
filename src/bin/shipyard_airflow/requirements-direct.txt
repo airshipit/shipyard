@@ -34,7 +34,7 @@ WTForms<=2.3.3
 
 itsdangerous==2.0.1
 
-git+https://opendev.org/airship/deckhand.git@13c5199f18664d66ccdd3a1e54bb40ad2c293d1a#egg=deckhand
-git+https://opendev.org/airship/drydock.git@d00eaf0303f50478d6503c2c2096e931134189ac#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@a6dcf17d178a89bad626b0e5ef6fafc428dca7e4#egg=armada
-git+https://opendev.org/airship/promenade.git@5602e85fb936eeafdc3e4699fd3afbe1576078bc#egg=promenade
+git+https://opendev.org/airship/deckhand.git@e4cf0c17df103683b971b07f6b29d58f1ae681c0#egg=deckhand
+git+https://opendev.org/airship/drydock.git@375abedb8aa3a413ca70a47aef467f39d65e1aee#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@b778f9faf890dce74c3e5650fb3a196b5d25628b#egg=armada
+git+https://opendev.org/airship/promenade.git@2e8f6642f446e4ea6af2d6854b0f87564ce0fe60#egg=promenade
