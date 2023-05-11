@@ -211,19 +211,6 @@ SECTIONS = [
                 help='Airflow logs retrieval timeout (in seconds)'
             ),
             cfg.IntOpt(
-                'deckhand_client_connect_timeout',
-                default=5,
-                help='Deckhand client connect timeout (in seconds)'
-            ),
-            cfg.IntOpt(
-                'deckhand_client_read_timeout',
-                default=300,
-                help=(
-                    'Deckhand client timeout (in seconds) for GET, '
-                    'PUT, POST and DELETE request'
-                )
-            ),
-            cfg.IntOpt(
                 'validation_connect_timeout',
                 default=5,
                 help=('Airship component validation connect timeout '
@@ -244,6 +231,19 @@ SECTIONS = [
                 'notes_read_timeout',
                 default=10,
                 help='Read timeout for a note source URL (in seconds)'
+            ),
+            cfg.IntOpt(
+                'deckhand_client_connect_timeout',
+                default=5,
+                help='Deckhand client connect timeout (in seconds)'
+            ),
+            cfg.IntOpt(
+                'deckhand_client_read_timeout',
+                default=300,
+                help=(
+                    'Deckhand client timeout (in seconds) for GET, '
+                    'PUT, POST and DELETE request'
+                )
             ),
             cfg.IntOpt(
                 'drydock_client_connect_timeout',

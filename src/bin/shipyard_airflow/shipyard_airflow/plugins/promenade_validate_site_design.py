@@ -18,13 +18,14 @@ import requests
 
 from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 try:
     from promenade_base_operator import PromenadeBaseOperator
 except ImportError:
     from shipyard_airflow.plugins.promenade_base_operator import \
         PromenadeBaseOperator
-from shipyard_airflow.shipyard_const import CustomHeaders
+
 
 LOG = logging.getLogger(__name__)
 
@@ -64,10 +65,13 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
         LOG.info("Waiting for Promenade to validate site design...")
 
         try:
-            design_validate_response = requests.post(validation_endpoint,
-                                                     headers=headers,
-                                                     data=json.dumps(payload),
-                                                     timeout=5)
+            design_validate_response = requests.post(
+                validation_endpoint,
+                headers=headers,
+                data=json.dumps(payload),
+                timeout=(
+                    self.validation_connect_timeout,
+                    self.validation_read_timeout))
 
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)

@@ -18,13 +18,14 @@ import requests
 
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
+from shipyard_airflow.shipyard_const import CustomHeaders
 
 try:
     from drydock_base_operator import DrydockBaseOperator
 except ImportError:
     from shipyard_airflow.plugins.drydock_base_operator import \
         DrydockBaseOperator
-from shipyard_airflow.shipyard_const import CustomHeaders
+
 
 LOG = logging.getLogger(__name__)
 
@@ -64,10 +65,12 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         LOG.info("Waiting for DryDock to validate site design...")
 
         try:
-            design_validate_response = requests.post(validation_endpoint,
-                                                     headers=headers,
-                                                     data=json.dumps(payload),
-                                                     timeout=5)
+            design_validate_response = requests.post(
+                validation_endpoint,
+                headers=headers,
+                data=json.dumps(payload),
+                timeout=(self.validation_connect_timeout,
+                         self.validation_read_timeout))
 
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)

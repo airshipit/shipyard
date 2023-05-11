@@ -14,12 +14,12 @@
 import abc
 import os
 import logging
+import requests
 
 from keystoneauth1.exceptions.auth import AuthorizationFailure
 from keystoneauth1.exceptions.catalog import EndpointNotFound
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
-import requests
 
 from shipyard_client.api_client.client_error import ClientError
 from shipyard_client.api_client.client_error import UnauthenticatedClientError
@@ -95,7 +95,11 @@ class BaseClient(metaclass=abc.ABCMeta):
             # This could use keystoneauth1 session, but that library handles
             # responses strangely (wraps all 400/500 in a keystone exception)
             response = requests.post(
-                url, data=data, params=query_params, headers=headers)
+                url,
+                data=data,
+                params=query_params,
+                headers=headers,
+                timeout=None)
             # handle some cases where the response code is sufficient to know
             # what needs to be done
             if response.status_code == 401:

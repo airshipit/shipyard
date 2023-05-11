@@ -97,6 +97,8 @@ class DrydockBaseOperator(UcpBaseOperator):
         self.svc_session = svc_session
         self.svc_token = svc_token
         self.target_nodes = None
+        self.validation_connect_timeout = None
+        self.validation_read_timeout = None
 
     def run_base(self, context):
         """Base setup/processing for Drydock operators
@@ -113,6 +115,10 @@ class DrydockBaseOperator(UcpBaseOperator):
                 'requests_config', 'drydock_client_connect_timeout'))
             self.drydock_client_read_timeout = int(config.get(
                 'requests_config', 'drydock_client_read_timeout'))
+            self.validation_connect_timeout = int(config.get(
+                'requests_config', 'validation_connect_timeout'))
+            self.validation_read_timeout = int(config.get(
+                'requests_config', 'validation_read_timeout'))
 
             # Setup the drydock client
             self._setup_drydock_client()

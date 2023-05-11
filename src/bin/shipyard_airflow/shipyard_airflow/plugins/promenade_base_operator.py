@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import configparser
 import logging
 
 from airflow.plugins_manager import AirflowPlugin
@@ -58,12 +59,22 @@ class PromenadeBaseOperator(UcpBaseOperator):
                   *args, **kwargs)
         self.redeploy_server = redeploy_server
         self.svc_token = svc_token
+        self.validation_connect_timeout = None
+        self.validation_read_timeout = None
 
     @shipyard_service_token
     def run_base(self, context):
 
         # Logs uuid of Shipyard action
         LOG.info("Executing Shipyard Action %s", self.action_id)
+
+        # Retrieve config values from shipyard configuration.
+        config = configparser.ConfigParser()
+        config.read(self.shipyard_conf)
+        self.validation_connect_timeout = int(config.get(
+            'requests_config', 'validation_connect_timeout'))
+        self.validation_read_timeout = int(config.get(
+            'requests_config', 'validation_read_timeout'))
 
         # Create additional headers dict to pass context marker
         # and end user

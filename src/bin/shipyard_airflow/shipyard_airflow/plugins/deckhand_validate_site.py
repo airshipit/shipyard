@@ -54,7 +54,8 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
             retrieved_list = yaml.safe_load(
                 requests.get(validation_endpoint,
                              headers=x_auth_token,
-                             timeout=self.validation_read_timeout).text)
+                             timeout=(self.validation_connect_timeout,
+                                      self.validation_read_timeout)).text)
 
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)

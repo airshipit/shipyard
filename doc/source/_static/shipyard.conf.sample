@@ -376,13 +376,6 @@
 # Airflow logs retrieval timeout (in seconds) (integer value)
 #airflow_log_read_timeout = 300
 
-# Deckhand client connect timeout (in seconds) (integer value)
-#deckhand_client_connect_timeout = 5
-
-# Deckhand client timeout (in seconds) for GET, PUT, POST and DELETE request
-# (integer value)
-#deckhand_client_read_timeout = 300
-
 # Airship component validation connect timeout (in seconds) (integer value)
 #validation_connect_timeout = 5
 
@@ -395,6 +388,13 @@
 
 # Read timeout for a note source URL (in seconds) (integer value)
 #notes_read_timeout = 10
+
+# Deckhand client connect timeout (in seconds) (integer value)
+#deckhand_client_connect_timeout = 5
+
+# Deckhand client timeout (in seconds) for GET, PUT, POST and DELETE request
+# (integer value)
+#deckhand_client_read_timeout = 300
 
 # Connect timeout used for connecting to Drydock using the Drydock client (in
 # seconds) (integer value)

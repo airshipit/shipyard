@@ -72,10 +72,12 @@ class DeckhandBaseOperator(UcpBaseOperator):
                   *args, **kwargs)
         self.committed_ver = committed_ver
         self.deckhandclient = deckhandclient
+        self.deckhand_client_connect_timeout = None
         self.deckhand_client_read_timeout = deckhand_client_read_timeout
         self.revision_id = revision_id
         self.svc_session = svc_session
         self.svc_token = svc_token
+        self.validation_connect_timeout = None
         self.validation_read_timeout = validation_read_timeout
 
     @shipyard_service_token
@@ -86,9 +88,12 @@ class DeckhandBaseOperator(UcpBaseOperator):
         config.read(self.shipyard_conf)
 
         # Initialize variables
+        self.deckhand_client_connect_timeout = int(config.get(
+            'requests_config', 'deckhand_client_connect_timeout'))
         self.deckhand_client_read_timeout = int(config.get(
             'requests_config', 'deckhand_client_read_timeout'))
-
+        self.validation_connect_timeout = int(config.get(
+            'requests_config', 'validation_connect_timeout'))
         self.validation_read_timeout = int(config.get(
             'requests_config', 'validation_read_timeout'))
 

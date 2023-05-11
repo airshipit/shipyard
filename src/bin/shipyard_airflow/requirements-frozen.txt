@@ -4,7 +4,7 @@ amqp==2.6.1
 apache-airflow==1.10.5
 apispec==1.3.3
 argcomplete==3.0.8
-Armada @ git+https://opendev.org/airship/armada.git@b778f9faf890dce74c3e5650fb3a196b5d25628b
+Armada @ git+https://opendev.org/airship/armada.git@4be7fa44a743fbcdf792e2bdca3af6c95b540f97
 arrow==0.17.0
 attrs==23.1.0
 autopage==0.5.1
@@ -29,7 +29,7 @@ coverage==5.3
 croniter==0.3.37
 cryptography==3.4.8
 debtcollector==2.5.0
-Deckhand @ git+https://opendev.org/airship/deckhand.git@e4cf0c17df103683b971b07f6b29d58f1ae681c0
+Deckhand @ git+https://opendev.org/airship/deckhand.git@3a06b1b6040865483a09514e2bf7dc5fae24560e
 decorator==5.1.1
 deepdiff==5.8.1
 defusedxml==0.7.1
@@ -65,7 +65,7 @@ future==0.16.0
 futurist==2.4.1
 gitdb==4.0.10
 GitPython==3.1.31
-google-auth==2.17.3
+google-auth==2.18.0
 greenlet==2.0.2
 gunicorn==19.10.0
 hacking==4.1.0
@@ -132,12 +132,12 @@ PasteDeploy==3.0.1
 PasteScript==3.3.0
 pbr==5.5.1
 pendulum==1.4.4
-pip==23.0.1
-platformdirs==3.5.0
+pip==23.1.2
+platformdirs==3.5.1
 ply==3.11
 prettytable==3.7.0
 prison==0.1.0
-promenade @ git+https://opendev.org/airship/promenade.git@2e8f6642f446e4ea6af2d6854b0f87564ce0fe60
+promenade @ git+https://opendev.org/airship/promenade.git@45bcba068eb42fe6ba54d494b12122600dcb2c6c
 prometheus-client==0.8.0
 protobuf==4.23.0
 psutil==5.9.5
@@ -202,7 +202,7 @@ SQLAlchemy==1.3.15
 sqlalchemy-migrate==0.13.0
 sqlparse==0.4.4
 statsd==4.0.1
-stevedore==5.0.0
+stevedore==5.1.0
 tabulate==0.8.3
 Tempita==0.5.2
 tenacity==4.12.0
