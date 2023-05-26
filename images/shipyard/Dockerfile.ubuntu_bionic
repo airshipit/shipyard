@@ -85,8 +85,8 @@ RUN chown -R shipyard: /home/shipyard \
     && chmod +x /home/shipyard/entrypoint.sh
 
 # Requirements and Shipyard source
-COPY ${ctx_base}/shipyard_airflow/requirements.txt /home/shipyard/api_requirements.txt
-COPY ${ctx_base}/shipyard_client/requirements.txt /home/shipyard/client_requirements.txt
+COPY ${ctx_base}/shipyard_airflow/requirements-frozen-bionic.txt /home/shipyard/api_requirements.txt
+COPY ${ctx_base}/shipyard_client/requirements-frozen-bionic.txt /home/shipyard/client_requirements.txt
 COPY ${ctx_base}/shipyard_client /home/shipyard/shipyard_client/
 COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
 

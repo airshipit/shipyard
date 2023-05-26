@@ -64,10 +64,13 @@ RUN set -ex && \
     libffi-dev \
     libssl-dev \
     libpq-dev \
+    libpq5 \
     libtool \
     locales \
     netcat \
     netbase \
+    postgresql-client \
+    postgresql-common \
     python3 \
     python3-setuptools \
     python3-pip \
@@ -110,7 +113,7 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Note - removing snakebite (python 2 vs. 3). See:
 #    https://github.com/puckel/docker-airflow/issues/77
 # Install Airflow directly to allow overriding source
-COPY images/airflow/requirements.txt /tmp/
+COPY ${ctx_base}/shipyard_airflow/requirements-frozen-bionic.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
     && pip3 install $AIRFLOW_SRC --no-cache-dir \
     && (pip3 uninstall -y snakebite || true) \
@@ -135,8 +138,8 @@ ENV PBR_VERSION 0.1a1
 # Since Shipyard and Airflow are built together as images, this should prevent
 # stale or out-of-date code between these parts.
 # Shipyard requirements, source and installation
-COPY ${ctx_base}/shipyard_airflow/requirements.txt /tmp/api_requirements.txt
-RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir
+# COPY ${ctx_base}/shipyard_airflow/requirements-frozen-bionic.txt /tmp/api_requirements.txt
+# RUN pip3 install -r /tmp/api_requirements.txt --no-cache-dir
 
 COPY ${ctx_base}/shipyard_airflow /tmp/shipyard/
 RUN cd /tmp/shipyard \

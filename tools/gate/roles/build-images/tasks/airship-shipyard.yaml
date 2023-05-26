@@ -47,6 +47,17 @@
   become: True
 
 
+- name: Make and run images - verbosive
+  when: not publish
+  shell: |
+        make run_images
+  args:
+    chdir: "{{ zuul.project.src_dir }}"
+    executable: /bin/bash
+  become: True
+
+
+
 - name: Make images
   when: not publish
   block:

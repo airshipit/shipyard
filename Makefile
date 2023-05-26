@@ -40,18 +40,36 @@ IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
 IMAGE_DIR:=images/$(IMAGE_NAME)
 
 .PHONY: images
-#Build all images in the list
-images: $(IMAGE_NAME)
-#Build and run all images in list
-#sudo make images IMAGE_NAME=airflow will Build and Run airflow
-#sudo make images will build and run airflow and shipyard
-$(IMAGE_NAME):
-	@echo
-	@echo "===== Processing [$@] image ====="
-	@make build IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG}-${DISTRO} IMAGE_DIR=images/$@ IMAGE_NAME=$@
-	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$@:${IMAGE_TAG}-${DISTRO} SCRIPT=./tools/$@_image_run.sh
 
 # Build all docker images for this project
+images: build_images
+
+build_images: build_airflow build_shipyard
+
+run_images: build_airflow run_airflow  build_shipyard run_shipyard
+
+#Build all images in list
+build_airflow:
+	@echo
+	@echo "===== Processing [airflow] image ====="
+	@make build IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/airflow:${IMAGE_TAG}-${DISTRO} IMAGE_DIR=images/airflow IMAGE_NAME=airflow
+
+build_shipyard:
+	@echo
+	@echo "===== Processing [shipyard] image ====="
+	@make build IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/shipyard:${IMAGE_TAG}-${DISTRO} IMAGE_DIR=images/shipyard IMAGE_NAME=shipyard
+
+
+#Run all images in list
+
+run_airflow:
+	@echo
+	@echo "===== Processing [airflow] image ====="
+	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/airflow:${IMAGE_TAG}-${DISTRO} SCRIPT=./tools/airflow_image_run.sh
+run_shipyard:
+	@echo
+	@echo "===== Processing [shipyard] image ====="
+	@make run IMAGE=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/shipyard:${IMAGE_TAG}-${DISTRO} SCRIPT=./tools/shipyard_image_run.sh
 
 # Create tgz of the chart
 .PHONY: charts

@@ -45,13 +45,15 @@
 
     - name: Build Shipyard and Airflow with submitted changes
       shell: |
-        make
-        docker pull quay.io/airshipit/shipyard:latest-ubuntu_bionic
-        docker rm quay.io/airshipit/shipyard:latest-ubuntu_bionic
-        docker tag quay.io/airshipit/shipyard:latest-ubuntu_focal quay.io/airshipit/shipyard:latest-ubuntu_bionic
-        docker pull quay.io/airshipit/airflow:latest-ubuntu_bionic
-        docker rm quay.io/airshipit/airflow:latest-ubuntu_bionic
-        docker tag quay.io/airshipit/airflow:latest-ubuntu_focal quay.io/airshipit/airflow:latest-ubuntu_bionic
+        set -ex
+        export DISTRO={{ SHIPYARD_IMAGE_DISTRO }}
+        make images
+        if test "${DISTRO}" = 'ubuntu_bionic'
+        then
+          # this trick is needed to use bionic image instead of focal in airskiff deployment test
+          docker tag quay.io/airshipit/airflow:latest-ubuntu_bionic quay.io/airshipit/airflow:latest-ubuntu_focal
+          docker tag quay.io/airshipit/shipyard:latest-ubuntu_bionic quay.io/airshipit/shipyard:latest-ubuntu_focal
+        fi
       args:
         chdir: "{{ zuul.project.src_dir }}"
       become: yes
