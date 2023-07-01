@@ -143,6 +143,7 @@ class TestDrydockDestroyNodesOperator:
         assert ct.called
         assert "Task destroy_nodes has failed." in caplog.text
 
+
     @mock.patch.object(
         DrydockDestroyNodeOperator, 'create_task'
     )
@@ -192,8 +193,8 @@ class TestDrydockDestroyNodesOperator:
             assert gs.called
             assert "Task destroy_nodes has timed out after 10 seconds." in (
                 caplog.text)
-        assert ("One or more nodes requested for destruction failed to "
-                "destroy") in str(ae.value)
+            assert ("One or more nodes requested for destruction failed to "
+                    "destroy") in str(ae.value)
 
     @mock.patch.object(
         DrydockDestroyNodeOperator, 'get_successes_for_task',

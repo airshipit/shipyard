@@ -92,7 +92,8 @@ def test__get_threshold_date():
         arrow.get('2017-10-09T10:00:00.00000').naive
     )
 
-
+RUN_ID_ONE = "AAAAAAAAAAAAAAAAAAAAA"
+RUN_ID_TWO = "BBBBBBBBBBBBBBBBBBBBB"
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 
@@ -100,7 +101,7 @@ DAG_RUN_1 = {
     'dag_id': 'did2',
     'execution_date': DATE_ONE,
     'state': 'FAILED',
-    'run_id': '99',
+    'run_id': RUN_ID_TWO,
     'external_trigger': 'something',
     'start_date': DATE_ONE,
     'end_date': DATE_ONE
@@ -133,9 +134,8 @@ TASK_LIST = [
     {
         'task_id': '1a',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE,
@@ -147,9 +147,8 @@ TASK_LIST = [
     {
         'task_id': '1b',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -161,9 +160,8 @@ TASK_LIST = [
     {
         'task_id': '1c',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -198,7 +196,7 @@ DAG_RUN_SUB = {
     'dag_id': 'did2.didnt',
     'execution_date': DATE_ONE,
     'state': 'FAILED',
-    'run_id': '99',
+    'run_id': RUN_ID_TWO,
     'external_trigger': 'something',
     'start_date': DATE_ONE,
     'end_date': DATE_ONE

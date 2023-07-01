@@ -19,15 +19,15 @@ python3_path=$(which python3)
 airflow_path=$(which airflow)
 
 # Initialize Airflow DB
-if [[ $cmd == 'initdb' ]]; then
-    ${python3_path} ${airflow_path} initdb
+if [[ $cmd == 'db init' ]]; then
+    ${python3_path} ${airflow_path} db init
 # Start the services based on argument from Airflow Helm Chart
 elif [[ $cmd == 'webserver' ]]; then
     ${python3_path} ${airflow_path} webserver
 elif [[ $cmd == 'flower' ]]; then
-    ${python3_path} ${airflow_path} flower
+    ${python3_path} ${airflow_path} celery flower --pid=/tmp/airflow-flower.pid
 elif [[ $cmd == 'worker' ]]; then
-    ${python3_path} ${airflow_path} worker
+    ${python3_path} ${airflow_path} celery worker --pid=/tmp/airflow-worker.pid
 # If command contains the word 'scheduler'
 elif [[ $cmd == *scheduler* ]]; then
     while true; do
@@ -39,11 +39,14 @@ elif [[ $cmd == *scheduler* ]]; then
         ${python3_path} ${airflow_path} scheduler $2 $3
     done
 elif [[ $cmd == 'quicktest' ]]; then
-    ${python3_path} ${airflow_path} initdb
+    ${python3_path} ${airflow_path} db init
+    ${python3_path} ${airflow_path} db upgrade
+    ${python3_path} ${airflow_path} dags list
     ${python3_path} ${airflow_path} webserver -p 8080 &
-    airflow run example_bash_operator runme_0 2018-01-01
-    airflow backfill example_bash_operator -s 2018-01-01 -e 2018-01-02
-    airflow dag_state example_bash_operator 2018-01-01
+    ${python3_path} ${airflow_path} tasks test example_bash_operator runme_0
+    ${python3_path} ${airflow_path} dags backfill example_bash_operator -s 2018-01-01 -e 2018-01-02
+    ${python3_path} ${airflow_path} tasks run example_bash_operator runme_0 2018-01-01
+    ${python3_path} ${airflow_path} dags state example_bash_operator 2018-01-01
 else
      echo "Invalid Command!"
      exit 1

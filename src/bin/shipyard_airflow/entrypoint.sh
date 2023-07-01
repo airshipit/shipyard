@@ -50,7 +50,7 @@ if [ "$1" = 'server' ]; then
         --http :${PORT} \
         --paste config:/etc/shipyard/api-paste.ini \
         --enable-threads \
-        -L \
+        --disable-logging \
         --pyargv "--config-file /etc/shipyard/shipyard.conf" \
         --threads ${SHIPYARD_API_THREADS} \
         --workers ${SHIPYARD_API_WORKERS} \

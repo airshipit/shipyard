@@ -19,7 +19,7 @@ to the api startup to handle the Falcon specific setup.
 import logging
 
 from oslo_config import cfg
-from werkzeug.contrib.profiler import ProfilerMiddleware
+from werkzeug.middleware.profiler import ProfilerMiddleware
 
 from shipyard_airflow.conf import config
 import shipyard_airflow.control.api as api

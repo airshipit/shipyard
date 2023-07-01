@@ -39,6 +39,8 @@ from shipyard_airflow.control.helpers.configdocs_helper import (
 from shipyard_airflow.errors import ApiError
 from shipyard_airflow.policy import ShipyardPolicy
 
+RUN_ID_ONE = "AAAAAAAAAAAAAAAAAAAAA"
+RUN_ID_TWO = "BBBBBBBBBBBBBBBBBBBBB"
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
@@ -107,7 +109,7 @@ def actions_db():
     """
     return [
         {
-            'id': 'aaaaaa',
+            'id': RUN_ID_ONE,
             'name': 'dag_it',
             'parameters': None,
             'dag_id': 'did1',
@@ -117,7 +119,7 @@ def actions_db():
             'context_marker': '8-4-4-4-12a'
         },
         {
-            'id': 'bbbbbb',
+            'id': RUN_ID_TWO,
             'name': 'dag2',
             'parameters': {
                 'p1': 'p1val'
@@ -140,7 +142,7 @@ def dag_runs_db():
             'dag_id': 'did2',
             'execution_date': DATE_ONE,
             'state': 'SUCCESS',
-            'run_id': '12345',
+            'run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO
@@ -149,7 +151,7 @@ def dag_runs_db():
             'dag_id': 'did1',
             'execution_date': DATE_ONE,
             'state': 'FAILED',
-            'run_id': '99',
+            'run_id': RUN_ID_ONE,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_ONE
@@ -165,9 +167,9 @@ def tasks_db():
         {
             'task_id': '1a',
             'dag_id': 'did2',
-            'execution_date': DATE_ONE,
             'state': 'SUCCESS',
-            'run_id': '12345',
+            'execution_date': DATE_ONE,
+            'run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -179,9 +181,9 @@ def tasks_db():
         {
             'task_id': '1b',
             'dag_id': 'did2',
-            'execution_date': DATE_ONE,
             'state': 'SUCCESS',
-            'run_id': '12345',
+            'execution_date': DATE_ONE,
+            'run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -193,9 +195,9 @@ def tasks_db():
         {
             'task_id': '1c',
             'dag_id': 'did2',
-            'execution_date': DATE_ONE,
             'state': 'SUCCESS',
-            'run_id': '12345',
+            'execution_date': DATE_ONE,
+            'run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -207,8 +209,9 @@ def tasks_db():
         {
             'task_id': '2a',
             'dag_id': 'did1',
-            'execution_date': DATE_ONE,
             'state': 'FAILED',
+            'execution_date': DATE_ONE,
+            'run_id': RUN_ID_ONE,
             'start_date': DATE_ONE,
             'end_date': DATE_ONE,
             'duration': '1second',
@@ -354,16 +357,16 @@ def test_get_all_actions_notes(*args):
     action_resource.get_all_dag_runs_db = dag_runs_db
     action_resource.get_all_tasks_db = tasks_db
     # inject some notes
-    nh.make_action_note('aaaaaa', "hello from aaaaaa1")
-    nh.make_action_note('aaaaaa', "hello from aaaaaa2")
-    nh.make_action_note('bbbbbb', "hello from bbbbbb")
+    nh.make_action_note(RUN_ID_ONE, "hello from aaaaaa1")
+    nh.make_action_note(RUN_ID_ONE, "hello from aaaaaa2")
+    nh.make_action_note(RUN_ID_TWO, "hello from bbbbbb")
 
     result = action_resource.get_all_actions(verbosity=1)
     assert len(result) == len(actions_db())
     for action in result:
-        if action['id'] == 'aaaaaa':
+        if action['id'] == RUN_ID_ONE:
             assert len(action['notes']) == 2
-        if action['id'] == 'bbbbbb':
+        if action['id'] == RUN_ID_TWO:
             assert len(action['notes']) == 1
             assert action['notes'][0]['note_val'] == 'hello from bbbbbb'
 

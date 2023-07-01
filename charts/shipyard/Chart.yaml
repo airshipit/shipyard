@@ -16,7 +16,7 @@
 apiVersion: v1
 description: A Helm chart for Shipyard and Airflow
 name: shipyard
-version: 0.1.2
+version: 0.2.0
 keywords:
 - shipyard
 - airflow

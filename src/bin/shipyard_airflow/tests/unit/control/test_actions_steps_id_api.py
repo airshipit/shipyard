@@ -26,6 +26,8 @@ from shipyard_airflow.control.action.actions_steps_id_api import \
 from shipyard_airflow.errors import ApiError
 from tests.unit.control import common
 
+RUN_ID_ONE = "AAAAAAAAAAAAAAAAAAAAA"
+RUN_ID_TWO = "BBBBBBBBBBBBBBBBBBBBB"
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
@@ -64,9 +66,9 @@ def tasks_db(dag_id, execution_date):
     return [{
         'task_id': '1a',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE,
@@ -77,9 +79,9 @@ def tasks_db(dag_id, execution_date):
     }, {
         'task_id': '1b',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -90,9 +92,9 @@ def tasks_db(dag_id, execution_date):
     }, {
         'task_id': '1c',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '12345',
+        'run_id': RUN_ID_ONE,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -172,3 +174,4 @@ class TestActionsStepsResource():
         action_resource.get_tasks_db(dag_id, execution_date)
         mock_get_tasks_by_id.assert_called_with(
             dag_id=dag_id, execution_date=execution_date)
+

@@ -53,7 +53,7 @@ class DbAccess:
         """
         Unimplemented method for use in overriding to peform db updates
         """
-        LOG.info('No databse version updates specified for %s',
+        LOG.info('No database version updates specified for %s',
                  self.__class__.__name__)
 
     def get_engine(self):

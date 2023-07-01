@@ -28,6 +28,8 @@ from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 from tests.unit.control.common import create_req, create_resp
 
+RUN_ID_ONE = "AAAAAAAAAAAAAAAAAAAAA"
+RUN_ID_TWO = "BBBBBBBBBBBBBBBBBBBBB"
 DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
 DATE_TWO = datetime(2017, 9, 13, 11, 13, 5, 57000)
 DATE_ONE_STR = DATE_ONE.strftime('%Y-%m-%dT%H:%M:%S')
@@ -50,10 +52,10 @@ def actions_db(action_id):
     replaces the actual db call
     """
     return {
-        'id': '12345678901234567890123456',
+        'id': RUN_ID_ONE,
         'name': 'dag_it',
         'parameters': None,
-        'dag_id': 'did2',
+        'dag_id': 'did1',
         'dag_execution_date': DATE_ONE_STR,
         'user': 'robot1',
         'timestamp': DATE_ONE,
@@ -69,7 +71,7 @@ def dag_runs_db(dag_id, execution_date):
         'dag_id': 'did2',
         'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '99',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE
@@ -83,9 +85,8 @@ def tasks_db(dag_id, execution_date):
     return [{
         'task_id': '1a',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE,
@@ -96,9 +97,8 @@ def tasks_db(dag_id, execution_date):
     }, {
         'task_id': '1b',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'SUCCESS',
-        'run_id': '12345',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -109,9 +109,8 @@ def tasks_db(dag_id, execution_date):
     }, {
         'task_id': '1c',
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '12345',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_TWO,
         'end_date': DATE_TWO,
@@ -230,7 +229,7 @@ def test_get_dag_run_by_id_notempty():
         'dag_id': 'did2',
         'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '99',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE
@@ -296,14 +295,13 @@ def test_get_tasks_db(mock_get_tasks_by_id):
         dag_id=dag_id, execution_date=execution_date)
     assert result == expected
 
-
 @mock.patch.object(AIRFLOW_DB, 'get_dag_runs_by_id')
 def test_get_dag_run_db(mock_get_dag_runs_by_id):
     expected = {
         'dag_id': 'did2',
         'execution_date': DATE_ONE,
         'state': 'FAILED',
-        'run_id': '99',
+        'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
         'start_date': DATE_ONE,
         'end_date': DATE_ONE
@@ -317,7 +315,6 @@ def test_get_dag_run_db(mock_get_dag_runs_by_id):
     mock_get_dag_runs_by_id.assert_called_once_with(
         dag_id=dag_id, execution_date=execution_date)
     assert result == expected
-
 
 @mock.patch.object(SHIPYARD_DB, 'get_command_audit_by_action_id')
 def test_get_action_command_audit_db(mock_get_command_audit_by_action_id):

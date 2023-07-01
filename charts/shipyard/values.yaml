@@ -471,34 +471,13 @@ conf:
       # Envrionment variable AIRFLOW_HOME is used instead.
       #airflow_home: /usr/local/airflow
       dags_folder: /usr/local/airflow/dags
-      base_log_folder: /usr/local/airflow/logs
-      remote_logging: "False"
-      remote_log_conn_id: ""
-      remote_base_log_folder: ""
-      encrypt_s3_logs: "False"
-      logging_level: "INFO"
-      fab_logging_level: "WARN"
-      # See image-bundled log_config.py.
-      # Adds console logging of task/step logs.
-      logging_config_class: log_config.LOGGING_CONFIG
-      # NOTE: Airflow 1.10 introduces extra newline characters between log
-      #     records. Version 1.10.1 should resolve this issue
-      #     https://issues.apache.org/jira/browse/AIRFLOW-1917
-      #
-      # NOTE: The log format ends up repeated for each log record that we log
-      #     in our custom operators, once for the logging_mixin class of
-      #     Airflow itself, and once again for the message we want to log.
-      #     E.g.:
-      #         2018-09-21 19:38:48,950 INFO     logging_mixin(95) write - 2018-09-21 19:38:48,950 INFO     deployment_configuration_operator(135) get_doc - Deckhand Client acquired
-      #
-      # NOTE: Updated from default to match Shipyard logging as much as
-      #     possible without more aggressive techniques
-      #
-      log_format: "%%(asctime)s %%(levelname)-8s %%(filename)s:%%(lineno)3d:%%(funcName)s %%(module)s %%(message)s"
-      simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
-      log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
-      log_processor_filename_template: "{{ filename }}.log"
-      dag_processor_manager_log_location: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
+      sensitive_var_conn_names:
+        - sql_alchemy_conn
+        - broker_url
+        - result_backend
+        - fernet_key
+      lazy_discover_providers: "False"
+      lazy_load_plugins: "False"
       hostname_callable: "socket:getfqdn"
       default_timezone: "utc"
       executor: "CeleryExecutor"
@@ -539,9 +518,40 @@ conf:
       endpoint_url: http://localhost/
     api:
       auth_backend: airflow.api.auth.backend.default
+      enable_experimental_api: "True"
     lineage:
       # Shipyard is not using this
       backend: ""
+    logging:
+      # See image-bundled log_config.py.
+      # Adds console logging of task/step logs.
+      # logging_config_class: log_config.LOGGING_CONFIG
+      logging_config_class: new_log_config.LOGGING_CONFIG
+      # NOTE: Airflow 1.10 introduces extra newline characters between log
+      #     records. Version 1.10.1 should resolve this issue
+      #     https://issues.apache.org/jira/browse/AIRFLOW-1917
+      #
+      # NOTE: The log format ends up repeated for each log record that we log
+      #     in our custom operators, once for the logging_mixin class of
+      #     Airflow itself, and once again for the message we want to log.
+      #     E.g.:
+      #         2018-09-21 19:38:48,950 INFO     logging_mixin(95) write - 2018-09-21 19:38:48,950 INFO     deployment_configuration_operator(135) get_doc - Deckhand Client acquired
+      #
+      # NOTE: Updated from default to match Shipyard logging as much as
+      #     possible without more aggressive techniques
+      #
+      log_format: "%%(asctime)s %%(levelname)-8s %%(filename)s:%%(lineno)3d:%%(funcName)s %%(module)s %%(message)s"
+      log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
+      log_processor_filename_template: "{{ filename }}.log"
+      dag_processor_manager_log_location: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
+      logging_level: "INFO"
+      fab_logging_level: "WARNING"
+      celery_logging_level: "INFO"
+      base_log_folder: /usr/local/airflow/logs
+      remote_logging: "False"
+      remote_log_conn_id: ""
+      remote_base_log_folder: ""
+      encrypt_s3_logs: "False"
     atlas:
       # Shipyard is not using this
       sasl_enabled: "False"
@@ -617,6 +627,11 @@ conf:
       flower_url_prefix: ""
       flower_port: 5555
       flower_basic_auth: ""
+      operation_timeout: 30.0
+      broker_connection_retry_on_startup: "True"
+      broker_connection_retry: "True"
+      broker_connection_max_retries: 0
+      broker_connection_timeout: 30.0
       default_queue: "default"
       # How many processes CeleryExecutor uses to sync task state.
       # 0 means to use max(1, number of cores - 1) processes.
@@ -645,7 +660,6 @@ conf:
       # scheduler section in the docs for more information). This defines
       # how often the scheduler should run (in seconds).
       scheduler_heartbeat_sec: 10
-      run_duration: -1
       # Check for pending dag runs no more than every 10 seconds
       min_file_process_interval: 10
       dag_dir_list_interval: 300
@@ -655,16 +669,19 @@ conf:
       scheduler_zombie_task_threshold: 300
       catchup_by_default: "True"
       max_tis_per_query: 512
-      statsd_on: "False"
-      statsd_host: "localhost"
-      statsd_port: 8125
-      statsd_prefix: "airflow"
       # Shipyard's use of Airflow is low volume. 1 Thread is probably enough.
-      max_threads: 1
+      # deprecated in 1.10.14. Replaced with "parsing_processes"
+      # max_threads: 1
+      parsing_processes: 1
       authenticate: "False"
       # Turn off scheduler use of cron intervals by setting this to False.
       # DAGs submitted manually in the web UI or with trigger_dag will still run.
       use_job_schedule: "False"
+    metrics:
+      statsd_on: "False"
+      statsd_host: "localhost"
+      statsd_port: 8125
+      statsd_prefix: "airflow"
     ldap:
       # Shipyard is not using this
       uri: ""

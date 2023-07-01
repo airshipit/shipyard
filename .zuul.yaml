@@ -14,36 +14,30 @@
     templates:
       - docs-on-readthedocs
       - openstack-python38-jobs
-      - openstack-python36-jobs
     vars:
       rtd_webhook_id: '38576'
       rtd_project_name: 'airship-shipyard'
       ensure_global_symlinks: true
     check:
       jobs:
-        - openstack-tox-pep8
+        - airship-shipyard-openstack-tox-pep8-focal
         - airship-shipyard-openstack-tox-cover-focal
         - airship-shipyard-chart-build-gate
         - airship-shipyard-chart-build-latest-htk
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-airskiff-deployment-bionic
         - airship-shipyard-airskiff-deployment-focal
         - airship-shipyard-image-gate-ubuntu_focal
-        - airship-shipyard-image-gate-ubuntu_bionic
     gate:
       jobs:
-        - openstack-tox-pep8
+        - airship-shipyard-openstack-tox-pep8-focal
         - airship-shipyard-openstack-tox-cover-focal
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-airskiff-deployment-bionic
         - airship-shipyard-airskiff-deployment-focal
         - airship-shipyard-image-gate-ubuntu_focal
-        - airship-shipyard-image-gate-ubuntu_bionic
     post:
       jobs:
         - airship-shipyard-docker-build-publish-ubuntu_focal
-        - airship-shipyard-docker-build-publish-ubuntu_bionic
         - shipyard-upload-git-mirror
 
 - nodeset:
@@ -57,6 +51,12 @@
     nodes:
       - name: primary
         label: ubuntu-focal
+
+- job:
+    name: airship-shipyard-openstack-tox-pep8-focal
+    parent: openstack-tox-pep8
+    description: Runs pep8 job on focal
+    nodeset: airship-shipyard-single-node-focal
 
 
 - job:
@@ -117,19 +117,6 @@
           patch_set: true
 
 - job:
-    name: airship-shipyard-image-gate-ubuntu_bionic
-    description: |
-      Run shipyard-image build for ubuntu_bionic
-    parent: airship-shipyard-image-base
-    irrelevant-files: *irrelevant-files
-    vars:
-      publish: false
-      distro: ubuntu_bionic
-      tags:
-        dynamic:
-          patch_set: true
-
-- job:
     name: airship-shipyard-airskiff-deployment-focal
     nodeset: airship-shipyard-single-node-focal
     description: |
@@ -145,34 +132,14 @@
       - airship/treasuremap
     vars:
       CLONE_SHIPYARD: false
-      HTK_COMMIT: master
+      HTK_COMMIT: 97ce6d7d8e9a090c748800d69a57bbd9af698b60
       SHIPYARD_IMAGE_DISTRO: ubuntu_focal
-    irrelevant-files: *irrelevant-files
-
-- job:
-    name: airship-shipyard-airskiff-deployment-bionic
-    nodeset: airship-shipyard-single-node-focal
-    description: |
-      Deploy Memcached using Airskiff and submitted Armada changes.
-    timeout: 9600
-    voting: true
-    pre-run:
-      - tools/gate/playbooks/airskiff-reduce-site.yaml
-      - tools/gate/playbooks/git-config.yaml
-    run: tools/gate/playbooks/airskiff-deploy.yaml
-    post-run: tools/gate/playbooks/debug-report.yaml
-    required-projects:
-      - airship/treasuremap
-    vars:
-      CLONE_SHIPYARD: false
-      HTK_COMMIT: master
-      SHIPYARD_IMAGE_DISTRO: ubuntu_bionic
     irrelevant-files: *irrelevant-files
 
 
 - job:
     name: airship-shipyard-docker-build-publish-ubuntu_focal
-    timeout: 1800
+    timeout: 3600
     run: tools/gate/playbooks/run-image.yaml
     nodeset: airship-shipyard-single-node-focal
     irrelevant-files: *irrelevant-files
@@ -187,24 +154,8 @@
           commit: true
         static:
           - latest
+          - airflow_2.6.2
 
-- job:
-    name: airship-shipyard-docker-build-publish-ubuntu_bionic
-    timeout: 1800
-    run: tools/gate/playbooks/run-image.yaml
-    nodeset: airship-shipyard-single-node-focal
-    irrelevant-files: *irrelevant-files
-    secrets:
-      - airship_shipyard_quay_creds
-    vars:
-      publish: true
-      distro: ubuntu_bionic
-      tags:
-        dynamic:
-          branch: true
-          commit: true
-        static:
-          - latest
 
 
 - secret:

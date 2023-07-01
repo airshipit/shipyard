@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from datetime import datetime
+from datetime import timezone
 import logging
 # Using nosec to prevent Bandit blacklist reporting. Subprocess is used
 # in a controlled way as part of this operator.
@@ -43,7 +44,8 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
     def do_execute(self):
 
         # Calculate total elapsed time for workflow
-        time_delta = datetime.now() - self.task_instance.execution_date
+        time_delta = datetime.now(timezone.utc) \
+            - self.task_instance.execution_date
 
         hours, remainder = divmod(time_delta.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
@@ -88,7 +90,8 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
         #      container.
         response = subprocess.run(  # nosec
             ['airflow',
-             'task_state',
+             'tasks',
+             'state',
              self.main_dag_name,
              task_id,
              execution_date],

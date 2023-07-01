@@ -57,7 +57,7 @@ TASK_INSTANCE_DB = [
     {
         'task_id': 'action_xcom',
         'dag_id': 'deploy_site',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'start_date': DATE_TWO,
         'end_date': DATE_THREE,
         'duration': '4.353791',
@@ -75,7 +75,7 @@ TASK_INSTANCE_DB = [
     }, {
         'task_id': 'dag_concurrency_check',
         'dag_id': 'deploy_site',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'start_date': DATE_TWO,
         'end_date': DATE_THREE,
         'duration': '4.034112',
@@ -93,7 +93,7 @@ TASK_INSTANCE_DB = [
     }, {
         'task_id': 'k8s_preflight_check',
         'dag_id': 'deploy_site',
-        'execution_date': DATE_ONE,
+        # 'execution_date': DATE_ONE,
         'start_date': DATE_TWO,
         'end_date': DATE_THREE,
         'duration': '4.452571',

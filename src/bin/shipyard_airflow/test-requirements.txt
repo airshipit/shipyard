@@ -1,13 +1,14 @@
 bandit==1.6.0
-flake8==3.8.4
-pytest==3.5.0
-pytest-cov==2.5.1
+flake8
+pytest==7.4.0
+pytest-cov==4.1.0
+coverage==5.3
 testfixtures
 tox<=4.0.0
-typing-extensions==3.7.2
-pyflakes>=2.1.1
+# typing-extensions==3.7.2
+pyflakes
 # Pin apache-airflow 1.10.5 to align with version in airflow images requirements.txt
-apache-airflow[crypto,celery,hive,hdfs,jdbc]==1.10.5
+# apache-airflow[crypto,celery,hive,hdfs,jdbc]==1.10.5
 # install postgres seperately as apache-airflow 1.10.5 forces postgres to use
 # psycopg2 instead of psycopg2-binary which requires additional apt packages
 # to be installed, i.e. postgres-devel. Otherwise the following error is seen:

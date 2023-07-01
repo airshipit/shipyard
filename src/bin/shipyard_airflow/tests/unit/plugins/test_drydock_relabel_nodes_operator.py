@@ -187,8 +187,8 @@ class TestDrydockRelabelNodesOperator:
             assert gs.called
             assert "Task relabel_nodes has timed out after 2 seconds." in (
                 caplog.text)
-        assert ("One or more nodes requested for relabeling failed to "
-                "relabel") in str(ae.value)
+            assert ("One or more nodes requested for relabeling failed to "
+                    "relabel") in str(ae.value)
 
     @mock.patch.object(
         DrydockRelabelNodesOperator, 'get_successes_for_task',

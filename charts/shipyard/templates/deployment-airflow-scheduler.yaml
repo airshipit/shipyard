@@ -89,7 +89,7 @@ spec:
               subPath: shipyard.conf
               readOnly: true
             - name: airflow-logs
-              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
+              mountPath: {{ .Values.conf.airflow.logging.base_log_folder }}
 {{ if $mounts_airflow_scheduler.volumeMounts }}{{ toYaml $mounts_airflow_scheduler.volumeMounts | indent 12 }}{{ end }}
       volumes:
         - name: airflow-etc

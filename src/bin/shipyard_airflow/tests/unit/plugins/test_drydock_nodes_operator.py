@@ -351,8 +351,9 @@ class TestDrydockNodesOperator:
         assert op._execute_task.call_count == 1
 
     @mock.patch("shipyard_airflow.plugins.check_k8s_node_status."
-                "check_node_status", return_value=[])
-    def test_execute_deployment(self, cns):
+                "check_node_status", return_value=[]
+    )
+    def test_execute_deployment(self,cns):
         op = DrydockNodesOperator(main_dag_name="main",
                                   shipyard_conf=CONF_FILE,
                                   task_id="t1")
@@ -369,8 +370,11 @@ class TestDrydockNodesOperator:
         assert op._execute_task.call_count == 1
         assert cns.call_count == 1
 
+
     @mock.patch("shipyard_airflow.plugins.check_k8s_node_status."
-                "check_node_status", return_value=['node2', 'node4'])
+                "check_node_status",
+                return_value=['node2', 'node4']
+    )
     def test_execute_deployment_k8s_fail(self, cns, caplog):
         op = DrydockNodesOperator(main_dag_name="main",
                                   shipyard_conf=CONF_FILE,

@@ -236,12 +236,12 @@ class TestDeploymentGroup:
         with pytest.raises(InvalidDeploymentGroupNodeLookupError) as err:
             DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
                             broken_node_lookup_1)
-        assert str(err).endswith("is not an iterable")
+        assert err.match("is not an iterable")
 
         with pytest.raises(InvalidDeploymentGroupNodeLookupError) as err:
             DeploymentGroup(yaml.safe_load(_GROUP_YAML_1),
                             broken_node_lookup_2)
-        assert str(err).endswith("is not all strings")
+        assert err.match("is not all strings")
 
     def test_set_stage(self):
         dg = DeploymentGroup(yaml.safe_load(_GROUP_YAML_ALL_SELECTOR),
@@ -269,7 +269,7 @@ class TestStage:
                                                       Stage.PREPARED]
         with pytest.raises(DeploymentGroupStageError) as de:
             Stage.previous_stage('Chickens and Turkeys')
-        assert str(de).endswith("Chickens and Turkeys is not a valid stage")
+        assert de.match("Chickens and Turkeys is not a valid stage")
 
 
 class TestCheckLabelFormat:

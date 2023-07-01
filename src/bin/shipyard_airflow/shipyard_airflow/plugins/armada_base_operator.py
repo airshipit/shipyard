@@ -81,7 +81,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
 
         # Logs uuid of action performed by the Operator
         LOG.info("Armada Operator for action %s", self.action_id)
-
         # Set up armada client
         self.armada_client = self._init_armada_client(
             self.endpoints.endpoint_by_name(service_endpoint.ARMADA),

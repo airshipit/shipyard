@@ -64,12 +64,12 @@ do
 
     # Get current state of dag using Airflow CLI
     # Use grep to remove logging messages that can pollute the status response
-    check_dag_state=`airflow dag_state ${dag_id} ${dag_execution_date} | grep -vE "DEBUG|INFO|WARN|ERROR"`
+    check_dag_state=$(airflow dags state ${dag_id} ${dag_execution_date} | grep -vE "DEBUG|INFO|WARN|ERROR")
     echo -e ${check_dag_state} >> /usr/local/airflow/upgrade_airflow_worker.log
 
     # We will need to extract the last word in the 'check_dag_state'
     # string variable as that will contain the status of the dag run
-    dag_state=`echo ${check_dag_state} | awk '{print $NF}'`
+    dag_state=$(echo ${check_dag_state} | awk '{print $NF}')
     echo -e ${dag_state} >> /usr/local/airflow/upgrade_airflow_worker.log
 
     if [[ $dag_state == "success" ]]; then
@@ -78,7 +78,7 @@ do
         echo -e "Proceeding to upgrade Airflow Worker..." >> /usr/local/airflow/upgrade_airflow_worker.log
         echo -e "Deleting Airflow Worker Pods..." >> /usr/local/airflow/upgrade_airflow_worker.log
 
-        for i in `kubectl get pods -n ucp | grep -i airflow-worker | awk '{print $1}'`; do
+        for i in $(kubectl get pods -n ucp | grep -i airflow-worker | awk '{print $1}'); do
             # Delete Airflow Worker pod so that they will respawn with the new
             # configurations and/or images
             kubectl delete pod $i -n ucp

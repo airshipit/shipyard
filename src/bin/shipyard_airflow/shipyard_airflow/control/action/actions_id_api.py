@@ -89,12 +89,12 @@ class ActionsIdResource(BaseResource):
             action['notes'].append(note.view())
         return action
 
-    def get_dag_run_by_id(self, dag_id, execution_date):
+    def get_dag_run_by_id(self, dag_id, run_id):
         """
         Wrapper for call to the airflow db to get a dag_run
         :returns: a dag run dictionary
         """
-        dag_run_list = self.get_dag_run_db(dag_id, execution_date)
+        dag_run_list = self.get_dag_run_db(dag_id, run_id)
         # should be only one result, return the first one
         if dag_run_list:
             return dag_run_list[0]

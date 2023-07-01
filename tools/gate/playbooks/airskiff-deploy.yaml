@@ -23,10 +23,11 @@
 
   tasks:
 
-    - name: Install Packaging python module for airship
+    - name: Install Packaging python module for tools/airship
       block:
         - pip:
             name: packaging
+            version: 23.1
             executable: pip3
       become: True
 
@@ -61,10 +62,18 @@
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
 
-    - name: Setup openstack client
+    - name: Setup OpenStack Client
       shell: |
         set -ex
         ./tools/deployment/airskiff/developer/020-setup-client.sh
+      args:
+        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
+      become: yes
+
+    - name: Build all charts locally
+      shell: |
+        set -ex
+        ./tools/deployment/airskiff/developer/015-make-all-charts.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
       become: yes
@@ -74,37 +83,22 @@
         set -ex
         export DISTRO={{ SHIPYARD_IMAGE_DISTRO }}
         make images
-        docker system prune --force
       args:
         chdir: "{{ zuul.project.src_dir }}"
       become: yes
 
+
     - name: Use locally built images in manifests
       shell: |
         set -ex
-        export DISTRO={{ SHIPYARD_IMAGE_DISTRO }}
         docker rm registry --force || true
         docker run -d -p 5000:5000 --restart=always --name registry registry:2
-        if test "${DISTRO}" = 'ubuntu_bionic'
-        then
-          docker tag quay.io/airshipit/shipyard:latest-ubuntu_bionic localhost:5000/shipyard:latest-ubuntu_bionic
-          docker push localhost:5000/shipyard:latest-ubuntu_bionic
-          sed -i "s#quay.io/airshipit/shipyard:latest-ubuntu_focal#localhost:5000/shipyard:latest-ubuntu_bionic#g" ./site/airskiff/software/config/versions.yaml
-          sed -i "s#quay.io/airshipit/shipyard:latest-ubuntu_focal#localhost:5000/shipyard:latest-ubuntu_bionic#g" ./global/software/config/versions.yaml
-        else
-          docker tag quay.io/airshipit/shipyard:latest-ubuntu_focal localhost:5000/shipyard:latest-ubuntu_focal
-          docker push localhost:5000/shipyard:latest-ubuntu_focal
-          sed -i "s#quay.io/airshipit/shipyard:latest-ubuntu_focal#localhost:5000/shipyard:latest-ubuntu_focal#g" ./site/airskiff/software/config/versions.yaml
-          sed -i "s#quay.io/airshipit/shipyard:latest-ubuntu_focal#localhost:5000/shipyard:latest-ubuntu_focal#g" ./global/software/config/versions.yaml
-        fi
-      args:
-        chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
-      become: yes
-
-    - name: Build all charts locally
-      shell: |
-        set -ex
-        ./tools/deployment/airskiff/developer/015-make-all-charts.sh
+        docker tag quay.io/airshipit/airflow:latest-ubuntu_focal localhost:5000/airflow:latest-ubuntu_focal
+        docker tag quay.io/airshipit/shipyard:latest-ubuntu_focal localhost:5000/shipyard:latest-ubuntu_focal
+        docker push localhost:5000/airflow:latest-ubuntu_focal
+        docker push localhost:5000/shipyard:latest-ubuntu_focal
+        sed -i "s#quay.io/airshipit/airflow:latest-ubuntu_focal#localhost:5000/airflow:latest-ubuntu_focal#g" ./site/airskiff/software/config/versions.yaml
+        sed -i "s#quay.io/airshipit/shipyard:latest-ubuntu_focal#localhost:5000/shipyard:latest-ubuntu_focal#g" ./site/airskiff/software/config/versions.yaml
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
       become: yes
@@ -121,8 +115,10 @@
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
       become: yes
 
+
     - name: Deploy Airship components using Armada
       shell: |
+        set -ex
         mkdir -p ~/.kube
         cp -rp /home/zuul/.kube/config ~/.kube/config
         ./tools/deployment/airskiff/developer/030-armada-bootstrap.sh
@@ -142,4 +138,13 @@
         ./tools/gate/wait-for-shipyard.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
+      become: yes
+
+    - name: Stop artifactory
+      shell: |
+        set -ex
+        # terminate artifactory
+        docker rm artifacts --force || true
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
       become: yes

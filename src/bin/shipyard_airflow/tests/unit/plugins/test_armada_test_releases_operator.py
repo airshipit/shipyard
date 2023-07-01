@@ -39,7 +39,7 @@ RELEASES = {
 }
 
 
-class TestArmadaTestReleasesOperator:
+class TestArmadaTestReleasesOperator(ArmadaTestReleasesOperator):
     @mock.patch('shipyard_airflow.plugins.armada_test_releases.LOG.info')
     @mock.patch.object(ArmadaBaseOperator, 'armada_client', create=True)
     @mock.patch.object(ArmadaBaseOperator, 'get_releases',

@@ -169,7 +169,6 @@ GET_STEP_API_RESP = """
   "try_number": 1,
   "task_id": "preflight",
   "state": "success",
-  "execution_date": "2017-09-24 19:05:49",
   "dag_id": "deploy_site",
   "index": 1,
   "start_date": "2017-09-24 19:05:59.281032",
@@ -311,8 +310,7 @@ WF_API_RESP = """
       "try_number": 1,
       "state": "success",
       "operator": "PythonOperator",
-      "dag_id": "deploy_site",
-      "execution_date": "2017-10-09 21:19:03"
+      "dag_id": "deploy_site"
     },
     {
       "end_date": "2017-10-09 21:19:25.283785",
@@ -323,8 +321,7 @@ WF_API_RESP = """
       "try_number": 1,
       "state": "success",
       "operator": "ConcurrencyCheckOperator",
-      "dag_id": "deploy_site",
-      "execution_date": "2017-10-09 21:19:03"
+      "dag_id": "deploy_site"
     },
     {
       "end_date": "2017-10-09 21:20:05.394677",
@@ -335,8 +332,7 @@ WF_API_RESP = """
       "try_number": 1,
       "state": "failed",
       "operator": "SubDagOperator",
-      "dag_id": "deploy_site",
-      "execution_date": "2017-10-09 21:19:03"
+      "dag_id": "deploy_site"
     }
   ],
   "dag_id": "deploy_site",
@@ -344,7 +340,6 @@ WF_API_RESP = """
   "run_id": "manual__2017-10-09T21:19:03",
   "sub_dags": [
     {
-      "execution_date": "2017-10-09 21:19:03",
       "end_date": null,
       "workflow_id": "deploy_site.preflight__2017-10-09T21:19:03.000000",
       "start_date": "2017-10-09 21:19:35.082479",
@@ -354,7 +349,6 @@ WF_API_RESP = """
       "run_id": "backfill_2017-10-09T21:19:03"
     },
     {
-      "execution_date": "2017-10-09 21:19:03",
       "end_date": null,
       "workflow_id": "deploy_site.postflight__2017-10-09T21:19:03.000000",
       "start_date": "2017-10-09 21:19:35.082479",

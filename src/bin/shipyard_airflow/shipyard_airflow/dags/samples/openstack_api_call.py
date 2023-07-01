@@ -16,8 +16,14 @@
 """
 import airflow
 from airflow import DAG
-from airflow.operators import OpenStackOperator
 from datetime import timedelta
+try:
+    from airflow.operators import OpenStackOperator
+    from config_path import config_path
+except ImportError:
+    from shipyard_airflow.plugins.openstack_operators import \
+        OpenStackOperator
+    from shipyard_airflow.dags.config_path import config_path
 
 
 default_args = {
@@ -31,10 +37,11 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-dag = DAG('openstack_cli', default_args=default_args, schedule_interval=None)
+dag = DAG('openstack_cli', default_args=default_args,
+          schedule_interval=None)
 
-# Location of shiyard.conf
-config_path = '/usr/local/airflow/plugins/shipyard.conf'
+# # Location of shiyard.conf
+# config_path = '/usr/local/airflow/plugins/shipyard.conf'
 
 # Note that the shipyard.conf file needs to be placed on a volume
 # that can be accessed by the containers

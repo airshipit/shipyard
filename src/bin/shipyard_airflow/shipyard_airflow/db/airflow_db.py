@@ -37,9 +37,9 @@ class AirflowDbAccess(DbAccess):
     SELECT
         "id",
         "dag_id",
-        "execution_date",
         "state",
         "run_id",
+        "execution_date",
         "external_trigger",
         "conf",
         "end_date",
@@ -52,9 +52,9 @@ class AirflowDbAccess(DbAccess):
     SELECT
         "id",
         "dag_id",
-        "execution_date",
         "state",
         "run_id",
+        "execution_date",
         "external_trigger",
         "conf",
         "end_date",
@@ -73,9 +73,9 @@ class AirflowDbAccess(DbAccess):
     SELECT
         "id",
         "dag_id",
-        "execution_date",
         "state",
         "run_id",
+        "execution_date",
         "external_trigger",
         "conf",
         "end_date",
@@ -93,6 +93,7 @@ class AirflowDbAccess(DbAccess):
         "task_id",
         "dag_id",
         "execution_date",
+        "dr"."run_id",
         "start_date",
         "end_date",
         "duration",
@@ -109,7 +110,19 @@ class AirflowDbAccess(DbAccess):
         "pid",
         "max_tries"
     FROM
-        task_instance
+        task_instance ti
+    INNER JOIN
+        (
+            SELECT
+                "execution_date",
+                "run_id"
+            FROM
+                dag_run
+            GROUP BY
+                run_id,
+                execution_date
+        ) dr
+    ON ti.run_id=dr.run_id
     ORDER BY
         priority_weight desc,
         start_date
@@ -119,33 +132,48 @@ class AirflowDbAccess(DbAccess):
     # used to merge into this query.
     SELECT_TASKS_BY_ID = sqlalchemy.sql.text('''
     SELECT
-        "task_id",
-        "dag_id",
-        "execution_date",
-        "start_date",
-        "end_date",
-        "duration",
-        "state",
-        "try_number",
-        "hostname",
-        "unixname",
-        "job_id",
-        "pool",
-        "queue",
-        "priority_weight",
-        "operator",
-        "queued_dttm",
-        "pid",
-        "max_tries"
-    FROM
-        task_instance
-    WHERE
-        dag_id LIKE :dag_id
-    AND
-        execution_date = :execution_date
-    ORDER BY
-        priority_weight desc,
-        start_date
+            "task_id",
+            "dag_id",
+            "execution_date",
+            "dr"."run_id",
+            "start_date",
+            "end_date",
+            "duration",
+            "state",
+            "try_number",
+            "hostname",
+            "unixname",
+            "job_id",
+            "pool",
+            "queue",
+            "priority_weight",
+            "operator",
+            "queued_dttm",
+            "pid",
+            "max_tries"
+        FROM
+            task_instance ti
+        INNER JOIN
+            (
+                SELECT
+                    "execution_date",
+                    "run_id"
+                FROM
+                    dag_run
+                GROUP BY
+                    run_id,
+                    execution_date
+            ) dr
+        ON
+            ti.run_id=dr.run_id
+        WHERE
+            dag_id LIKE :dag_id
+        AND
+            execution_date = :execution_date
+        ORDER BY
+            priority_weight desc,
+            start_date
+        LIMIT 1
     ''')
 
     UPDATE_DAG_RUN_STATUS = sqlalchemy.sql.text('''

@@ -336,8 +336,9 @@ class ActionsResource(BaseResource):
             # "conf" - JSON string that gets pickled into the DagRun's
             # conf attribute. The conf is passed as as a string of escaped
             # json inside the json payload accepted by the API.
-            conf_value = self.to_json({'action': action})
-            payload = {'run_id': action['id'], 'conf': conf_value}
+            # conf_value = self.to_json({'action': action})
+            payload = {'run_id': action['id'], 'conf': {'action': action}}
+            LOG.info('Request payload: %s', payload)
             try:
                 resp = requests.post(req_url, timeout=(c_timeout, r_timeout),
                                      headers=headers, json=payload)

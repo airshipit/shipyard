@@ -142,7 +142,7 @@ spec:
               subPath: shipyard.conf
               readOnly: true
             - name: airflow-logs
-              mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
+              mountPath: {{ .Values.conf.airflow.logging.base_log_folder }}
 {{ if $mounts_shipyard.volumeMounts }}{{ toYaml $mounts_shipyard.volumeMounts | indent 12 }}{{ end }}
       volumes:
 {{ if .Values.conf.shipyard.base.profiler }}

@@ -26,6 +26,9 @@ ENV container docker
 ENV PORT 9000
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
+
+ENV PYTHONWARNINGS=ignore::DeprecationWarning,ignore::FutureWarning
+
 # Setting the version explicitly for PBR
 ENV PBR_VERSION 0.1a1
 
@@ -112,10 +115,10 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
     && python3 -m pip install -U pip \
     && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard_client \
-    && python3 setup.py install \
+    && pip3 install . --use-pep517  --no-cache-dir \
     && pip3 install -r /home/shipyard/api_requirements.txt --no-cache-dir \
     && cd /home/shipyard/shipyard \
-    && python3 setup.py install \
+    && pip3 install . --use-pep517 --no-cache-dir \
     && apt-get purge -y --auto-remove $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \

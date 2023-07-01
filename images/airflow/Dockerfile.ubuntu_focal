@@ -32,6 +32,7 @@ ENV WEB_PORT 8080
 ENV FLOWER_PORT 5555
 ENV WORKER_PORT 8793
 ENV SLUGIFY_USES_TEXT_UNIDECODE yes
+ENV PYTHONWARNINGS=ignore::DeprecationWarning,ignore::FutureWarning
 
 # Expose port for applications
 EXPOSE $WEB_PORT
@@ -43,12 +44,12 @@ ARG AIRFLOW_HOME=/usr/local/airflow
 # Moved celery to images/airflow/requirements.txt as apache-airflow uses a
 # version of celery incompatibile with the version of kombu needed by other
 # Airship components
-ARG AIRFLOW_SRC="apache-airflow[crypto,postgres,hive,hdfs,jdbc]==1.10.5"
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.6.2"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.26.3
+ARG KUBECTL_VERSION=1.27.1
 
 # Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
@@ -124,8 +125,8 @@ RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
 # Install Airflow directly to allow overriding source
 # COPY images/airflow/requirements.txt /tmp/
 COPY ${ctx_base}/shipyard_airflow/requirements-frozen.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt --no-cache-dir
-    # && pip3 install $AIRFLOW_SRC --no-cache-dir
+RUN pip3 install -r /tmp/requirements.txt --no-cache-dir \
+    && pip3 install $AIRFLOW_SRC --no-cache-dir
     # && (pip3 uninstall -y snakebite || true) \
     # && (pip3 uninstall -y psycopg2 || true) \
     # && (pip3 install --no-cache-dir --force-reinstall $(pip freeze | grep psycopg2-binary) || true)
@@ -135,6 +136,7 @@ COPY images/airflow/script/*.sh ${AIRFLOW_HOME}/
 
 # Copy configuration (e.g. logging config for Airflow):
 COPY images/airflow/config/*.py ${AIRFLOW_HOME}/config/
+COPY images/airflow/webserver_config.py ${AIRFLOW_HOME}/
 
 # Change permissions
 RUN chown -R airflow: ${AIRFLOW_HOME}
@@ -167,7 +169,11 @@ RUN cd /tmp/shipyard \
 #
 # Copy the plugins and dags that will be used by this Airflow image:
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/plugins ${AIRFLOW_HOME}/plugins/
+COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/plugins \
+        /usr/local/lib/python3.8/dist-packages/airflow/plugins/
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/dags ${AIRFLOW_HOME}/dags/
+COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/dags  \
+        /usr/local/lib/python3.8/dist-packages/airflow/dags/
 
 # Set work directory
 USER airflow
