@@ -36,7 +36,7 @@ ARG ctx_base=src/bin
 EXPOSE $PORT
 
 RUN set -ex && \
-    apt-get -qq update && \
+    apt-get update && apt-get upgrade -y && \
     apt-get -y install \
     automake \
     ca-certificates \

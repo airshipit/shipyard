@@ -54,7 +54,7 @@ ARG KUBECTL_VERSION=1.26.3
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
 
 RUN set -ex \
-    && apt-get update \
+    && apt-get update && apt-get upgrade -y \
     && apt-get install -y wget curl \
         apt-transport-https ca-certificates gnupg \
     && echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \

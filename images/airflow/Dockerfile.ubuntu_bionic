@@ -54,7 +54,7 @@ ARG KUBECTL_VERSION=1.24.6
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
 
 RUN set -ex && \
-    apt-get -qq update && \
+    apt-get update && apt-get upgrade -y && \
     apt-get -y install \
     automake \
     ca-certificates \
