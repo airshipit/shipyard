@@ -863,6 +863,21 @@ pod:
     airflow:
       worker: 2
       scheduler: 2
+  probes:
+    airflow_worker:
+      airflow_worker:
+        readiness:
+          enabled: true
+          params:
+            periodSeconds: 15
+            timeoutSeconds: 10
+      airflow_logrotate:
+        readiness:
+          enabled: true
+          params:
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 10
   lifecycle:
     upgrades:
       deployments:

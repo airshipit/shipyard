@@ -12,6 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+{{- define "airflowLogrotateReadinessProbeTemplate" }}
+exec:
+  command:
+    - sh
+    - -c
+    - |-
+      set -ex
+      ps -ef | grep 'sleep 3600' | grep -v 'grep'
+{{- end }}
+
+{{- define "airflowWorkerReadinessProbeTemplate" }}
+tcpSocket:
+  port: {{ .Values.network.airflow.worker.port }}
+{{- end }}
+
 {{- if .Values.manifests.statefulset_airflow_worker }}
 {{- $envAll := . }}
 
@@ -143,6 +158,7 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.worker | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "airflow_worker" "container" "airflow_worker" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+{{ dict "envAll" $envAll "component" "airflow_worker" "container" "airflow_worker" "type" "readiness" "probeTemplate" (include "airflowWorkerReadinessProbeTemplate" $envAll | fromYaml) | include "helm-toolkit.snippets.kubernetes_probe" | indent 10 }}
           env:
           - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
             valueFrom:
@@ -152,9 +168,6 @@ spec:
           ports:
             - containerPort: {{ tuple "airflow_worker" "internal" "airflow_worker" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
           args: ["worker"]
-          readinessProbe:
-            tcpSocket:
-              port: {{ .Values.network.airflow.worker.port }}
           volumeMounts:
             - name: pod-tmp
               mountPath: /tmp
@@ -177,6 +190,7 @@ spec:
           imagePullPolicy: {{ .Values.images.pull_policy }}
 {{ tuple $envAll $envAll.Values.pod.resources.airflow.logrotate | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "airflow_worker" "container" "airflow_logrotate" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+{{ dict "envAll" $envAll "component" "airflow_worker" "container" "airflow_logrotate" "type" "readiness" "probeTemplate" (include "airflowLogrotateReadinessProbeTemplate" $envAll | fromYaml) | include "helm-toolkit.snippets.kubernetes_probe" | indent 10 }}
           env:
           - name: PERCENT_MAX_LOG_FS_USAGE
             value: {{ .Values.logrotate.percent_max_log_fs_usage | quote }}
@@ -186,16 +200,6 @@ spec:
             value: {{ .Values.conf.airflow.core.base_log_folder }}
           - name: LOGROTATE_ENABLED
             value: "enabled"
-          readinessProbe:
-            exec:
-              command:
-              - sh
-              - -c
-              - |-
-                set -ex
-                ps -ef | grep 'sleep 3600' | grep -v 'grep'
-            initialDelaySeconds: 15
-            periodSeconds: 15
           volumeMounts:
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.core.base_log_folder }}
