@@ -64,7 +64,7 @@ funcsigs==1.0.0
 future==0.16.0
 futurist==2.4.1
 gitdb==4.0.9
-GitPython==3.1.18
+GitPython==3.1.32
 google-auth==2.19.0
 greenlet==2.0.2
 gunicorn==19.10.0
