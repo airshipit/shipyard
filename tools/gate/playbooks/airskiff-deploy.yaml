@@ -13,6 +13,7 @@
 # limitations under the License.
 
 - hosts: primary
+
   roles:
     - clear-firewall
     - bindep

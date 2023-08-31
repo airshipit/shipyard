@@ -173,7 +173,6 @@ class AirflowDbAccess(DbAccess):
         ORDER BY
             priority_weight desc,
             start_date
-        LIMIT 1
     ''')
 
     UPDATE_DAG_RUN_STATUS = sqlalchemy.sql.text('''
