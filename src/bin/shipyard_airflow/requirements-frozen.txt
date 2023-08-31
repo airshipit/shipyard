@@ -70,7 +70,7 @@ fastavro==1.7.4
 fasteners==0.18
 fixtures==4.1.0
 Flask==2.2.5
-Flask-AppBuilder==4.3.1
+Flask-AppBuilder==4.3.2
 Flask-Babel==2.0.0
 Flask-Caching==2.0.2
 Flask-JWT-Extended==4.5.2
