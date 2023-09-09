@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from airflow.models import DAG
+from airflow.utils.task_group import TaskGroup
 
 try:
     from airflow.operators import DrydockNodesOperator
@@ -32,46 +32,39 @@ except ImportError:
     from shipyard_airflow.dags.config_path import config_path
 
 
-def deploy_site_drydock(parent_dag_name, child_dag_name, args,
-                        verify_nodes_exist=False):
+def deploy_site_drydock(dag, verify_nodes_exist=False):
     '''
-    DryDock Subdag
+    DryDock TaskGroup
     '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
+    with TaskGroup(group_id="drydock_build", dag=dag) as drydock_build:
 
-    if verify_nodes_exist:
-        drydock_verify_nodes_exist = DrydockVerifyNodesExistOperator(
-            task_id='verify_nodes_exist',
+        if verify_nodes_exist:
+            drydock_verify_nodes_exist = DrydockVerifyNodesExistOperator(
+                task_id='verify_nodes_exist',
+                shipyard_conf=config_path,
+                dag=dag)
+
+        drydock_verify_site = DrydockVerifySiteOperator(
+            task_id='verify_site',
             shipyard_conf=config_path,
-            main_dag_name=parent_dag_name,
             dag=dag)
 
-    drydock_verify_site = DrydockVerifySiteOperator(
-        task_id='verify_site',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        drydock_prepare_site = DrydockPrepareSiteOperator(
+            task_id='prepare_site',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    drydock_prepare_site = DrydockPrepareSiteOperator(
-        task_id='prepare_site',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        drydock_nodes = DrydockNodesOperator(
+            task_id='prepare_and_deploy_nodes',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    drydock_nodes = DrydockNodesOperator(
-        task_id='prepare_and_deploy_nodes',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Define dependencies
+        drydock_prepare_site.set_upstream(drydock_verify_site)
+        if verify_nodes_exist:
+            drydock_verify_nodes_exist.set_upstream(drydock_prepare_site)
+            drydock_nodes.set_upstream(drydock_verify_nodes_exist)
+        else:
+            drydock_nodes.set_upstream(drydock_prepare_site)
 
-    # Define dependencies
-    drydock_prepare_site.set_upstream(drydock_verify_site)
-    if verify_nodes_exist:
-        drydock_verify_nodes_exist.set_upstream(drydock_prepare_site)
-        drydock_nodes.set_upstream(drydock_verify_nodes_exist)
-    else:
-        drydock_nodes.set_upstream(drydock_prepare_site)
-
-    return dag
+        return drydock_build

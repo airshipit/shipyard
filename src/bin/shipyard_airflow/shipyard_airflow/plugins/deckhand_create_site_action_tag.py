@@ -116,7 +116,7 @@ class DeckhandCreateSiteActionTagOperator(DeckhandBaseOperator):
     def check_workflow_result(self):
 
         # Initialize Variables
-        task = ['armada_build']
+        task = ['armada_build.armada_get_releases']
         task_result = {}
 
         if self.main_dag_name in ['update_site', 'update_software']:

@@ -47,7 +47,8 @@ def destroy_server(parent_dag_name, child_dag_name, args):
     """
     dag = DAG(
         '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
+        default_args=args,
+        schedule_interval=None)
 
     # Drain Node
     promenade_drain_node = PromenadeDrainNodeOperator(

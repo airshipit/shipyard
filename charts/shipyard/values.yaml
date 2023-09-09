@@ -476,8 +476,8 @@ conf:
         - broker_url
         - result_backend
         - fernet_key
-      lazy_discover_providers: "False"
-      lazy_load_plugins: "False"
+      lazy_discover_providers: "True"
+      lazy_load_plugins: "True"
       hostname_callable: "socket:getfqdn"
       default_timezone: "utc"
       executor: "CeleryExecutor"
@@ -526,7 +526,7 @@ conf:
       # See image-bundled log_config.py.
       # Adds console logging of task/step logs.
       # logging_config_class: log_config.LOGGING_CONFIG
-      logging_config_class: new_log_config.LOGGING_CONFIG
+      logging_config_class: log_config.DEFAULT_LOGGING_CONFIG
       # NOTE: Airflow 1.10 introduces extra newline characters between log
       #     records. Version 1.10.1 should resolve this issue
       #     https://issues.apache.org/jira/browse/AIRFLOW-1917
@@ -544,9 +544,9 @@ conf:
       log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
       log_processor_filename_template: "{{ filename }}.log"
       dag_processor_manager_log_location: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
-      logging_level: "INFO"
+      logging_level: "DEBUG"
       fab_logging_level: "WARNING"
-      celery_logging_level: "INFO"
+      celery_logging_level: "DEBUG"
       base_log_folder: /usr/local/airflow/logs
       remote_logging: "False"
       remote_log_conn_id: ""

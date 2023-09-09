@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from airflow.models import DAG
+from airflow.utils.task_group import TaskGroup
 
 try:
     from airflow.operators import ArmadaValidateDesignOperator
@@ -35,53 +35,49 @@ BAREMETAL = 'baremetal'
 SOFTWARE = 'software'
 
 
-def validate_site_design(parent_dag_name, child_dag_name, args, targets=None):
-    """Subdag to delegate design verification to the Airship components
+def validate_site_design(dag, targets=None):
+    """TaskGroup to delegate design verification to the Airship components
 
     There is no wiring of steps - they all execute in parallel
     """
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
+    with TaskGroup(group_id="validate_site_design",
+                   dag=dag) as validate_site_design:
 
-    if targets is None:
-        targets = [BAREMETAL, SOFTWARE]
+        if targets is None:
+            targets = [BAREMETAL, SOFTWARE]
 
-    # Always add Deckhand validations
-    DeckhandValidateSiteDesignOperator(
-        task_id='deckhand_validate_site_design',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        retries=1,
-        dag=dag
-    )
-
-    if BAREMETAL in targets:
-        # Add Drydock and Promenade validations
-        DrydockValidateDesignOperator(
-            task_id='drydock_validate_site_design',
+        # Always add Deckhand validations
+        deckhand_validate_site_design = DeckhandValidateSiteDesignOperator(
+            task_id='deckhand_validate_site_design',
             shipyard_conf=config_path,
-            main_dag_name=parent_dag_name,
             retries=1,
             dag=dag
         )
 
-        PromenadeValidateSiteDesignOperator(
-            task_id='promenade_validate_site_design',
-            shipyard_conf=config_path,
-            main_dag_name=parent_dag_name,
-            retries=1,
-            dag=dag
-        )
+        if BAREMETAL in targets:
+            # Add Drydock and Promenade validations
+            drydock_validate_site_design = DrydockValidateDesignOperator(
+                task_id='drydock_validate_site_design',
+                shipyard_conf=config_path,
+                retries=1,
+                dag=dag
+            )
 
-    if SOFTWARE in targets:
-        # Add Armada validations
-        ArmadaValidateDesignOperator(
-            task_id='armada_validate_site_design',
-            shipyard_conf=config_path,
-            main_dag_name=parent_dag_name,
-            retries=1,
-            dag=dag
-        )
+            promenade_validate_site_design = \
+                PromenadeValidateSiteDesignOperator(
+                    task_id='promenade_validate_site_design',
+                    shipyard_conf=config_path,
+                    retries=1,
+                    dag=dag
+                )
 
-    return dag
+        if SOFTWARE in targets:
+            # Add Armada validations
+            armada_validate_site_design = ArmadaValidateDesignOperator(
+                task_id='armada_validate_site_design',
+                shipyard_conf=config_path,
+                retries=1,
+                dag=dag
+            )
+
+        return validate_site_design

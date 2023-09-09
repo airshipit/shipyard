@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from airflow.models import DAG
+from airflow.utils.task_group import TaskGroup
 
 try:
     from airflow.operators import ArmadaGetReleasesOperator
@@ -26,30 +26,29 @@ except ImportError:
     from shipyard_airflow.dags.config_path import config_path
 
 
-def deploy_site_armada(parent_dag_name, child_dag_name, args):
+def deploy_site_armada(dag):
     '''
-    Armada Subdag
+    Armada TaskGroup
     '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
+    with TaskGroup(group_id="armada_build", dag=dag) as armada_build:
+        """Generate the armada post_apply step
 
-    # Armada Apply
-    armada_post_apply = ArmadaPostApplyOperator(
-        task_id='armada_post_apply',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        retries=5,
-        dag=dag)
+        Armada post_apply does the deployment of helm charts
+        """
+        armada_post_apply = ArmadaPostApplyOperator(
+            task_id='armada_post_apply',
+            shipyard_conf=config_path,
+            retries=5,
+            dag=dag)
+        """Generate the armada get_releases step
 
-    # Get Helm Releases
-    armada_get_releases = ArmadaGetReleasesOperator(
-        task_id='armada_get_releases',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        Armada get_releases does the verification of releases of helm charts
+        """
+        armada_get_releases = ArmadaGetReleasesOperator(
+            task_id='armada_get_releases',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Define dependencies
-    armada_get_releases.set_upstream(armada_post_apply)
+        armada_post_apply >> armada_get_releases
 
-    return dag
+        return armada_build

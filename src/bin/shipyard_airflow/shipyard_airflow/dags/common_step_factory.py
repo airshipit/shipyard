@@ -125,19 +125,14 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_preflight(self, task_id=dn.ALL_PREFLIGHT_CHECKS_DAG_NAME):
+    def get_preflight(self):
         """Generate the preflight step
 
         Preflight checks preconditions for running a DAG
         """
-        return SubDagOperator(
-            subdag=all_preflight_checks(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
-            task_id=task_id,
-            on_failure_callback=step_failure_handler,
-            dag=self.dag)
+        return all_preflight_checks(
+            self.dag
+        )
 
     def get_get_rendered_doc(self, task_id=dn.GET_RENDERED_DOC):
         """Generate the get deckhand rendered doc step
@@ -152,23 +147,16 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_validate_site_design(self,
-                                 targets=None,
-                                 task_id=dn.VALIDATE_SITE_DESIGN_DAG_NAME):
+    def get_validate_site_design(self, targets=None):
         """Generate the validate site design step
 
         Validation of the site design checks that the design to be used
         for a deployment passes checks before using it.
         """
-        return SubDagOperator(
-            subdag=validate_site_design(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args,
-                targets=targets),
-            task_id=task_id,
-            on_failure_callback=step_failure_handler,
-            dag=self.dag)
+        return validate_site_design(
+            self.dag,
+            targets=targets
+        )
 
     def get_deployment_configuration(self,
                                      task_id=dn.DEPLOYMENT_CONFIGURATION):
@@ -184,21 +172,15 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_drydock_build(self, task_id=dn.DRYDOCK_BUILD_DAG_NAME,
-                          verify_nodes_exist=False):
+    def get_drydock_build(self, verify_nodes_exist=False):
         """Generate the drydock build step
 
         Drydock build does the hardware provisioning.
         """
-        return SubDagOperator(
-            subdag=deploy_site_drydock(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args,
-                verify_nodes_exist=verify_nodes_exist),
-            task_id=task_id,
-            on_failure_callback=step_failure_handler,
-            dag=self.dag)
+        return deploy_site_drydock(
+            self.dag,
+            verify_nodes_exist=verify_nodes_exist
+        )
 
     def get_relabel_nodes(self, task_id=dn.RELABEL_NODES_DAG_NAME):
         """Generate the relabel nodes step
@@ -212,19 +194,14 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_armada_build(self, task_id=dn.ARMADA_BUILD_DAG_NAME):
+    def get_armada_build(self):
         """Generate the armada build step
 
         Armada build does the deployment of helm charts
         """
-        return SubDagOperator(
-            subdag=deploy_site_armada(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
-            task_id=task_id,
-            on_failure_callback=step_failure_handler,
-            dag=self.dag)
+        return deploy_site_armada(
+            self.dag
+        )
 
     def get_armada_test_releases(self, task_id=dn.ARMADA_TEST_RELEASES):
         """Generate the armada_test_releases step

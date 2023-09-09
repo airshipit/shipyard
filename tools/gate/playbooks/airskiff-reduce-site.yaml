@@ -17,7 +17,6 @@
     - name: Overwrite Armada manifest
       shell: |
         git checkout v1.9
-        mv tools/gate/manifests/full-site.yaml \
-            type/skiff/manifests/full-site.yaml
+        mv tools/gate/manifests/full-site.yaml type/skiff/manifests/full-site.yaml
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"

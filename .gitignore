@@ -120,6 +120,10 @@ AUTHORS
 # vscode
 .vscode/
 
+
+# pycharm
+.idea
+
 # tests
 airship-ucp-shipyard.values.yaml
 airflow-webserver.pid
@@ -128,3 +132,4 @@ airflow.db
 latest
 src/bin/shipyard_airflow/shipyard_airflow/config
 src/bin/shipyard_airflow/shipyard_airflow/webserver_config.py
+airflow-runtime

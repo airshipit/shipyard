@@ -35,6 +35,7 @@ DESTROY_SERVER = 'destroy_nodes'
 DEPLOYMENT_STATUS = 'deployment_status'
 FINAL_DEPLOYMENT_STATUS = 'final_deployment_status'
 
+
 # Define a list of critical steps, used to determine successfulness of a
 # still-running DAG
 CRITICAL_DAG_STEPS = [

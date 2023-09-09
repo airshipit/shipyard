@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from airflow.models import DAG
+
+from airflow.utils.task_group import TaskGroup
 
 try:
     from airflow.operators import UcpHealthCheckOperator
@@ -22,22 +23,18 @@ except ImportError:
     from shipyard_airflow.dags.config_path import config_path
 
 
-def all_preflight_checks(parent_dag_name, child_dag_name, args):
+def all_preflight_checks(dag):
     '''
     Pre-Flight Checks Subdag
     '''
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args)
+    with TaskGroup(group_id="preflight", dag=dag) as preflight:
+        '''
+        Check that all Airship components are in good state for the purposes
+        of the Undercloud Platform to proceed with processing.
+        '''
+        shipyard = UcpHealthCheckOperator(
+            task_id='ucp_preflight_check',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    '''
-    Check that all Airship components are in good state for the purposes
-    of the Undercloud Platform to proceed with processing.
-    '''
-    shipyard = UcpHealthCheckOperator(
-        task_id='ucp_preflight_check',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
-
-    return dag
+        return preflight
