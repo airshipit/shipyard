@@ -36,7 +36,8 @@
     - name: Clone Required Repositories
       shell: |
         export CLONE_SHIPYARD={{ CLONE_SHIPYARD }}
-        export OSH_INFRA_COMMIT={{ HTK_COMMIT }}
+        export OSH_INFRA_COMMIT={{ OSH_INFRA_COMMIT }}
+        export OSH_COMMIT={{ OSH_COMMIT }}
         ./tools/deployment/airskiff/developer/000-clone-dependencies.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
@@ -75,6 +76,8 @@
     - name: Build all charts locally
       shell: |
         set -ex
+        export HELM_ARTIFACT_URL={{ HELM_ARTIFACT_URL }}
+        export HTK_COMMIT={{ HTK_COMMIT }}
         ./tools/deployment/airskiff/developer/015-make-all-charts.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"
