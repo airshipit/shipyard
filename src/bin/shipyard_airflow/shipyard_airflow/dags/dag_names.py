@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Subdags
-ALL_PREFLIGHT_CHECKS_DAG_NAME = 'preflight'
+# TaskGroups
+ALL_PREFLIGHT_CHECKS_TG_NAME = 'preflight'
 UCP_PREFLIGHT_NAME = 'ucp_preflight_check'
-ARMADA_BUILD_DAG_NAME = 'armada_build'
-DESTROY_SERVER_DAG_NAME = 'destroy_server'
-DRYDOCK_BUILD_DAG_NAME = 'drydock_build'
-VALIDATE_SITE_DESIGN_DAG_NAME = 'validate_site_design'
-RELABEL_NODES_DAG_NAME = 'relabel_nodes'
+ARMADA_BUILD_TG_NAME = 'armada_build'
+DESTROY_SERVER_TG_NAME = 'destroy_server'
+DRYDOCK_BUILD_TG_NAME = 'drydock_build'
+VALIDATE_SITE_DESIGN_TG_NAME = 'validate_site_design'
+RELABEL_NODES_TG_NAME = 'relabel_nodes'
 
 # Steps
 ACTION_XCOM = 'action_xcom'
+ARMADA_BUILD_ARMADA_POST_APPLY = 'armada_build.armada_post_apply'
+ARMADA_BUILD_ARMADA_GET_RELEASES = 'armada_build.armada_get_releases'
 ARMADA_TEST_RELEASES = 'armada_test_releases'
 CONCURRENCY_CHECK = 'dag_concurrency_check'
 CREATE_ACTION_TAG = 'create_action_tag'
@@ -39,7 +41,8 @@ FINAL_DEPLOYMENT_STATUS = 'final_deployment_status'
 # Define a list of critical steps, used to determine successfulness of a
 # still-running DAG
 CRITICAL_DAG_STEPS = [
-    ARMADA_BUILD_DAG_NAME,
+    ARMADA_BUILD_ARMADA_POST_APPLY,
+    ARMADA_BUILD_ARMADA_GET_RELEASES,
     SKIP_UPGRADE_AIRFLOW,
     UPGRADE_AIRFLOW,
     ARMADA_TEST_RELEASES

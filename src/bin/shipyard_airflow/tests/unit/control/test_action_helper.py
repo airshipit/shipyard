@@ -86,7 +86,7 @@ def get_fake_latest_step_dict_failed():
     :rtype: dict
     """
     return {
-        'armada_build': {'state': 'failed'},
+        'armada_build.armada_post_apply': {'state': 'failed'},
         'arbitrary_step': {'state': 'success'},
         'another_arbitrary_step': {'state': 'running'},
         'upgrade_airflow': {'state': 'success'},

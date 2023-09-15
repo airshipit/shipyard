@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from airflow.models import DAG
+from airflow.utils.task_group import TaskGroup
 
 try:
     from airflow.operators import DrydockDestroyNodeOperator
@@ -38,65 +38,56 @@ except ImportError:
     from shipyard_airflow.dags.config_path import config_path
 
 
-def destroy_server(parent_dag_name, child_dag_name, args):
+def destroy_server(dag):
     """DAG to tear down node
 
     The DAG will make use of the promenade and drydock operators
     to tear down a target node.
 
     """
-    dag = DAG(
-        '{}.{}'.format(parent_dag_name, child_dag_name),
-        default_args=args,
-        schedule_interval=None)
+    with TaskGroup(group_id="destroy_server", dag=dag) as destroy_server:
 
-    # Drain Node
-    promenade_drain_node = PromenadeDrainNodeOperator(
-        task_id='promenade_drain_node',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Drain Node
+        promenade_drain_node = PromenadeDrainNodeOperator(
+            task_id='promenade_drain_node',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Clear Labels
-    promenade_clear_labels = PromenadeClearLabelsOperator(
-        task_id='promenade_clear_labels',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Clear Labels
+        promenade_clear_labels = PromenadeClearLabelsOperator(
+            task_id='promenade_clear_labels',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Shutdown Kubelet
-    promenade_shutdown_kubelet = PromenadeShutdownKubeletOperator(
-        task_id='promenade_shutdown_kubelet',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Shutdown Kubelet
+        promenade_shutdown_kubelet = PromenadeShutdownKubeletOperator(
+            task_id='promenade_shutdown_kubelet',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # ETCD Sanity Check
-    promenade_check_etcd = PromenadeCheckEtcdOperator(
-        task_id='promenade_check_etcd',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # ETCD Sanity Check
+        promenade_check_etcd = PromenadeCheckEtcdOperator(
+            task_id='promenade_check_etcd',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Power down and destroy node using DryDock
-    drydock_destroy_node = DrydockDestroyNodeOperator(
-        task_id='destroy_node',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Power down and destroy node using DryDock
+        drydock_destroy_node = DrydockDestroyNodeOperator(
+            task_id='destroy_node',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Decommission node from Kubernetes cluster using Promenade
-    promenade_decommission_node = PromenadeDecommissionNodeOperator(
-        task_id='promenade_decommission_node',
-        shipyard_conf=config_path,
-        main_dag_name=parent_dag_name,
-        dag=dag)
+        # Decommission node from Kubernetes cluster using Promenade
+        promenade_decommission_node = PromenadeDecommissionNodeOperator(
+            task_id='promenade_decommission_node',
+            shipyard_conf=config_path,
+            dag=dag)
 
-    # Define dependencies
-    promenade_clear_labels.set_upstream(promenade_drain_node)
-    promenade_shutdown_kubelet.set_upstream(promenade_clear_labels)
-    promenade_check_etcd.set_upstream(promenade_shutdown_kubelet)
-    drydock_destroy_node.set_upstream(promenade_check_etcd)
-    promenade_decommission_node.set_upstream(drydock_destroy_node)
+        # Define dependencies
+        promenade_clear_labels.set_upstream(promenade_drain_node)
+        promenade_shutdown_kubelet.set_upstream(promenade_clear_labels)
+        promenade_check_etcd.set_upstream(promenade_shutdown_kubelet)
+        drydock_destroy_node.set_upstream(promenade_check_etcd)
+        promenade_decommission_node.set_upstream(drydock_destroy_node)
 
-    return dag
+        return destroy_server

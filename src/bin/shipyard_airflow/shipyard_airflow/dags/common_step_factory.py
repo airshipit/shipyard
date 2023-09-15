@@ -14,8 +14,6 @@
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import BranchPythonOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.subdag_operator import SubDagOperator
-
 
 try:
     # Operators are loaded from being registered to airflow.operators
@@ -182,7 +180,7 @@ class CommonStepFactory(object):
             verify_nodes_exist=verify_nodes_exist
         )
 
-    def get_relabel_nodes(self, task_id=dn.RELABEL_NODES_DAG_NAME):
+    def get_relabel_nodes(self, task_id=dn.RELABEL_NODES_TG_NAME):
         """Generate the relabel nodes step
 
         This step uses Drydock to relabel select nodes.
@@ -221,8 +219,8 @@ class CommonStepFactory(object):
 
         This version of destroying servers does no pre-validations or extra
         shutdowns of anything. It unconditionally triggers Drydock to destroy
-        the server. The counterpart to this step is the subdag returned by the
-        get_destroy_server method below.
+        the server. The counterpart to this step is the TaskGroup returned by
+        the get_destroy_server method below.
         """
         return DrydockDestroyNodeOperator(
             shipyard_conf=config_path,
@@ -231,19 +229,14 @@ class CommonStepFactory(object):
             on_failure_callback=step_failure_handler,
             dag=self.dag)
 
-    def get_destroy_server(self, task_id=dn.DESTROY_SERVER_DAG_NAME):
+    def get_destroy_server(self):
         """Generate a destroy server step
 
         Destroy server tears down kubernetes and hardware
         """
-        return SubDagOperator(
-            subdag=destroy_server(
-                self.parent_dag_name,
-                task_id,
-                args=self.default_args),
-            task_id=task_id,
-            on_failure_callback=step_failure_handler,
-            dag=self.dag)
+        return destroy_server(
+            self.dag
+        )
 
     def get_decide_airflow_upgrade(self, task_id=dn.DECIDE_AIRFLOW_UPGRADE):
         """Generate the decide_airflow_upgrade step
@@ -258,13 +251,13 @@ class CommonStepFactory(object):
             worker. The decision will be based on the xcom value that
             is retrieved from the 'armada_post_apply' task
             """
-            # DAG ID will be parent + subdag name
-            dag_id = self.parent_dag_name + '.' + dn.ARMADA_BUILD_DAG_NAME
+            # DAG ID will be parent
+            dag_id = self.parent_dag_name
 
             # Check if Shipyard/Airflow were upgraded by the workflow
             upgrade_airflow = kwargs['ti'].xcom_pull(
                 key='upgrade_airflow_worker',
-                task_ids='armada_post_apply',
+                task_ids='armada_build.armada_post_apply',
                 dag_id=dag_id)
 
             # Go to the branch to upgrade Airflow worker if the Shipyard

@@ -25,7 +25,7 @@ except ImportError:
 
 def all_preflight_checks(dag):
     '''
-    Pre-Flight Checks Subdag
+    Pre-Flight Checks TaskGroup
     '''
     with TaskGroup(group_id="preflight", dag=dag) as preflight:
         '''
