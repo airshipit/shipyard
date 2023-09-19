@@ -21,6 +21,9 @@ labels:
   shipyard:
     node_selector_key: ucp-control-plane
     node_selector_value: enabled
+  airflow_webserver_ui:
+    node_selector_key: ucp-control-plane
+    node_selector_value: enabled
   airflow:
     node_selector_key: ucp-control-plane
     node_selector_value: enabled
@@ -31,12 +34,13 @@ labels:
 images:
   tags:
     airflow: quay.io/airshipit/airflow:latest-ubuntu_focal
+    apache_proxy: docker.io/library/httpd:2.4
     shipyard: quay.io/airshipit/shipyard:latest-ubuntu_focal
-    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
-    shipyard_db_init: docker.io/postgres:14.5
-    shipyard_db_auxiliary: docker.io/postgres:14.5
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:v1.0.0
+    shipyard_db_init: docker.io/postgres:14.8
+    shipyard_db_auxiliary: docker.io/postgres:14.8
     shipyard_db_sync: quay.io/airshipit/shipyard:latest-ubuntu_focal
-    airflow_db_init: docker.io/postgres:14.5
+    airflow_db_init: docker.io/postgres:14.8
     rabbit_init: docker.io/rabbitmq:3.7-management
     airflow_db_sync: quay.io/airshipit/airflow:latest-ubuntu_focal
     ks_user: docker.io/openstackhelm/heat:ocata
@@ -74,6 +78,22 @@ network:
       name: airflow-worker
       port: 8793
       enable_node_port: false
+  airflow_webserver_ui:
+    ingress:
+      public: true
+      classes:
+        namespace: "nginx"
+        cluster: "nginx-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          more_clear_headers "Server";
+          more_set_headers "X-Content-Type-Options: 'nosniff'";
+          more_set_headers "X-Frame-Options: 'deny'";
+    node_port: 31902
+    enable_node_port: false
 
 dependencies:
   static:
@@ -208,6 +228,32 @@ endpoints:
       #   tls:
       #     crt: null
       #     key: null
+  airflow_webserver_ui:
+    name: airflow-webserver-ui
+    hosts:
+      default: airflow-int
+      public: airflow-api
+    port:
+      api:
+        default: 80
+        public: 80
+    auth:
+      admin:
+        username: airflow
+        password: password
+    path:
+      default: /
+    scheme:
+      default: http
+    host_fqdn_override:
+      default: null
+      # NOTE(bryan-strassner): this chart supports TLS for fqdn over-ridden public
+      # endpoints using the following format:
+      # public:
+      #   host: null
+      #   tls:
+      #     crt: null
+      #     key: null
   airflow_worker:
     name: airflow-worker
     hosts:
@@ -307,6 +353,22 @@ endpoints:
     port:
       memcache:
         default: 11211
+  ldap:
+    hosts:
+      default: ldap
+    auth:
+      admin:
+        bind: "cn=admin,dc=cluster,dc=local"
+        password: password
+    host_fqdn_override:
+      default: null
+    path:
+      default: "/ou=People,dc=cluster,dc=local"
+    scheme:
+      default: ldap
+    port:
+      ldap:
+        default: 389
 
 secrets:
   identity:
@@ -321,12 +383,118 @@ secrets:
   postgresql_airflow_db:
     admin: airflow-db-admin
     user: airflow-db-user
+  airflow_webserver_ui:
+    admin: airflow-admin-creds
   tls:
     shipyard:
       shipyard:
         public: shipyard-tls-public
+    airflow_webserver_ui:
+      airflow_webserver_ui:
+        public: airflow-tls-public
+
 
 conf:
+  httpd: |
+    ServerRoot "/usr/local/apache2"
+
+    Listen 80
+
+    LoadModule mpm_event_module modules/mod_mpm_event.so
+    LoadModule authn_file_module modules/mod_authn_file.so
+    LoadModule authn_core_module modules/mod_authn_core.so
+    LoadModule authz_host_module modules/mod_authz_host.so
+    LoadModule authz_groupfile_module modules/mod_authz_groupfile.so
+    LoadModule authz_user_module modules/mod_authz_user.so
+    LoadModule authz_core_module modules/mod_authz_core.so
+    LoadModule access_compat_module modules/mod_access_compat.so
+    LoadModule auth_basic_module modules/mod_auth_basic.so
+    LoadModule ldap_module modules/mod_ldap.so
+    LoadModule authnz_ldap_module modules/mod_authnz_ldap.so
+    LoadModule reqtimeout_module modules/mod_reqtimeout.so
+    LoadModule filter_module modules/mod_filter.so
+    LoadModule proxy_html_module modules/mod_proxy_html.so
+    LoadModule log_config_module modules/mod_log_config.so
+    LoadModule env_module modules/mod_env.so
+    LoadModule headers_module modules/mod_headers.so
+    LoadModule setenvif_module modules/mod_setenvif.so
+    LoadModule version_module modules/mod_version.so
+    LoadModule proxy_module modules/mod_proxy.so
+    LoadModule proxy_connect_module modules/mod_proxy_connect.so
+    LoadModule proxy_http_module modules/mod_proxy_http.so
+    LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+    LoadModule remoteip_module modules/mod_remoteip.so
+    LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+    LoadModule slotmem_plain_module modules/mod_slotmem_plain.so
+    LoadModule unixd_module modules/mod_unixd.so
+    LoadModule status_module modules/mod_status.so
+    LoadModule autoindex_module modules/mod_autoindex.so
+
+    <IfModule unixd_module>
+    User daemon
+    Group daemon
+    </IfModule>
+
+    <Directory />
+        AllowOverride none
+        Require all denied
+    </Directory>
+
+    <Files ".ht*">
+        Require all denied
+    </Files>
+
+    ErrorLog /dev/stderr
+
+    LogLevel warn
+
+    <IfModule log_config_module>
+        LogFormat "%a %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+        LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" proxy
+        LogFormat "%h %l %u %t \"%r\" %>s %b" common
+
+        <IfModule logio_module>
+          LogFormat "%a %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+        </IfModule>
+
+        SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+        CustomLog /dev/stdout common
+        CustomLog /dev/stdout combined
+        CustomLog /dev/stdout proxy env=forwarded
+    </IfModule>
+
+    <Directory "/usr/local/apache2/cgi-bin">
+        AllowOverride None
+        Options None
+        Require all granted
+    </Directory>
+
+    <IfModule headers_module>
+        RequestHeader unset Proxy early
+    </IfModule>
+
+    <IfModule proxy_html_module>
+    Include conf/extra/proxy-html.conf
+    </IfModule>
+
+    <VirtualHost *:80>
+      RemoteIPHeader X-Original-Forwarded-For
+
+      ProxyPreserveHost On
+      ProxyPass / http://localhost:8080/
+      ProxyPassReverse / http://localhost:8080/
+
+      <Proxy *>
+          AuthName "Airflow"
+          AuthType Basic
+          AuthBasicProvider file ldap
+          AuthUserFile /usr/local/apache2/conf/.htpasswd
+          AuthLDAPBindDN {{ .Values.endpoints.ldap.auth.admin.bind }}
+          AuthLDAPBindPassword {{ .Values.endpoints.ldap.auth.admin.password }}
+          AuthLDAPURL {{ tuple "ldap" "default" "ldap" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup" | quote }}
+          Require valid-user
+      </Proxy>
+    </VirtualHost>
   uwsgi:
     # for more info about these default overrides please read
     # https://uwsgi-docs.readthedocs.io/en/latest/ThingsToKnow.html
@@ -461,6 +629,8 @@ conf:
       deployment_version_commit: Skip
   airflow_config_file:
     path: /usr/local/airflow/airflow.cfg
+  airflow_webserver_config_file:
+    path: /usr/local/airflow/webserver_config.py
   airflow_unittests_file:
     path: /usr/local/airflow/unittests.cfg
   airflow:
@@ -762,6 +932,10 @@ pod:
     airflow-scheduler:
       init: runtime/default
       airflow-scheduler: runtime/default
+    airflow-webserver-ui:
+      init: runtime/default
+      apache-proxy: runtime/default
+      airflow-webserver-ui: runtime/default
     shipyard-db-auxiliary:
       init: runtime/default
       shipyard-db-auxiliary: runtime/default
@@ -795,6 +969,15 @@ pod:
         runAsUser: 1000
       container:
         airflow_scheduler:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    airflow_webserver_ui:
+      container:
+        apache_proxy:
+          runAsUser: 0
+          readOnlyRootFilesystem: false
+        airflow_webserver_ui:
+          runAsUser: 1000
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
     airflow_worker:
@@ -856,6 +1039,9 @@ pod:
       init_container: null
       airflow_worker:
       airflow_scheduler:
+    airflow_webserver_ui:
+      airflow_webserver_ui:
+      init_container: null
     shipyard:
       init_container: null
       shipyard:
@@ -880,6 +1066,8 @@ pod:
     airflow:
       worker: 2
       scheduler: 2
+    airflow_webserver_ui:
+      airflow_webserver_ui: 1
   probes:
     airflow_worker:
       airflow_worker:
@@ -937,6 +1125,18 @@ pod:
           memory: "128Mi"
           cpu: "100m"
         requests:
+          memory: "128Mi"
+          cpu: "100m"
+    apache_proxy:
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+    airflow_webserver_ui:
+      airflow_webserver_ui:
+        limits:
           memory: "128Mi"
           cpu: "100m"
     shipyard_api:
@@ -1040,9 +1240,11 @@ manifests:
   # TODO: Set this to false only if a new deployment, or if the worker pod is
   #   running the scheduler
   deployment_airflow_scheduler: true
+  deployment_airflow_webserver_ui: true
   deployment_shipyard: true
   statefulset_airflow_worker: true
   ingress_shipyard_api: true
+  ingress_airflow_webserver_ui: true
   job_shipyard_db_init: true
   job_shipyard_db_auxiliary: true
   job_shipyard_db_sync: true
@@ -1052,6 +1254,8 @@ manifests:
   job_ks_endpoints: true
   job_ks_service: true
   job_ks_user: true
+  secret_apache_etc: true
+  secret_airflow_webserver_ui: true
   secret_airflow_db: true
   secret_shipyard_db: true
   secret_ingress_tls: true
@@ -1059,6 +1263,8 @@ manifests:
   secret_rabbitmq: true
   service_shipyard: true
   service_shipyard_ingress: true
+  service_airflow_webserver_ui: true
+  service_airflow_webserver_ui_ingress: true
   service_airflow_worker: true
   service_discovery_airflow_worker: true
   test_shipyard_api: true

@@ -133,3 +133,4 @@ latest
 src/bin/shipyard_airflow/shipyard_airflow/config
 src/bin/shipyard_airflow/shipyard_airflow/webserver_config.py
 airflow-runtime
+shipyard.yaml

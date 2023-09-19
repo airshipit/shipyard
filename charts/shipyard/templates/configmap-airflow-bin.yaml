@@ -21,6 +21,8 @@ kind: ConfigMap
 metadata:
   name: airflow-bin
 data:
+  apache.sh: |
+{{ tuple "bin/_apache.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
   rabbit-init.sh: |+
 {{- include "helm-toolkit.scripts.rabbit_init" . | indent 4 }}
   airflow-db-init.sh: |+

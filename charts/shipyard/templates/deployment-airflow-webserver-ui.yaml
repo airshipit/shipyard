@@ -1,0 +1,153 @@
+# Copyright (c) 2018 AT&T Intellectual Property. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{- if .Values.manifests.deployment_airflow_webserver_ui }}
+{{- $envAll := . }}
+{{- $labels :=  tuple $envAll "airflow_webserver_ui" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" -}}
+{{- $serviceAccountName := "airflow-webserver-ui" }}
+{{- $airflowProxyPort := tuple "airflow_webserver_ui" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+{{- $airflowUserSecret := .Values.secrets.airflow_webserver_ui.admin }}
+{{ tuple $envAll "airflow_server" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{- $mounts_airflow_webserver_ui := .Values.pod.mounts.airflow_webserver_ui.airflow_webserver_ui }}
+{{- $mounts_airflow_webserver_ui_init := .Values.pod.mounts.airflow_webserver_ui.init_container }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver-ui
+  annotations:
+    {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
+spec:
+  replicas: {{ .Values.pod.replicas.airflow_webserver_ui.airflow_webserver_ui }}
+  selector:
+    matchLabels:
+{{ $labels | indent 6 }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ $labels | indent 8 }}
+      annotations:
+{{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" | indent 8 }}
+        configmap-bin-hash: {{ tuple "configmap-airflow-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        configmap-etc-hash: {{ tuple "configmap-airflow-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+{{ dict "envAll" $envAll "podName" "airflow-webserver-ui" "containerNames" (list "init" "airflow-webserver-ui") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 8 }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      affinity:
+{{ tuple $envAll "airflow_webserver_ui" "airflow_webserver_ui" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+{{ dict "envAll" $envAll "application" "airflow_webserver_ui" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
+      nodeSelector:
+        {{ .Values.labels.airflow.node_selector_key }}: {{ .Values.labels.airflow.node_selector_value }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.airflow.timeout | default "30" }}
+      initContainers:
+{{ tuple $envAll "airflow_server" $mounts_airflow_webserver_ui_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: apache-proxy
+{{ tuple $envAll "apache_proxy" | include "helm-toolkit.snippets.image" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.apache_proxy | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "dashboard" "container" "apache_proxy" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+          command:
+            - /tmp/apache.sh
+            - start
+          ports:
+            - name: http
+              containerPort: {{ $airflowProxyPort }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ $airflowProxyPort }}
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          env:
+            - name: AIRFLOW_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $airflowUserSecret }}
+                  key: AIRFLOW_USERNAME
+            - name: AIRFLOW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $airflowUserSecret }}
+                  key: AIRFLOW_PASSWORD
+          volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
+            - name: airflow-bin
+              mountPath: /tmp/apache.sh
+              subPath: apache.sh
+              readOnly: true
+            - name: apache-etc
+              mountPath: /usr/local/apache2/conf/httpd.conf
+              subPath: httpd.conf
+              readOnly: true
+        - name: airflow-webserver-ui
+          image: {{ .Values.images.tags.airflow }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.airflow_webserver_ui.airflow_webserver_ui | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "airflow-webserver-ui" "container" "airflow_webserver_ui" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+          env:
+          - name: AIRFLOW_CONN_AIRFLOWS_OWN_DB
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secrets.postgresql_airflow_db.user }}
+                key: AIRFLOW_DATABASE_URI
+          args: ["webserver"]
+          volumeMounts:
+            - name: airflow-etc
+              mountPath: {{ .Values.conf.airflow_webserver_config_file.path }}
+              subPath: webserver_config.py
+              readOnly: true
+            - name: airflow-etc
+              mountPath: {{ .Values.conf.airflow_config_file.path }}
+              subPath: airflow.cfg
+              readOnly: true
+            - name: airflow-usr
+              mountPath: {{ .Values.conf.airflow_unittests_file.path }}
+              subPath: unittests.cfg
+              readOnly: true
+            - name: shipyard-etc
+              mountPath: /usr/local/airflow/plugins/shipyard.conf
+              subPath: shipyard.conf
+              readOnly: true
+            - name: airflow-logs
+              mountPath: {{ .Values.conf.airflow.logging.base_log_folder }}
+{{ if $mounts_airflow_webserver_ui.volumeMounts }}{{ toYaml $mounts_airflow_webserver_ui.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: pod-tmp
+          emptyDir: {}
+        - name: airflow-etc
+          configMap:
+            name: airflow-etc
+            defaultMode: 0444
+        - name: apache-etc
+          secret:
+            secretName: apache-etc
+            defaultMode: 0444
+        - name: airflow-usr
+          configMap:
+            name: airflow-usr
+            defaultMode: 0444
+        - name: shipyard-etc
+          configMap:
+            name: shipyard-etc
+            defaultMode: 0444
+        - name: airflow-bin
+          configMap:
+            name: airflow-bin
+            defaultMode: 0555
+        - name: airflow-logs
+          emptyDir: {}
+{{ if $mounts_airflow_webserver_ui.volumes }}{{ toYaml $mounts_airflow_webserver_ui.volumes | indent 8 }}{{ end }}
+{{- end }}
