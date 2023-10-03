@@ -254,7 +254,7 @@ tzdata==2023.3
 uc-micro-py==1.0.2
 ulid==1.1
 unicodecsv==0.14.1
-urllib3==1.26.16
+urllib3==1.26.17
 uWSGI==2.0.22
 vine==5.0.0
 wcwidth==0.2.6
