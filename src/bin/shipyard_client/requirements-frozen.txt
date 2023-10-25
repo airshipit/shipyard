@@ -23,6 +23,6 @@ setuptools==67.7.2
 six==1.16.0
 stevedore==5.1.0
 urllib3==1.26.16
-Werkzeug==2.2.3
+Werkzeug==3.0.1
 wheel==0.40.0
 zipp==3.15.0
