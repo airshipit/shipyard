@@ -179,7 +179,7 @@ psutil==5.9.5
 psycopg2-binary==2.9.6
 pure-sasl==0.6.2
 py==1.11.0
-pyarrow==11.0.0
+pyarrow==14.0.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycadf==3.1.1
