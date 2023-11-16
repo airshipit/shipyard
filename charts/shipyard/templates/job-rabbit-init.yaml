@@ -16,5 +16,8 @@ limitations under the License.
 
 {{- if .Values.manifests.job_rabbit_init }}
 {{- $rmqJob := dict "envAll" . "serviceName" "airflow" -}}
+{{- if .Values.manifests.certificates -}}
+{{- $_ := set $rmqJob "tlsSecret" .Values.endpoints.oslo_messaging.auth.admin.secret.tls.internal -}}
+{{- end -}}
 {{ $rmqJob | include "helm-toolkit.manifests.job_rabbit_init" }}
 {{- end }}

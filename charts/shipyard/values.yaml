@@ -334,12 +334,15 @@ endpoints:
       admin:
         username: rabbitmq
         password: password
+        secret:
+          tls:
+            internal: rabbitmq-tls-direct
     hosts:
       default: rabbitmq
     host_fqdn_override:
       default: null
     path: /airflow
-    scheme: amqp
+    scheme: rabbit
     port:
       amqp:
         default: 5672
