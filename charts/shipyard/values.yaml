@@ -813,9 +813,9 @@ conf:
       celery_config_options: airflow.config_templates.default_celery.DEFAULT_CELERY_CONFIG
       # TODO: Enable this for security
       ssl_active: "False"
-      ssl_key: ""
-      ssl_cert: ""
-      ssl_cacert: ""
+      ssl_key: /ect/rabbitmq/certs/tls.key
+      ssl_cert: /ect/rabbitmq/certs/tls.crt
+      ssl_cacert: /ect/rabbitmq/certs/ca.crt
     celery_broker_transport_options:
       visibility_timeout: 21600
     dask:
@@ -1233,6 +1233,9 @@ network_policy:
       - {}
     egress:
       - {}
+
+tls:
+  oslo_messaging: false
 
 manifests:
   configmap_shipyard_bin: true

@@ -185,6 +185,7 @@ spec:
               readOnly: true
             - name: airflow-logs
               mountPath: {{ .Values.conf.airflow.logging.base_log_folder }}
+{{- dict "enabled" $envAll.Values.tls.oslo_messaging "name" $envAll.Values.endpoints.oslo_messaging.auth.admin.secret.tls.internal "path" "/etc/rabbitmq/certs" | include "helm-toolkit.snippets.tls_volume_mount" | indent 12 }}
         - name: airflow-logrotate
           image: {{ .Values.images.tags.airflow }}
           imagePullPolicy: {{ .Values.images.pull_policy }}
@@ -237,6 +238,7 @@ spec:
           configMap:
             name: airflow-bin
             defaultMode: 0555
+{{- dict "enabled" $envAll.Values.tls.oslo_messaging "name" $envAll.Values.endpoints.oslo_messaging.auth.admin.secret.tls.internal | include "helm-toolkit.snippets.tls_volume" | indent 8 }}
   volumeClaimTemplates:
   - metadata:
       name: airflow-logs
