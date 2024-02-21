@@ -688,7 +688,7 @@ conf:
       api_client: airflow.api.client.local_client
       # if endpoint_url is not set, it is extracted from endpoints by the
       # configmap template
-      endpoint_url: http://localhost/
+      endpoint_url: http://localhost
     api:
       auth_backend: airflow.api.auth.backend.default
       enable_experimental_api: "True"
@@ -744,7 +744,7 @@ conf:
     webserver:
       # if base_url is not set, is extracted from endpoints by the configmap
       # template
-      base_url: http://localhost/
+      base_url: http://localhost
       # set web_server_host to 0.0.0.0 to bind to all interfaces. By default
       # only bind to loopback
       web_server_host: 127.0.0.1
@@ -787,7 +787,7 @@ conf:
       smtp_port: 25
       smtp_mail_from: airflow@airflow.local
     celery:
-      celery_app_name: airflow.executors.celery_executor
+      celery_app_name: airflow.providers.celery.executors.celery_executor
       # The concurrency that will be used when starting workers with the
       # "airflow worker" command. This defines the number of task instances
       # that a worker will take, so size up your workers based on the resources

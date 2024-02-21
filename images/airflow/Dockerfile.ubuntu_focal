@@ -44,12 +44,12 @@ ARG AIRFLOW_HOME=/usr/local/airflow
 # Moved celery to images/airflow/requirements.txt as apache-airflow uses a
 # version of celery incompatibile with the version of kombu needed by other
 # Airship components
-ARG AIRFLOW_SRC="apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.6.2"
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.8.1"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.27.1
+ARG KUBECTL_VERSION=1.29.0
 
 # Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}

@@ -1,9 +1,10 @@
 alembic
-apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.6.2
+apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.8.1
 arrow
 celery
 Flask
 Flask-AppBuilder
+graphviz
 pytz
 falcon
 jsonschema
@@ -49,7 +50,7 @@ WTForms
 
 itsdangerous
 
-git+https://opendev.org/airship/deckhand.git@37ba567da5bf7f146f54a468478a025c70793574#egg=deckhand
-git+https://opendev.org/airship/drydock.git@f99abfa4337f8cbb591513aac404b11208d4187c#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@6595dd83ea65324196c89cf6fb83f168818822de#egg=armada
-git+https://opendev.org/airship/promenade.git@69a74590e76e810916f7780fc525c63ec58c7dc1#egg=promenade
+git+https://opendev.org/airship/deckhand.git@5d2765e513fa55be74aef4456d6b353d24bc7097#egg=deckhand
+git+https://opendev.org/airship/drydock.git@1e180a3f51fcb1d00c85e5691fde548b934d0572#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@b3b8d05fe71cf42a3af0cd1bc50110ef989024a9#egg=armada
+git+https://opendev.org/airship/promenade.git@1a0ea41f286980bf1ccdb185578d9795983512eb#egg=promenade

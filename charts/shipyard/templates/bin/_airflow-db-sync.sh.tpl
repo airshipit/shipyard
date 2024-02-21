@@ -19,4 +19,5 @@ limitations under the License.
 
 set -ex
 
-airflow db upgrade
+airflow db init
+airflow db migrate

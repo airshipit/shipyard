@@ -133,6 +133,7 @@
 
     - name: Deploy Memcached using Airship
       shell: |
+        set -ex
         ./tools/deployment/airskiff/developer/100-deploy-osh.sh
       args:
         chdir: "{{ zuul.projects['opendev.org/airship/treasuremap'].src_dir }}"

@@ -21,6 +21,7 @@ airflow_path=$(which airflow)
 # Initialize Airflow DB
 if [[ $cmd == 'db init' ]]; then
     ${python3_path} ${airflow_path} db init
+    ${python3_path} ${airflow_path} db migrate
 # Start the services based on argument from Airflow Helm Chart
 elif [[ $cmd == 'webserver' ]]; then
     ${python3_path} ${airflow_path} webserver
@@ -40,7 +41,7 @@ elif [[ $cmd == *scheduler* ]]; then
     done
 elif [[ $cmd == 'quicktest' ]]; then
     ${python3_path} ${airflow_path} db init
-    ${python3_path} ${airflow_path} db upgrade
+    ${python3_path} ${airflow_path} db migrate
     ${python3_path} ${airflow_path} dags list
     ${python3_path} ${airflow_path} webserver -p 8080 &
     ${python3_path} ${airflow_path} tasks test example_bash_operator runme_0
