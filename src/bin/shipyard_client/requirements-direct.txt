@@ -17,7 +17,6 @@
 arrow
 click
 click-default-group
-keystoneauth1==4.3.1
 requests
 PTable
 pylibyaml
@@ -29,3 +28,14 @@ MarkupSafe
 pbr
 python-dateutil
 Werkzeug
+
+# Openstack Antelope 2023.1
+# https://releases.openstack.org/antelope/index.html
+python-keystoneclient==5.1.0
+
+keystoneauth1==5.1.2
+
+oslo.config==9.1.1
+oslo.i18n==6.0.0
+oslo.serialization==5.1.1
+oslo.utils==6.1.0

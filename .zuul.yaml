@@ -157,7 +157,7 @@
           commit: true
         static:
           - latest
-          - airflow_2.8.1
+          - airflow_2.8.2
 
 
 

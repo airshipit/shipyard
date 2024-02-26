@@ -994,7 +994,7 @@ pod:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         airflow_worker:
-          readOnlyRootFilesystem: true
+          readOnlyRootFilesystem: false
           allowPrivilegeEscalation: false
         airflow_logrotate:
           readOnlyRootFilesystem: true
