@@ -97,7 +97,7 @@ gunicorn==21.2.0
 h11==0.14.0
 hdfs==2.7.3
 hmsclient==0.1.1
-html5lib==0.9999999
+html5lib==0.999999999
 httpcore==0.16.3
 httpexceptor==1.4.0
 httpx==0.23.3
