@@ -220,6 +220,7 @@
         - ./tools/deployment/airskiff/developer/100-deploy-osh.sh
         - ./tools/deployment/airskiff/common/os-env.sh
         - ./tools/gate/wait-for-shipyard.sh
+        # - ./tools/deployment/airskiff/common/sleep.sh
     irrelevant-files: *irrelevant-files
 
 - job:

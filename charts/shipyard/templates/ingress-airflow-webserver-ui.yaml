@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and .Values.manifests.ingress_shipyard_api .Values.network.airflow_webserver_ui.ingress.public }}
+{{- if and .Values.manifests.ingress_airflow_webserver_ui .Values.network.airflow_webserver_ui.ingress.public }}
 {{- $ingressOpts := dict "envAll" . "backendService" "airflow_webserver_ui" "backendServiceType" "airflow_webserver_ui" "backendPort" "api" -}}
 {{- $ingressOpts | include "helm-toolkit.manifests.ingress" -}}
 {{- end }}

@@ -1246,11 +1246,11 @@ manifests:
   # TODO: Set this to false only if a new deployment, or if the worker pod is
   #   running the scheduler
   deployment_airflow_scheduler: true
-  deployment_airflow_webserver_ui: true
+  deployment_airflow_webserver_ui: false
   deployment_shipyard: true
   statefulset_airflow_worker: true
   ingress_shipyard_api: true
-  ingress_airflow_webserver_ui: true
+  ingress_airflow_webserver_ui: false
   job_shipyard_db_init: true
   job_shipyard_db_auxiliary: true
   job_shipyard_db_sync: true
@@ -1260,8 +1260,9 @@ manifests:
   job_ks_endpoints: true
   job_ks_service: true
   job_ks_user: true
-  secret_apache_etc: true
-  secret_airflow_webserver_ui: true
+  secret_apache_etc: false
+  secret_airflow_webserver_ui: false
+  secret_airflow_webserver_ui_ingress_tls: false
   secret_airflow_db: true
   secret_shipyard_db: true
   secret_ingress_tls: true
@@ -1269,8 +1270,7 @@ manifests:
   secret_rabbitmq: true
   service_shipyard: true
   service_shipyard_ingress: true
-  service_airflow_webserver_ui: true
-  service_airflow_webserver_ui_ingress: true
+  service_airflow_webserver_ui: false
   service_airflow_worker: true
   service_discovery_airflow_worker: true
   test_shipyard_api: true
