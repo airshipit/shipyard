@@ -102,7 +102,7 @@ httpcore==0.16.3
 httpexceptor==1.4.0
 httpx==0.23.3
 humanize==4.9.0
-idna==3.6
+idna==3.7
 importlib-metadata==6.11.0
 importlib-resources==5.13.0
 inflection==0.5.1
