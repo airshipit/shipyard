@@ -5,7 +5,7 @@ click==8.1.7
 click-default-group==1.2.4
 debtcollector==3.0.0
 Flask==2.2.5
-idna==3.6
+idna==3.7
 importlib-metadata==6.11.0
 iso8601==2.1.0
 itsdangerous==2.1.2
