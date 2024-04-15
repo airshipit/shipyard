@@ -245,7 +245,7 @@ SQLAlchemy==1.4.51
 SQLAlchemy-JSONField==1.0.2
 sqlalchemy-migrate==0.13.0
 SQLAlchemy-Utils==0.41.1
-sqlparse==0.4.4
+sqlparse==0.5.0
 statsd==4.0.1
 stevedore==5.2.0
 tabulate==0.9.0
