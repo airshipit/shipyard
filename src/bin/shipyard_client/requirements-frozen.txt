@@ -37,7 +37,7 @@ six==1.16.0
 stevedore==5.2.0
 types-python-dateutil==2.8.19.20240106
 urllib3==1.26.18
-Werkzeug==2.2.3
+Werkzeug==3.0.3
 wheel==0.41.2
 wrapt==1.16.0
 zipp==3.17.0
