@@ -69,7 +69,7 @@ do
 
     # We will need to extract the last word in the 'check_dag_state'
     # string variable as that will contain the status of the dag run
-    dag_state=$(echo ${check_dag_state} | awk '{print $NF}')
+    dag_state=$(echo ${check_dag_state} | awk -F ',' '{print $1}')
     echo -e ${dag_state} >> /usr/local/airflow/upgrade_airflow_worker.log
 
     if [[ $dag_state == "success" ]]; then

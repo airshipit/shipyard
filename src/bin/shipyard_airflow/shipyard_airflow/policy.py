@@ -300,7 +300,7 @@ class ShipyardPolicy(object):
         policy.DocumentedRuleDefault(
             ACTION_TEST_SITE,
             RULE_ADMIN_REQUIRED,
-            'Create a workflow action to invoke Helm tests on all releases ' \
+            'Create a workflow action to invoke Helm tests on all releases '
             'or a targeted release',
             [{
                 'path': '/api/v1.0/actions',
