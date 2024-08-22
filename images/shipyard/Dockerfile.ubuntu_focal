@@ -111,6 +111,7 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
       python3-pip \
     ' \
     && apt-get -qq update \
+    && apt-get upgrade -y \
     && apt-get -y install -y $buildDeps --no-install-recommends \
     && python3 -m pip install -U pip \
     && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
