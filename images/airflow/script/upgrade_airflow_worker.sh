@@ -78,11 +78,20 @@ do
         echo -e "Proceeding to upgrade Airflow Worker..." >> /usr/local/airflow/upgrade_airflow_worker.log
         echo -e "Deleting Airflow Worker Pods..." >> /usr/local/airflow/upgrade_airflow_worker.log
 
-        for i in $(kubectl get pods -n ucp | grep -i airflow-worker | awk '{print $1}'); do
-            # Delete Airflow Worker pod so that they will respawn with the new
-            # configurations and/or images
+        # Delete Airflow Worker pod so that they will respawn with the new
+        # configurations and/or images
+
+        # Get the name of the current pod
+        CURRENT_POD=$(hostname)
+
+        # Loop through all pods matching the 'airflow-worker' pattern, excluding the current pod
+        for i in $(kubectl get pods -n ucp | grep -i airflow-worker | awk '{print $1}' | grep -v $CURRENT_POD); do
             kubectl delete pod $i -n ucp
         done
+
+        # Finally, delete the current pod
+        kubectl delete pod $CURRENT_POD -n ucp
+
 
         echo -e "Airflow Worker Pods Deleted!" >> /usr/local/airflow/upgrade_airflow_worker.log
 
