@@ -1,0 +1,141 @@
+# Copyright 2017 AT&T Intellectual Property.  All other rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+ARG FROM=ubuntu:jammy
+FROM ${FROM}
+
+LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode' \
+      org.opencontainers.image.url='https://airshipit.org' \
+      org.opencontainers.image.documentation='https://airship-shipyard.readthedocs.org' \
+      org.opencontainers.image.source='https://opendev.org/airship/shipyard' \
+      org.opencontainers.image.vendor='The Airship Authors' \
+      org.opencontainers.image.licenses='Apache-2.0'
+
+ENV container docker
+ENV PORT 9000
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+
+ENV PYTHONWARNINGS=ignore::DeprecationWarning,ignore::FutureWarning
+
+# Setting the version explicitly for PBR
+ENV PBR_VERSION 0.1a1
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ctx_base=src/bin
+
+# Expose port 9000 for application
+EXPOSE $PORT
+
+RUN set -ex && \
+    apt-get update && apt-get upgrade -y && \
+    apt-get -y install \
+    automake \
+    ca-certificates \
+    curl \
+    build-essential \
+    git \
+    libtool \
+    libxml2 \
+    make \
+    netbase \
+    python3-dev \
+    python3-setuptools \
+    --no-install-recommends \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/man \
+        /usr/share/doc \
+        /usr/share/doc-base
+
+# Install LibYAML
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+ARG LIBYAML_VERSION=0.2.5
+RUN set -ex \
+    && git clone https://github.com/yaml/libyaml.git \
+    && cd libyaml \
+    && git checkout $LIBYAML_VERSION \
+    && ./bootstrap \
+    && ./configure \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -fr libyaml
+
+# Create shipyard user
+RUN useradd -ms /bin/bash shipyard \
+    && mkdir -p /home/shipyard/shipyard \
+    && mkdir -p /home/shipyard/shipyard_client
+
+# Copy entrypoint.sh to /home/shipyard
+COPY ${ctx_base}/shipyard_airflow/entrypoint.sh /home/shipyard/entrypoint.sh
+# Change permissions and set up directories
+RUN chown -R shipyard: /home/shipyard \
+    && chmod +x /home/shipyard/entrypoint.sh
+
+# Requirements and Shipyard source
+COPY ${ctx_base}/shipyard_airflow/requirements-frozen.txt /home/shipyard/api_requirements.txt
+COPY ${ctx_base}/shipyard_client/requirements-frozen.txt /home/shipyard/client_requirements.txt
+COPY ${ctx_base}/shipyard_client /home/shipyard/shipyard_client/
+COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
+
+# Build
+ RUN set -ex \
+    && buildDeps=' \
+      build-essential \
+      git \
+      libssl-dev \
+      libffi-dev \
+      libkrb5-dev \
+      libpq-dev \
+      libsasl2-dev \
+      libssl-dev \
+      libre2-dev \
+      libzmq3-dev \
+      make \
+      python3-pip \
+    ' \
+    && apt-get -qq update \
+    && apt-get upgrade -y \
+    && apt-get -y install -y $buildDeps --no-install-recommends \
+    && python3 -m pip install -U pip \
+    && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
+    && cd /home/shipyard/shipyard_client \
+    && pip3 install . --use-pep517  --no-cache-dir \
+    && pip3 install -r /home/shipyard/api_requirements.txt --no-cache-dir \
+    && cd /home/shipyard/shipyard \
+    && pip3 install . --use-pep517 --no-cache-dir \
+    && apt-get purge -y --auto-remove $buildDeps \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /usr/share/man \
+        /usr/share/doc \
+        /usr/share/doc-base \
+    && python3 -m pip install -U pip
+
+
+# Entrypoint
+ENTRYPOINT ["/home/shipyard/entrypoint.sh"]
+CMD ["server"]
+# Set user to shipyard
+USER shipyard

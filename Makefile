@@ -34,9 +34,11 @@ USE_PROXY                  ?= false
 AIRFLOW_SRC                ?=
 AIRFLOW_HOME               ?=
 DISTRO_BASE_IMAGE          ?=
-DISTRO                     ?= ubuntu_focal
+DISTRO            ?= ubuntu_jammy
+DISTRO_ALIAS	   ?= ubuntu_focal
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
+IMAGE_ALIAS              := ${DOCKER_REGISTRY}/${IMAGE_PREFIX}/${IMAGE_NAME}:${IMAGE_TAG}-${DISTRO_ALIAS}
 IMAGE_DIR:=images/$(IMAGE_NAME)
 
 .PHONY: images
@@ -136,6 +138,13 @@ else
 		$(_AIRFLOW_SRC_ARG) \
 		$(_AIRFLOW_HOME_ARG) \
 		--build-arg ctx_base=$(BUILD_CTX) .
+endif
+ifneq ($(DISTRO), $(DISTRO_ALIAS))
+	docker tag $(IMAGE) $(IMAGE_ALIAS)
+endif
+ifeq ($(DOCKER_REGISTRY), localhost:5000)
+	docker push $(IMAGE)
+	docker push $(IMAGE_ALIAS)
 endif
 ifeq ($(PUSH_IMAGE), true)
 	docker push $(IMAGE)

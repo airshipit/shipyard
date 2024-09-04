@@ -32,6 +32,7 @@ fi
 if [ "${USE_PROXY}" == "true" ]; then
     TEST_RESP="$(docker run \
         -p 8080:8080 \
+        --rm \
         --env HTTP_PROXY="${PROXY}" \
         --env HTTPS_PROXY="${PROXY}" \
         --env NO_PROXY="${NO_PROXY}" \
@@ -40,12 +41,11 @@ if [ "${USE_PROXY}" == "true" ]; then
 else
     TEST_RESP="$(docker run \
         -p 8080:8080 \
+        --rm \
         --name airflow_test ${IMAGE} \
         quicktest)"
 fi
 
-docker stop airflow_test
-docker rm airflow_test
 
 
 if [ ${TEST_RESP:(-7)} == "success" ]; then

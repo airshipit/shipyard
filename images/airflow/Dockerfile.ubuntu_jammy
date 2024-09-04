@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Docker image to run Airflow on Kubernetes
-ARG FROM=ubuntu:focal
+ARG FROM=ubuntu:jammy
 FROM ${FROM}
 
 LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode' \
@@ -44,12 +44,12 @@ ARG AIRFLOW_HOME=/usr/local/airflow
 # Moved celery to images/airflow/requirements.txt as apache-airflow uses a
 # version of celery incompatibile with the version of kombu needed by other
 # Airship components
-ARG AIRFLOW_SRC="apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.8.2"
+ARG AIRFLOW_SRC="apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.10.2"
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
 
 # Kubectl version
-ARG KUBECTL_VERSION=1.30.4
+ARG KUBECTL_VERSION=1.31.0
 
 # Needed from apache-airflow 1.10.2, since core.airflow_home config is deprecated
 ENV AIRFLOW_HOME=${AIRFLOW_HOME}
@@ -58,7 +58,7 @@ RUN set -ex \
     && apt-get update && apt-get upgrade -y \
     && apt-get install -y wget curl \
         apt-transport-https ca-certificates gnupg \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && curl -o /etc/apt/trusted.gpg.d/postgresql_release_signing_key.asc 'https://www.postgresql.org/media/keys/ACCC4CF8.asc' \
     && apt update \
     && apt -y install \
@@ -74,6 +74,7 @@ RUN set -ex \
         libpq-dev \
         libpq5 \
         libtool \
+        libxml2 \
         libsasl2-dev \
         locales \
         netcat \
@@ -95,7 +96,9 @@ RUN set -ex \
         /var/tmp/* \
         /usr/share/man \
         /usr/share/doc \
-        /usr/share/doc-base
+        /usr/share/doc-base \
+        /etc/ssl/private/ssl-cert-snakeoil.key \
+        /etc/ssl/private/ssl-cert-snakeoil.pem
 
 # Install LibYAML
 ENV LD_LIBRARY_PATH=/usr/local/lib
@@ -170,10 +173,10 @@ RUN cd /tmp/shipyard \
 # Copy the plugins and dags that will be used by this Airflow image:
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/plugins ${AIRFLOW_HOME}/plugins/
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/plugins \
-        /usr/local/lib/python3.8/dist-packages/airflow/plugins/
+        /usr/local/lib/python3.10/dist-packages/airflow/plugins/
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/dags ${AIRFLOW_HOME}/dags/
 COPY ${ctx_base}/shipyard_airflow/shipyard_airflow/dags  \
-        /usr/local/lib/python3.8/dist-packages/airflow/dags/
+        /usr/local/lib/python3.10/dist-packages/airflow/dags/
 
 # Set work directory
 USER airflow

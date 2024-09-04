@@ -1,5 +1,5 @@
 alembic
-apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.8.2
+apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.10.2
 arrow
 celery
 Flask
@@ -59,7 +59,7 @@ oslo.versionedobjects==3.1.0
 
 
 # Airship dependencies
-git+https://opendev.org/airship/deckhand.git@32e9950db405b5d1eb74da0c4e8df344a8638eff#egg=deckhand
-git+https://opendev.org/airship/drydock.git@6b317dda0518e3366c9835ee99d9691ffba718eb#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@e85f0ccdeb93475aef2f2f4ce3da9f53a00309cd#egg=armada
-git+https://opendev.org/airship/promenade.git@d21e3434f641e1f1e7400a44e77fccb5b87a2824#egg=promenade
+git+https://opendev.org/airship/deckhand.git@be9f97b846b1edc6b74777e5e639aa9edce8cfa6#egg=deckhand
+git+https://opendev.org/airship/drydock.git@146f1debbaf85f66e22cf8c546c3f343f0180ec9#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@edf8b5b88b726691f0dae23ec911e8d539c49211#egg=armada
+git+https://opendev.org/airship/promenade.git@ac573b9fb53fd543172c50bbbcdfac3656fb8e66#egg=promenade

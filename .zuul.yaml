@@ -13,30 +13,34 @@
 - project:
     templates:
       - docs-on-readthedocs
-      - openstack-python38-jobs
     vars:
       rtd_webhook_id: '38576'
       rtd_project_name: 'airship-shipyard'
       ensure_global_symlinks: true
     check:
       jobs:
-        - airship-shipyard-openstack-tox-pep8-focal
-        - airship-shipyard-openstack-tox-cover-focal
+        - openstack-tox-py310
+        - airship-shipyard-openstack-tox-pep8-jammy
+        - airship-shipyard-openstack-tox-cover-jammy
         - airship-shipyard-chart-build-gate
         - airship-shipyard-chart-build-latest-htk
+        - airship-airflow-dependency-vulnerability-check
+        - airship-shipyard-dependency-vulnerability-check
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-airskiff-deployment-focal
-        - shipyard-airskiff-deployment-focal-kubeadm
+        - airship-shipyard-image-gate-ubuntu_jammy
+        - shipyard-airskiff-deployment-jammy-kubeadm
     gate:
       jobs:
-        - airship-shipyard-openstack-tox-pep8-focal
-        - airship-shipyard-openstack-tox-cover-focal
+        - openstack-tox-py310
+        - airship-shipyard-openstack-tox-pep8-jammy
+        - airship-shipyard-openstack-tox-cover-jammy
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-airskiff-deployment-focal
+        - airship-shipyard-image-gate-ubuntu_jammy
+        - shipyard-airskiff-deployment-jammy-kubeadm
     post:
       jobs:
-        - airship-shipyard-docker-build-publish-ubuntu_focal
+        - airship-shipyard-docker-build-publish-ubuntu_jammy
         - shipyard-upload-git-mirror
 
 - nodeset:
@@ -46,32 +50,52 @@
         label: ubuntu-bionic
 
 - nodeset:
-    name: airship-shipyard-single-node-focal
+    name: airship-shipyard-single-node-jammy
     nodes:
       - name: primary
-        label: ubuntu-focal
+        label: ubuntu-jammy
 
 - job:
-    name: airship-shipyard-openstack-tox-pep8-focal
+    name: airship-airflow-dependency-vulnerability-check
+    parent: tox-py310
+    voting: false
+    timeout: 600
+    nodeset: ubuntu-jammy
+    vars:
+      tox_envlist:  airflow_safety
+      bindep_profile: test py310
+
+- job:
+    name: airship-shipyard-dependency-vulnerability-check
+    parent: tox-py310
+    voting: false
+    timeout: 600
+    nodeset: ubuntu-jammy
+    vars:
+      tox_envlist: shipyard_safety
+      bindep_profile: test py310
+
+- job:
+    name: airship-shipyard-openstack-tox-pep8-jammy
     parent: openstack-tox-pep8
-    description: Runs pep8 job on focal
-    nodeset: airship-shipyard-single-node-focal
+    description: Runs pep8 job on jammy
+    nodeset: airship-shipyard-single-node-jammy
 
 
 - job:
-    name: airship-shipyard-openstack-tox-cover-focal
+    name: airship-shipyard-openstack-tox-cover-jammy
     parent: openstack-tox-cover
-    description: Runs cover job on focal
-    nodeset: airship-shipyard-single-node-focal
+    description: Runs cover job on jammy
+    nodeset: airship-shipyard-single-node-jammy
 
 - job:
     name: airship-shipyard-chart-build-gate
     description: Build charts using pinned Helm toolkit.
     timeout: 900
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node-focal
+    nodeset: airship-shipyard-single-node-jammy
     vars:
-      HTK_COMMIT: cfff60ec10a6c386f38db79bb9f59a552c2b032f
+      HTK_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
 
 - job:
     name: airship-shipyard-chart-build-latest-htk
@@ -79,7 +103,7 @@
     timeout: 900
     voting: false
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node-focal
+    nodeset: airship-shipyard-single-node-jammy
     vars:
       HTK_COMMIT: master
 
@@ -88,7 +112,7 @@
     description: |
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
-    nodeset: airship-shipyard-single-node-focal
+    nodeset: airship-shipyard-single-node-jammy
 
 - job:
     name: airship-shipyard-image-base
@@ -96,7 +120,7 @@
       Base job for running airship-shipyard image related jobs.
     timeout: 3600
     run: tools/gate/playbooks/docker-image-build.yaml
-    nodeset: airship-shipyard-single-node-focal
+    nodeset: airship-shipyard-single-node-jammy
     irrelevant-files: &irrelevant-files
       - ^.*\.rst$
       - ^doc/.*$
@@ -104,39 +128,17 @@
 
 
 - job:
-    name: airship-shipyard-image-gate-ubuntu_focal
+    name: airship-shipyard-image-gate-ubuntu_jammy
     description: |
-      Run shipyard-image build for ubuntu_focal.
+      Run shipyard-image build for ubuntu_jammy.
     parent: airship-shipyard-image-base
     vars:
       publish: false
-      distro: ubuntu_focal
+      distro: ubuntu_jammy
       tags:
         dynamic:
           patch_set: true
 
-# - job:
-#     name: airship-shipyard-airskiff-deployment-focal
-#     nodeset: airship-shipyard-single-node-focal
-#     description: |
-#       Deploy Memcached using Airskiff and submitted Armada changes.
-#     timeout: 9600
-#     voting: true
-#     pre-run:
-#       - tools/gate/playbooks/airskiff-reduce-site.yaml
-#       - tools/gate/playbooks/git-config.yaml
-#     run: tools/gate/playbooks/airskiff-deploy.yaml
-#     post-run: tools/gate/playbooks/debug-report.yaml
-#     required-projects:
-#       - airship/treasuremap
-#     vars:
-#       CLONE_SHIPYARD: false
-#       SHIPYARD_IMAGE_DISTRO: ubuntu_focal
-#       HELM_ARTIFACT_URL: https://get.helm.sh/helm-v3.13.2-linux-amd64.tar.gz
-#       HTK_COMMIT: cfff60ec10a6c386f38db79bb9f59a552c2b032f
-#       OSH_INFRA_COMMIT: cfff60ec10a6c386f38db79bb9f59a552c2b032f
-#       OSH_COMMIT: 2d9457e34ca4200ed631466bd87569b0214c92e7
-#     irrelevant-files: *irrelevant-files
 
 - job:
     name: shipyard-base
@@ -153,6 +155,7 @@
     irrelevant-files: *irrelevant-files
     timeout: 10800
     pre-run:
+      - tools/gate/playbooks/checkout-treasuremap-ref.yaml
       - tools/gate/playbooks/prepare-hosts.yaml
       - tools/gate/playbooks/mount-volumes.yaml
       - tools/gate/playbooks/deploy-env.yaml
@@ -161,6 +164,7 @@
     post-run:
       - tools/gate/playbooks/osh-infra-collect-logs.yaml
     vars:
+      treasuremap_ref: refs/changes/43/927643/4
       extra_volume:
         size: 80G
         type: Linux
@@ -177,16 +181,16 @@
       loopback_device: /dev/loop100
       loopback_image: "/opt/ext_vol/openstack-helm/ceph-loop.img"
       ceph_osd_data_device: /dev/loop100
-      kube_version_repo: "v1.29"
-      # the list of k8s package versions are available here
-      # https://pkgs.k8s.io/core:/stable:/{{ kube_version_repo }}/deb/Packages
-      kube_version: "1.29.5-1.1"
+      kube_version_repo: "v1.30"
+      kube_version: "1.30.3-1.1"
       calico_setup: true
-      calico_version: "v3.27.0"
+      calico_version: "v3.27.4"
       cilium_setup: false
-      helm_version: "v3.14.2"
-      yq_version: "v4.6.0"
-      crictl_version: "v1.26.1"
+      cilium_version: "1.16.0"
+      flannel_setup: false
+      flannel_version: v0.25.4
+      helm_version: "v3.15.4"
+      crictl_version: "v1.30.1"
       zuul_osh_relative_path: ../../openstack/openstack-helm
       zuul_osh_infra_relative_path: ../../openstack/openstack-helm-infra
       zuul_treasuremap_relative_path: ../../airship/treasuremap
@@ -194,19 +198,20 @@
       run_helm_tests: "no"
 
 - job:
-    name: shipyard-airskiff-deployment-focal-kubeadm
-    nodeset: treasuremap-airskiff-1node-ubuntu_focal
+    name: shipyard-airskiff-deployment-jammy-kubeadm
+    nodeset: treasuremap-airskiff-1node-ubuntu_jammy
     description: |
       Deploy Memcached using Airskiff and submitted Shipyard changes.
     parent: shipyard-base
     vars:
       site: airskiff
-      HELM_ARTIFACT_URL: https://get.helm.sh/helm-v3.14.2-linux-amd64.tar.gz
-      HTK_COMMIT: 05f2f45971abcf483189358d663e2b46c3fc2fe8
-      OSH_INFRA_COMMIT: 05f2f45971abcf483189358d663e2b46c3fc2fe8
-      OSH_COMMIT: 049e679939fbd3b0c659dd0977911b8dc3b5a015
+      HELM_ARTIFACT_URL: https://get.helm.sh/helm-v3.15.4-linux-amd64.tar.gz
+      HTK_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
+      OSH_INFRA_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
+      OSH_COMMIT: 540df5cb0dbdaed63c202e2d6f2b7891062f8203
+      TREASUREMAP_COMMIT: refs/changes/43/927643/4
       CLONE_SHIPYARD: false
-      DISTRO: ubuntu_focal
+      DISTRO: ubuntu_jammy
       DOCKER_REGISTRY: localhost:5000
       MAKE_SHIPYARD_IMAGES: true
       gate_scripts_relative_path: ../../airship/treasuremap
@@ -227,23 +232,23 @@
     irrelevant-files: *irrelevant-files
 
 - job:
-    name: airship-shipyard-docker-build-publish-ubuntu_focal
+    name: airship-shipyard-docker-build-publish-ubuntu_jammy
     timeout: 3600
     run: tools/gate/playbooks/run-image.yaml
-    nodeset: airship-shipyard-single-node-focal
+    nodeset: airship-shipyard-single-node-jammy
     irrelevant-files: *irrelevant-files
     secrets:
       - airship_shipyard_quay_creds
     vars:
       publish: true
-      distro: ubuntu_focal
+      distro: ubuntu_jammy
       tags:
         dynamic:
           branch: true
           commit: true
         static:
           - latest
-          - airflow_2.8.2
+          - airflow_2.10.2
 
 
 

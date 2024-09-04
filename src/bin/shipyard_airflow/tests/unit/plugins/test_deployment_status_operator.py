@@ -19,20 +19,24 @@ import yaml
 import kubernetes
 
 import airflow
+import pendulum
 from shipyard_airflow.common.document_validators import \
     document_validation_utils
 from shipyard_airflow.common.document_validators import errors
 from shipyard_airflow.plugins import deckhand_client_factory
 from shipyard_airflow.plugins import deployment_status_operator
 from shipyard_airflow.plugins import xcom_puller
+from airflow import DAG
+from airflow.models import TaskInstance, DagRun
+from airflow.utils.dates import days_ago
+from airflow.utils.state import State
+from airflow.utils.types import DagRunType
 
-
-@mock.patch.object(airflow.models.BaseOperator, '__init__')
+# @mock.patch.object(airflow.models.BaseOperator, '__init__')
 class TestDeploymentStatusOperator(TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TestDeploymentStatusOperator, self).__init__(*args, **kwargs)
-        self.context = {'ti': None}
         self.status = {'status': "doc"}
         self.revision_id = "revision_id"
         self.version = {'version': "doc"}
@@ -42,33 +46,51 @@ class TestDeploymentStatusOperator(TestCase):
         }
         self.config_map_data = {'release': yaml.safe_dump(full_data)}
 
-    @mock.patch.object(xcom_puller.XcomPuller, 'get_concurrency_status',
-                       return_value=True)
+    def setUp(self):
+        # Create a DAG for the test using pendulum
+        self.dag = DAG(dag_id="example_dag", start_date=pendulum.now('UTC').add(days=-1))
+
+        # Create a DagRun to associate with the TaskInstance
+        self.dag_run = DagRun(
+            dag_id=self.dag.dag_id,
+            execution_date=pendulum.now('UTC').add(days=-1),  # Use pendulum for execution_date
+            run_id="manual__" + pendulum.now('UTC').to_iso8601_string(),
+            run_type=DagRunType.MANUAL,
+            state=State.RUNNING
+        )
+
+        # Create a TaskInstance with run_id
+        self.operator = deployment_status_operator.DeploymentStatusOperator(
+            shipyard_conf='conf', main_dag_name='name', dag=self.dag, task_id="task")
+
+        self.task_instance = TaskInstance(task=self.operator, run_id=self.dag_run.run_id)
+        self.task_instance.dag_run = self.dag_run  # Associate TaskInstance with DagRun
+        self.task_instance.state = State.RUNNING
+
+        # Set the context to include TaskInstance
+        self.context = {'ti': self.task_instance}
+
+    @mock.patch.object(deployment_status_operator.XcomPuller, 'get_concurrency_status', return_value=True)
     @mock.patch('shipyard_airflow.conf.config.parse_args')
-    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator,
-                       '_get_version_doc')
-    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator,
-                       '_get_status_and_revision')
-    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator,
-                       '_store_as_config_map')
+    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator, '_get_version_doc')
+    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator, '_get_status_and_revision')
+    @mock.patch.object(deployment_status_operator.DeploymentStatusOperator, '_store_as_config_map')
     def test_execute(self,
                      store_as_config_map,
                      get_status_and_revision,
                      get_version_doc,
                      config_parse_args,
-                     xcom_puller,
-                     base_operator_init):
+                     get_concurrency_status_mock):
 
+        # Mock return values for the methods
         get_status_and_revision.return_value = (self.status, self.revision_id)
         get_version_doc.return_value = self.version
 
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
-
-        operator.execute(self.context)
+        # Execute the operator
+        self.operator.execute(self.context)
 
         assert config_parse_args.called
-        assert xcom_puller.called
+        assert get_concurrency_status_mock.called
         assert get_status_and_revision.called
         get_version_doc.assert_called_once_with(self.revision_id)
         store_as_config_map.assert_called_once_with(self.config_map_data)
@@ -78,12 +100,10 @@ class TestDeploymentStatusOperator(TestCase):
     @mock.patch('shipyard_airflow.conf.config.parse_args')
     def test_execute_concurrency_fail(self,
                                       config_parse_args,
-                                      xcom_puller,
-                                      base_operator_init):
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
+                                      xcom_puller):
+
         try:
-            operator.execute(self.context)
+            self.operator.execute(self.context)
         except airflow.AirflowException as err:
             assert str(err) == "Concurrency check did not pass, so the " \
                                "deployment status will not be updated"
@@ -104,15 +124,13 @@ class TestDeploymentStatusOperator(TestCase):
                                                      create_cfg_map_object,
                                                      create_cfg_map,
                                                      patch_cfg_map,
-                                                     load_k8s_config,
-                                                     base_operator_init):
+                                                     load_k8s_config):
         data = 'data'
 
         patch_cfg_map.side_effect = kubernetes.client.rest.ApiException(
             status=404)
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
-        operator._store_as_config_map(data)
+
+        self.operator._store_as_config_map(data)
         patch_cfg_map.assert_called_once_with(
             config_parser.return_value,
             config_parser.return_value,
@@ -144,13 +162,11 @@ class TestDeploymentStatusOperator(TestCase):
                                                      create_cfg_map,
                                                      patch_cfg_map,
                                                      load_k8s_config,
-                                                     get_deployment_status,
-                                                     base_operator_init):
+                                                     get_deployment_status):
         data = 'data'
 
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
-        operator._store_as_config_map(data)
+
+        self.operator._store_as_config_map(data)
         patch_cfg_map.assert_called_once_with(
             config_parser.return_value,
             config_parser.return_value,
@@ -173,16 +189,14 @@ class TestDeploymentStatusOperator(TestCase):
                                                 config_parser,
                                                 create_cfg_map_object,
                                                 patch_cfg_map,
-                                                load_k8s_config,
-                                                base_operator_init):
+                                                load_k8s_config):
         data = 'data'
 
         patch_cfg_map.side_effect = kubernetes.client.rest.ApiException(
             status=409)
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
+
         try:
-            operator._store_as_config_map(data)
+            self.operator._store_as_config_map(data)
         except kubernetes.client.rest.ApiException as err:
             assert patch_cfg_map.side_effect == err
 
@@ -206,11 +220,9 @@ class TestDeploymentStatusOperator(TestCase):
     def test__get_version_doc(self,
                               config_parser,
                               get_unique_doc,
-                              get_client,
-                              base_operator_init):
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
-        result = operator._get_version_doc(self.revision_id)
+                              get_client):
+
+        result = self.operator._get_version_doc(self.revision_id)
 
         assert result == get_unique_doc.return_value
         assert get_client.called
@@ -229,13 +241,11 @@ class TestDeploymentStatusOperator(TestCase):
     def test__get_version_doc_does_not_exist(self,
                                              config_parser,
                                              get_unique_doc,
-                                             get_client,
-                                             base_operator_init):
+                                             get_client):
         get_unique_doc.side_effect = errors.DocumentNotFoundError()
 
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
-        result = operator._get_version_doc(self.revision_id)
+
+        result = self.operator._get_version_doc(self.revision_id)
 
         assert result == {}
         assert get_client.called
@@ -247,21 +257,18 @@ class TestDeploymentStatusOperator(TestCase):
     @mock.patch('shipyard_airflow.plugins.deployment_status_operator'
                 '.get_deployment_status')
     def test__get_status_and_revision(self,
-                                      get_deployment_status,
-                                      base_operator_init):
-        operator = deployment_status_operator.DeploymentStatusOperator(
-            shipyard_conf='conf', main_dag_name='name')
+                                      get_deployment_status):
 
         action = {'committed_rev_id': self.revision_id}
-        operator.xcom_puller = mock.MagicMock()
-        operator.xcom_puller.get_action_info = mock.MagicMock()
-        operator.xcom_puller.get_action_info.return_value = action
+        self.operator.xcom_puller = mock.MagicMock()
+        self.operator.xcom_puller.get_action_info = mock.MagicMock()
+        self.operator.xcom_puller.get_action_info.return_value = action
 
-        status_and_revision = operator._get_status_and_revision()
+        status_and_revision = self.operator._get_status_and_revision()
 
         get_deployment_status.assert_called_once_with(
             action,
-            force_completed=operator.force_completed)
+            force_completed=self.operator.force_completed)
 
         assert status_and_revision == (get_deployment_status.return_value,
                                        self.revision_id)
