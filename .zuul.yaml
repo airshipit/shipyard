@@ -164,7 +164,7 @@
     post-run:
       - tools/gate/playbooks/osh-infra-collect-logs.yaml
     vars:
-      treasuremap_ref: refs/changes/43/927643/4
+      treasuremap_ref: v1.9
       extra_volume:
         size: 80G
         type: Linux
@@ -209,7 +209,6 @@
       HTK_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
       OSH_INFRA_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
       OSH_COMMIT: 540df5cb0dbdaed63c202e2d6f2b7891062f8203
-      TREASUREMAP_COMMIT: refs/changes/43/927643/4
       CLONE_SHIPYARD: false
       DISTRO: ubuntu_jammy
       DOCKER_REGISTRY: localhost:5000
