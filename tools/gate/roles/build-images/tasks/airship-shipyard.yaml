@@ -42,7 +42,6 @@
   block:
     - pip:
         name: docker
-        version: 4.4.4
         executable: pip3
   become: True
 
