@@ -12,4 +12,94 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- include: airship-shipyard.yaml
+- name: Debug tag generation inputs
+  block:
+    - debug:
+        var: publish
+    - debug:
+        var: distro
+    - debug:
+        var: tags
+    - debug:
+        var: zuul
+    - debug:
+        msg: "{{ tags | to_json }}"
+
+- name: Determine tags
+  shell: echo '{{ tags | to_json }}' | python3 {{ zuul.project.src_dir }}/tools/image_tags.py
+  environment:
+    BRANCH: "{{ zuul.branch | default('') }}"
+    CHANGE: "{{ zuul.change | default('') }}"
+    COMMIT: "{{ zuul.newrev | default('') }}"
+    PATCHSET: "{{ zuul.patchset | default('') }}"
+  register: image_tags
+
+- name: Debug computed tags
+  debug:
+    var: image_tags
+
+- name: Install Docker python module for ansible docker login
+  block:
+    - pip:
+        name: docker
+        executable: pip3
+  become: True
+
+
+- name: Make and run images - verbosive
+  when: not publish
+  shell: |
+        make run_images
+  args:
+    chdir: "{{ zuul.project.src_dir }}"
+    executable: /bin/bash
+  become: True
+
+
+
+- name: Make images
+  when: not publish
+  block:
+    - make:
+        chdir: "{{ zuul.project.src_dir }}"
+        target: images
+        params:
+          IMAGE_TAG: "{{ item }}"
+          DISTRO: "{{ distro }}"
+      with_items: "{{ image_tags.stdout_lines }}"
+
+    - shell: "docker images"
+      register: docker_images
+
+    - debug:
+        var: docker_images
+
+  become: True
+
+- name: Publish images
+  block:
+    - docker_login:
+        username: "{{ airship_shipyard_quay_creds.username }}"
+        password: "{{ airship_shipyard_quay_creds.password }}"
+        registry_url: "https://quay.io/api/v1/"
+
+    - make:
+        chdir: "{{ zuul.project.src_dir }}"
+        target: images
+        params:
+          DOCKER_REGISTRY: "quay.io"
+          IMAGE_PREFIX: "airshipit"
+          IMAGE_TAG: "{{ item }}"
+          COMMIT: "{{ zuul.newrev | default('') }}"
+          PUSH_IMAGE: "true"
+          DISTRO: "{{ distro }}"
+      with_items: "{{ image_tags.stdout_lines }}"
+
+    - shell: "docker images"
+      register: docker_images
+
+    - debug:
+        var: docker_images
+
+  when: publish
+  become: True
