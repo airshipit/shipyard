@@ -19,5 +19,4 @@ limitations under the License.
 
 set -ex
 
-airflow db init
 airflow db migrate
