@@ -35,7 +35,7 @@ AIRFLOW_SRC                ?=
 AIRFLOW_HOME               ?=
 DISTRO_BASE_IMAGE          ?=
 DISTRO            ?= ubuntu_jammy
-DISTRO_ALIAS	   ?= ubuntu_focal
+DISTRO_ALIAS	   ?= ubuntu_jammy
 
 IMAGE:=${DOCKER_REGISTRY}/${IMAGE_PREFIX}/$(IMAGE_NAME):${IMAGE_TAG}-${DISTRO}
 IMAGE_ALIAS              := ${DOCKER_REGISTRY}/${IMAGE_PREFIX}/${IMAGE_NAME}:${IMAGE_TAG}-${DISTRO_ALIAS}
@@ -141,10 +141,12 @@ else
 endif
 ifneq ($(DISTRO), $(DISTRO_ALIAS))
 	docker tag $(IMAGE) $(IMAGE_ALIAS)
+ifeq ($(DOCKER_REGISTRY), localhost:5000)
+	docker push $(IMAGE_ALIAS)
+endif
 endif
 ifeq ($(DOCKER_REGISTRY), localhost:5000)
 	docker push $(IMAGE)
-	docker push $(IMAGE_ALIAS)
 endif
 ifeq ($(PUSH_IMAGE), true)
 	docker push $(IMAGE)
