@@ -13,7 +13,13 @@
 # limitations under the License.
 
 # Docker image to run Airflow on Kubernetes
-ARG FROM=ubuntu:jammy
+#
+# In order to fix rate limit error
+#
+# 429 Too Many Requests - Server message: too many requests:
+#   You have reached your pull rate limit.
+#   You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+ARG FROM=public.ecr.aws/ubuntu/ubuntu:jammy
 FROM ${FROM}
 
 LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc://#airshipit@freenode' \
