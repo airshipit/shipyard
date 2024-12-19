@@ -14,7 +14,7 @@ click==8.1.7
 click-default-group==1.2.4
 cliff==4.8.0
 cmd2==2.5.8
-cryptography==42.0.8
+cryptography==44.0.0
 debtcollector==3.0.0
 decorator==5.1.1
 dnspython==2.7.0
