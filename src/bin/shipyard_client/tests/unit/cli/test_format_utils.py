@@ -14,7 +14,7 @@
 import json
 from unittest.mock import MagicMock
 
-from prettytable.prettytable import DEFAULT
+from prettytable import PrettyTable, TableStyle
 
 import shipyard_client.cli.format_utils as format_utils
 
@@ -295,7 +295,7 @@ def test_table_factory_fields():
 
 
 def test_table_factory_fields_data():
-    t = format_utils.table_factory(style=DEFAULT,
+    t = format_utils.table_factory(style=TableStyle.DEFAULT,
                                    field_names=['a', 'b', 'c'],
                                    rows=[['1', '2', '3'], ['4', '5', '6']])
     assert 'a' in t.get_string()

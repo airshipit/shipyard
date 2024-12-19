@@ -14,8 +14,7 @@
 import json
 import yaml
 
-from prettytable import PrettyTable
-from prettytable.prettytable import PLAIN_COLUMNS
+from prettytable import PrettyTable, TableStyle
 
 _INDENT = ' ' * 8
 
@@ -229,7 +228,7 @@ def table_factory(field_names=None, rows=None, style=None):
     """
     p = PrettyTable()
     if style is None:
-        p.set_style(PLAIN_COLUMNS)
+        p.set_style(TableStyle.PLAIN_COLUMNS)
     else:
         p.set_style(style)
     if field_names:

@@ -125,7 +125,7 @@ def default_error_serializer(req, resp, exception):
     )
 
 
-def default_exception_handler(ex, req, resp, params):
+def default_exception_handler(req, resp, ex, params):
     """
     Catch-all exception handler for standardized output.
     If this is a standard falcon HTTPError, rethrow it for handling
@@ -197,7 +197,7 @@ class AppError(Exception):
         return '{} : {}'.format(ttl, dsc)
 
     @staticmethod
-    def handle(ex, req, resp, params):
+    def handle(req, resp, ex, params):
         """
         The handler used for app errors and child classes
         """
