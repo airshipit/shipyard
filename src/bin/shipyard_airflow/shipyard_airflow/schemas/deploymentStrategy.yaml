@@ -6,7 +6,7 @@ metadata:
   labels:
     application: shipyard
 data:
-  $schema: 'http://json-schema.org/schema#'
+  $schema: 'http://json-schema.org/draft-04/schema#'
   id: 'https://github.com/openstack/airship-shipyard/blob/master/src/bin/shipyard_airflow/shipyard_airflow/schemas/deploymentStrategy.yaml'
   type: 'object'
   required:

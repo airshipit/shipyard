@@ -16,7 +16,7 @@ import os
 import yaml
 
 import jsonschema
-import pkg_resources
+from importlib.resources import files
 import pytest
 
 from jsonschema.exceptions import ValidationError
@@ -31,8 +31,7 @@ class BaseSchemaValidationTest(object):
         :param expect_failure: should the validation pass or fail.
         :param input_files: pytest fixture used to access the test input files
         :param input: test input yaml doc filename"""
-        schema_dir = pkg_resources.resource_filename('shipyard_airflow',
-                                                     'schemas')
+        schema_dir = str(files('shipyard_airflow') / 'schemas')
         schema_filename = os.path.join(schema_dir, schema)
         schema_file = open(schema_filename, 'r')
         schema = yaml.safe_load(schema_file)
