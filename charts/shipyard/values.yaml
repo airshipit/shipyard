@@ -717,9 +717,9 @@ conf:
       log_filename_template: "{{ ti.dag_id }}/{{ ti.task_id }}/{{ execution_date.strftime('%%Y-%%m-%%dT%%H:%%M:%%S') }}/{{ try_number }}.log"
       log_processor_filename_template: "{{ filename }}.log"
       dag_processor_manager_log_location: /usr/local/airflow/logs/dag_processor_manager/dag_processor_manager.log
-      logging_level: "DEBUG"
+      logging_level: "INFO"
       fab_logging_level: "WARNING"
-      celery_logging_level: "DEBUG"
+      celery_logging_level: "INFO"
       base_log_folder: /usr/local/airflow/logs
       remote_logging: "False"
       remote_log_conn_id: ""
