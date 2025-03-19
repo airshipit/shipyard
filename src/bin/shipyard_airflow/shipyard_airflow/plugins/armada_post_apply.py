@@ -47,10 +47,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         self.dc = self.xcom_puller.get_deployment_configuration()
         self.target_manifest = self.dc['armada.manifest']
         if self.action_info['name'] == 'update_software':
-            update_manifest = self.dc.get(
-                'armada.update_manifest', "").strip()
-            if update_manifest:
-                self.target_manifest = update_manifest
+            self.target_manifest = self.dc['armada.update_manifest']
 
         # Update query dict with information of target_manifest
         self.query['target_manifest'] = self.target_manifest
@@ -59,7 +56,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         timeout = self.dc['armada.post_apply_timeout']
 
         # Execute Armada Apply to install the helm charts in sequence
-        LOG.info("Armada Apply, target manifest: ", self.target_manifest)
+        LOG.info("Armada Apply, target manifest: %s", self.target_manifest)
 
         try:
             armada_post_apply = self.armada_client.post_apply(

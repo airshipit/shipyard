@@ -74,6 +74,7 @@ class DeploymentConfigurationOperator(BaseOperator):
         "armada.get_releases_timeout": 300,
         "armada.get_status_timeout": 300,
         "armada.manifest": "full-site",
+        "armada.update_manifest": "full-site",
         "armada.post_apply_timeout": 2700,
         "armada.validate_design_timeout": 600
     }

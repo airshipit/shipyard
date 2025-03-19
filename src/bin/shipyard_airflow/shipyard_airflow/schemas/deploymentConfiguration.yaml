@@ -73,6 +73,8 @@ data:
           type: 'integer'
         manifest:
           type: 'string'
+        update_manifest:
+          type: 'string'
         post_apply_timeout:
           type: 'integer'
         validate_design_timeout:
