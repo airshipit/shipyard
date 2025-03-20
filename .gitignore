@@ -119,7 +119,7 @@ AUTHORS
 
 # vscode
 .vscode/
-
+.devcontainer/
 
 # pycharm
 .idea
