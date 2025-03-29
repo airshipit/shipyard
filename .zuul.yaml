@@ -95,7 +95,7 @@
     run: tools/gate/playbooks/build-charts.yaml
     nodeset: airship-shipyard-single-node-jammy
     vars:
-      HTK_COMMIT: 43fd7143481b6ddda0dbd2f26bf6ec39a417b15b
+      HTK_COMMIT: master
 
 - job:
     name: airship-shipyard-chart-build-latest-htk
@@ -144,11 +144,11 @@
     name: shipyard-base
     abstract: true
     roles:
-      - zuul: openstack/openstack-helm-infra
+      - zuul: airship/kubernetes-entrypoint
+      - zuul: openstack/openstack-helm
       - zuul: zuul/zuul-jobs
     required-projects:
       - name: openstack/openstack-helm
-      - name: openstack/openstack-helm-infra
       - name: openstack/openstack-helm-plugin
       - name: airship/treasuremap
         override-checkout: v1.9
@@ -194,9 +194,9 @@
       helm_version: "v3.14.0"
       crictl_version: "v1.30.1"
       zuul_osh_relative_path: ../../openstack/openstack-helm
-      zuul_osh_infra_relative_path: ../../openstack/openstack-helm-infra
+      zuul_osh_infra_relative_path: ../../openstack/openstack-helm
       zuul_treasuremap_relative_path: ../../airship/treasuremap
-      gate_scripts_relative_path: ../../openstack/openstack-helm-infra
+      gate_scripts_relative_path: ../../openstack/openstack-helm
       run_helm_tests: "no"
 
 - job:
@@ -208,9 +208,9 @@
     vars:
       site: airskiff
       HELM_ARTIFACT_URL: https://get.helm.sh/helm-v3.16.4-linux-amd64.tar.gz
-      HTK_COMMIT: 962333df313e04a01923ca8394d2a44f2afbb714
-      OSH_INFRA_COMMIT: 962333df313e04a01923ca8394d2a44f2afbb714
-      OSH_COMMIT: 5a3f2080c12bb56238b150c69a06064c64d61d0f
+      HTK_COMMIT: master
+      OSH_INFRA_COMMIT: master
+      OSH_COMMIT: master
       CLONE_SHIPYARD: false
       DISTRO: ubuntu_jammy
       DOCKER_REGISTRY: localhost:5000
@@ -229,6 +229,7 @@
         - ./tools/deployment/airskiff/developer/100-deploy-osh.sh
         - ./tools/deployment/airskiff/common/os-env.sh
         - ./tools/gate/wait-for-shipyard.sh
+        - ./tools/deployment/airskiff/common/get-airflow-worker-logs.sh
         # - ./tools/deployment/airskiff/common/sleep.sh
     irrelevant-files: *irrelevant-files
 
@@ -249,7 +250,7 @@
           commit: true
         static:
           - latest
-          - airflow_2.10.2
+          - airflow_2.10.4
 
 
 
