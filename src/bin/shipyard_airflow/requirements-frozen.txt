@@ -10,7 +10,7 @@ apache-airflow-providers-apache-hive==8.2.1
 apache-airflow-providers-celery==3.8.5
 apache-airflow-providers-common-compat==1.2.2
 apache-airflow-providers-common-io==1.4.2
-apache-airflow-providers-common-sql==1.20.0
+apache-airflow-providers-common-sql==1.25.0rc1
 apache-airflow-providers-fab==1.5.1
 apache-airflow-providers-ftp==3.11.1
 apache-airflow-providers-http==4.13.3
