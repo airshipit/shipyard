@@ -95,7 +95,7 @@
     run: tools/gate/playbooks/build-charts.yaml
     nodeset: airship-shipyard-single-node-jammy
     vars:
-      HTK_COMMIT: master
+      HTK_COMMIT: 49c117443391cec75e0bd52bb4a9d033325927ad
 
 - job:
     name: airship-shipyard-chart-build-latest-htk
@@ -208,9 +208,8 @@
     vars:
       site: airskiff
       HELM_ARTIFACT_URL: https://get.helm.sh/helm-v3.16.4-linux-amd64.tar.gz
-      HTK_COMMIT: master
-      OSH_INFRA_COMMIT: master
-      OSH_COMMIT: master
+      HTK_COMMIT: 49c117443391cec75e0bd52bb4a9d033325927ad
+      OSH_COMMIT: 49c117443391cec75e0bd52bb4a9d033325927ad
       CLONE_SHIPYARD: false
       DISTRO: ubuntu_jammy
       DOCKER_REGISTRY: localhost:5000
