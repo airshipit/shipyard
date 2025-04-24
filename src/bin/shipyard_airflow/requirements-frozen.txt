@@ -96,7 +96,7 @@ greenlet==3.1.1
 grpcio==1.65.5
 gssapi==1.9.0
 gunicorn==23.0.0
-h11==0.14.0
+h11==0.16.0
 hdfs==2.7.3
 hmsclient==0.1.1
 html5lib==0.9999999
