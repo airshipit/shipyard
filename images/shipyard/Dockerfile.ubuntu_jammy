@@ -22,15 +22,15 @@ LABEL org.opencontainers.image.authors='airship-discuss@lists.airshipit.org, irc
       org.opencontainers.image.vendor='The Airship Authors' \
       org.opencontainers.image.licenses='Apache-2.0'
 
-ENV container docker
-ENV PORT 9000
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV container=docker
+ENV PORT=9000
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 ENV PYTHONWARNINGS=ignore::DeprecationWarning,ignore::FutureWarning
 
 # Setting the version explicitly for PBR
-ENV PBR_VERSION 0.1a1
+ENV PBR_VERSION=0.1a1
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin
@@ -38,45 +38,27 @@ ARG ctx_base=src/bin
 # Expose port 9000 for application
 EXPOSE $PORT
 
-RUN set -ex && \
-    apt-get update && apt-get upgrade -y && \
-    apt-get -y install \
-    automake \
-    ca-certificates \
-    curl \
-    build-essential \
-    git \
-    libtool \
-    libxml2 \
-    make \
-    netbase \
-    python3-dev \
-    python3-setuptools \
-    --no-install-recommends \
-    && apt-get autoremove -yqq --purge \
-    && apt-get clean \
-    && rm -rf \
-        /var/lib/apt/lists/* \
-        /tmp/* \
-        /var/tmp/* \
-        /usr/share/man \
-        /usr/share/doc \
-        /usr/share/doc-base
-
-# Install LibYAML
-ENV LD_LIBRARY_PATH=/usr/local/lib
-
-ARG LIBYAML_VERSION=0.2.5
 RUN set -ex \
-    && git clone https://github.com/yaml/libyaml.git \
-    && cd libyaml \
-    && git checkout $LIBYAML_VERSION \
-    && ./bootstrap \
-    && ./configure \
-    && make \
-    && make install \
-    && cd .. \
-    && rm -fr libyaml
+    && apt update -qq \
+    && apt upgrade -y \
+    && apt -y install \
+        ca-certificates \
+        curl \
+        netbase \
+        libxml2 \
+        python3-dev \
+        python3-setuptools \
+        --no-install-recommends \
+    && apt autoremove -yqq --purge \
+    && apt clean \
+    && rm -rf \
+        /tmp/* \
+        /usr/share/doc \
+        /usr/share/doc-base \
+        /usr/share/man \
+        /var/lib/apt/lists/* \
+        /var/log/* \
+        /var/tmp/*
 
 # Create shipyard user
 RUN useradd -ms /bin/bash shipyard \
@@ -97,22 +79,24 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
 
 # Build
  RUN set -ex \
-    && buildDeps=' \
-      build-essential \
-      git \
-      libssl-dev \
-      libffi-dev \
-      libkrb5-dev \
-      libpq-dev \
-      libsasl2-dev \
-      libssl-dev \
-      libre2-dev \
-      libzmq3-dev \
-      make \
-      python3-pip \
-    ' \
+        && buildDeps=' \
+            build-essential \
+            libssl-dev \
+            libffi-dev \
+            libkrb5-dev \
+            libpq-dev \
+            libsasl2-dev \
+            libssl-dev \
+            libre2-dev \
+            libzmq3-dev \
+            libyaml-dev \
+            libtool \
+            make \
+            python3-pip \
+        ' \
     && apt-get -qq update \
-    && apt-get upgrade -y \
+    # Keep git separate so it's not removed below
+    && apt-get install -y $buildDeps git --no-install-recommends \
     && apt-get -y install -y $buildDeps --no-install-recommends \
     && python3 -m pip install -U pip \
     && pip3 install -r /home/shipyard/client_requirements.txt --no-cache-dir \
@@ -130,8 +114,7 @@ COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
         /var/tmp/* \
         /usr/share/man \
         /usr/share/doc \
-        /usr/share/doc-base \
-    && python3 -m pip install -U pip
+        /usr/share/doc-base
 
 
 # Entrypoint
