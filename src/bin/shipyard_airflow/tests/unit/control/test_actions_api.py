@@ -22,7 +22,7 @@ import falcon
 from falcon import testing
 from oslo_config import cfg
 import pytest
-import responses
+import requests
 import yaml
 
 from shipyard_airflow.common.notes.notes import NotesManager
@@ -78,7 +78,7 @@ nh = NotesHelper(NotesManager(MemoryNotesStorage(), get_token))
 
 
 def create_req(ctx, body):
-    '''creates a falcon request'''
+    '''Creates a Falcon request'''
     env = testing.create_environ(
         path='/',
         query_string='',
@@ -98,14 +98,14 @@ def create_req(ctx, body):
 
 
 def create_resp():
-    '''creates a falcon response'''
+    '''Creates a Falcon response'''
     resp = falcon.Response()
     return resp
 
 
 def actions_db():
     """
-    replaces the actual db call
+    Replaces the actual DB call with a stub.
     """
     return [
         {
@@ -113,7 +113,7 @@ def actions_db():
             'name': 'dag_it',
             'parameters': None,
             'dag_id': 'did1',
-            'dag_execution_date': DATE_ONE_STR,
+            'dag_execution_date': DATE_TWO_STR,
             'user': 'robot1',
             'timestamp': DATE_ONE,
             'context_marker': '8-4-4-4-12a'
@@ -125,7 +125,7 @@ def actions_db():
                 'p1': 'p1val'
             },
             'dag_id': 'did2',
-            'dag_execution_date': DATE_ONE_STR,
+            'dag_execution_date': DATE_TWO_STR,
             'user': 'robot2',
             'timestamp': DATE_ONE,
             'context_marker': '8-4-4-4-12b'
@@ -133,25 +133,25 @@ def actions_db():
     ]
 
 
-def dag_runs_db():
+def dag_runs_api():
     """
-    replaces the actual db call
+    Replaces the actual API call for dag runs with a stub.
     """
     return [
         {
             'dag_id': 'did2',
-            'execution_date': DATE_ONE,
+            'logical_date': DATE_ONE,
             'state': 'SUCCESS',
-            'run_id': RUN_ID_TWO,
+            'dag_run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO
         },
         {
             'dag_id': 'did1',
-            'execution_date': DATE_ONE,
+            'logical_date': DATE_ONE,
             'state': 'FAILED',
-            'run_id': RUN_ID_ONE,
+            'dag_run_id': RUN_ID_ONE,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_ONE
@@ -159,9 +159,9 @@ def dag_runs_db():
     ]
 
 
-def tasks_db():
+def tasks_api():
     """
-    replaces the actual db call
+    Replaces the actual API call for tasks with a stub.
     """
     return [
         {
@@ -169,7 +169,7 @@ def tasks_db():
             'dag_id': 'did2',
             'state': 'SUCCESS',
             'execution_date': DATE_ONE,
-            'run_id': RUN_ID_TWO,
+            'dag_run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -183,7 +183,7 @@ def tasks_db():
             'dag_id': 'did2',
             'state': 'SUCCESS',
             'execution_date': DATE_ONE,
-            'run_id': RUN_ID_TWO,
+            'dag_run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -197,7 +197,7 @@ def tasks_db():
             'dag_id': 'did2',
             'state': 'SUCCESS',
             'execution_date': DATE_ONE,
-            'run_id': RUN_ID_TWO,
+            'dag_run_id': RUN_ID_TWO,
             'external_trigger': 'something',
             'start_date': DATE_ONE,
             'end_date': DATE_TWO,
@@ -211,7 +211,7 @@ def tasks_db():
             'dag_id': 'did1',
             'state': 'FAILED',
             'execution_date': DATE_ONE,
-            'run_id': RUN_ID_ONE,
+            'dag_run_id': RUN_ID_ONE,
             'start_date': DATE_ONE,
             'end_date': DATE_ONE,
             'duration': '1second',
@@ -224,8 +224,7 @@ def tasks_db():
 
 def airflow_stub(**kwargs):
     """
-    asserts that the airflow invocation method was called with the right
-    parameters
+    Asserts that the Airflow invocation method was called with the correct parameters.
     """
     assert kwargs['dag_id']
     assert kwargs['action']
@@ -234,20 +233,23 @@ def airflow_stub(**kwargs):
 
 def insert_action_stub(**kwargs):
     """
-    asserts that the insert action was called with the right parameters
+    Asserts that the insert action was called with the correct parameters.
     """
     assert kwargs['action']
 
 
 def audit_control_command_db(action_audit):
     """
-    Stub for inserting the invoke record
+    Stub for inserting the invoke record.
     """
     assert action_audit['command'] == 'invoke'
 
 
 @pytest.fixture(scope='function')
 def conf_fixture(request):
+    """
+    Fixture to override configuration values for tests.
+    """
     def set_override(name, override, group):
         CONF = cfg.CONF
         CONF.set_override(name, override, group=group)
@@ -260,9 +262,9 @@ context = ShipyardRequestContext()
 
 
 def test_actions_all_in_list():
-    """Test that all actions are in alignment with supported list
+    """Test that all actions are in alignment with the supported list.
     Compares the action mappings structure with the externalized list of
-    supported actions, allowing for better alignment with the client
+    supported actions, allowing for better alignment with the client.
     """
     mappings = actions_api._action_mappings()
     actions = _get_actions_list()
@@ -325,16 +327,18 @@ def test_on_post(mock_info, mock_create_action, mock_authorize, *args):
     assert '/api/v1.0/actions/' in resp.location
 
 
-@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
-            new=nh)
-def test_get_all_actions(*args):
-    """
-    Tests the main response from get all actions
-    """
+@mock.patch('requests.get')
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper', new=nh)
+@mock.patch('shipyard_airflow.api.airflow_api.AirflowApiAccess.get_dag_runs_by_id')
+@mock.patch('shipyard_airflow.control.action.actions_api.ActionsResource.get_tasks_by_id')
+def test_get_all_actions(mock_get_tasks_by_id, mock_get_dag_runs_by_id, *args):
+    def fake_get_dag_runs_by_id(dag_id, execution_date=None):
+        return [run for run in dag_runs_api() if run['dag_id'] == dag_id]
+    mock_get_dag_runs_by_id.side_effect = fake_get_dag_runs_by_id
+    mock_get_tasks_by_id.side_effect = lambda dag_id: [t for t in tasks_api() if t['dag_id'] == dag_id]
+
     action_resource = ActionsResource()
     action_resource.get_all_actions_db = actions_db
-    action_resource.get_all_dag_runs_db = dag_runs_db
-    action_resource.get_all_tasks_db = tasks_db
     result = action_resource.get_all_actions(verbosity=1)
     assert len(result) == len(actions_db())
     for action in result:
@@ -346,16 +350,19 @@ def test_get_all_actions(*args):
             assert action['dag_status'] == 'SUCCESS'
 
 
-@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
-            new=nh)
-def test_get_all_actions_notes(*args):
-    """
-    Tests the main response from get all actions
-    """
+@mock.patch('requests.post')
+@mock.patch('requests.get')
+@mock.patch('shipyard_airflow.control.action.actions_api.notes_helper', new=nh)
+def test_get_all_actions_notes(mock_get, mock_post, *args):
+    # Мокаем ответ POST на /dagRuns/list
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {'dag_runs': dag_runs_api()}
+    mock_post.return_value.raise_for_status = lambda: None
+
     action_resource = ActionsResource()
     action_resource.get_all_actions_db = actions_db
-    action_resource.get_all_dag_runs_db = dag_runs_db
-    action_resource.get_all_tasks_db = tasks_db
+    action_resource.get_all_dag_runs_api = dag_runs_api
+    action_resource.get_all_tasks_api = tasks_api
     # inject some notes
     nh.make_action_note(RUN_ID_ONE, "hello from aaaaaa1")
     nh.make_action_note(RUN_ID_ONE, "hello from aaaaaa2")
@@ -375,8 +382,8 @@ def _gen_action_resource_stubbed():
     # TODO(bryan-strassner): mabye subclass this instead?
     action_resource = ActionsResource()
     action_resource.get_all_actions_db = actions_db
-    action_resource.get_all_dag_runs_db = dag_runs_db
-    action_resource.get_all_tasks_db = tasks_db
+    action_resource.get_all_dag_runs_api = dag_runs_api
+    action_resource.get_all_tasks_api = tasks_api
     action_resource.invoke_airflow_dag = airflow_stub
     action_resource.insert_action = insert_action_stub
     action_resource.audit_control_command_db = audit_control_command_db
@@ -406,6 +413,85 @@ def test_create_action_invalid_input(ic_val, full_val, basic_val, *args):
     assert not ic_val.called
     assert not full_val.called
     assert not basic_val.called
+
+
+@patch('requests.post')
+@patch('requests.get')
+@patch('logging.Logger.info')
+def test_invoke_airflow_dag_success(mock_info, mock_get, mock_post):
+    # Mock the JWT token retrieval
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {'access_token': 'mock_token'}
+
+    # Mock the Airflow API response
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "logical_date": "2025-05-07T16:45:05.493000"
+    }
+
+    # Create an instance of ActionsResource
+    actions_resource = ActionsResource()
+
+    # Mock the action and context
+    action = {"id": "test_action_id"}
+    context = mock.Mock()
+
+    # Call the invoke_airflow_dag method
+    dag_execution_date = actions_resource.invoke_airflow_dag(
+        dag_id="example_dag",
+        action=action,
+        context=context
+    )
+
+    # Assert that the correct logical_date is returned
+    assert dag_execution_date == "2025-05-07T16:45:05.493000"
+
+    # Assert that the correct payload was sent
+    mock_post.assert_called_once_with(
+        'http://localhost:8080/api/v2/dags/example_dag/dagRuns?limit=10000',
+        timeout=(CONF.base.airflow_api_connect_timeout, CONF.base.airflow_api_read_timeout),
+        headers={'Cache-Control': 'no-cache', 'Authorization': 'Bearer mock_token'},
+        json={
+            'dag_run_id': 'test_action_id',
+            'logical_date': mock.ANY,  # Match any logical_date
+            'conf': {'action': action}
+        }
+    )
+
+
+@patch('requests.post')
+@patch('requests.get')
+@patch('logging.Logger.error')
+def test_invoke_airflow_dag_error(mock_error, mock_get, mock_post):
+    # Mock the JWT token retrieval
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {'access_token': 'mock_token'}
+
+    # Mock the Airflow API response with an error
+    mock_post.return_value.status_code = 500
+    mock_post.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError("Internal Server Error")
+
+    # Create an instance of ActionsResource
+    actions_resource = ActionsResource()
+
+    # Mock the action and context
+    action = {"id": "test_action_id"}
+    context = mock.Mock()
+
+    # Call the invoke_airflow_dag method and assert that an ApiError is raised
+    with pytest.raises(ApiError) as exc_info:
+        actions_resource.invoke_airflow_dag(
+            dag_id="example_dag",
+            action=action,
+            context=context
+        )
+
+    # Assert that the ApiError contains the correct details
+    assert 'Unable to complete request to Airflow' in str(exc_info.value)
+    assert 'Airflow could not be contacted properly by Shipyard' in str(exc_info.value)
+
+    # Assert that the error log message was generated
+    mock_error.assert_any_call("Request to Airflow failed: %s", mock_post.return_value.raise_for_status.side_effect.args)
 
 
 @mock.patch('shipyard_airflow.control.action.actions_api.notes_helper',
@@ -625,6 +711,9 @@ def test_create_targeted_action_no_committed(basic_val, *args):
             side_effect=Exception('purposeful'))
 @mock.patch('shipyard_airflow.policy.check_auth')
 def test_auth_alignment(auth, *args):
+    """
+    Tests that the correct RBAC policy is checked for each action.
+    """
     action_resource = _gen_action_resource_stubbed()
     for action_name, action_cfg in actions_api._action_mappings().items():
         # Only test if validate returns
@@ -643,27 +732,19 @@ def test_auth_alignment(auth, *args):
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.'
        'get_all_submitted_actions')
 def test_get_all_actions_db(mock_get_all_submitted_actions):
+    """
+    Tests that get_all_actions_db calls the correct DB method.
+    """
     act_resource = ActionsResource()
     act_resource.get_all_actions_db()
     assert mock_get_all_submitted_actions.called
 
 
-@patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_all_dag_runs')
-def test_get_all_dag_runs_db(mock_get_all_dag_runs):
-    act_resource = ActionsResource()
-    act_resource.get_all_dag_runs_db()
-    assert mock_get_all_dag_runs.called
-
-
-@patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_all_tasks')
-def test_get_all_tasks_db(mock_get_all_tasks):
-    act_resource = ActionsResource()
-    act_resource.get_all_tasks_db()
-    assert mock_get_all_tasks.called
-
-
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.insert_action')
 def test_insert_action(mock_insert_action):
+    """
+    Tests that insert_action calls the correct DB method.
+    """
     act_resource = ActionsResource()
     action = 'test_action'
     act_resource.insert_action(action)
@@ -673,100 +754,20 @@ def test_insert_action(mock_insert_action):
 @patch('shipyard_airflow.db.shipyard_db.ShipyardDbAccess.'
        'insert_action_command_audit')
 def test_audit_control_command_db(mock_insert_action_audit):
+    """
+    Tests that audit_control_command_db calls the correct DB method.
+    """
     act_resource = ActionsResource()
     action_audit = 'test_action_audit'
     act_resource.audit_control_command_db(action_audit)
     mock_insert_action_audit.assert_called_with(action_audit)
 
 
-@responses.activate
-@mock.patch.object(
-    ActionsResource,
-    '_exhume_date',
-    return_value=datetime(2017, 9, 22, 22, 16, 14))
-@patch('logging.Logger.info')
-def test_invoke_airflow_dag_success(mock_info, mock_exhume_date):
-    act_resource = ActionsResource()
-    dag_id = 'test_dag_id'
-    action = {'id': '123', 'user': 'unittester'}
-    CONF = cfg.CONF
-    web_server_url = CONF.base.web_server
-    conf_value = {'action': action}
-    log_string = 'Created <DagRun deploy_site @ 2017-09-22 22:16:14: man'
-    responses.add(
-        method='POST',
-        url='{}api/experimental/dags/{}/dag_runs'.format(
-            web_server_url, dag_id),
-        body=json.dumps({'message': log_string}),
-        status=200,
-        content_type='application/json')
-
-    result = act_resource.invoke_airflow_dag(dag_id, action, context)
-    mock_exhume_date.assert_called_with(dag_id, log_string)
-    assert result == '2017-09-22T22:16:14'
-
-
-@responses.activate
-@patch('logging.Logger.info')
-def test_invoke_airflow_dag_errors(mock_info):
-    act_resource = ActionsResource()
-    dag_id = 'test_dag_id'
-    action = {'id': '123', 'user': 'unittester'}
-    web_server_url = CONF.base.web_server
-    conf_value = {'action': action}
-    responses.add(
-        method='POST',
-        url='{}api/experimental/dags/{}/dag_runs'.format(
-            web_server_url, dag_id),
-        body=json.dumps({
-            "error": "not found"
-        }),
-        status=404,
-        content_type='application/json')
-
-    with pytest.raises(ApiError) as expected_exc:
-        act_resource.invoke_airflow_dag(dag_id, action, context)
-    mock_info.assert_called_with('Response code from Airflow trigger_dag: %s',
-                                 404)
-    assert 'Unable to complete request to Airflow' in str(expected_exc)
-    assert 'Airflow could not be contacted properly by Shipyard' in str(
-        expected_exc)
-
-    with mock.patch.object(actions_api, 'CONF') as mock_conf:
-        mock_conf.base.web_server = 'Error'
-        with pytest.raises(ApiError) as expected_exc:
-            act_resource.invoke_airflow_dag(dag_id, action, context)
-        assert 'Unable to invoke workflow' in str(expected_exc)
-        assert ('Airflow URL not found by Shipyard. Shipyard configuration is '
-                'missing web_server value') in str(expected_exc)
-
-
-def test_exhume_date():
-    act_resource = ActionsResource()
-    dag_id = 'test_dag_id'
-    log_string = 'test_log_string'
-    with pytest.raises(ApiError) as expected_exc:
-        act_resource._exhume_date(dag_id, log_string)
-    assert 'Unable to determine if workflow has started' in str(expected_exc)
-    assert ('Airflow has not responded with parseable output. Shipyard is '
-            'unable to determine run timestamp') in str(expected_exc)
-
-    dag_id = 'deploy_site'
-    log_string = 'Created <DagRun deploy_site @ 2017-09-22 22:16:14: man'
-    result = act_resource._exhume_date(dag_id, log_string)
-    assert result == datetime(2017, 9, 22, 22, 16, 14)
-
-    log_string = 'Created <DagRun deploy_site @ test'
-    with pytest.raises(ApiError) as expected_exc:
-        act_resource._exhume_date(dag_id, log_string)
-    assert 'Unable to determine if workflow has started' in str(expected_exc)
-    assert (
-        'Airflow has not responded with parseable output. Shipyard is unable '
-        'to determine run timestamp') in str(expected_exc)
-
-
 @mock.patch.object(ConfigdocsHelper, 'get_revision_id', return_value=7)
 def test_get_committed_design_version(*args):
+    """
+    Tests get_committed_design_version returns the correct revision id.
+    """
     act_resource = ActionsResource()
     act_resource.configdocs_helper = ConfigdocsHelper(ShipyardRequestContext())
     assert act_resource.get_committed_design_version() == 7
@@ -774,6 +775,9 @@ def test_get_committed_design_version(*args):
 
 @mock.patch.object(ConfigdocsHelper, 'get_revision_id', return_value=None)
 def test_get_committed_design_version_missing(*args):
+    """
+    Tests get_committed_design_version returns None when no revision is committed.
+    """
     act_resource = ActionsResource()
     act_resource.configdocs_helper = ConfigdocsHelper(
         ShipyardRequestContext()

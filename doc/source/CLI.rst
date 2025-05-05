@@ -176,46 +176,29 @@ Sample
 Control commands
 ----------------
 
-pause, unpause, stop
+stop
 ~~~~~~~~~~~~~~~~~~~~
 
 Three separate commands with a common format that allow for controlling
 the processing of actions created in Shipyard.
 
-pause
-  pause something in progress e.g. an executing action
-unpause
-  unpause something paused e.g. a paused action
 stop
-  stops an executing or paused item e.g. an action
+  stops an executing item e.g. an action
 
 ::
-
-    shipyard pause
-        <type>
-        <id>
-
-    shipyard unpause
-        <type>
-        <id>
 
     shipyard stop
         <type>
         <id>
 
     shipyard
-        pause|unpause|stop
+        stop
         <qualified name>
 
     Example:
 
-        shipyard pause action 01BTG32JW87G0YKA1K29TKNAFX
-
-        shipyard unpause action 01BTG32JW87G0YKA1K29TKNAFX
-
         shipyard stop action 01BTG32JW87G0YKA1K29TKNAFX
 
-        shipyard pause action/01BTG32JW87G0YKA1K29TKNAFX
 
 <type>
   The type of entity to take action upon. Currently supports: action
@@ -229,15 +212,15 @@ Sample
 
 ::
 
-    $ shipyard pause action/01BZZMEXAVYGG7BT0BMA3RHYY7
-    pause successfully submitted for action 01BZZMEXAVYGG7BT0BMA3RHYY7
+    $ shipyard stop action/01BZZMEXAVYGG7BT0BMA3RHYY7
+    stop successfully submitted for action 01BZZMEXAVYGG7BT0BMA3RHYY7
 
 A failed command:
 
 ::
 
-    $ shipyard pause action/01BZZK07NF04XPC5F4SCTHNPKN
-    Error: Unable to pause action
+    $ shipyard stop action/01BZZK07NF04XPC5F4SCTHNPKN
+    Error: Unable to stop action
     Reason: dag_run state must be running, but is failed
     - Error: dag_run state must be running, but is failed
 

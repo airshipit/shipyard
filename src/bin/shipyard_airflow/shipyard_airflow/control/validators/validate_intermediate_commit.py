@@ -26,6 +26,7 @@ class ValidateIntermediateCommit:
     If allow_intermediate_commits is set on the action, this validator will
     not check.
     """
+
     def __init__(self, action, configdocs_helper):
         self.action = action
         self.configdocs_helper = configdocs_helper
@@ -47,5 +48,4 @@ class ValidateIntermediateCommit:
                         'please rerun this action with the option '
                         '`allow-intermediate-commits=True`'),
                     status=falcon.HTTP_409,
-                    retry=False
-                )
+                    retry=False)

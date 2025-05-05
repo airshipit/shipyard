@@ -46,7 +46,7 @@ class DrydockVerifyNodesExistOperator(DrydockBaseOperator):
     destruction of potentially running workloads.
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         LOG.info("Verifying that nodes exist before proceeding.")
         node_list = self.get_nodes()
         if not node_list:

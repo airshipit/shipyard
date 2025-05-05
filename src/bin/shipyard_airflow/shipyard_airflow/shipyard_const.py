@@ -24,5 +24,6 @@ class CustomHeaders(enum.Enum):
     END_USER = 'X-End-User'
     CONTEXT_MARKER = 'X-Context-Marker'
 
+
 # TODO: Other constants that are used across modules in Shipyard
 # to be defined here for better maintainability

@@ -304,7 +304,8 @@ class TestDrydockNodesOperator:
         op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         op.task_id = "prepare_and_deploy_nodes"
 
-        op.do_execute()
+        mock_context = {}
+        op.do_execute(mock_context)
         assert get_dgm.call_count == 1
         assert nl.call_count == 1
         assert pdg.call_count == 1
@@ -330,7 +331,8 @@ class TestDrydockNodesOperator:
             op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             op.task_id = "prepare_and_deploy_nodes"
 
-            op.do_execute()
+            mock_context = {}
+            op.do_execute(mock_context)
 
         assert get_dgm.call_count == 1
         assert nl.call_count == 1
@@ -485,7 +487,8 @@ class TestDrydockNodesOperator:
         op.action_id = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         op.task_id = "prepare_and_deploy_nodes"
 
-        op.do_execute()
+        mock_context = {}
+        op.do_execute(mock_context)
         assert "critical groups have met their success criteria" in caplog.text
 
     # TODO (bryan-strassner) test for _execute_task

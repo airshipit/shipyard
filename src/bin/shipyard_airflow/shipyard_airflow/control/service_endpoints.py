@@ -65,12 +65,9 @@ def _get_service_type(endpoint):
         title='Endpoint is not known',
         description=(
             'Shipyard is trying to reach an unknown endpoint: {}'.format(
-                endpoint.name
-            )
-        ),
+                endpoint.name)),
         status=falcon.HTTP_500,
-        retry=False
-    )
+        retry=False)
 
 
 def get_endpoint(endpoint):
@@ -83,18 +80,15 @@ def get_endpoint(endpoint):
     """
     service_type = _get_service_type(endpoint)
     try:
-        return _get_ks_session().get_endpoint(
-            interface='internal',
-            service_type=service_type)
+        return _get_ks_session().get_endpoint(interface='internal',
+                                              service_type=service_type)
     except exc.EndpointNotFound:
-        LOG.error('Could not find an internal interface for %s',
-                  endpoint.name)
+        LOG.error('Could not find an internal interface for %s', endpoint.name)
         raise AppError(
             title='Can not access service endpoint',
             description=(
                 'Keystone catalog has no internal endpoint for service type: '
-                '{}'.format(service_type)
-            ),
+                '{}'.format(service_type)),
             status=falcon.HTTP_500,
             retry=False)
 
@@ -117,13 +111,10 @@ def _get_ks_session():
         auth = loading.load_auth_from_conf_options(CONF, "keystone_authtoken")
         return session.Session(auth=auth)
     except exc.AuthorizationFailure as aferr:
-        LOG.error('Could not authorize against keystone: %s',
-                  str(aferr))
+        LOG.error('Could not authorize against keystone: %s', str(aferr))
         raise AppError(
             title='Could not authorize Shipyard against Keystone',
             description=(
-                'Keystone has rejected the authorization request by Shipyard'
-            ),
+                'Keystone has rejected the authorization request by Shipyard'),
             status=falcon.HTTP_500,
-            retry=False
-        )
+            retry=False)

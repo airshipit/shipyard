@@ -534,12 +534,11 @@ action_lifecycle
   -  Processing - The action is underway.
   -  Complete - The action has completed successfully.
   -  Failed - The action has encountered an error, and has failed.
-  -  Paused - The action has been paused by a user.
 
 command audit
   A list of commands that have been issued against the action. Initially,
-  the action listed will be “invoke”, but may include “pause”, “unpause”,
-  or “stop” if those commands are issued.
+  the action listed will be “invoke”, but may include “stop” if
+  those commands are issued.
 
 context_marker
   The user supplied or system assigned context marker associated with the
@@ -762,7 +761,7 @@ None, there is no associated response entity for this resource
 
 POST /v1.0/actions/{action_id}/control/{control_verb}
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Trigger a control action against an activity.- this includes: pause, unpause
+Trigger a control action against an activity.- this includes: stop
 
 Responses
 '''''''''
@@ -775,7 +774,7 @@ Failure case - command is invalid for the execution state of the action.
 ::
 
     $ curl -D - \
-      -X POST $URL/api/v1.0/actions/01BTTMFVDKZFRJM80FGD7J1AKN/control/pause \
+      -X POST $URL/api/v1.0/actions/01BTTMFVDKZFRJM80FGD7J1AKN/control/stop \
       -H "X-Auth-Token:$TOKEN"
 
     HTTP/1.1 409 Conflict

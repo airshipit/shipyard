@@ -15,6 +15,8 @@ from datetime import datetime
 
 import arrow
 
+from unittest.mock import patch
+
 from shipyard_airflow.control.helpers.workflow_helper import (
     WorkflowHelper
 )
@@ -113,7 +115,12 @@ def test_get_workflow_list():
     Tests the get_workflow_list method
     """
     helper = WorkflowHelper('')
-    helper._get_all_dag_runs_db = lambda: [DAG_RUN_1, DAG_RUN_1, DAG_RUN_1]
+    def fake_get_all_dag_runs_api(threshold_date=None):
+        # DATE_ONE = datetime(2017, 9, 13, 11, 13, 3, 57000)
+        if threshold_date and threshold_date > DATE_ONE:
+            return []
+        return [DAG_RUN_1, DAG_RUN_1, DAG_RUN_1]
+    helper._get_all_dag_runs_api = fake_get_all_dag_runs_api
 
     # Time includes items
     dag_list = helper.get_workflow_list(
@@ -172,14 +179,14 @@ TASK_LIST = [
     }
 ]
 
-
-def test_get_workflow():
+@patch('requests.get')
+def test_get_workflow(mock_get):
     """
     Tests the get_workflow method
     """
     helper = WorkflowHelper('')
-    helper._get_dag_run_like_id_db = lambda dag_id, execution_date: [DAG_RUN_1]
-    helper._get_tasks_by_id_db = lambda dag_id, execution_date: TASK_LIST
+    helper._get_dag_run_like_id_api = lambda dag_id, execution_date: [DAG_RUN_1]
+    helper._get_tasks_by_id_api = lambda dag_id, execution_date: TASK_LIST
     dag_detail = helper.get_workflow(
         workflow_id='dag_id__1957-03-14T12:12:12.000000'
     )
@@ -202,16 +209,16 @@ DAG_RUN_SUB = {
     'end_date': DATE_ONE
 }
 
-
-def test_get_workflow_subords():
+@patch('requests.get')
+def test_get_workflow_subords(mock_get):
     """
     Tests the get_workflow method
     """
     helper = WorkflowHelper('')
-    helper._get_dag_run_like_id_db = (
+    helper._get_dag_run_like_id_api = (
         lambda dag_id, execution_date: [DAG_RUN_SUB, DAG_RUN_1]
     )
-    helper._get_tasks_by_id_db = lambda dag_id, execution_date: TASK_LIST
+    helper._get_tasks_by_id_api = lambda dag_id, execution_date: TASK_LIST
     dag_detail = helper.get_workflow(
         workflow_id='dag_id__1957-03-14T12:12:12.000000'
     )

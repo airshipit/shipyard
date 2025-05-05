@@ -24,20 +24,21 @@ import re
 # The following are copied from oslo_utils, strutils. Extend using the other
 # facilties to make these easier to keep in sync:
 _FORMAT_PATTERNS_1 = [r'(%(key)s\s*[=]\s*)[^\s^\'^\"]+']
-_FORMAT_PATTERNS_2 = [r'(%(key)s\s*[=]\s*[\"\'])[^\"\']*([\"\'])',
-                      r'(%(key)s\s+[\"\'])[^\"\']*([\"\'])',
-                      r'([-]{2}%(key)s\s+)[^\'^\"^=^\s]+([\s]*)',
-                      r'(<%(key)s>)[^<]*(</%(key)s>)',
-                      r'([\"\']%(key)s[\"\']\s*:\s*[\"\'])[^\"\']*([\"\'])',
-                      r'([\'"][^"\']*%(key)s[\'"]\s*:\s*u?[\'"])[^\"\']*'
-                      '([\'"])',
-                      r'([\'"][^\'"]*%(key)s[\'"]\s*,\s*\'--?[A-z]+\'\s*,\s*u?'
-                      '[\'"])[^\"\']*([\'"])',
-                      r'(%(key)s\s*--?[A-z]+\s*)\S+(\s*)']
-_SANITIZE_KEYS = ['adminPass', 'admin_pass', 'password', 'admin_password',
-                  'auth_token', 'new_pass', 'auth_password', 'secret_uuid',
-                  'secret', 'sys_pswd', 'token', 'configdrive',
-                  'CHAPPASSWORD', 'encrypted_key']
+_FORMAT_PATTERNS_2 = [
+    r'(%(key)s\s*[=]\s*[\"\'])[^\"\']*([\"\'])',
+    r'(%(key)s\s+[\"\'])[^\"\']*([\"\'])',
+    r'([-]{2}%(key)s\s+)[^\'^\"^=^\s]+([\s]*)',
+    r'(<%(key)s>)[^<]*(</%(key)s>)',
+    r'([\"\']%(key)s[\"\']\s*:\s*[\"\'])[^\"\']*([\"\'])',
+    r'([\'"][^"\']*%(key)s[\'"]\s*:\s*u?[\'"])[^\"\']*'
+    '([\'"])', r'([\'"][^\'"]*%(key)s[\'"]\s*,\s*\'--?[A-z]+\'\s*,\s*u?'
+    '[\'"])[^\"\']*([\'"])', r'(%(key)s\s*--?[A-z]+\s*)\S+(\s*)'
+]
+_SANITIZE_KEYS = [
+    'adminPass', 'admin_pass', 'password', 'admin_password', 'auth_token',
+    'new_pass', 'auth_password', 'secret_uuid', 'secret', 'sys_pswd', 'token',
+    'configdrive', 'CHAPPASSWORD', 'encrypted_key'
+]
 
 
 class Redactor():

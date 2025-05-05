@@ -16,8 +16,7 @@ import logging
 import falcon
 
 from shipyard_airflow import policy
-from shipyard_airflow.control.helpers.status_helper import (
-    StatusHelper)
+from shipyard_airflow.control.helpers.status_helper import (StatusHelper)
 from shipyard_airflow.control.base import BaseResource
 
 LOG = logging.getLogger(__name__)

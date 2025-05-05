@@ -204,8 +204,11 @@ class TestActionsStepsLogsEndpoint():
     def test_retrieve_logs_404(self, mock_get):
         mock_get.return_value.status_code = 404
         action_logs_resource = ActionsStepsLogsResource()
+        log_endpoint = (
+            'http://airflow-worker-0.ucp.svc.cluster.local:8793/'
+            'log/deploy_site/action_xcom/2018-04-05T16:29:11/2.log')
         with pytest.raises(ApiError) as e:
-            action_logs_resource.retrieve_logs(None)
+            action_logs_resource.retrieve_logs(log_endpoint)
         assert ('Airflow endpoint returned error status code' in
                 e.value.description)
         assert falcon.HTTP_404 == e.value.status
@@ -214,8 +217,11 @@ class TestActionsStepsLogsEndpoint():
     def test_retrieve_logs_error(self, mock_get):
         mock_get.side_effect = requests.exceptions.ConnectionError
         action_logs_resource = ActionsStepsLogsResource()
+        log_endpoint = (
+            'http://airflow-worker-0.ucp.svc.cluster.local:8793/'
+            'log/deploy_site/action_xcom/2018-04-05T16:29:11/2.log')
         with pytest.raises(ApiError) as e:
-            action_logs_resource.retrieve_logs(None)
+            action_logs_resource.retrieve_logs(log_endpoint)
         assert ("Exception happened during Airflow API request" in
                 e.value.description)
         assert falcon.HTTP_500 == e.value.status

@@ -26,6 +26,7 @@ class ValidateCommittedRevision:
     Does not perform the actual lookup - only validates that the action has
     the value populated with a valid value other than `None`
     """
+
     def __init__(self, action):
         self.action = action
 
@@ -34,8 +35,6 @@ class ValidateCommittedRevision:
             raise ApiError(
                 title='No committed configdocs',
                 description=(
-                    'Unable to locate a committed revision in Deckhand'
-                ),
+                    'Unable to locate a committed revision in Deckhand'),
                 status=falcon.HTTP_400,
-                retry=False
-            )
+                retry=False)

@@ -31,10 +31,7 @@ class XcomPusher(object):
         """Push a particular xcom value"""
 
         LOG.info("Pushing xcom from %s.%s with key %s and value %s",
-                 self.ti.dag_id,
-                 self.ti.task_id,
-                 key,
-                 value)
+                 self.ti.dag_id, self.ti.task_id, key, value)
 
         try:
             self.ti.xcom_push(key=key, value=value)

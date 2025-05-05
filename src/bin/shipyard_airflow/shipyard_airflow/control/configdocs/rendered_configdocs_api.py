@@ -25,10 +25,9 @@ from shipyard_airflow.control.helpers.configdocs_helper import \
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
-VERSION_VALUES = ['buffer',
-                  'committed',
-                  'last_site_action',
-                  'successful_site_action']
+VERSION_VALUES = [
+    'buffer', 'committed', 'last_site_action', 'successful_site_action'
+]
 
 
 class RenderedConfigDocsResource(BaseResource):
@@ -55,8 +54,7 @@ class RenderedConfigDocsResource(BaseResource):
         resp.text = self.get_rendered_configdocs(
             helper=helper,
             version=version,
-            cleartext_secrets=cleartext_secrets
-        )
+            cleartext_secrets=cleartext_secrets)
         resp.append_header('Content-Type', 'application/x-yaml')
         resp.status = falcon.HTTP_200
 
@@ -65,14 +63,15 @@ class RenderedConfigDocsResource(BaseResource):
         if version.lower() not in VERSION_VALUES:
             raise ApiError(
                 title='Invalid version query parameter specified',
-                description=(
-                    'version must be {}'.format(', '.join(VERSION_VALUES))
-                ),
+                description=('version must be {}'.format(
+                    ', '.join(VERSION_VALUES))),
                 status=falcon.HTTP_400,
                 retry=False,
             )
 
-    def get_rendered_configdocs(self, helper, version='buffer',
+    def get_rendered_configdocs(self,
+                                helper,
+                                version='buffer',
                                 cleartext_secrets=False):
         """
         Get and return the rendered configdocs from the helper/Deckhand

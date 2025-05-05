@@ -76,6 +76,8 @@ spec:
           # Set to -1 to stop scheduler from going into crash loops
           args: ["scheduler", "-n", "-1" ]
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
@@ -109,6 +111,8 @@ spec:
             name: airflow-bin
             defaultMode: 0555
         - name: airflow-logs
+          emptyDir: {}
+        - name: pod-tmp
           emptyDir: {}
 {{ if $mounts_airflow_scheduler.volumes }}{{ toYaml $mounts_airflow_scheduler.volumes | indent 8 }}{{ end }}
 {{- end }}

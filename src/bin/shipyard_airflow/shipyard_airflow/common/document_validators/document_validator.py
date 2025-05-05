@@ -15,9 +15,8 @@
 import abc
 import logging
 
-from .errors import (
-    DeckhandClientRequiredError, DocumentLookupError, DocumentNotFoundError
-)
+from .errors import (DeckhandClientRequiredError, DocumentLookupError,
+                     DocumentNotFoundError)
 from .document_validation_utils import DocumentValidationUtils
 
 LOG = logging.getLogger(__name__)
@@ -31,6 +30,7 @@ class DocumentValidator(metaclass=abc.ABCMeta):
     :param revision: The numeric Deckhand revision of document under test
     :param doc_name: The name of the document under test
     """
+
     def __init__(self, deckhand_client, revision, doc_name):
         if deckhand_client is None:
             raise DeckhandClientRequiredError()
@@ -74,8 +74,13 @@ class DocumentValidator(metaclass=abc.ABCMeta):
         """
         self._triggered_validations.append((validator_class, doc_name))
 
-    def val_msg(self, message, name, error=True, level='Error',
-                documents=None, diagnostic=None):
+    def val_msg(self,
+                message,
+                name,
+                error=True,
+                level='Error',
+                documents=None,
+                diagnostic=None):
         """Generate a ValidationMessage
 
         :param error: True or False
@@ -119,41 +124,35 @@ class DocumentValidator(metaclass=abc.ABCMeta):
         if self.missing_severity not in ["Error", "Warning", "Info"]:
             LOG.warning("Document Validator for {}, {} does not have a valid "
                         "value set for missing_severity (got {}). "
-                        "Assuming Error".format(
-                            self.schema, self.doc_name, self.missing_severity
-                        ))
+                        "Assuming Error".format(self.schema, self.doc_name,
+                                                self.missing_severity))
             self.missing_severity = "Error"
 
         try:
-            LOG.debug("Lookup document %s: %s from revision %s",
-                      self.schema,
-                      self.doc_name,
-                      self.revision)
-            self.doc_dict = self.docutils.get_unique_doc(self.revision,
-                                                         self.doc_name,
-                                                         self.schema)
+            LOG.debug("Lookup document %s: %s from revision %s", self.schema,
+                      self.doc_name, self.revision)
+            self.doc_dict = self.docutils.get_unique_doc(
+                self.revision, self.doc_name, self.schema)
             # only proceed to validating the document if it is present.
             LOG.debug("Generic document validation complete. Proceeding to "
                       "specific validation")
             self.do_validate()
         except DocumentLookupError as dle:
-            self.val_msg_list.append(self.val_msg(
-                name=dle.__class__.__name__,
-                error=True,
-                level="Error",
-                message="Document Lookup failed for {}".format(self.schema),
-                diagnostic=str(dle)))
+            self.val_msg_list.append(
+                self.val_msg(name=dle.__class__.__name__,
+                             error=True,
+                             level="Error",
+                             message="Document Lookup failed for {}".format(
+                                 self.schema),
+                             diagnostic=str(dle)))
         except DocumentNotFoundError as dnfe:
             name = dnfe.__class__.__name__
 
             if self.missing_severity == "Error":
                 diagnostic = (
                     "The configuration documents must include a document with "
-                    "schema: {} and name: {}".format(
-                        self.schema,
-                        self.doc_name
-                    )
-                )
+                    "schema: {} and name: {}".format(self.schema,
+                                                     self.doc_name))
                 message = "Missing required document {}".format(self.schema)
                 error = True
                 self.error_status = True
@@ -161,11 +160,8 @@ class DocumentValidator(metaclass=abc.ABCMeta):
                 diagnostic = (
                     "It is recommended, but not required that the "
                     "configuration documents include a document with "
-                    "schema: {} and name: {}".format(
-                        self.schema,
-                        self.doc_name
-                    )
-                )
+                    "schema: {} and name: {}".format(self.schema,
+                                                     self.doc_name))
                 message = "Missing recommended document {}".format(self.schema)
                 error = False
                 self.error_status = True
@@ -173,15 +169,14 @@ class DocumentValidator(metaclass=abc.ABCMeta):
                 diagnostic = (
                     "Optional document with schema: {} and name: {} was not"
                     "found among the configuration documents.".format(
-                        self.schema,
-                        self.doc_name
-                    )
-                )
+                        self.schema, self.doc_name))
                 message = "Optional document {} not found".format(self.schema)
                 error = False
                 self.error_status = True
 
-            self.val_msg_list.append(self.val_msg(
-                name=name, error=error, level=self.missing_severity,
-                message=message, diagnostic=diagnostic
-            ))
+            self.val_msg_list.append(
+                self.val_msg(name=name,
+                             error=error,
+                             level=self.missing_severity,
+                             message=message,
+                             diagnostic=diagnostic))

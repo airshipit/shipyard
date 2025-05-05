@@ -26,9 +26,8 @@ from shipyard_airflow.common.document_validators import errors
 from shipyard_airflow.plugins import deckhand_client_factory
 from shipyard_airflow.plugins import deployment_status_operator
 from shipyard_airflow.plugins import xcom_puller
-from airflow import DAG
+from airflow.sdk import DAG
 from airflow.models import TaskInstance, DagRun
-from airflow.utils.dates import days_ago
 from airflow.utils.state import State
 from airflow.utils.types import DagRunType
 
@@ -53,7 +52,7 @@ class TestDeploymentStatusOperator(TestCase):
         # Create a DagRun to associate with the TaskInstance
         self.dag_run = DagRun(
             dag_id=self.dag.dag_id,
-            execution_date=pendulum.now('UTC').add(days=-1),  # Use pendulum for execution_date
+            logical_date=pendulum.now('UTC').add(days=-1),  # Use pendulum for execution_date
             run_id="manual__" + pendulum.now('UTC').to_iso8601_string(),
             run_type=DagRunType.MANUAL,
             state=State.RUNNING

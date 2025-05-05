@@ -37,10 +37,8 @@ try:
     import check_k8s_node_status
     from drydock_base_operator import DrydockBaseOperator
     from drydock_base_operator import gen_node_name_filter
-    from drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+    from drydock_errors import (DrydockTaskFailedException,
+                                DrydockTaskTimeoutException)
 except ImportError:
     from shipyard_airflow.plugins import check_k8s_node_status
     from shipyard_airflow.plugins.drydock_base_operator import \
@@ -48,9 +46,7 @@ except ImportError:
     from shipyard_airflow.plugins.drydock_base_operator import \
         gen_node_name_filter
     from shipyard_airflow.plugins.drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+        DrydockTaskFailedException, DrydockTaskTimeoutException)
 
 LOG = logging.getLogger(__name__)
 DOCUMENT_INFO = 'document_info'
@@ -63,17 +59,15 @@ class DrydockNodesOperator(DrydockBaseOperator):
     deploy a series of baremetal nodes using Drydock.
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         self._setup_configured_values()
         # setup self.strategy
         self.strategy = self.get_deployment_strategy()
         dgm = _get_deployment_group_manager(
             self.strategy['groups'],
-            _get_node_lookup(self.drydock_client, self.design_ref)
-        )
+            _get_node_lookup(self.drydock_client, self.design_ref))
 
-        _process_deployment_groups(dgm,
-                                   self._execute_prepare,
+        _process_deployment_groups(dgm, self._execute_prepare,
                                    self._execute_deployment)
 
         # All groups "complete" (as they're going to be). Report summary
@@ -83,8 +77,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
 
         if dgm.critical_groups_failed():
             raise AirflowException(
-                "One or more deployment groups marked as critical have failed"
-            )
+                "One or more deployment groups marked as critical have failed")
         else:
             LOG.info("All critical groups have met their success criteria")
 
@@ -99,8 +92,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         for stage in stages:
             nodes = dgm.get_nodes(stage=stage)
             if nodes:
-                nodes_by_stage.append("{}: {}".format(
-                    stage, ", ".join(nodes)))
+                nodes_by_stage.append("{}: {}".format(stage, ", ".join(nodes)))
         if nodes_by_stage:
             self.notes_helper.make_step_note(
                 action_id=self.action_id,
@@ -141,14 +133,12 @@ class DrydockNodesOperator(DrydockBaseOperator):
         self.dep_interval = self.dc['physical_provisioner.deploy_interval']
         self.node_st_interval = self.dc['kubernetes.node_status_interval']
         self.prep_interval = self.dc[
-            'physical_provisioner.prepare_node_interval'
-        ]
+            'physical_provisioner.prepare_node_interval']
         # Timeouts - Time Shipyard waits for completion of a task.
         self.dep_timeout = self.dc['physical_provisioner.deploy_timeout']
         self.node_st_timeout = self.dc['kubernetes.node_status_timeout']
         self.prep_timeout = self.dc[
-            'physical_provisioner.prepare_node_timeout'
-        ]
+            'physical_provisioner.prepare_node_timeout']
         # The time to wait before querying k8s nodes after Drydock deploy nodes
         self.join_wait = self.dc['physical_provisioner.join_wait']
 
@@ -161,8 +151,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         LOG.info("Group %s is preparing nodes", group.name)
 
         self.node_filter = gen_node_name_filter(group.actionable_nodes)
-        return self._execute_task('prepare_nodes',
-                                  self.prep_interval,
+        return self._execute_task('prepare_nodes', self.prep_interval,
                                   self.prep_timeout)
 
     def _execute_deployment(self, group, successful_prepared_nodes):
@@ -176,8 +165,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
         LOG.info("Group %s is deploying nodes", group.name)
         s_nodes = list(successful_prepared_nodes)
         self.node_filter = gen_node_name_filter(s_nodes)
-        task_result = self._execute_task('deploy_nodes',
-                                         self.dep_interval,
+        task_result = self._execute_task('deploy_nodes', self.dep_interval,
                                          self.dep_timeout)
 
         if not task_result.successes:
@@ -205,22 +193,22 @@ class DrydockNodesOperator(DrydockBaseOperator):
         not_ready_list = check_k8s_node_status.check_node_status(
             self.node_st_timeout,
             self.node_st_interval,
-            expected_nodes=task_result.successes
-        )
+            expected_nodes=task_result.successes)
         for node in not_ready_list:
             # Remove nodes that are not ready from the list of successes, since
             # they did not complete deployment successfully.
             try:
-                LOG.info("Node %s failed to join the Kubernetes cluster or was"
-                         " not timely enough", node)
+                LOG.info(
+                    "Node %s failed to join the Kubernetes cluster or was"
+                    " not timely enough", node)
                 task_result.successes.remove(node)
             except (ValueError, KeyError):
                 # This node is not joined, but was not one that we were
                 # looking for either.
-                LOG.info("%s failed to join Kubernetes, but was not in the "
-                         "Drydock results: %s",
-                         node,
-                         ", ".join(task_result.successes))
+                LOG.info(
+                    "%s failed to join Kubernetes, but was not in the "
+                    "Drydock results: %s", node,
+                    ", ".join(task_result.successes))
         return task_result
 
     def _execute_task(self, task_name, interval, timeout):
@@ -255,11 +243,9 @@ class DrydockNodesOperator(DrydockBaseOperator):
             LOG.warning(
                 "Task %s with Drydock task-id: %s has failed. Logs contain "
                 "details of the failure. Some nodes may be succesful, "
-                "processing continues", task_name, self.drydock_task_id
-            )
-            LOG.debug(
-                "Current state of failed Drydock task %s: %s",
-                self.drydock_task_id, task_dict)
+                "processing continues", task_name, self.drydock_task_id)
+            LOG.debug("Current state of failed Drydock task %s: %s",
+                      self.drydock_task_id, task_dict)
         except DrydockTaskTimeoutException:
             # Task timeout may be successful enough based on success criteria.
             # This should not halt the overall flow of this workflow step.
@@ -267,11 +253,9 @@ class DrydockNodesOperator(DrydockBaseOperator):
                 "Task %s with Drydock task-id: %s has timed out after %s "
                 "seconds. Logs contain details of the failure. Some nodes may "
                 "be succesful, processing continues", task_name,
-                self.drydock_task_id, timeout
-            )
-            LOG.debug(
-                "Current state of timed out Drydock task %s: %s",
-                self.drydock_task_id, task_dict)
+                self.drydock_task_id, timeout)
+            LOG.debug("Current state of timed out Drydock task %s: %s",
+                      self.drydock_task_id, task_dict)
         # Other AirflowExceptions will fail the whole task - let them do this.
 
         # find successes
@@ -308,8 +292,7 @@ class DrydockNodesOperator(DrydockBaseOperator):
                 # any nodes fail to deploy.
                 strat_name = 'all-at-once (defaulted)'
                 strategy = gen_simple_deployment_strategy()
-        LOG.info("Strategy Name: %s has %s groups",
-                 strat_name,
+        LOG.info("Strategy Name: %s has %s groups", strat_name,
                  len(strategy.get('groups', [])))
         return strategy
 
@@ -327,24 +310,24 @@ def gen_simple_deployment_strategy(name=None, nodes=None):
     target_nodes = list(nodes) if nodes else []
 
     return {
-        'groups': [
-            {
-                'name': target_name,
-                'critical': True,
-                'depends_on': [],
-                'selectors': [
-                    {
-                        'node_names': target_nodes,
-                        'node_labels': [],
-                        'node_tags': [],
-                        'rack_names': [],
-                    },
-                ],
-                'success_criteria': {
-                    'percent_successful_nodes': 100
+        'groups': [{
+            'name':
+            target_name,
+            'critical':
+            True,
+            'depends_on': [],
+            'selectors': [
+                {
+                    'node_names': target_nodes,
+                    'node_labels': [],
+                    'node_tags': [],
+                    'rack_names': [],
                 },
-            }
-        ]
+            ],
+            'success_criteria': {
+                'percent_successful_nodes': 100
+            },
+        }]
     }
 
 
@@ -389,11 +372,12 @@ def _process_deployment_groups(dgm, prepare_func, deploy_func):
 
         LOG.info("*** Deployment Group: %s is being processed ***", group.name)
         if not group.actionable_nodes:
-            LOG.info("There were no actionable nodes for group %s. It is "
-                     "possible that all nodes: [%s] have previously been "
-                     "deployed. Group will be immediately checked "
-                     "against its success criteria", group.name,
-                     ", ".join(group.full_nodes))
+            LOG.info(
+                "There were no actionable nodes for group %s. It is "
+                "possible that all nodes: [%s] have previously been "
+                "deployed. Group will be immediately checked "
+                "against its success criteria", group.name,
+                ", ".join(group.full_nodes))
 
             # In the case of a group having no actionable nodes, since groups
             # prepare -> deploy in direct sequence, we can check against
@@ -420,8 +404,8 @@ def _process_deployment_groups(dgm, prepare_func, deploy_func):
             dgm.mark_node_prepared(node_name)
 
         dgm.fail_unsuccessful_nodes(group, prep_qtr.successes)
-        should_deploy = dgm.evaluate_group_succ_criteria(group.name,
-                                                         Stage.PREPARED)
+        should_deploy = dgm.evaluate_group_succ_criteria(
+            group.name, Stage.PREPARED)
         if not should_deploy:
             # group has failed, move on to next group. Current group has
             # been marked as failed.
@@ -438,18 +422,19 @@ def _process_deployment_groups(dgm, prepare_func, deploy_func):
             # TODO(bryan-strassner) Update this message if Drydock provides
             #     a way to cancel a task, and that method is employed by
             #     Shipyard upon timeout.
-            LOG.info("There were no nodes successfully prepared. "
-                     "Deployment will not be attempted for group %s. "
-                     "Success criteria will be immediately checked. "
-                     "If a timeout in the prepare step has occured, it is "
-                     "possible that Drydock is still attempting the prepare "
-                     "task.",
-                     group.name)
+            LOG.info(
+                "There were no nodes successfully prepared. "
+                "Deployment will not be attempted for group %s. "
+                "Success criteria will be immediately checked. "
+                "If a timeout in the prepare step has occured, it is "
+                "possible that Drydock is still attempting the prepare "
+                "task.", group.name)
         dgm.evaluate_group_succ_criteria(group.name, Stage.DEPLOYED)
 
 
 class QueryTaskResult:
     """Represents a summarized query result from a task"""
+
     def __init__(self, task_id, task_name):
         self.task_id = task_id
         self.task_name = task_name
@@ -458,7 +443,6 @@ class QueryTaskResult:
 
 
 class DrydockNodesOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockPrepareNodesOperator in Airflow."""
 
     name = 'drydock_nodes_operator'

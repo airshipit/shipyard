@@ -21,21 +21,17 @@ import logging
 from oslo_config import cfg
 
 from shipyard_airflow.common.deployment_group.deployment_group_manager import (
-    DeploymentGroupManager
-)
+    DeploymentGroupManager)
 from shipyard_airflow.common.deployment_group.errors import (
-    DeploymentGroupCycleError,
-    InvalidDeploymentGroupError,
-    InvalidDeploymentGroupNodeLookupError
-)
+    DeploymentGroupCycleError, InvalidDeploymentGroupError,
+    InvalidDeploymentGroupNodeLookupError)
 from shipyard_airflow.common.deployment_group.node_lookup import NodeLookup
 from shipyard_airflow.common.document_validators.document_validator import (
-    DocumentValidator
-)
+    DocumentValidator)
 from shipyard_airflow.control import service_clients
 from shipyard_airflow.control.helpers.design_reference_helper import (
-    DesignRefHelper
-)
+    DesignRefHelper)
+
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
@@ -45,8 +41,7 @@ def _get_node_lookup(revision_id):
 
     return NodeLookup(
         service_clients.drydock_client(),
-        DesignRefHelper().get_design_reference_href(revision_id)
-    ).lookup
+        DesignRefHelper().get_design_reference_href(revision_id)).lookup
 
 
 def _get_deployment_group_manager(groups, revision_id):
@@ -56,6 +51,7 @@ def _get_deployment_group_manager(groups, revision_id):
 
 class ValidateDeploymentStrategy(DocumentValidator):
     """Validates the deployment strategy"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -67,44 +63,45 @@ class ValidateDeploymentStrategy(DocumentValidator):
         try:
             _get_deployment_group_manager(groups, self.revision)
         except DeploymentGroupCycleError as dgce:
-            self.val_msg_list.append(self.val_msg(
-                name=dgce.__class__.__name__,
-                error=True,
-                level="Error",
-                message=("The deployment groups specified in the Deployment "
-                         "Strategy have groups that form a "
-                         "cycle."),
-                diagnostic=str(dgce)
-            ))
+            self.val_msg_list.append(
+                self.val_msg(
+                    name=dgce.__class__.__name__,
+                    error=True,
+                    level="Error",
+                    message=(
+                        "The deployment groups specified in the Deployment "
+                        "Strategy have groups that form a "
+                        "cycle."),
+                    diagnostic=str(dgce)))
             self.error_status = True
         except InvalidDeploymentGroupError as idge:
-            self.val_msg_list.append(self.val_msg(
-                name=idge.__class__.__name__,
-                error=True,
-                level="Error",
-                message=("A deployment group specified in the Deployment "
-                         "Strategy is invalid"),
-                diagnostic=str(idge)
-            ))
+            self.val_msg_list.append(
+                self.val_msg(
+                    name=idge.__class__.__name__,
+                    error=True,
+                    level="Error",
+                    message=("A deployment group specified in the Deployment "
+                             "Strategy is invalid"),
+                    diagnostic=str(idge)))
             self.error_status = True
         except InvalidDeploymentGroupNodeLookupError as idgnle:
-            self.val_msg_list.append(self.val_msg(
-                name=idgnle.__class__.__name__,
-                error=True,
-                level="Error",
-                message=("Shipyard does not have a valid node lookup to "
-                         "validate the deployment strategy"),
-                diagnostic=str(idgnle)
-            ))
+            self.val_msg_list.append(
+                self.val_msg(
+                    name=idgnle.__class__.__name__,
+                    error=True,
+                    level="Error",
+                    message=("Shipyard does not have a valid node lookup to "
+                             "validate the deployment strategy"),
+                    diagnostic=str(idgnle)))
             self.error_status = True
         except Exception as ex:
             # all other exceptions are an error
-            self.val_msg_list.append(self.val_msg(
-                name="DocumentValidationProcessingError",
-                error=True,
-                level="Error",
-                message=("Shipyard has encountered an unexpected error "
-                         "while processing document validations"),
-                diagnostic=str(ex)
-            ))
+            self.val_msg_list.append(
+                self.val_msg(
+                    name="DocumentValidationProcessingError",
+                    error=True,
+                    level="Error",
+                    message=("Shipyard has encountered an unexpected error "
+                             "while processing document validations"),
+                    diagnostic=str(ex)))
             self.error_status = True

@@ -21,7 +21,6 @@ except ImportError:
 
 
 class DrydockPrepareSiteOperator(DrydockBaseOperator):
-
     """Drydock Prepare Site Operator
 
     This operator will trigger drydock to prepare site for
@@ -29,7 +28,7 @@ class DrydockPrepareSiteOperator(DrydockBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Trigger DryDock to execute task
         self.create_task('prepare_site')
@@ -43,7 +42,6 @@ class DrydockPrepareSiteOperator(DrydockBaseOperator):
 
 
 class DrydockPrepareSiteOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockPrepareSiteOperator in Airflow."""
 
     name = 'drydock_prepare_site_operator'

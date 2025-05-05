@@ -20,9 +20,8 @@ import os
 import configparser
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 
 class OpenStackOperator(BaseOperator):
@@ -31,12 +30,13 @@ class OpenStackOperator(BaseOperator):
     :shipyard_conf: Location of shipyard.conf
     :openstack_command: The OpenStack command to be executed
     """
-    @apply_defaults
+
     def __init__(self,
                  shipyard_conf,
                  openstack_command=None,
                  xcom_push=False,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
 
         super(OpenStackOperator, self).__init__(*args, **kwargs)
         self.shipyard_conf = shipyard_conf

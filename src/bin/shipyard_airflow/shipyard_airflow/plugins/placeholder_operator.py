@@ -13,8 +13,7 @@
 # limitations under the License.
 import logging
 
-from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 
 
@@ -28,7 +27,6 @@ class PlaceholderOperator(BaseOperator):
     template_fields = tuple()
     ui_color = '#e8f7e4'
 
-    @apply_defaults
     def __init__(self, *args, **kwargs):
         super(PlaceholderOperator, self).__init__(*args, **kwargs)
 

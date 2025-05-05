@@ -37,13 +37,10 @@ check_timeout_counter() {
 #
 # NOTE: Dag ID will take value of $1
 #
-# NOTE: $2 will look like '2018-03-13' while $3 will look like '05:10:19'
-# The execution date that we need to pass into the Airflow CLI will need
-# to take the form of '2018-03-13T05:10:19'. Hence we will need to concatenate
-# $2 and $3 together to form the dag_execution_date.
+# NOTE: $2 will look like '01JVQXBAKYEP88T7ES4DPQ03RK'- dag run_id
 #
 dag_id=$1
-dag_execution_date="$2T$3"
+dag_run_id="$2"
 query_time=${4:-30}
 max_count=${5:-10}
 
@@ -64,7 +61,7 @@ do
 
     # Get current state of dag using Airflow CLI
     # Use grep to remove logging messages that can pollute the status response
-    check_dag_state=$(airflow dags state ${dag_id} ${dag_execution_date} | grep -vE "DEBUG|INFO|WARN|ERROR")
+    check_dag_state=$(airflow dags state ${dag_id} ${dag_run_id} | grep -vE "DEBUG|INFO|WARN|ERROR")
     echo -e ${check_dag_state} >> /usr/local/airflow/upgrade_airflow_worker.log
 
     # We will need to extract the last word in the 'check_dag_state'

@@ -14,8 +14,8 @@
 from shipyard_airflow.control.action.actions_control_api import \
     ActionsControlResource
 from shipyard_airflow.control.base import ShipyardRequestContext
-from shipyard_airflow.db.errors import AirflowStateError
-from shipyard_airflow.db.db import AIRFLOW_DB
+from shipyard_airflow.api.errors import AirflowStateError
+from shipyard_airflow.api.api import AIRFLOW_API
 from shipyard_airflow.errors import ApiError
 
 
@@ -67,14 +67,14 @@ def test_get_action():
     """
     Tests the main response from get all actions
     """
-    saved_control_dag_run = AIRFLOW_DB._control_dag_run
+    saved_control_dag_run = AIRFLOW_API._control_dag_run
     try:
         action_resource = ActionsControlResource()
         # stubs for db
         action_resource.get_action_db = actions_db
         action_resource.audit_control_command_db = audit_control_command_db
 
-        AIRFLOW_DB._control_dag_run = control_dag_run
+        AIRFLOW_API._control_dag_run = control_dag_run
 
         # bad action
         try:
@@ -100,25 +100,6 @@ def test_get_action():
             assert api_error.title == 'Control not supported'
             assert api_error.status == '404 Not Found'
 
-        # success on each action - pause, unpause, stop
-        try:
-            action_resource.handle_control(
-                action_id='59bb330a-9e64-49be-a586-d253bb67d443',
-                control_verb='pause',
-                context=ShipyardRequestContext()
-            )
-        except ApiError as api_error:
-            assert False, 'Should not raise an ApiError'
-
-        try:
-            action_resource.handle_control(
-                action_id='59bb330a-9e64-49be-a586-d253bb67d443',
-                control_verb='unpause',
-                context=ShipyardRequestContext()
-            )
-        except ApiError as api_error:
-            assert False, 'Should not raise an ApiError'
-
         try:
             action_resource.handle_control(
                 action_id='59bb330a-9e64-49be-a586-d253bb67d443',
@@ -127,30 +108,6 @@ def test_get_action():
             )
         except ApiError as api_error:
             assert False, 'Should not raise an ApiError'
-
-        # pause state conflict
-        try:
-            action_resource.handle_control(
-                action_id='state error',
-                control_verb='pause',
-                context=ShipyardRequestContext()
-            )
-            assert False, 'should raise a conflicting state'
-        except ApiError as api_error:
-            assert api_error.title == 'Unable to pause action'
-            assert api_error.status == '409 Conflict'
-
-        # Unpause state conflict
-        try:
-            action_resource.handle_control(
-                action_id='state error',
-                control_verb='unpause',
-                context=ShipyardRequestContext()
-            )
-            assert False, 'should raise a conflicting state'
-        except ApiError as api_error:
-            assert api_error.title == 'Unable to unpause action'
-            assert api_error.status == '409 Conflict'
 
         # Stop state conflict
         try:
@@ -165,4 +122,4 @@ def test_get_action():
             assert api_error.status == '409 Conflict'
     finally:
         # modified class variable... replace it
-        AIRFLOW_DB._control_dag_run = saved_control_dag_run
+        AIRFLOW_API._control_dag_run = saved_control_dag_run

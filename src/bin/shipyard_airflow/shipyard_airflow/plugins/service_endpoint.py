@@ -39,8 +39,7 @@ def _ucp_service_endpoint(shipyard_conf, svc_type, addl_headers=None):
     int_endpoint = None
 
     # Retrieve Keystone Session
-    sess = ucp_keystone_session(shipyard_conf,
-                                additional_headers=addl_headers)
+    sess = ucp_keystone_session(shipyard_conf, additional_headers=addl_headers)
 
     # We will allow 1 retry in getting the Keystone Endpoint with a
     # backoff interval of 10 seconds in case there is a temporary
@@ -72,6 +71,7 @@ def _ucp_service_endpoint(shipyard_conf, svc_type, addl_headers=None):
 
 class ServiceEndpoints():
     """Class that serves service endpoints"""
+
     def __init__(self, shipyard_conf):
         self.shipyard_conf = shipyard_conf
 

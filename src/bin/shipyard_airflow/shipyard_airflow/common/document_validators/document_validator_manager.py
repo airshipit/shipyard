@@ -23,6 +23,7 @@ class _DocValidationDef:
     :param validator: the class of the validator
     :param name: the name of the document to be validated
     """
+
     def __init__(self, validator, name):
         LOG.info("Setting up validation for %s", name)
         self.validator = validator
@@ -41,6 +42,7 @@ class DocumentValidationManager:
     :param validations: The list of tuples containing a Validator (extending
         DocumentValidator) and a document name.
     """
+
     def __init__(self, deckhand_client, revision, validations):
         self.deckhand_client = deckhand_client
         self.revision = revision
@@ -67,8 +69,8 @@ class DocumentValidationManager:
                 vldtr = val_def.validator(deckhand_client=self.deckhand_client,
                                           revision=self.revision,
                                           doc_name=val_def.name)
-                LOG.info("Validating document %s: %s ",
-                         vldtr.schema, vldtr.doc_name)
+                LOG.info("Validating document %s: %s ", vldtr.schema,
+                         vldtr.doc_name)
                 vldtr.validate()
                 self.validations_run += 1
                 # set the validation status from the status of the validator

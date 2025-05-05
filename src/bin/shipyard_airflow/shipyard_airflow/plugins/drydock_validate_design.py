@@ -26,12 +26,10 @@ except ImportError:
     from shipyard_airflow.plugins.drydock_base_operator import \
         DrydockBaseOperator
 
-
 LOG = logging.getLogger(__name__)
 
 
 class DrydockValidateDesignOperator(DrydockBaseOperator):
-
     """Drydock Validate Design Operator
 
     This operator will trigger drydock to validate the
@@ -39,7 +37,7 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Form Validation Endpoint
         validation_endpoint = os.path.join(self.drydock_svc_endpoint,
@@ -83,8 +81,8 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
         LOG.info(json.loads(validate_site_design))
 
         # Check if site design is valid
-        status = str(json.loads(validate_site_design).get('status',
-                                                          'unspecified'))
+        status = str(
+            json.loads(validate_site_design).get('status', 'unspecified'))
         if status.lower() == 'success':
             LOG.info("DryDock Site Design has been successfully validated")
         else:
@@ -93,7 +91,6 @@ class DrydockValidateDesignOperator(DrydockBaseOperator):
 
 
 class DrydockValidateDesignOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockValidateDesignOperator in Airflow."""
 
     name = 'drydock_validate_design_operator'

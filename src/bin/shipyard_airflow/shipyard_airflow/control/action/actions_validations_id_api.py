@@ -45,10 +45,9 @@ class ActionsValidationsResource(BaseResource):
         action = self.get_action_db(action_id=action_id)
 
         if action is None:
-            raise ApiError(
-                title='Action not found',
-                description='Unknown action {}'.format(action_id),
-                status=falcon.HTTP_404)
+            raise ApiError(title='Action not found',
+                           description='Unknown action {}'.format(action_id),
+                           status=falcon.HTTP_404)
 
         validation = self.get_validation_db(validation_id=validation_id)
         if validation is not None:
@@ -65,13 +64,11 @@ class ActionsValidationsResource(BaseResource):
         Wrapper for call to the shipyard database to get an action
         :returns: a dictionary of action details.
         """
-        return SHIPYARD_DB.get_action_by_id(
-            action_id=action_id)
+        return SHIPYARD_DB.get_action_by_id(action_id=action_id)
 
     def get_validation_db(self, validation_id):
         """
         Wrapper for call to the shipyard database to get an action
         :returns: a dictionary of action details.
         """
-        return SHIPYARD_DB.get_validation_by_id(
-            validation_id=validation_id)
+        return SHIPYARD_DB.get_validation_by_id(validation_id=validation_id)

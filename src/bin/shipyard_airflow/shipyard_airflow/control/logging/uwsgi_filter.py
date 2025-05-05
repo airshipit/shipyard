@@ -23,6 +23,7 @@ class UwsgiLogFilter(logging.Filter):
     based information, or information provided by log_extra in the
     kwargs provided to a thread
     """
+
     def __init__(self, uwsgi, additional_fields=None):
         super().__init__()
         if additional_fields is None:

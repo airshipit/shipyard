@@ -1,5 +1,6 @@
 alembic
-apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==2.10.4
+apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==3.0.2
+apache-airflow-providers-standard
 arrow
 celery
 Flask
@@ -29,6 +30,7 @@ uWSGI
 Werkzeug
 WTForms
 itsdangerous
+pandas
 
 # Openstack Caracal 2024.1
 # https://releases.openstack.org/caracal/index.html
@@ -59,7 +61,7 @@ oslo.versionedobjects==3.3.0
 
 
 # Airship dependencies
-git+https://opendev.org/airship/deckhand.git@211b2d20c080ec806d196f3ec6b0d0472b00fa1b#egg=deckhand
-git+https://opendev.org/airship/drydock.git@108a3c1ee4666df3a6fb4439df245525a870d1d9#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@963e23bb9323ea30472c54adc32e5c9eb7bf0506#egg=armada
-git+https://opendev.org/airship/promenade.git@40fd108fd976c19bc142d10cc52b24d48de37100#egg=promenade
+git+https://opendev.org/airship/deckhand.git@d8cc9f3ed2c9f2b9d9bf271a72c9bf301f16f647#egg=deckhand
+git+https://opendev.org/airship/drydock.git@1886a2f09fbd6a06fa4c5da86361b255edd46b11#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@61d1659d4276a4be5e4711d803c14b721d910b85#egg=armada
+git+https://opendev.org/airship/promenade.git@63bf9dd5693b6e1bf372addadab703cade80cce3#egg=promenade

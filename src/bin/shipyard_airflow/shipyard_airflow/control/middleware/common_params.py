@@ -37,6 +37,7 @@ class CommonParametersMiddleware(object):
 
       ?verbosity=1 results in req.context.verbosity set to the value 1.
     """
+
     def process_request(self, req, resp):
         self.verbosity(req)
 
@@ -48,12 +49,10 @@ class CommonParametersMiddleware(object):
         """
 
         try:
-            verbosity = req.get_param_as_int(
-                'verbosity',
-                required=False,
-                min_value=0,
-                max_value=MAX_VERBOSITY
-            )
+            verbosity = req.get_param_as_int('verbosity',
+                                             required=False,
+                                             min_value=0,
+                                             max_value=MAX_VERBOSITY)
             if verbosity is not None:
                 # if not set, retains the context default value.
                 req.context.verbosity = verbosity
@@ -63,5 +62,4 @@ class CommonParametersMiddleware(object):
                 title="Invalid verbosity parameter",
                 description=("If specified, verbosity parameter should be a "
                              "value from 0 to {}".format(MAX_VERBOSITY)),
-                status=falcon.HTTP_400
-            )
+                status=falcon.HTTP_400)

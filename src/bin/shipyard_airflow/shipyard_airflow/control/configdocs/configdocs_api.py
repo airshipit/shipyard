@@ -29,12 +29,13 @@ from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-VERSION_VALUES = ['buffer',
-                  'committed',
-                  'last_site_action',
-                  'successful_site_action']
-DEPLOYMENT_DATA_DOC = {'name': CONF.document_info.deployment_version_name,
-                       'schema': CONF.document_info.deployment_version_schema}
+VERSION_VALUES = [
+    'buffer', 'committed', 'last_site_action', 'successful_site_action'
+]
+DEPLOYMENT_DATA_DOC = {
+    'name': CONF.document_info.deployment_version_name,
+    'schema': CONF.document_info.deployment_version_schema
+}
 
 
 class ConfigDocsStatusResource(BaseResource):
@@ -79,12 +80,11 @@ class ConfigDocsResource(BaseResource):
         buffer_mode = req.get_param('buffermode')
 
         helper = ConfigdocsHelper(req.context)
-        validations = self.post_collection(
-            helper=helper,
-            collection_id=collection_id,
-            document_data=document_data,
-            buffer_mode_param=buffer_mode,
-            empty_collection=empty_coll)
+        validations = self.post_collection(helper=helper,
+                                           collection_id=collection_id,
+                                           document_data=document_data,
+                                           buffer_mode_param=buffer_mode,
+                                           empty_collection=empty_coll)
 
         resp.status = falcon.HTTP_201
         if validations and validations['status'] == 'Success':
@@ -105,15 +105,16 @@ class ConfigDocsResource(BaseResource):
                 description='Content Length is 0 or not specified',
                 status=falcon.HTTP_400,
                 error_list=[{
-                    'message': (
-                        "The Content-Length specified is 0 or not set. To "
-                        "clear a collection's contents, please specify "
-                        "the query parameter 'empty-collection=true'."
-                        "Otherwise, a non-zero length payload and "
-                        "matching Content-Length header is required to "
-                        "post a collection.")
+                    'message':
+                    ("The Content-Length specified is 0 or not set. To "
+                     "clear a collection's contents, please specify "
+                     "the query parameter 'empty-collection=true'."
+                     "Otherwise, a non-zero length payload and "
+                     "matching Content-Length header is required to "
+                     "post a collection.")
                 }],
-                retry=False, )
+                retry=False,
+            )
         return content_length
 
     @policy.ApiEnforcer(policy.GET_CONFIGDOCS)
@@ -131,9 +132,10 @@ class ConfigDocsResource(BaseResource):
             policy.check_auth(req.context, policy.GET_CONFIGDOCS_CLRTXT)
 
         # Not reformatting to JSON or YAML since just passing through
-        resp.text = self.get_collection(
-            helper=helper, collection_id=collection_id, version=version,
-            cleartext_secrets=cleartext_secrets)
+        resp.text = self.get_collection(helper=helper,
+                                        collection_id=collection_id,
+                                        version=version,
+                                        cleartext_secrets=cleartext_secrets)
         resp.append_header('Content-Type', 'application/x-yaml')
         resp.status = falcon.HTTP_200
 
@@ -142,12 +144,16 @@ class ConfigDocsResource(BaseResource):
         if version.lower() not in VERSION_VALUES:
             raise ApiError(
                 title='Invalid version query parameter specified',
-                description=(
-                    'version must be {}'.format(', '.join(VERSION_VALUES))),
+                description=('version must be {}'.format(
+                    ', '.join(VERSION_VALUES))),
                 status=falcon.HTTP_400,
-                retry=False, )
+                retry=False,
+            )
 
-    def get_collection(self, helper, collection_id, version='buffer',
+    def get_collection(self,
+                       helper,
+                       collection_id,
+                       version='buffer',
                        cleartext_secrets=False):
         """
         Attempts to retrieve the specified collection of documents
@@ -192,8 +198,8 @@ class ConfigDocsResource(BaseResource):
                 title = 'Deployment version document missing from collection'
                 error_msg = ('Expected document to be present with schema: {} '
                              'and name: {}').format(
-                    DEPLOYMENT_DATA_DOC['schema'],
-                    DEPLOYMENT_DATA_DOC['name'])
+                                 DEPLOYMENT_DATA_DOC['schema'],
+                                 DEPLOYMENT_DATA_DOC['name'])
 
                 if ver_validation_cfg in ['info', 'warning']:
                     extra_messages[ver_validation_cfg].append('{}. {}'.format(
@@ -204,15 +210,17 @@ class ConfigDocsResource(BaseResource):
                         description=('Collection rejected due to missing '
                                      'deployment data document'),
                         status=falcon.HTTP_400,
-                        error_list=[{'message': error_msg}],
+                        error_list=[{
+                            'message': error_msg
+                        }],
                         retry=False,
                     )
 
         if helper.is_buffer_valid_for_bucket(collection_id, buffer_mode):
             buffer_revision = helper.add_collection(collection_id,
                                                     document_data)
-            if not (empty_collection or helper.is_collection_in_buffer(
-                    collection_id)):
+            if not (empty_collection or
+                    helper.is_collection_in_buffer(collection_id)):
                 # raise an error if adding the collection resulted in no new
                 # revision (meaning it was unchanged) and we're not explicitly
                 # clearing the collection
@@ -250,8 +258,7 @@ class ConfigDocsResource(BaseResource):
 
         for level, messages in extra_messages.items():
             if len(messages):
-                add_messages_to_validation_status(validation_status,
-                                                  messages,
+                add_messages_to_validation_status(validation_status, messages,
                                                   level)
         return validation_status
 
@@ -291,13 +298,11 @@ class CommitConfigDocsResource(BaseResource):
                 status=falcon.HTTP_409,
                 retry=True)
         validations = helper.get_validations_for_revision(
-            helper.get_revision_id(configdocs_helper.BUFFER)
-        )
+            helper.get_revision_id(configdocs_helper.BUFFER))
         if dryrun:
             validations['code'] = falcon.HTTP_200
             if 'message' in validations:
-                validations['message'] = (
-                    validations['message'] + ' DRYRUN')
+                validations['message'] = (validations['message'] + ' DRYRUN')
             else:
                 validations['message'] = 'DRYRUN'
         else:
@@ -307,8 +312,8 @@ class CommitConfigDocsResource(BaseResource):
                 # override the status in the response
                 validations['code'] = falcon.HTTP_200
                 if 'message' in validations:
-                    validations['message'] = (
-                        validations['message'] + ' FORCED SUCCESS')
+                    validations['message'] = (validations['message'] +
+                                              ' FORCED SUCCESS')
                 else:
                     validations['message'] = 'FORCED SUCCESS'
         return validations

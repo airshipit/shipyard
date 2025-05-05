@@ -163,8 +163,8 @@ def test_determine_lifecycle():
         assert(status_pair['expected'] ==
                action_helper.determine_lifecycle(status_pair['input']))
 
-
-def test_get_step():
+@patch('requests.get')
+def test_get_step(mock_get):
     # Set up actions helper
     action_id = '01CPV581B0CM8C9CA0CFRNVPPY'  # id in db
     actions = yaml.safe_load("""
@@ -258,7 +258,7 @@ def test_get_step():
     max_tries: 0
 ...
 """)
-    action_helper.ActionsHelper._get_tasks_db = lambda \
+    action_helper.ActionsHelper._get_tasks_api = lambda \
             self, dag_id, execution_date: tasks
     actions_helper = action_helper.ActionsHelper(action_id=action_id)
 

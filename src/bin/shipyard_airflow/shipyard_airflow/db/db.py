@@ -14,7 +14,6 @@
 """
 The Application scope instances of db access classes
 """
-from shipyard_airflow.db import airflow_db, shipyard_db
+from shipyard_airflow.db import shipyard_db
 
 SHIPYARD_DB = shipyard_db.ShipyardDbAccess()
-AIRFLOW_DB = airflow_db.AirflowDbAccess()

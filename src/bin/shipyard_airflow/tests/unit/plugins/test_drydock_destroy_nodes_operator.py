@@ -187,7 +187,8 @@ class TestDrydockDestroyNodesOperator:
         }
         op.target_nodes = ['n0', 'n1', 'n2']
         with pytest.raises(AirflowException) as ae:
-            op.do_execute()
+            mock_context = {}
+            op.do_execute(mock_context)
             assert qt.called
             assert ct.called
             assert gs.called
@@ -215,7 +216,8 @@ class TestDrydockDestroyNodesOperator:
             'physical_provisioner.destroy_timeout': 10,
         }
         op.target_nodes = ['n0', 'n1', 'n2']
-        op.do_execute()
+        mock_context = {}
+        op.do_execute(mock_context)
         assert qt.called
         assert ct.called
         assert gs.called

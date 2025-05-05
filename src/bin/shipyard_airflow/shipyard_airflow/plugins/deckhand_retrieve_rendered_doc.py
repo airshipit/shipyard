@@ -22,26 +22,24 @@ except ImportError:
     from shipyard_airflow.plugins.deckhand_base_operator import \
         DeckhandBaseOperator
 
-
 LOG = logging.getLogger(__name__)
 
 
 class DeckhandRetrieveRenderedDocOperator(DeckhandBaseOperator):
-
     """Deckhand Retrieve Rendered Doc Operator
 
     This operator will trigger deckhand to retrieve rendered doc
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         LOG.info("Retrieving Rendered Document...")
 
         # Retrieve Rendered Document
         try:
-            self.deckhandclient.revisions.documents(
-                self.revision_id, rendered=True)
+            self.deckhandclient.revisions.documents(self.revision_id,
+                                                    rendered=True)
 
             LOG.info("Successfully Retrieved Rendered Document")
 
@@ -50,7 +48,6 @@ class DeckhandRetrieveRenderedDocOperator(DeckhandBaseOperator):
 
 
 class DeckhandRetrieveRenderedDocOperatorPlugin(AirflowPlugin):
-
     """Creates DeckhandRetrieveRenderedDocOperator in Airflow."""
 
     name = 'deckhand_retrieve_rendered_doc_operator'

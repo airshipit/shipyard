@@ -228,10 +228,10 @@ class ShipyardDbAccess(DbAccess):
             alembic_command.upgrade(config, 'head')
             os.chdir(cwd)
         except Exception as exception:
-            LOG.error('***\n'
-                      'Failed Alembic DB upgrade. Check the config: %s\n'
-                      '***',
-                      exception)
+            LOG.error(
+                '***\n'
+                'Failed Alembic DB upgrade. Check the config: %s\n'
+                '***', exception)
             # don't let things continue...
             raise exception
 
@@ -311,12 +311,7 @@ class ShipyardDbAccess(DbAccess):
                             command=ac_audit['command'],
                             user=ac_audit['user'])
 
-    def insert_api_lock(self,
-                        lock_id,
-                        lock_type,
-                        expires,
-                        user,
-                        reference_id):
+    def insert_api_lock(self, lock_id, lock_type, expires, user, reference_id):
         """
         Inserts an api lock
         """
@@ -334,9 +329,7 @@ class ShipyardDbAccess(DbAccess):
         type.
         """
         result_dict = self.get_as_dict_array(
-            ShipyardDbAccess.SELECT_LATEST_LOCK_BY_TYPE,
-            lock_type=lock_type
-        )
+            ShipyardDbAccess.SELECT_LATEST_LOCK_BY_TYPE, lock_type=lock_type)
         if result_dict:
             return result_dict[0].get('id')
         # No lock found
@@ -346,5 +339,4 @@ class ShipyardDbAccess(DbAccess):
         """
         Marks the lock specified by the id as released.
         """
-        self.perform_update(ShipyardDbAccess.UPDATE_LOCK_RELEASE,
-                            id=lock_id)
+        self.perform_update(ShipyardDbAccess.UPDATE_LOCK_RELEASE, id=lock_id)

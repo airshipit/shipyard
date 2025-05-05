@@ -88,9 +88,10 @@ def check_node_status(time_out, interval, expected_nodes):
                     summary_message = j.status.conditions[-1].message
                 except (AttributeError, IndexError):
                     # any issue with the response object, move on to next item
-                    logging.warning("Malformed node status response object. "
-                                    "Processing continues with the next item",
-                                    exc_info=True)
+                    logging.warning(
+                        "Malformed node status response object. "
+                        "Processing continues with the next item",
+                        exc_info=True)
                     continue
 
                 # only check nodes that we're currently waiting for

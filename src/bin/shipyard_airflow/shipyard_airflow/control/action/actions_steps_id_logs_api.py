@@ -15,6 +15,8 @@ import falcon
 import logging
 import os
 import requests
+import jwt
+import datetime
 
 from oslo_config import cfg
 
@@ -35,6 +37,7 @@ class ActionsStepsLogsResource(BaseResource):
     the names of the logs as 1.log, 2.log, 3.log, etc.
 
     """
+
     @policy.ApiEnforcer(policy.GET_ACTION_STEP_LOGS)
     def on_get(self, req, resp, **kwargs):
         """
@@ -43,17 +46,14 @@ class ActionsStepsLogsResource(BaseResource):
         """
         # We will set the kwarg to 'try_number' as 'try' is a
         # reserved keyword
-        try_number = req.get_param_as_int('try',
-                                          required=False)
+        try_number = req.get_param_as_int('try', required=False)
 
         # Parse kwargs
         action_id = ActionsHelper.parse_action_id(**kwargs)
         step_id = ActionsHelper.parse_step_id(**kwargs)
 
         # Retrieve logs for the action step
-        resp.text = self.get_action_step_logs(action_id,
-                                              step_id,
-                                              try_number)
+        resp.text = self.get_action_step_logs(action_id, step_id, try_number)
 
         resp.status = falcon.HTTP_200
 
@@ -71,9 +71,7 @@ class ActionsStepsLogsResource(BaseResource):
         dag_id = step['dag_id']
 
         # Generate Log Endpoint
-        log_endpoint = self.generate_log_endpoint(step,
-                                                  dag_id,
-                                                  step_id,
+        log_endpoint = self.generate_log_endpoint(step, dag_id, step_id,
                                                   try_number)
 
         LOG.debug("Log endpoint url is: %s", log_endpoint)
@@ -88,8 +86,7 @@ class ActionsStepsLogsResource(BaseResource):
         scheme = CONF.airflow.worker_endpoint_scheme
         worker_pod_fqdn = step['hostname']
         worker_pod_port = CONF.airflow.worker_port
-        worker_pod_url = "{}://{}:{}".format(scheme,
-                                             worker_pod_fqdn,
+        worker_pod_url = "{}://{}:{}".format(scheme, worker_pod_fqdn,
                                              str(worker_pod_port))
 
         # Define log_file
@@ -103,12 +100,8 @@ class ActionsStepsLogsResource(BaseResource):
             self.actions_helper.get_formatted_dag_execution_date(step))
 
         # Form logs query endpoint
-        log_endpoint = os.path.join(worker_pod_url,
-                                    'log',
-                                    dag_id,
-                                    step_id,
-                                    dag_execution_date,
-                                    log_file)
+        log_endpoint = os.path.join(worker_pod_url, 'log', dag_id, step_id,
+                                    dag_execution_date, log_file)
 
         return log_endpoint
 
@@ -117,14 +110,46 @@ class ActionsStepsLogsResource(BaseResource):
         """
         Retrieve Logs
         """
-
         LOG.debug("Retrieving Airflow logs...")
+
+        if not log_endpoint:
+            raise ApiError(
+                title='Log retrieval error',
+                description='Log endpoint is not specified',
+                status=falcon.HTTP_500)
+
+        # 1. Extract filename from log_endpoint (after /log/)
+        from urllib.parse import urlparse
+        path = urlparse(log_endpoint).path
+        parts = path.split('/log/', 1)
+        if len(parts) != 2:
+            raise ApiError(
+                title='Log retrieval error',
+                description='Could not extract filename from log endpoint',
+                status=falcon.HTTP_500)
+        filename = parts[1]
+
+        # 2. Generate JWT token
+        secret = CONF.airflow.worker_log_jwt_secret
+        now = datetime.datetime.now(datetime.timezone.utc)
+        payload = {
+            "sub": "airflow",
+            "exp": int((now + datetime.timedelta(minutes=10)).timestamp()),
+            "iat": int(now.timestamp()),
+            "nbf": int(now.timestamp()),
+            "aud": "task-instance-logs",
+            "filename": filename
+        }
+        token = jwt.encode(payload, secret, algorithm="HS512")
+
+        headers = {"Authorization": token}
+
         try:
             response = requests.get(
                 log_endpoint,
-                timeout=(
-                    CONF.requests_config.airflow_log_connect_timeout,
-                    CONF.requests_config.airflow_log_read_timeout))
+                headers=headers,
+                timeout=(CONF.requests_config.airflow_log_connect_timeout,
+                         CONF.requests_config.airflow_log_read_timeout))
         except requests.exceptions.RequestException as e:
             LOG.exception(e)
             raise ApiError(
@@ -132,14 +157,13 @@ class ActionsStepsLogsResource(BaseResource):
                 description='Exception happened during Airflow API request',
                 status=falcon.HTTP_500)
         if response.status_code >= 400:
-            LOG.info('Airflow endpoint returned error status code %s, '
-                     'content %s. Response code will be bubbled up',
-                     response.status_code, response.text)
+            LOG.info(
+                'Airflow endpoint returned error status code %s, '
+                'content %s. Response code will be bubbled up',
+                response.status_code, response.text)
             raise ApiError(
                 title='Log retrieval error',
                 description='Airflow endpoint returned error status code',
-                status=getattr(
-                    falcon,
-                    'HTTP_%d' % response.status_code,
-                    falcon.HTTP_500))
+                status=getattr(falcon, 'HTTP_%d' % response.status_code,
+                               falcon.HTTP_500))
         return response.text

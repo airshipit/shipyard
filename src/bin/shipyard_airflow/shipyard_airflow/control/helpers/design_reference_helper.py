@@ -17,16 +17,15 @@ component.
 """
 import json
 
-from shipyard_airflow.control.helpers.deckhand_client import (
-    DeckhandClient, DeckhandPaths
-)
+from shipyard_airflow.control.helpers.deckhand_client import (DeckhandClient,
+                                                              DeckhandPaths)
 
 
 class DesignRefHelper:
+
     def __init__(self):
         self._path = DeckhandClient.get_path(
-            DeckhandPaths.RENDERED_REVISION_DOCS
-        )
+            DeckhandPaths.RENDERED_REVISION_DOCS)
 
     def get_design_reference(self, revision_id):
         """Constructs a design reference as json using the supplied revision_id

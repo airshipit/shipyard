@@ -55,9 +55,7 @@ class DeploymentGroupManager:
             group = DeploymentGroup(group_dict, node_lookup)
             self._all_groups[group.name] = group
 
-        self._group_graph = _generate_group_graph(
-            self._all_groups.values()
-        )
+        self._group_graph = _generate_group_graph(self._all_groups.values())
         self._group_order = list(nx.topological_sort(self._group_graph))
 
         # Setup nodes.
@@ -109,44 +107,41 @@ class DeploymentGroupManager:
         if failed_criteria:
             # Logging of criteria has already occurred during checking.
             self.mark_group_failed(group_name)
-            LOG.info("Group %s has failed to meet its success criteria while "
-                     "trying to move to stage: %s",
-                     group_name, stage)
+            LOG.info(
+                "Group %s has failed to meet its success criteria while "
+                "trying to move to stage: %s", group_name, stage)
             return False
         elif stage == Stage.DEPLOYED:
             self.mark_group_deployed(group_name)
-            LOG.info("Group %s has met its success criteria and is "
-                     "successfully deployed (%s)", group_name, stage)
+            LOG.info(
+                "Group %s has met its success criteria and is "
+                "successfully deployed (%s)", group_name, stage)
             return True
         elif stage == Stage.PREPARED:
             self.mark_group_prepared(group_name)
-            LOG.info("Group %s has met its success criteria and is "
-                     "now set to stage %s", group_name, stage)
+            LOG.info(
+                "Group %s has met its success criteria and is "
+                "now set to stage %s", group_name, stage)
             return True
         # Any other cases are invalid.
         raise DeploymentGroupSuccessProcessingError(
             "Group {} has no failures, but is in an invalid state {}".format(
-                group_name, stage
-            )
-        )
+                group_name, stage))
 
     def report_group_summary(self):
         """Reports the status of all groups handled by this deployment"""
         LOG.info("=====   Group Summary   =====")
         for group in self.group_list():
-            LOG.info("  Group %s%s ended with stage: %s",
-                     group.name,
-                     " [Critical]" if group.critical else "",
-                     group.stage)
+            LOG.info("  Group %s%s ended with stage: %s", group.name,
+                     " [Critical]" if group.critical else "", group.stage)
         LOG.info("===== End Group Summary =====")
 
     def report_node_summary(self):
         """Reports the status of all nodes handled by this deployment"""
         # Ordered stages
-        stages = [Stage.NOT_STARTED,
-                  Stage.PREPARED,
-                  Stage.DEPLOYED,
-                  Stage.FAILED]
+        stages = [
+            Stage.NOT_STARTED, Stage.PREPARED, Stage.DEPLOYED, Stage.FAILED
+        ]
 
         LOG.info("=====   Node Summary   =====")
         for stage in stages:
@@ -204,8 +199,7 @@ class DeploymentGroupManager:
         if group is None:
             raise UnknownDeploymentGroupError(
                 "Group name {} does not refer to a known group".format(
-                    group_name)
-            )
+                    group_name))
         return group
 
     def get_group_failures_for_stage(self, group_name, stage):
@@ -276,9 +270,10 @@ class DeploymentGroupManager:
         if stage is None:
             return [name for name in self._all_nodes]
 
-        return [name for name, n_stage
-                in self._all_nodes.items()
-                if n_stage == stage]
+        return [
+            name for name, n_stage in self._all_nodes.items()
+            if n_stage == stage
+        ]
 
 
 def _update_group_actionable_nodes(group, known_nodes):
@@ -286,17 +281,15 @@ def _update_group_actionable_nodes(group, known_nodes):
 
     Acitonable nodes is the group's (full_nodes - known_nodes)
     """
-    LOG.debug("Known nodes before processing group %s is %s",
-              group.name,
+    LOG.debug("Known nodes before processing group %s is %s", group.name,
               ", ".join(known_nodes))
 
     group_nodes = set(group.full_nodes)
     group.actionable_nodes = list(group_nodes.difference(known_nodes))
-    LOG.debug("Group %s set actionable_nodes to %s. "
-              "Full node list for this group is %s",
-              group.name,
-              ", ".join(group.actionable_nodes),
-              ", ".join(group.full_nodes))
+    LOG.debug(
+        "Group %s set actionable_nodes to %s. "
+        "Full node list for this group is %s", group.name,
+        ", ".join(group.actionable_nodes), ", ".join(group.full_nodes))
 
 
 def _generate_group_graph(groups):
@@ -346,5 +339,4 @@ def _detect_cycles(graph):
             involved_nodes.update(dep)
         raise DeploymentGroupCycleError(
             "The following are involved in a circular dependency:"
-            " {}".format(", ".join(involved_nodes))
-        )
+            " {}".format(", ".join(involved_nodes)))

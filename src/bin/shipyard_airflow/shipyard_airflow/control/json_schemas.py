@@ -39,9 +39,7 @@ def validate_json(json_string, schema):
     except ValidationError as err:
         title = 'JSON validation failed: {}'.format(err.message)
         description = 'Failed validator: {} : {}'.format(
-            err.validator,
-            err.validator_value
-        )
+            err.validator, err.validator_value)
         LOG.error(title)
         LOG.error(description)
         raise InvalidFormatError(
@@ -53,19 +51,13 @@ def validate_json(json_string, schema):
         description = 'Invalid Schema: {}'.format(schema_title)
         LOG.error(title)
         LOG.error(description)
-        raise AppError(
-            title=title,
-            description=description
-        )
+        raise AppError(title=title, description=description)
     except FormatError as err:
         title = 'FormatError: Unable to validate JSON: {}'.format(err)
         description = 'Invalid Format: {}'.format(schema_title)
         LOG.error(title)
         LOG.error(description)
-        raise AppError(
-            title=title,
-            description=description
-        )
+        raise AppError(title=title, description=description)
 
 
 # The action resource structure

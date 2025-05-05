@@ -41,8 +41,12 @@ class _NoteType:
         note of this type.
     """
 
-    def __init__(self, root, key_pattern_count, id_start,
-                 id_end=None, default_subtype="metadata"):
+    def __init__(self,
+                 root,
+                 key_pattern_count,
+                 id_start,
+                 id_end=None,
+                 default_subtype="metadata"):
         self.root = root
         self.base_pattern = "{}/".format(root)
         self.kp_count = key_pattern_count
@@ -65,12 +69,11 @@ class NoteType(Enum):
     #                  |                         |
     #           (7) ACTION_ID_START              |
     #                                      (33) ACTION_ID_END
-    ACTION = _NoteType(
-        root="action",
-        key_pattern_count=1,
-        id_start=7,
-        id_end=33,
-        default_subtype="action metadata")
+    ACTION = _NoteType(root="action",
+                       key_pattern_count=1,
+                       id_start=7,
+                       id_end=33,
+                       default_subtype="action metadata")
 
     # Step
     #
@@ -82,11 +85,10 @@ class NoteType(Enum):
     #           (5) STEP_ACTION_ID_START       | \
     #                                          | (32) STEP_ID_START
     #                               (31) STEP_ACTION_ID_END
-    STEP = _NoteType(
-        root="step",
-        key_pattern_count=2,
-        id_start=32,
-        default_subtype="step metadata")
+    STEP = _NoteType(root="step",
+                     key_pattern_count=2,
+                     id_start=32,
+                     default_subtype="step metadata")
 
     OTHER = _NoteType(root="", key_pattern_count=0, id_start=0)
 
@@ -128,34 +130,36 @@ class NotesHelper:
     Provides helper methods for the common use cases for notes
     :param notes_manager: the NotesManager object to use
     """
+
     def __init__(self, notes_manager):
         self.nm = notes_manager
 
-    def _failsafe_make_note(self, assoc_id, subject, sub_type, note_val,
-                            verbosity=MIN_VERBOSITY, link_url=None,
-                            is_auth_link=None, note_timestamp=None):
+    def _failsafe_make_note(self,
+                            assoc_id,
+                            subject,
+                            sub_type,
+                            note_val,
+                            verbosity=MIN_VERBOSITY,
+                            link_url=None,
+                            is_auth_link=None,
+                            note_timestamp=None):
         """LOG and continue on any note creation failure"""
         try:
-            self.nm.create(
-                assoc_id=assoc_id,
-                subject=subject,
-                sub_type=sub_type,
-                note_val=note_val,
-                verbosity=verbosity,
-                link_url=link_url,
-                is_auth_link=is_auth_link,
-                note_timestamp=note_timestamp
-            )
+            self.nm.create(assoc_id=assoc_id,
+                           subject=subject,
+                           sub_type=sub_type,
+                           note_val=note_val,
+                           verbosity=verbosity,
+                           link_url=link_url,
+                           is_auth_link=is_auth_link,
+                           note_timestamp=note_timestamp)
         except Exception as ex:
             LOG.warning(
                 "Creating note for {} encountered a problem, exception info "
-                "follows, but processing is not halted for notes.",
-                assoc_id
-            )
+                "follows, but processing is not halted for notes.", assoc_id)
             LOG.exception(ex)
 
-    def _failsafe_get_notes(self, assoc_id_pattern, verbosity,
-                            exact_match):
+    def _failsafe_get_notes(self, assoc_id_pattern, verbosity, exact_match):
         """LOG and continue on any note retrieval failure"""
         try:
             if verbosity < MIN_VERBOSITY:
@@ -166,8 +170,7 @@ class NotesHelper:
             LOG.warning(
                 "Note retrieval for {} encountered a problem, exception "
                 "info follows, but processing is not halted for notes.",
-                assoc_id_pattern
-            )
+                assoc_id_pattern)
             LOG.exception(ex)
         return []
 
@@ -207,9 +210,15 @@ class NotesHelper:
     # Action notes helper methods
     #
 
-    def make_action_note(self, action_id, note_val, subject=None,
-                         sub_type=None, verbosity=MIN_VERBOSITY, link_url=None,
-                         is_auth_link=None, note_timestamp=None):
+    def make_action_note(self,
+                         action_id,
+                         note_val,
+                         subject=None,
+                         sub_type=None,
+                         verbosity=MIN_VERBOSITY,
+                         link_url=None,
+                         is_auth_link=None,
+                         note_timestamp=None):
         """Creates an action note using a convention for the note's assoc_id
 
         :param action_id: the ULID id of an action
@@ -234,16 +243,14 @@ class NotesHelper:
         if sub_type is None:
             sub_type = NoteType.ACTION.default_subtype
 
-        self._failsafe_make_note(
-            assoc_id=assoc_id,
-            subject=subject,
-            sub_type=sub_type,
-            note_val=note_val,
-            verbosity=verbosity,
-            link_url=link_url,
-            is_auth_link=is_auth_link,
-            note_timestamp=note_timestamp
-        )
+        self._failsafe_make_note(assoc_id=assoc_id,
+                                 subject=subject,
+                                 sub_type=sub_type,
+                                 note_val=note_val,
+                                 verbosity=verbosity,
+                                 link_url=link_url,
+                                 is_auth_link=is_auth_link,
+                                 note_timestamp=note_timestamp)
 
     def get_all_action_notes(self, verbosity=MIN_VERBOSITY):
         """Retrieve notes for all actions, in a dictionary keyed by action id.
@@ -255,8 +262,7 @@ class NotesHelper:
         notes = self._failsafe_get_notes(
             assoc_id_pattern=NoteType.ACTION.lookup_pattern,
             verbosity=verbosity,
-            exact_match=False
-        )
+            exact_match=False)
         note_dict = {}
         id_s = NoteType.ACTION.id_start
         id_e = NoteType.ACTION.id_end
@@ -279,16 +285,22 @@ class NotesHelper:
         return self._failsafe_get_notes(
             assoc_id_pattern=NoteType.ACTION.key_pattern.format(action_id),
             verbosity=verbosity,
-            exact_match=True
-        )
+            exact_match=True)
 
     #
     # Step notes helper methods
     #
 
-    def make_step_note(self, action_id, step_id, note_val, subject=None,
-                       sub_type=None, verbosity=MIN_VERBOSITY, link_url=None,
-                       is_auth_link=None, note_timestamp=None):
+    def make_step_note(self,
+                       action_id,
+                       step_id,
+                       note_val,
+                       subject=None,
+                       sub_type=None,
+                       verbosity=MIN_VERBOSITY,
+                       link_url=None,
+                       is_auth_link=None,
+                       note_timestamp=None):
         """Creates an action note using a convention for the note's assoc_id
 
         :param action_id: the ULID id of the action containing the note
@@ -314,18 +326,17 @@ class NotesHelper:
         if sub_type is None:
             sub_type = NoteType.STEP.default_subtype
 
-        self._failsafe_make_note(
-            assoc_id=assoc_id,
-            subject=subject,
-            sub_type=sub_type,
-            note_val=note_val,
-            verbosity=verbosity,
-            link_url=link_url,
-            is_auth_link=is_auth_link,
-            note_timestamp=note_timestamp
-        )
+        self._failsafe_make_note(assoc_id=assoc_id,
+                                 subject=subject,
+                                 sub_type=sub_type,
+                                 note_val=note_val,
+                                 verbosity=verbosity,
+                                 link_url=link_url,
+                                 is_auth_link=is_auth_link,
+                                 note_timestamp=note_timestamp)
 
-    def get_all_step_notes_for_action(self, action_id,
+    def get_all_step_notes_for_action(self,
+                                      action_id,
                                       verbosity=MIN_VERBOSITY):
         """Retrieve a dict keyed by step names for the action_id
 
@@ -337,8 +348,7 @@ class NotesHelper:
         notes = self._failsafe_get_notes(
             assoc_id_pattern=NoteType.STEP.lookup_pattern.format(action_id),
             verbosity=verbosity,
-            exact_match=False
-        )
+            exact_match=False)
         note_dict = {}
         id_s = NoteType.STEP.id_start
         for n in notes:
@@ -362,5 +372,4 @@ class NotesHelper:
             assoc_id_pattern=NoteType.STEP.key_pattern.format(
                 action_id, step_id),
             verbosity=verbosity,
-            exact_match=True
-        )
+            exact_match=True)

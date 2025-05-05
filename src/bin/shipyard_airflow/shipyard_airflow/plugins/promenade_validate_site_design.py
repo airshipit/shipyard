@@ -26,7 +26,6 @@ except ImportError:
     from shipyard_airflow.plugins.promenade_base_operator import \
         PromenadeBaseOperator
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -38,7 +37,7 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
     Promenade API
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         LOG.info("Validating site design...")
 
         # Form Validation Endpoint
@@ -69,9 +68,8 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
                 validation_endpoint,
                 headers=headers,
                 data=json.dumps(payload),
-                timeout=(
-                    self.validation_connect_timeout,
-                    self.validation_read_timeout))
+                timeout=(self.validation_connect_timeout,
+                         self.validation_read_timeout))
 
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
@@ -90,8 +88,7 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
             raise AirflowException(e)
 
         # Check if site design is valid
-        status = validate_site_design_dict.get('status',
-                                               'unspecified')
+        status = validate_site_design_dict.get('status', 'unspecified')
 
         if status.lower() == 'success':
             LOG.info("Promenade Site Design has been successfully validated")
@@ -102,7 +99,6 @@ class PromenadeValidateSiteDesignOperator(PromenadeBaseOperator):
 
 
 class PromenadeValidateSiteDesignOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeValidateSiteDesginOperator in Airflow."""
 
     name = 'promenade_validate_site_design_operator'

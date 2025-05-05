@@ -14,3 +14,4 @@ pyflakes
 # to be installed, i.e. postgres-devel. Otherwise the following error is seen:
 # Error: pg_config executable not found. Only seems to be an issue in xenial
 postgres>=3.0.0
+ruff

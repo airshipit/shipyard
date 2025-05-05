@@ -37,7 +37,6 @@ def test_find_conflicting_dag_set():
     Ensure that the right values are determined by find_conflicting_dag_set
     """
     # Should not be found in the default set - no conflicts
-    assert operator.DAG_RUN_SELECT_RUNNING_SQL is not None
     assert not operator.find_conflicting_dag_set("this_is_completely_cheese")
 
     # Check for contents vs the COLOR_SETS

@@ -19,30 +19,24 @@ import time
 from urllib.parse import urlparse
 
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 import drydock_provisioner.drydock_client.client as client
 import drydock_provisioner.drydock_client.session as session
 from drydock_provisioner import error as errors
 
 try:
-    from drydock_errors import (
-        DrydockClientUseFailureException,
-        DrydockTaskFailedException,
-        DrydockTaskNotCreatedException,
-        DrydockTaskTimeoutException
-    )
+    from drydock_errors import (DrydockClientUseFailureException,
+                                DrydockTaskFailedException,
+                                DrydockTaskNotCreatedException,
+                                DrydockTaskTimeoutException)
     import service_endpoint
     from service_token import shipyard_service_token
     from ucp_base_operator import UcpBaseOperator
 
 except ImportError:
     from shipyard_airflow.plugins.drydock_errors import (
-        DrydockClientUseFailureException,
-        DrydockTaskFailedException,
-        DrydockTaskNotCreatedException,
-        DrydockTaskTimeoutException
-    )
+        DrydockClientUseFailureException, DrydockTaskFailedException,
+        DrydockTaskNotCreatedException, DrydockTaskTimeoutException)
     from shipyard_airflow.plugins import service_endpoint
     from shipyard_airflow.plugins.service_token import shipyard_service_token
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
@@ -58,7 +52,6 @@ class DrydockBaseOperator(UcpBaseOperator):
     from this class
     """
 
-    @apply_defaults
     def __init__(self,
                  drydock_client=None,
                  drydock_task_id=None,
@@ -66,7 +59,8 @@ class DrydockBaseOperator(UcpBaseOperator):
                  redeploy_server=None,
                  svc_session=None,
                  svc_token=None,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         """Initialization of DrydockBaseOperator object.
 
         :param drydockclient: An instance of drydock client
@@ -83,11 +77,14 @@ class DrydockBaseOperator(UcpBaseOperator):
         the action and the deployment configuration
 
         """
-        super(DrydockBaseOperator,
-              self).__init__(
-                  pod_selector_pattern=[{'pod_pattern': 'drydock-api',
-                                         'container': 'drydock-api'}],
-                  *args, **kwargs)
+        super(DrydockBaseOperator, self).__init__(pod_selector_pattern=[{
+            'pod_pattern':
+            'drydock-api',
+            'container':
+            'drydock-api'
+        }],
+            *args,
+            **kwargs)
         self.drydock_client = drydock_client
         self.drydock_client_connect_timeout = None
         self.drydock_client_read_timeout = None
@@ -111,14 +108,15 @@ class DrydockBaseOperator(UcpBaseOperator):
             # Retrieve config values from shipyard configuration.
             config = configparser.ConfigParser()
             config.read(self.shipyard_conf)
-            self.drydock_client_connect_timeout = int(config.get(
-                'requests_config', 'drydock_client_connect_timeout'))
-            self.drydock_client_read_timeout = int(config.get(
-                'requests_config', 'drydock_client_read_timeout'))
-            self.validation_connect_timeout = int(config.get(
-                'requests_config', 'validation_connect_timeout'))
-            self.validation_read_timeout = int(config.get(
-                'requests_config', 'validation_read_timeout'))
+            self.drydock_client_connect_timeout = int(
+                config.get('requests_config',
+                           'drydock_client_connect_timeout'))
+            self.drydock_client_read_timeout = int(
+                config.get('requests_config', 'drydock_client_read_timeout'))
+            self.validation_connect_timeout = int(
+                config.get('requests_config', 'validation_connect_timeout'))
+            self.validation_read_timeout = int(
+                config.get('requests_config', 'validation_read_timeout'))
 
             # Setup the drydock client
             self._setup_drydock_client()
@@ -131,9 +129,10 @@ class DrydockBaseOperator(UcpBaseOperator):
         Returns the self.continue_processing value.
         """
         if self.xcom_puller.get_check_drydock_continue_on_fail():
-            LOG.info("Skipping %s as health checks on Drydock have "
-                     "failed and continue-on-fail option has been "
-                     "turned on", self.__class__.__name__)
+            LOG.info(
+                "Skipping %s as health checks on Drydock have "
+                "failed and continue-on-fail option has been "
+                "turned on", self.__class__.__name__)
             # Set continue processing to False
             self.continue_processing = False
 
@@ -143,8 +142,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         """Setup the drydock client for use by this operator"""
         # Retrieve Endpoint Information
         self.drydock_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.DRYDOCK
-        )
+            service_endpoint.DRYDOCK)
 
         LOG.info("Drydock endpoint is %s", self.drydock_svc_endpoint)
 
@@ -167,8 +165,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         # Raise Exception if we are not able to set up the session
         if not dd_session:
             raise DrydockClientUseFailureException(
-                "Failed to set up Drydock Session!"
-            )
+                "Failed to set up Drydock Session!")
 
         # Use the DrydockSession to build a DrydockClient that can
         # be used to make one or more API calls
@@ -176,8 +173,7 @@ class DrydockBaseOperator(UcpBaseOperator):
         # Raise Exception if we are not able to build the client
         if not self.drydock_client:
             raise DrydockClientUseFailureException(
-                "Failed to set up Drydock Client!"
-            )
+                "Failed to set up Drydock Client!")
         LOG.info("Drydock Session and Client etablished.")
 
     @shipyard_service_token
@@ -206,8 +202,7 @@ class DrydockBaseOperator(UcpBaseOperator):
 
         # Retrieve Task ID
         self.drydock_task_id = create_task_response['task_id']
-        LOG.info('Drydock %s task ID is %s',
-                 task_action, self.drydock_task_id)
+        LOG.info('Drydock %s task ID is %s', task_action, self.drydock_task_id)
 
         # Raise Exception if we are not able to get the task_id from
         # Drydock
@@ -299,8 +294,9 @@ class DrydockBaseOperator(UcpBaseOperator):
             raise DrydockClientUseFailureException(client_error)
 
         # Retrieve the failed parent task and assign it to list
-        failed_parent_task = (
-            [x for x in all_tasks if x['task_id'] == self.drydock_task_id])
+        failed_parent_task = ([
+            x for x in all_tasks if x['task_id'] == self.drydock_task_id
+        ])
 
         # Print detailed information of failed parent task in json output
         # Since there is only 1 failed parent task, we will print index 0
@@ -345,8 +341,7 @@ class DrydockBaseOperator(UcpBaseOperator):
 
                 if task:
                     # Print subtask action and state
-                    LOG.info("%s subtask is in %s state",
-                             task['action'],
+                    LOG.info("%s subtask is in %s state", task['action'],
                              task['result']['status'])
 
                     # Check for subtasks and extend the list
@@ -372,8 +367,7 @@ class DrydockBaseOperator(UcpBaseOperator):
 
                 else:
                     raise DrydockClientUseFailureException(
-                        "Unable to retrieve subtask info!"
-                    )
+                        "Unable to retrieve subtask info!")
 
     def get_nodes(self):
         """
@@ -410,11 +404,11 @@ class DrydockBaseOperator(UcpBaseOperator):
             task_status = task_dict.get('status', "Not Specified")
             task_result = task_dict.get('result')
             if task_result is None:
-                LOG.warning("Task result is missing for task %s, "
-                            "with status %s."
-                            " Neither successes nor further details can be"
-                            " extracted from this result",
-                            task_id, task_status)
+                LOG.warning(
+                    "Task result is missing for task %s, "
+                    "with status %s."
+                    " Neither successes nor further details can be"
+                    " extracted from this result", task_id, task_status)
             else:
                 if extend_success:
                     try:
@@ -439,8 +433,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                         LOG.warning(
                             "Missing successes field on result of task %s, "
                             "but a success field was expected. No successes"
-                            " can be extracted from this result", task_id
-                        )
+                            " can be extracted from this result", task_id)
                         pass
                 _report_task_info(task_id, task_result, task_status)
                 self._create_drydock_results_notes(task_id, task_result)
@@ -450,13 +443,15 @@ class DrydockBaseOperator(UcpBaseOperator):
             for ch_task_id in task_dict.get('subtask_id_list', []):
                 success_nodes.extend(
                     self.get_successes_for_task(ch_task_id,
-                                                extend_success=False)
-                )
+                                                extend_success=False))
         except Exception:
             # since we are reporting task results, if we can't get the
             # results, do not block the processing.
-            LOG.warning("Failed to retrieve a result for task %s. Exception "
-                        "follows:", task_id, exc_info=True)
+            LOG.warning(
+                "Failed to retrieve a result for task %s. Exception "
+                "follows:",
+                task_id,
+                exc_info=True)
 
         # deduplicate and return
         return set(success_nodes)
@@ -502,8 +497,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                     error = msg.get('error', False)
                     msg_text = "{}:{}:{}{}".format(
                         msg.get('context_type', 'N/A'),
-                        msg.get('context', 'N/A'),
-                        msg.get('message'),
+                        msg.get('context', 'N/A'), msg.get('message'),
                         " (error)" if error else "")
                     self.notes_helper.make_step_note(
                         action_id=self.action_id,
@@ -514,8 +508,9 @@ class DrydockBaseOperator(UcpBaseOperator):
                         note_timestamp=msg.get('ts'),
                         verbosity=3)
             except Exception as ex:
-                LOG.warning("Error while creating a task result note, "
-                            "processing continues. Source info %s", msg)
+                LOG.warning(
+                    "Error while creating a task result note, "
+                    "processing continues. Source info %s", msg)
                 LOG.exception(ex)
 
         links = task_result.get('links', [])
@@ -535,8 +530,9 @@ class DrydockBaseOperator(UcpBaseOperator):
                         is_auth_link=True,
                         verbosity=5)
             except Exception as ex:
-                LOG.warning("Error while creating a link-based note, "
-                            "processing continues. Source info: %s", link)
+                LOG.warning(
+                    "Error while creating a link-based note, "
+                    "processing continues. Source info: %s", link)
                 LOG.exception(ex)
 
 
@@ -560,12 +556,10 @@ def gen_node_name_filter(node_names):
     """
     return {
         'filter_set_type': 'union',
-        'filter_set': [
-            {
-                'filter_type': 'union',
-                'node_names': node_names
-            }
-        ]
+        'filter_set': [{
+            'filter_type': 'union',
+            'node_names': node_names
+        }]
     }
 
 
@@ -581,9 +575,10 @@ def _report_task_info(task_id, task_result, task_status):
     task_successes = task_result.get('successes', [])
     result_details = task_result.get('details', {'messageList': []})
     result_status = task_result.get('status', "No status supplied")
-    LOG.info("Task %s with status %s/%s reports successes: [%s] and"
-             " failures: [%s]", task_id, task_status, result_status,
-             ", ".join(task_successes), ", ".join(task_failures))
+    LOG.info(
+        "Task %s with status %s/%s reports successes: [%s] and"
+        " failures: [%s]", task_id, task_status, result_status,
+        ", ".join(task_successes), ", ".join(task_failures))
     for message_item in result_details['messageList']:
         context_type = message_item.get('context_type', 'N/A')
         context_id = message_item.get('context', 'N/A')
@@ -595,7 +590,6 @@ def _report_task_info(task_id, task_result, task_status):
 
 
 class DrydockBaseOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockBaseOperator in Airflow."""
 
     name = 'drydock_base_operator_plugin'

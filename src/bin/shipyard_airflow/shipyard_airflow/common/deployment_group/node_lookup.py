@@ -19,9 +19,7 @@ import logging
 import time
 
 from .deployment_group import GroupNodeSelector
-from .errors import (
-    InvalidDeploymentGroupNodeLookupError
-)
+from .errors import (InvalidDeploymentGroupNodeLookupError)
 from drydock_provisioner import error as errors
 
 LOG = logging.getLogger(__name__)
@@ -38,13 +36,13 @@ class NodeLookup:
     Note that after the specified number of retries, any exceptions will be
     bubbled out to the client of this node lookup
     """
+
     def __init__(self, drydock_client, design_ref, retries=2, retry_delay=30):
         # Empty dictionary or none for design ref will not work.
         if not design_ref:
             raise InvalidDeploymentGroupNodeLookupError(
                 "An incomplete design ref was supplied to the NodeLookup: "
-                " {}".format(str(design_ref))
-            )
+                " {}".format(str(design_ref)))
         if drydock_client is None:
             raise TypeError('Drydock client is required.')
         self.design_ref = design_ref
@@ -64,8 +62,7 @@ class NodeLookup:
         while retries_remaining >= 0:
             try:
                 return _get_nodes_for_filter(self.drydock_client,
-                                             self.design_ref,
-                                             node_filter)
+                                             self.design_ref, node_filter)
             except (errors.ClientUnauthorizedError,
                     errors.ClientForbiddenError) as er:
                 # do not retry the client related (4xx) errors
@@ -77,9 +74,10 @@ class NodeLookup:
             except (errors.ClientError, Exception) as ex:
                 # This only includes the 5xx and drydock uncautht errors.
                 if retries_remaining > 0:
-                    LOG.exception("Lookup of nodes encountered a problem, "
-                                  "but will be retried. Retries "
-                                  "remaining: %d", retries_remaining)
+                    LOG.exception(
+                        "Lookup of nodes encountered a problem, "
+                        "but will be retried. Retries "
+                        "remaining: %d", retries_remaining)
                     retries_remaining -= 1
                     time.sleep(self.retry_delay)
                 else:
@@ -95,13 +93,11 @@ def _validate_selectors(selectors):
     except TypeError:
         raise InvalidDeploymentGroupNodeLookupError(
             "The node lookup function requires an iterable of "
-            "GroupNodeSelectors as input"
-        )
+            "GroupNodeSelectors as input")
     if not (all(isinstance(sel, GroupNodeSelector) for sel in sel_list)):
         raise InvalidDeploymentGroupNodeLookupError(
             "The node lookup function requires all input elements in the "
-            "selectors be GroupNodeSelectors"
-        )
+            "selectors be GroupNodeSelectors")
     return sel_list
 
 
@@ -132,7 +128,6 @@ def _generate_node_filter(selectors):
 
 
 def _get_nodes_for_filter(client, design_ref, node_filter):
-    return set(client.get_nodes_for_filter(
-        design_ref=design_ref,
-        node_filter=node_filter
-    ))
+    return set(
+        client.get_nodes_for_filter(design_ref=design_ref,
+                                    node_filter=node_filter))

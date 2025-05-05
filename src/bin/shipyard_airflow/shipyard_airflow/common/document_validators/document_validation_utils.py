@@ -20,6 +20,7 @@ LOG = logging.getLogger(__name__)
 
 
 class DocumentValidationUtils:
+
     def __init__(self, deckhand_client):
         if deckhand_client is None:
             raise TypeError('Deckhand client is required.')
@@ -35,10 +36,7 @@ class DocumentValidationUtils:
             found
         returns the specified document, or raises a DocumentLookupError
         """
-        filters = {
-            "schema": schema,
-            "metadata.name": name
-        }
+        filters = {"schema": schema, "metadata.name": name}
         docs = self.get_docs_by_filter(revision_id, filters)
         LOG.info("Found %s documents", len(docs))
         if len(docs) == 1 and docs[0].data:

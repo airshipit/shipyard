@@ -53,13 +53,16 @@ class XcomPuller(object):
             source_dag = self.mdn
         else:
             source_dag = "{}.{}".format(self.mdn, dag_id)
-        LOG.info("Retrieving xcom from %s.%s with key %s",
-                 source_dag,
-                 source_task,
-                 key)
+        LOG.info("Retrieving xcom from %s.%s with key %s", source_dag,
+                 source_task, key)
         xcom_val = self.ti.xcom_pull(task_ids=source_task,
                                      dag_id=source_dag,
                                      key=key)
+
+        # Log the entire TaskInstance object
+        LOG.info("TaskInstance object: %s",
+                 vars(self.ti))  # Prints all attributes of the TaskInstance
+
         if log_result:
             # log the xcom value - don't put large values in xcom!
             LOG.info(xcom_val)
@@ -70,7 +73,7 @@ class XcomPuller(object):
         """Retrieve the deployment configuration dictionary"""
         source_task = dag_names.DEPLOYMENT_CONFIGURATION
         source_dag = None
-        key = None
+        key = 'return_value'
         return self._get_xcom(source_task=source_task,
                               dag_id=source_dag,
                               key=key)

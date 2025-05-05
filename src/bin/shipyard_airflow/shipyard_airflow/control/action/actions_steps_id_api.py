@@ -17,7 +17,8 @@ from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.common.notes.notes import MAX_VERBOSITY
 from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
-from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
+from shipyard_airflow.db.db import SHIPYARD_DB
+from shipyard_airflow.api.api import AIRFLOW_API
 from shipyard_airflow.errors import ApiError
 
 
@@ -26,6 +27,7 @@ class ActionsStepsResource(BaseResource):
     """
     The actions steps resource is the steps of an action
     """
+
     @policy.ApiEnforcer(policy.GET_ACTION_STEP)
     def on_get(self, req, resp, **kwargs):
         """
@@ -33,12 +35,9 @@ class ActionsStepsResource(BaseResource):
         :returns: a json object describing a step
         """
         resp.text = self.to_json(
-            self.get_action_step(
-                action_id=kwargs['action_id'],
-                step_id=kwargs['step_id'],
-                verbosity=req.context.verbosity
-            )
-        )
+            self.get_action_step(action_id=kwargs['action_id'],
+                                 step_id=kwargs['step_id'],
+                                 verbosity=req.context.verbosity))
         resp.status = falcon.HTTP_200
 
     def get_action_step(self, action_id, step_id, verbosity=MAX_VERBOSITY):
@@ -55,22 +54,19 @@ class ActionsStepsResource(BaseResource):
         action = self.get_action_db(action_id=action_id)
 
         if action is None:
-            raise ApiError(
-                title='Action not found',
-                description='Unknown action {}'.format(action_id),
-                status=falcon.HTTP_404)
+            raise ApiError(title='Action not found',
+                           description='Unknown action {}'.format(action_id),
+                           status=falcon.HTTP_404)
 
         # resolve the ids for lookup of steps
         dag_id = action['dag_id']
         dag_execution_date = action['dag_execution_date']
 
         # get the action steps from shipyard db
-        steps = self.get_tasks_db(dag_id, dag_execution_date)
-        step_notes = notes_helper.get_step_notes(
-            action_id=action_id,
-            step_id=step_id,
-            verbosity=verbosity
-        )
+        steps = self.get_tasks_api(dag_id, dag_execution_date)
+        step_notes = notes_helper.get_step_notes(action_id=action_id,
+                                                 step_id=step_id,
+                                                 verbosity=verbosity)
         for idx, step in enumerate(steps):
             if step_id == step['task_id']:
                 step['index'] = idx + 1
@@ -80,23 +76,21 @@ class ActionsStepsResource(BaseResource):
                 return step
 
         # if we didn't find it, 404
-        raise ApiError(
-            title='Step not found',
-            description='Unknown step {}'.format(step_id),
-            status=falcon.HTTP_404)
+        raise ApiError(title='Step not found',
+                       description='Unknown step {}'.format(step_id),
+                       status=falcon.HTTP_404)
 
     def get_action_db(self, action_id):
         """
         Wrapper for call to the shipyard database to get an action
         :returns: a dictionary of action details.
         """
-        return SHIPYARD_DB.get_action_by_id(
-            action_id=action_id)
+        return SHIPYARD_DB.get_action_by_id(action_id=action_id)
 
-    def get_tasks_db(self, dag_id, execution_date):
+    def get_tasks_api(self, dag_id, execution_date):
         """
-        Wrapper for call to the airflow db to get all tasks for a dag run
+        Wrapper for call to the airflow api to get all tasks for a dag run
         :returns: a list of task dictionaries
         """
-        return AIRFLOW_DB.get_tasks_by_id(
-            dag_id=dag_id, execution_date=execution_date)
+        return AIRFLOW_API.get_tasks_by_id(dag_id=dag_id,
+                                           execution_date=execution_date)

@@ -20,19 +20,15 @@ from airflow.plugins_manager import AirflowPlugin
 try:
     from drydock_base_operator import DrydockBaseOperator
     from drydock_base_operator import gen_node_name_filter
-    from drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+    from drydock_errors import (DrydockTaskFailedException,
+                                DrydockTaskTimeoutException)
 except ImportError:
     from shipyard_airflow.plugins.drydock_base_operator import \
         DrydockBaseOperator
     from shipyard_airflow.plugins.drydock_base_operator import \
         gen_node_name_filter
     from shipyard_airflow.plugins.drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+        DrydockTaskFailedException, DrydockTaskTimeoutException)
 
 LOG = logging.getLogger(__name__)
 
@@ -43,7 +39,8 @@ class DrydockDestroyNodeOperator(DrydockBaseOperator):
     This operator will trigger drydock to destroy a bare metal
     node
     """
-    def do_execute(self):
+
+    def do_execute(self, context):
         self.successes = []
 
         LOG.info("Destroying nodes [%s]", ", ".join(self.target_nodes))
@@ -74,15 +71,17 @@ class DrydockDestroyNodeOperator(DrydockBaseOperator):
         try:
             self.query_task(self.dest_interval, self.dest_timeout)
         except DrydockTaskFailedException:
-            LOG.exception("Task %s has failed. Some nodes may have been "
-                          "destroyed. The report at the end of processing "
-                          "this step contains the results", task_name)
+            LOG.exception(
+                "Task %s has failed. Some nodes may have been "
+                "destroyed. The report at the end of processing "
+                "this step contains the results", task_name)
         except DrydockTaskTimeoutException:
-            LOG.warning("Task %s has timed out after %s seconds. "
-                        "Some nodes may "
-                        "have been destroyed. The report at the end of "
-                        "processing this step contains the results", task_name,
-                        self.dest_timeout)
+            LOG.warning(
+                "Task %s has timed out after %s seconds. "
+                "Some nodes may "
+                "have been destroyed. The report at the end of "
+                "processing this step contains the results", task_name,
+                self.dest_timeout)
 
     def report_summary(self):
         """Reports the successfully destroyed nodes"""
@@ -100,7 +99,6 @@ class DrydockDestroyNodeOperator(DrydockBaseOperator):
 
 
 class DrydockDestroyNodeOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockDestroyNodeOperator in Airflow."""
 
     name = 'drydock_destroy_node_operator'

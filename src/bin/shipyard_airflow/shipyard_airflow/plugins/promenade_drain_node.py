@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeDrainNodeOperator(PromenadeBaseOperator):
-
     """Promenade Drain Node Operator
 
     This operator will trigger promenade to drain the target
@@ -37,7 +36,7 @@ class PromenadeDrainNodeOperator(PromenadeBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
 
@@ -54,12 +53,10 @@ class PromenadeDrainNodeOperator(PromenadeBaseOperator):
             LOG.info("Node %s has been successfully drained",
                      self.redeploy_server)
         else:
-            raise AirflowException('Failed to drain %s!',
-                                   self.redeploy_server)
+            raise AirflowException('Failed to drain %s!', self.redeploy_server)
 
 
 class PromenadeDrainNodeOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeDrainNodeOperator in Airflow."""
 
     name = 'promenade_drain_node_operator'

@@ -21,8 +21,7 @@ import logging
 from oslo_config import cfg
 
 from shipyard_airflow.common.document_validators.document_validator import (
-    DocumentValidator
-)
+    DocumentValidator)
 from .validate_deployment_strategy import ValidateDeploymentStrategy
 from .validate_deployment_version import ValidateDeploymentVersion
 
@@ -37,6 +36,7 @@ class ValidateDeploymentConfigurationBasic(DocumentValidator):
     The Schema validation done separately ensures that the Armada Manifest
     document is specified.
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -47,17 +47,17 @@ class ValidateDeploymentConfigurationBasic(DocumentValidator):
         self.error_status = False
 
 
-class ValidateDeploymentConfigurationFull(
-        ValidateDeploymentConfigurationBasic):
+class ValidateDeploymentConfigurationFull(ValidateDeploymentConfigurationBasic
+                                          ):
     """Validates the DeploymentConfiguration
 
     Includes triggered checks for DeploymentStrategy and DeploymentVersion
     """
+
     def do_validate(self):
         try:
             dep_strat_nm = (
-                self.doc_dict['physical_provisioner']['deployment_strategy']
-            )
+                self.doc_dict['physical_provisioner']['deployment_strategy'])
             self.add_triggered_validation(ValidateDeploymentStrategy,
                                           dep_strat_nm)
 
@@ -65,14 +65,15 @@ class ValidateDeploymentConfigurationFull(
             # need to check both KeyError for missing 'deployment_strategy'
             # and TypeError for not subscriptable exception when
             # 'physical_provisioner' is None
-            self.val_msg_list.append(self.val_msg(
-                name="DeploymentStrategyNotSpecified",
-                error=False,
-                level="Info",
-                message=("A deployment strategy document was not specified in "
-                         "the deployment configuration. Because of this, the "
-                         "strategy used will be all-at-once.")
-            ))
+            self.val_msg_list.append(
+                self.val_msg(
+                    name="DeploymentStrategyNotSpecified",
+                    error=False,
+                    level="Info",
+                    message=(
+                        "A deployment strategy document was not specified in "
+                        "the deployment configuration. Because of this, the "
+                        "strategy used will be all-at-once.")))
             LOG.info("No deployment strategy document specified, "
                      "'all-at-once' is assumed, and deployment strategy will "
                      "not be further validated")

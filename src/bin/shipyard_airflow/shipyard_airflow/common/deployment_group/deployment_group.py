@@ -39,15 +39,13 @@ def check_label_format(label_string):
         raise DeploymentGroupLabelFormatError(
             "Label {} is formatted incorrectly. One : (colon) character is "
             "required, and the label must be in key:value format".format(
-                label_string)
-        )
+                label_string))
     for v in split:
         if v.strip() == "":
             raise DeploymentGroupLabelFormatError(
                 "Label {} is formatted incorrectly. The values on either side "
                 "of the colon character must not be empty.".format(
-                    label_string)
-            )
+                    label_string))
 
 
 class Stage(Enum):
@@ -80,7 +78,7 @@ class Stage(Enum):
             return [cls.NOT_STARTED, cls.PREPARED]
         else:
             raise DeploymentGroupStageError("{} is not a valid stage".format(
-                                            str(stage)))
+                str(stage)))
 
 
 class GroupNodeSelector:
@@ -98,6 +96,7 @@ class GroupNodeSelector:
             'rack_names': ['rack03'],
         }
     """
+
     def __init__(self, selector_dict):
         self.node_names = selector_dict.get('node_names', [])
         self.node_labels = selector_dict.get('node_labels', [])
@@ -108,14 +107,17 @@ class GroupNodeSelector:
             check_label_format(label)
 
         # A selector is an "all_selector" if there are no criteria specified.
-        self.all_selector = not any([self.node_names, self.node_labels,
-                                     self.node_tags, self.rack_names])
+        self.all_selector = not any([
+            self.node_names, self.node_labels, self.node_tags, self.rack_names
+        ])
         if self.all_selector:
             LOG.debug("Selector values select all available nodes")
 
     def get_node_labels_as_dict(self):
-        return {label.split(':')[0].strip(): label.split(':')[1].strip()
-                for label in self.node_labels}
+        return {
+            label.split(':')[0].strip(): label.split(':')[1].strip()
+            for label in self.node_labels
+        }
 
 
 class SuccessCriteria:
@@ -127,6 +129,7 @@ class SuccessCriteria:
 
     If no criteria are specified, all results are considered a success
     """
+
     def __init__(self, criteria):
         if not criteria:
             self._always_succeed = True
@@ -164,14 +167,16 @@ class SuccessCriteria:
         fail_size = len(all_set.difference(succ_set))
         actual_pct_succ = succ_size / all_size * 100
 
-        failures.extend(self._check("percent_successful_nodes",
-                                    actual_pct_succ, operator.ge,
-                                    self.pct_succ_nodes))
-        failures.extend(self._check("minimum_successful_nodes", succ_size,
-                                    operator.ge, self.min_succ_nodes))
+        failures.extend(
+            self._check("percent_successful_nodes", actual_pct_succ,
+                        operator.ge, self.pct_succ_nodes))
+        failures.extend(
+            self._check("minimum_successful_nodes", succ_size, operator.ge,
+                        self.min_succ_nodes))
 
-        failures.extend(self._check("maximum_failed_nodes", fail_size,
-                                    operator.le, self.max_failed_nodes))
+        failures.extend(
+            self._check("maximum_failed_nodes", fail_size, operator.le,
+                        self.max_failed_nodes))
         return failures
 
     def _check(self, name, actual, op, needed):
@@ -232,6 +237,7 @@ class DeploymentGroup:
             },
         }
     """
+
     def __init__(self, group_dict, node_lookup):
         # store the original dictionary
         self._group_dict = group_dict
@@ -251,8 +257,7 @@ class DeploymentGroup:
             self.selectors.append(GroupNodeSelector({}))
 
         self.success_criteria = SuccessCriteria(
-            group_dict.get('success_criteria', {})
-        )
+            group_dict.get('success_criteria', {}))
 
         # all groups start as NOT_STARTED
         self.__stage = None
@@ -284,11 +289,8 @@ class DeploymentGroup:
         else:
             raise DeploymentGroupStageError(
                 "{} is not a valid stage for a group in stage {}".format(
-                    stage, self.__stage
-                ))
-        LOG.info("Setting group %s with %s -> %s",
-                 self.name,
-                 pre_change_stage,
+                    stage, self.__stage))
+        LOG.info("Setting group %s with %s -> %s", self.name, pre_change_stage,
                  stage)
 
     def _check_required_fields(self):
@@ -317,15 +319,13 @@ class DeploymentGroup:
         except TypeError:
             raise InvalidDeploymentGroupNodeLookupError(
                 "The node lookup function supplied to the DeploymentGroup "
-                "is not an iterable"
-            )
+                "is not an iterable")
         if not all(isinstance(node, str) for node in node_list):
             raise InvalidDeploymentGroupNodeLookupError(
                 "The node lookup function supplied to the DeploymentGroup "
-                "is not all strings"
-            )
-        LOG.info("Group %s selectors have resolved to nodes: %s",
-                 self.name, ", ".join(node_list))
+                "is not all strings")
+        LOG.info("Group %s selectors have resolved to nodes: %s", self.name,
+                 ", ".join(node_list))
         return node_list
 
     def get_failed_success_criteria(self, success_node_list):

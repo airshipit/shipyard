@@ -25,6 +25,7 @@ class AuthMiddleware(object):
     """ Authentication middleware class that handles auth headers
     and adds them to the request context
     """
+
     def process_request(self, req, resp):
         ctx = req.context
         ctx.set_policy_engine(policy.policy_engine)

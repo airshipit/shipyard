@@ -37,17 +37,21 @@ def deploy_site_armada(dag):
         """
         armada_post_apply = ArmadaPostApplyOperator(
             task_id='armada_post_apply',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
             retries=5,
-            dag=dag)
+            dag=dag
+        )
         """Generate the armada get_releases step
 
         Armada get_releases does the verification of releases of helm charts
         """
         armada_get_releases = ArmadaGetReleasesOperator(
             task_id='armada_get_releases',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         armada_post_apply >> armada_get_releases
 

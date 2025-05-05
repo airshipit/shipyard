@@ -16,8 +16,9 @@ import ulid
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
-from shipyard_airflow.db.errors import AirflowStateError
+from shipyard_airflow.db.db import SHIPYARD_DB
+from shipyard_airflow.api.api import AIRFLOW_API
+from shipyard_airflow.api.errors import AirflowStateError
 from shipyard_airflow.errors import ApiError
 
 
@@ -26,11 +27,10 @@ class ActionsControlResource(BaseResource):
     """
     The actions control resource allows for runtime control
     """
+
     def __init__(self):
         BaseResource.__init__(self)
         self.controls = {
-            'pause': self.pause_dag,
-            'unpause': self.unpause_dag,
             'stop': self.stop_dag
         }
 
@@ -40,8 +40,7 @@ class ActionsControlResource(BaseResource):
         Returns that a control was recevied (202 response)
         :returns: a no-body response
         """
-        self.handle_control(kwargs['action_id'],
-                            kwargs['control_verb'],
+        self.handle_control(kwargs['action_id'], kwargs['control_verb'],
                             req.context)
         resp.status = falcon.HTTP_202
 
@@ -53,10 +52,9 @@ class ActionsControlResource(BaseResource):
         action = self.get_action_db(action_id=action_id)
 
         if action is None:
-            raise ApiError(
-                title='Action not found',
-                description='Unknown action {}'.format(action_id),
-                status=falcon.HTTP_404)
+            raise ApiError(title='Action not found',
+                           description='Unknown action {}'.format(action_id),
+                           status=falcon.HTTP_404)
 
         if control_verb in self.controls:
             self.controls.get(control_verb)(
@@ -79,8 +77,7 @@ class ActionsControlResource(BaseResource):
         Wrapper for call to the shipyard database to get an action
         :returns: a dictionary of action details.
         """
-        return SHIPYARD_DB.get_action_by_id(
-            action_id=action_id)
+        return SHIPYARD_DB.get_action_by_id(action_id=action_id)
 
     def audit_control_command_db(self, action_audit):
         """
@@ -89,41 +86,14 @@ class ActionsControlResource(BaseResource):
         """
         return SHIPYARD_DB.insert_action_command_audit(action_audit)
 
-    def pause_dag(self, dag_id, execution_date):
-        """
-        Sets the pause flag on this dag/execution
-        """
-        try:
-            AIRFLOW_DB.pause_dag_run(
-                dag_id=dag_id, execution_date=execution_date)
-        except AirflowStateError as state_error:
-            raise ApiError(
-                title='Unable to pause action',
-                description=state_error.message,
-                status=falcon.HTTP_409)
-
-    def unpause_dag(self, dag_id, execution_date):
-        """
-        Clears the pause flag on this dag/execution
-        """
-        try:
-            AIRFLOW_DB.unpause_dag_run(
-                dag_id=dag_id, execution_date=execution_date)
-        except AirflowStateError as state_error:
-            raise ApiError(
-                title='Unable to unpause action',
-                description=state_error.message,
-                status=falcon.HTTP_409)
-
     def stop_dag(self, dag_id, execution_date):
         """
         Sets the stop flag on this dag/execution
         """
         try:
-            AIRFLOW_DB.stop_dag_run(
-                dag_id=dag_id, execution_date=execution_date)
+            AIRFLOW_API.stop_dag_run(dag_id=dag_id,
+                                     execution_date=execution_date)
         except AirflowStateError as state_error:
-            raise ApiError(
-                title='Unable to stop action',
-                description=state_error.message,
-                status=falcon.HTTP_409)
+            raise ApiError(title='Unable to stop action',
+                           description=state_error.message,
+                           status=falcon.HTTP_409)

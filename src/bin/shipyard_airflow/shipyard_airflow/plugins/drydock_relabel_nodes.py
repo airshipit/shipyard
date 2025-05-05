@@ -21,19 +21,15 @@ from airflow.plugins_manager import AirflowPlugin
 try:
     from drydock_base_operator import DrydockBaseOperator
     from drydock_base_operator import gen_node_name_filter
-    from drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+    from drydock_errors import (DrydockTaskFailedException,
+                                DrydockTaskTimeoutException)
 except ImportError:
     from shipyard_airflow.plugins.drydock_base_operator import \
         DrydockBaseOperator
     from shipyard_airflow.plugins.drydock_base_operator import \
         gen_node_name_filter
     from shipyard_airflow.plugins.drydock_errors import (
-        DrydockTaskFailedException,
-        DrydockTaskTimeoutException
-    )
+        DrydockTaskFailedException, DrydockTaskTimeoutException)
 
 LOG = logging.getLogger(__name__)
 
@@ -45,7 +41,7 @@ class DrydockRelabelNodesOperator(DrydockBaseOperator):
     using Drydock.
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         self.successes = []
 
         LOG.info("Relabeling nodes [%s]", ", ".join(self.target_nodes))
@@ -56,8 +52,7 @@ class DrydockRelabelNodesOperator(DrydockBaseOperator):
         self.report_summary()
         if not self.is_task_successful():
             raise AirflowException(
-                "One or more nodes requested for relabeling failed to relabel"
-            )
+                "One or more nodes requested for relabeling failed to relabel")
 
     def setup_configured_values(self):
         """Retrieve and localize the interval and timeout values for destroy
@@ -77,15 +72,17 @@ class DrydockRelabelNodesOperator(DrydockBaseOperator):
         try:
             self.query_task(self.q_interval, self.task_timeout)
         except DrydockTaskFailedException:
-            LOG.exception("Task %s has failed. Some nodes may have been "
-                          "relabeled. The report at the end of processing "
-                          "this step contains the results", task_name)
+            LOG.exception(
+                "Task %s has failed. Some nodes may have been "
+                "relabeled. The report at the end of processing "
+                "this step contains the results", task_name)
         except DrydockTaskTimeoutException:
-            LOG.warning("Task %s has timed out after %s seconds. "
-                        "Some nodes may "
-                        "have been relabeled. The report at the end of "
-                        "processing this step contains the results", task_name,
-                        self.task_timeout)
+            LOG.warning(
+                "Task %s has timed out after %s seconds. "
+                "Some nodes may "
+                "have been relabeled. The report at the end of "
+                "processing this step contains the results", task_name,
+                self.task_timeout)
 
     def report_summary(self):
         """Reports the successfully relabeled nodes"""
@@ -104,7 +101,6 @@ class DrydockRelabelNodesOperator(DrydockBaseOperator):
 
 
 class DrydockRelabelNodesOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockRelabelNodesOperator in Airflow."""
 
     name = 'drydock_relabel_nodes_operator'

@@ -25,6 +25,7 @@ except ImportError:
 
 
 def shipyard_service_token(func):
+
     @wraps(func)
     def keystone_token_get(self, *args):
         """This function retrieves Keystone token for Airship Services

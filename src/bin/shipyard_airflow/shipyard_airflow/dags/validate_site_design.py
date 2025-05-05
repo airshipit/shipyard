@@ -49,6 +49,7 @@ def validate_site_design(dag, targets=None):
         # Always add Deckhand validations
         deckhand_validate_site_design = DeckhandValidateSiteDesignOperator(
             task_id='deckhand_validate_site_design',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
             retries=1,
             dag=dag
@@ -58,6 +59,7 @@ def validate_site_design(dag, targets=None):
             # Add Drydock and Promenade validations
             drydock_validate_site_design = DrydockValidateDesignOperator(
                 task_id='drydock_validate_site_design',
+                main_dag_name=dag.dag_id.split('.')[0],
                 shipyard_conf=config_path,
                 retries=1,
                 dag=dag
@@ -66,6 +68,7 @@ def validate_site_design(dag, targets=None):
             promenade_validate_site_design = \
                 PromenadeValidateSiteDesignOperator(
                     task_id='promenade_validate_site_design',
+                    main_dag_name=dag.dag_id.split('.')[0],
                     shipyard_conf=config_path,
                     retries=1,
                     dag=dag
@@ -75,6 +78,7 @@ def validate_site_design(dag, targets=None):
             # Add Armada validations
             armada_validate_site_design = ArmadaValidateDesignOperator(
                 task_id='armada_validate_site_design',
+                main_dag_name=dag.dag_id.split('.')[0],
                 shipyard_conf=config_path,
                 retries=1,
                 dag=dag

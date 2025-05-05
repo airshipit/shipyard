@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeDecommissionNodeOperator(PromenadeBaseOperator):
-
     """Promenade Decommission Node Operator
 
     This operator will trigger promenade to perform steps to
@@ -35,7 +34,7 @@ class PromenadeDecommissionNodeOperator(PromenadeBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         LOG.info("Decommissioning node from Kubernetes cluster...")
@@ -52,7 +51,6 @@ class PromenadeDecommissionNodeOperator(PromenadeBaseOperator):
 
 
 class PromenadeDecommissionNodeOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeDecommissionNodeOperator in Airflow."""
 
     name = 'promenade_decommission_node_operator'

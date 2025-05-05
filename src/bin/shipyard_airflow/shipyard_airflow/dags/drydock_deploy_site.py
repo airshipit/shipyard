@@ -41,23 +41,31 @@ def deploy_site_drydock(dag, verify_nodes_exist=False):
         if verify_nodes_exist:
             drydock_verify_nodes_exist = DrydockVerifyNodesExistOperator(
                 task_id='verify_nodes_exist',
+                main_dag_name=dag.dag_id.split('.')[0],
                 shipyard_conf=config_path,
-                dag=dag)
+                dag=dag
+            )
 
         drydock_verify_site = DrydockVerifySiteOperator(
             task_id='verify_site',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         drydock_prepare_site = DrydockPrepareSiteOperator(
             task_id='prepare_site',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         drydock_nodes = DrydockNodesOperator(
             task_id='prepare_and_deploy_nodes',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         # Define dependencies
         drydock_prepare_site.set_upstream(drydock_verify_site)

@@ -26,7 +26,6 @@ LOG = logging.getLogger(__name__)
 
 
 class ArmadaGetReleasesOperator(ArmadaBaseOperator):
-
     """Armada Get Releases Operator
 
     This operator will trigger armada to get the Helm charts releases
@@ -34,7 +33,7 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Retrieve Armada Releases after deployment
         LOG.info("Retrieving Helm charts releases after deployment..")
         armada_get_releases = self.get_releases()
@@ -47,7 +46,6 @@ class ArmadaGetReleasesOperator(ArmadaBaseOperator):
 
 
 class ArmadaGetReleasesOperatorPlugin(AirflowPlugin):
-
     """Creates ArmadaGetReleasesOperator in Airflow."""
 
     name = 'armada_get_releases_operator'

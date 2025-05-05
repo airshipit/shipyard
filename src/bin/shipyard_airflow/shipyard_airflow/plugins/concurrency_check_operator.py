@@ -12,26 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import requests
+from urllib.parse import urljoin
 
-from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
-from airflow.plugins_manager import AirflowPlugin
-from airflow.hooks.postgres_hook import PostgresHook
 from airflow.exceptions import AirflowException
-
+from airflow.sdk import BaseOperator
+from airflow.plugins_manager import AirflowPlugin
+from oslo_config import cfg
 from shipyard_airflow.plugins.xcom_pusher import XcomPusher
 
-# constants related to the dag_run table.
-DAG_RUN_SELECT_RUNNING_SQL = ("select dag_id, execution_date "
-                              "from dag_run "
-                              "where state='running'")
+CONF = cfg.CONF
 
-# connection name for airflow's own sql db
-AIRFLOW_DB = 'airflows_own_db'
-
-# each set in this list of sets indicates DAGs that shouldn't execute together
-CONFLICTING_DAG_SETS = [set(['deploy_site', 'update_site', 'update_software',
-                             'redeploy_server', 'relabel_nodes'])]
+CONFLICTING_DAG_SETS = [
+    set([
+        'deploy_site', 'update_site', 'update_software', 'redeploy_server',
+        'relabel_nodes'
+    ])
+]
 
 
 def find_conflicting_dag_set(dag_name, conflicting_dag_sets=None):
@@ -53,10 +50,9 @@ def find_conflicting_dag_set(dag_name, conflicting_dag_sets=None):
 class ConcurrencyCheckOperator(BaseOperator):
     """
     Provides a way to indicate which DAGs should not be executing
-    simultaneously.
+    simultaneously using the Airflow API.
     """
 
-    @apply_defaults
     def __init__(self, conflicting_dag_set=None, *args, **kwargs):
         super(ConcurrencyCheckOperator, self).__init__(*args, **kwargs)
         self.conflicting_dag_set = conflicting_dag_set
@@ -64,11 +60,12 @@ class ConcurrencyCheckOperator(BaseOperator):
 
     def execute(self, context):
         """
-        Run the check to see if this DAG has an concurrency issues with other
+        Run the check to see if this DAG has concurrency issues with other
         DAGs. Stop the workflow if there is.
         """
         self.xcom_push = XcomPusher(context['task_instance'])
         self._xcom_push_status(False)
+
         if self.conflicting_dag_set is None:
             self.check_dag_id = self.dag.dag_id
             logging.debug('dag_id is %s', self.check_dag_id)
@@ -76,7 +73,7 @@ class ConcurrencyCheckOperator(BaseOperator):
                 self.check_dag_id = self.dag.dag_id.split('.', 1)[0]
                 logging.debug('dag_id modified to %s', self.check_dag_id)
 
-            logging.info('from dag %s, assuming %s for concurrency check',
+            logging.info('From dag %s, assuming %s for concurrency check',
                          self.dag.dag_id, self.check_dag_id)
             self.conflicting_dag_set = find_conflicting_dag_set(
                 self.check_dag_id)
@@ -88,25 +85,56 @@ class ConcurrencyCheckOperator(BaseOperator):
         if conflicting_dag is None:
             logging.info('No conflicts found. Continuing Execution')
         else:
-            self.abort_conflict(
-                dag_name=self.check_dag_id, conflict=conflicting_dag)
+            self.abort_conflict(dag_name=self.check_dag_id,
+                                conflict=conflicting_dag)
         self._xcom_push_status(True)
 
     def get_executing_dags(self):
         """
-        Encapsulation of getting database records of running dags.
-        Returns a list of records of dag_id and execution_date
+        Fetch the list of currently running DAGs using the Airflow API.
+        Returns a list of tuples containing dag_id and logical_date.
         """
-        logging.info('Executing: %s', DAG_RUN_SELECT_RUNNING_SQL)
-        airflow_pg_hook = PostgresHook(postgres_conn_id=AIRFLOW_DB)
-        return airflow_pg_hook.get_records(DAG_RUN_SELECT_RUNNING_SQL)
+        web_server_url = CONF.base.web_server
+        headers = {"Authorization": f"Bearer {self._get_airflow_api_token()}"}
+        running_dags = []
+
+        try:
+            # Fetch all DAGs
+            dags_url = urljoin(web_server_url, "/api/v2/dags?limit=10000")
+            response = requests.get(dags_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            dags = response.json()
+
+            for dag in dags['dags']:
+                dag_id = dag['dag_id']
+                # Fetch DAG runs for each DAG
+                dag_runs_url = urljoin(web_server_url,
+                                       f"/api/v2/dags/{dag_id}"
+                                       f"/dagRuns?limit=10000")
+                dag_runs_response = requests.get(dag_runs_url,
+                                                 headers=headers,
+                                                 timeout=10)
+                dag_runs_response.raise_for_status()
+                dag_runs = dag_runs_response.json()
+
+                # Filter running DAGs
+                for dag_run in dag_runs['dag_runs']:
+                    if dag_run['state'] == 'running':
+                        running_dags.append((dag_id, dag_run['logical_date']))
+
+        except requests.exceptions.RequestException as e:
+            logging.error("Failed to fetch running DAGs from Airflow API: %s",
+                          str(e))
+            raise AirflowException(
+                "Failed to fetch running DAGs from Airflow API")
+
+        return running_dags
 
     def find_conflicting_dag(self, dag_id_to_check):
         """
-        Checks for a DAGs that is conflicting and exits based on the first
-        one found.
-        Also will return the dag_id_to_check as conflicting if more than 1
-        instance is running
+        Checks for a DAG that is conflicting and exits based on the first
+        one found. Also will return the dag_id_to_check as conflicting if
+        more than 1 instance is running.
         """
         self_dag_count = 0
         for dag_id, execution_date in self.get_executing_dags():
@@ -135,11 +163,24 @@ class ConcurrencyCheckOperator(BaseOperator):
 
     def _xcom_push_status(self, status):
         """
-        Push the status of the concurrency check
+        Push the status of the concurrency check.
         :param status: bool of whether or not this task is successful
         :return:
         """
         self.xcom_push.xcom_push(key="concurrency_check_success", value=status)
+
+    def _get_airflow_api_token(self):
+        """
+        Fetch the Airflow API token (JWT) from the authentication endpoint.
+        """
+        token_url = urljoin(CONF.base.web_server, "auth/token")
+        try:
+            response = requests.get(token_url, timeout=10)
+            response.raise_for_status()
+            return response.json().get("access_token")
+        except requests.exceptions.RequestException as e:
+            logging.error("Failed to fetch Airflow API token: %s", str(e))
+            raise AirflowException("Failed to fetch Airflow API token")
 
 
 class ConcurrencyCheckPlugin(AirflowPlugin):

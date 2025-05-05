@@ -13,8 +13,9 @@
 # limitations under the License.
 from datetime import timedelta
 
-import airflow
-from airflow import DAG
+import pendulum
+
+from airflow.sdk import DAG
 
 try:
     from common_step_factory import CommonStepFactory
@@ -22,7 +23,6 @@ try:
 except ImportError:
     from shipyard_airflow.dags.common_step_factory import CommonStepFactory
     from shipyard_airflow.dags.validate_site_design import BAREMETAL
-
 """redeploy_server
 
 The top-level orchestration DAG for redeploying server(s).
@@ -33,7 +33,7 @@ PARENT_DAG_NAME = 'redeploy_server'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': airflow.utils.dates.days_ago(1),
+    'start_date': pendulum.now('UTC').subtract(days=1),
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -42,20 +42,18 @@ default_args = {
     'retry_delay': timedelta(seconds=30),
 }
 
-dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
                                  default_args=default_args,
                                  action_type='targeted')
 
-
 action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()
 deployment_configuration = step_factory.get_deployment_configuration()
 validate_site_design = step_factory.get_validate_site_design(
-    targets=[BAREMETAL]
-)
+    targets=[BAREMETAL])
 # TODO(bryan-strassner): When the rest of the necessary functionality is in
 #     place, this step may need to be replaced with the guarded version of
 #     destroying servers.
@@ -66,9 +64,7 @@ drydock_build = step_factory.get_drydock_build()
 
 # DAG Wiring
 deployment_configuration.set_upstream(action_xcom)
-validate_site_design.set_upstream([
-    concurrency_check,
-    deployment_configuration
-])
+validate_site_design.set_upstream(
+    [concurrency_check, deployment_configuration])
 destroy_server.set_upstream(validate_site_design)
 drydock_build.set_upstream(destroy_server)

@@ -38,11 +38,12 @@ def api_lock(api_lock_type):
     These locks are intended for use around methods such as on_post
     and on_get, etc...
     """
+
     def lock_decorator(func):
+
         @wraps(func)
         def func_wrapper(self, req, resp, *args, **kwargs):
-            lock = ApiLock(api_lock_type,
-                           req.context.external_marker,
+            lock = ApiLock(api_lock_type, req.context.external_marker,
                            req.context.user)
             try:
                 lock.acquire()
@@ -53,17 +54,16 @@ def api_lock(api_lock_type):
                     description=(
                         'Another process is currently blocking this request '
                         'with a lock for {}. Lock expires in not more '
-                        'than {} seconds'.format(
-                            lock.lock_type_name,
-                            lock.expires
-                        )
-                    ),
+                        'than {} seconds'.format(lock.lock_type_name,
+                                                 lock.expires)),
                     status=falcon.HTTP_409,
                     retry=False,
                 )
             finally:
                 lock.release()
+
         return func_wrapper
+
     return lock_decorator
 
 
@@ -111,11 +111,7 @@ class ApiLock(object):
     60 seconds
     """
 
-    def __init__(self,
-                 api_lock_type,
-                 reference_id,
-                 user,
-                 lock_db=SHIPYARD_DB):
+    def __init__(self, api_lock_type, reference_id, user, lock_db=SHIPYARD_DB):
         """
         Set up the Api Lock, using the input ApiLockType.
         Generates a ULID to represent this lock
@@ -128,8 +124,7 @@ class ApiLock(object):
         if (not isinstance(api_lock_type, ApiLockType) or
                 api_lock_type.value.get('name') is None):
             raise ApiLockSetupError(
-                message='ApiLock requires a valid ApiLockType'
-            )
+                message='ApiLock requires a valid ApiLockType')
         self.lock_id = ulid.ulid()
         self.lock_type_name = api_lock_type.value.get('name')
         self.expires = api_lock_type.value.get('expires', 60)
@@ -143,8 +138,7 @@ class ApiLock(object):
         Responds with an ApiLockAcquireError if the lock is not
         acquired
         """
-        LOG.info('Acquiring lock type: %s. Lock id: %s.',
-                 self.lock_type_name,
+        LOG.info('Acquiring lock type: %s. Lock id: %s.', self.lock_type_name,
                  self.lock_id)
 
         holds_lock = False
@@ -153,23 +147,16 @@ class ApiLock(object):
             lock_type=self.lock_type_name,
             expires=self.expires,
             user=self.user,
-            reference_id=self.reference_id
-        )
-        LOG.info('Insert lock %s %s',
-                 self.lock_id,
+            reference_id=self.reference_id)
+        LOG.info('Insert lock %s %s', self.lock_id,
                  'succeeded' if insert_worked else 'failed')
 
         if insert_worked:
             lock_retrieved = self.lock_db.get_api_lock(
-                lock_type=self.lock_type_name
-            )
+                lock_type=self.lock_type_name)
             holds_lock = lock_retrieved == self.lock_id
-            LOG.info(
-                'Lock %s is currently held. This lock is %s. Match=%s',
-                lock_retrieved,
-                self.lock_id,
-                holds_lock
-            )
+            LOG.info('Lock %s is currently held. This lock is %s. Match=%s',
+                     lock_retrieved, self.lock_id, holds_lock)
 
         if not holds_lock:
             LOG.info('Api Lock not acquired')
@@ -184,13 +171,11 @@ class ApiLock(object):
         except Exception as error:
             # catching Exception because this is a non-fatal case
             # and has no expected action to be taken.
-            LOG.error('Exception raised during release of api lock: %s. '
-                      'Unreleased lock for %s will expire in not more than '
-                      '%s seconds. Exception: %s',
-                      self.lock_id,
-                      self.lock_type_name,
-                      self.expires,
-                      str(error))
+            LOG.error(
+                'Exception raised during release of api lock: %s. '
+                'Unreleased lock for %s will expire in not more than '
+                '%s seconds. Exception: %s', self.lock_id, self.lock_type_name,
+                self.expires, str(error))
 
 
 class ApiLockError(Exception):

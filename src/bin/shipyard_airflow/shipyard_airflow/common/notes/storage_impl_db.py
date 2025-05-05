@@ -29,7 +29,7 @@ from sqlalchemy import func
 from sqlalchemy import Text
 from sqlalchemy import types
 
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base  # Updated import
 from sqlalchemy.orm import sessionmaker
 
 from .notes import Note
@@ -39,7 +39,7 @@ from .errors import NotesError
 from .errors import NotesInitializationError
 
 LOG = logging.getLogger(__name__)
-Base = declarative_base()
+Base = declarative_base()  # Updated to use the new API
 
 
 class TNote(Base):
@@ -69,6 +69,7 @@ class ShipyardSQLNotesStorage(NotesStorage):
     :param engine_getter: A method that can be used to get SQLAlchemy engine
         to use
     """
+
     def __init__(self, engine_getter):
         try:
             self._engine_getter = engine_getter
@@ -77,8 +78,7 @@ class ShipyardSQLNotesStorage(NotesStorage):
             LOG.exception(ex)
             raise NotesInitializationError(
                 "Misconfiguration has casuse a failure to setup the desired "
-                "database connection for Notes."
-            )
+                "database connection for Notes.")
 
     def _get_session(self):
         """Lazy initilize the sessionmaker, invoke the engine getter, and
@@ -103,8 +103,7 @@ class ShipyardSQLNotesStorage(NotesStorage):
                 LOG.exception(ex)
                 raise NotesError(
                     "An unexpected error has occurred while attempting to "
-                    "interact with the database for note storage"
-                )
+                    "interact with the database for note storage")
         finally:
             session.close()
 
@@ -125,18 +124,14 @@ class ShipyardSQLNotesStorage(NotesStorage):
             notes_res = []
             if (query.exact_match):
                 n_qry = session.query(TNote).filter(
-                    and_(
-                        TNote.assoc_id == a_id_pat,
-                        TNote.verbosity <= max_verb
-                    )
-                ).order_by(TNote.note_timestamp)
+                    and_(TNote.assoc_id == a_id_pat,
+                         TNote.verbosity <= max_verb)).order_by(
+                             TNote.note_timestamp)
             else:
                 n_qry = session.query(TNote).filter(
-                    and_(
-                        TNote.assoc_id.like(a_id_pat + '%'),
-                        TNote.verbosity <= max_verb
-                    )
-                ).order_by(TNote.note_timestamp)
+                    and_(TNote.assoc_id.like(a_id_pat + '%'),
+                         TNote.verbosity <= max_verb)).order_by(
+                             TNote.note_timestamp)
             db_notes = n_qry.all()
             for tn in db_notes:
                 r_notes.append(self._map(tn, Note))
@@ -157,20 +152,17 @@ class ShipyardSQLNotesStorage(NotesStorage):
         :param target_type: the type of object to create and map to
         """
         try:
-            tgt = target_type(
-                assoc_id=src.assoc_id,
-                subject=src.subject,
-                sub_type=src.sub_type,
-                note_val=src.note_val,
-                verbosity=src.verbosity,
-                link_url=src.link_url,
-                is_auth_link=src.is_auth_link,
-                note_id=src.note_id,
-                note_timestamp=src.note_timestamp
-            )
+            tgt = target_type(assoc_id=src.assoc_id,
+                              subject=src.subject,
+                              sub_type=src.sub_type,
+                              note_val=src.note_val,
+                              verbosity=src.verbosity,
+                              link_url=src.link_url,
+                              is_auth_link=src.is_auth_link,
+                              note_id=src.note_id,
+                              note_timestamp=src.note_timestamp)
         except AttributeError as ae:
             LOG.exception(ae)
             raise NotesError(
-                "Note could not be translated from/to SQL form; mapping error"
-            )
+                "Note could not be translated from/to SQL form; mapping error")
         return tgt

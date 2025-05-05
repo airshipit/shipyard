@@ -17,8 +17,7 @@ import logging
 import yaml
 from airflow import AirflowException
 from airflow.plugins_manager import AirflowPlugin
-from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
+from airflow.sdk import BaseOperator
 import kubernetes
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_config_map import V1ConfigMap
@@ -55,9 +54,12 @@ class DeploymentStatusOperator(BaseOperator):
     Update Kubernetes with the deployment status of this dag's action
     """
 
-    @apply_defaults
-    def __init__(self, shipyard_conf, main_dag_name, force_completed=False,
-                 *args, **kwargs):
+    def __init__(self,
+                 shipyard_conf,
+                 main_dag_name,
+                 force_completed=False,
+                 *args,
+                 **kwargs):
         super(DeploymentStatusOperator, self).__init__(*args, **kwargs)
         self.shipyard_conf = shipyard_conf
         self.main_dag_name = main_dag_name
@@ -104,8 +106,7 @@ class DeploymentStatusOperator(BaseOperator):
         """
         action_info = self.xcom_puller.get_action_info()
         deployment_status = get_deployment_status(
-            action_info,
-            force_completed=self.force_completed)
+            action_info, force_completed=self.force_completed)
 
         revision_id = action_info['committed_rev_id']
 
@@ -130,9 +131,7 @@ class DeploymentStatusOperator(BaseOperator):
 
         try:
             deployment_version_doc = dh_tool.get_unique_doc(
-                revision_id=revision_id,
-                schema=doc_schema,
-                name=doc_name)
+                revision_id=revision_id, schema=doc_schema, name=doc_name)
             return deployment_version_doc
         except DocumentNotFoundError:
             LOG.info("There is no deployment-version document in Deckhand "
@@ -158,8 +157,8 @@ class DeploymentStatusOperator(BaseOperator):
         cfg_map_obj = self._create_config_map_object(name, namespace, data)
         cfg_map_naming = "(name: {}, namespace: {})".format(name, namespace)
         try:
-            LOG.info("Updating deployment status config map {}, "
-                     .format(cfg_map_naming))
+            LOG.info("Updating deployment status config map {}, ".format(
+                cfg_map_naming))
             k8s_client.patch_namespaced_config_map(
                 name,
                 namespace,
@@ -173,9 +172,7 @@ class DeploymentStatusOperator(BaseOperator):
             LOG.info("Creating deployment status config map {}".format(
                 cfg_map_naming))
             k8s_client.create_namespaced_config_map(
-                namespace,
-                cfg_map_obj,
-                pretty=CONFIG_MAP_DETAILS['pretty'])
+                namespace, cfg_map_obj, pretty=CONFIG_MAP_DETAILS['pretty'])
 
     @staticmethod
     def _get_k8s_client():
@@ -199,16 +196,11 @@ class DeploymentStatusOperator(BaseOperator):
         :rtype: V1ConfigMap
         """
         LOG.debug("Creating Kubernetes config map object")
-        metadata = V1ObjectMeta(
-            name=name,
-            namespace=namespace
-        )
-        return V1ConfigMap(
-            api_version=CONFIG_MAP_DETAILS['api_version'],
-            kind=CONFIG_MAP_DETAILS['kind'],
-            data=data,
-            metadata=metadata
-        )
+        metadata = V1ObjectMeta(name=name, namespace=namespace)
+        return V1ConfigMap(api_version=CONFIG_MAP_DETAILS['api_version'],
+                           kind=CONFIG_MAP_DETAILS['kind'],
+                           data=data,
+                           metadata=metadata)
 
 
 class DeploymentStatusOperatorPlugin(AirflowPlugin):

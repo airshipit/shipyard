@@ -24,8 +24,7 @@ from oslo_config import cfg
 from shipyard_airflow.common.notes.notes import NotesManager
 from shipyard_airflow.common.notes.notes_helper import NotesHelper
 from shipyard_airflow.common.notes.storage_impl_db import (
-    ShipyardSQLNotesStorage
-)
+    ShipyardSQLNotesStorage)
 from shipyard_airflow.control.service_endpoints import get_token
 from shipyard_airflow.db.db import SHIPYARD_DB
 
@@ -36,12 +35,9 @@ LOG = logging.getLogger(__name__)
 def _notes_manager():
     """Setup a NotesManager object using Shipyard settings"""
     sy_engine_getter = SHIPYARD_DB.get_engine
-    return NotesManager(
-        ShipyardSQLNotesStorage(sy_engine_getter),
-        get_token,
-        CONF.requests_config.notes_connect_timeout,
-        CONF.requests_config.notes_read_timeout
-    )
+    return NotesManager(ShipyardSQLNotesStorage(sy_engine_getter), get_token,
+                        CONF.requests_config.notes_connect_timeout,
+                        CONF.requests_config.notes_read_timeout)
 
 
 # NOTES is the notes manager that can be imported and used by other modules

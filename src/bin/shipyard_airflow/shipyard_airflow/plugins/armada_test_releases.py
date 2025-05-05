@@ -32,7 +32,8 @@ class ArmadaTestReleasesOperator(ArmadaBaseOperator):
     Invoke the Helm test of every deployed release or a targeted release
     specified by the "release" parameter.
     """
-    def do_execute(self):
+
+    def do_execute(self, context):
         release = self.action_params.get('release')
         if release:
             # Invoke Helm tests for specified release
@@ -53,8 +54,7 @@ class ArmadaTestReleasesOperator(ArmadaBaseOperator):
         LOG.info("Invoking Helm tests for release '{}'".format(release))
         try:
             armada_test_release = self.armada_client.get_test_release(
-                release=release,
-                timeout=None)
+                release=release, timeout=None)
         except errors.ClientError as client_error:
             raise AirflowException(client_error)
 

@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
-
     """Promenade Check ETCD Operator
 
     This operator will trigger promenade to retrieve the current
@@ -35,7 +34,7 @@ class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
 
@@ -54,7 +53,6 @@ class PromenadeCheckEtcdOperator(PromenadeBaseOperator):
 
 
 class PromenadeCheckEtcdOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeCheckEtcdOperator in Airflow."""
 
     name = 'promenade_check_etcd_operator'

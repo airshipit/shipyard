@@ -31,7 +31,6 @@ from shipyard_airflow.shipyard_const import CustomHeaders
 
 LOG = logging.getLogger(__name__)
 
-
 addl_headers_map = {
     'context_marker': CustomHeaders.CONTEXT_MARKER.value,
     'user': CustomHeaders.END_USER.value
@@ -76,8 +75,7 @@ def validate_deployment_action_full(action, **kwargs):
     validator = ValidateDeploymentAction(
         dh_client=service_clients.deckhand_client(addl_headers=addl_headers),
         action=action,
-        full_validation=True
-    )
+        full_validation=True)
     validator.validate()
 
 
@@ -92,8 +90,7 @@ def validate_deployment_action_basic(action, **kwargs):
     validator = ValidateDeploymentAction(
         dh_client=service_clients.deckhand_client(addl_headers=addl_headers),
         action=action,
-        full_validation=False
-    )
+        full_validation=False)
     validator.validate()
 
 
@@ -104,8 +101,8 @@ def validate_intermediate_commits(action, configdocs_helper, **kwargs):
     since the last site action. If 'allow_intermediate_commits' is set on the
     action, allows the action to continue
     """
-    validator = ValidateIntermediateCommit(
-        action=action, configdocs_helper=configdocs_helper)
+    validator = ValidateIntermediateCommit(action=action,
+                                           configdocs_helper=configdocs_helper)
     validator.validate()
 
 

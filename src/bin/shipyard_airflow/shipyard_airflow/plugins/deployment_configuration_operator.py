@@ -20,17 +20,15 @@ import configparser
 import logging
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 try:
     from deckhand_client_factory import DeckhandClientFactory
     from xcom_puller import XcomPuller
 except ImportError:
     from shipyard_airflow.plugins.deckhand_client_factory import (
-        DeckhandClientFactory
-    )
+        DeckhandClientFactory)
     from shipyard_airflow.plugins.xcom_puller import XcomPuller
 from shipyard_airflow.shipyard_const import CustomHeaders
 
@@ -79,11 +77,11 @@ class DeploymentConfigurationOperator(BaseOperator):
         "armada.validate_design_timeout": 600
     }
 
-    @apply_defaults
     def __init__(self,
                  main_dag_name=None,
                  shipyard_conf=None,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         """Deployment Configuration Operator
 
         Generate a DeploymentConfigurationOperator to read the deployment's
@@ -130,8 +128,7 @@ class DeploymentConfigurationOperator(BaseOperator):
         # either revision id was not on xcom, or the task_instance is messed
         raise AirflowException(
             "Design_revision is not set. Cannot proceed with retrieval of"
-            " the design configuration"
-        )
+            " the design configuration")
 
     def get_doc(self, revision_id):
         """Get the DeploymentConfiguration document dictionary from Deckhand"""
@@ -142,8 +139,8 @@ class DeploymentConfigurationOperator(BaseOperator):
         name = self.config.get(DOCUMENT_INFO,
                                'deployment_configuration_name',
                                fallback='deployment-configuration')
-        LOG.info("Attempting to retrieve {}, {} from Deckhand".format(schema,
-                                                                      name))
+        LOG.info("Attempting to retrieve {}, {} from Deckhand".format(
+            schema, name))
         filters = {"schema": schema, "metadata.name": name}
 
         # Create additional headers dict to pass context marker
@@ -204,8 +201,8 @@ class DeploymentConfigurationOperator(BaseOperator):
             LOG.info("Deployment Config value set- %s: %s", cfg_key, data)
             return data
         else:
-            LOG.info("Deployment Config using default- %s: %s",
-                     cfg_key, cfg_default)
+            LOG.info("Deployment Config using default- %s: %s", cfg_key,
+                     cfg_default)
             return cfg_default
 
 

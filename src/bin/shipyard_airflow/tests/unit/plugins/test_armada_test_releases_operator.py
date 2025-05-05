@@ -35,11 +35,16 @@ RELEASES = {
 
 @pytest.fixture
 def setup_armada_operator():
-    """Fixture to setup the ArmadaTestReleasesOperator with default params"""
-    op = ArmadaTestReleasesOperator(main_dag_name='main',
-                                    shipyard_conf=CONF_FILE,
-                                    task_id='t1')
+    op = ArmadaTestReleasesOperator(
+        main_dag_name='main',
+        shipyard_conf=CONF_FILE,
+        task_id='t1'
+    )
     op.action_params = dict()
+    op.dc = {'armada.get_releases_timeout': 30}
+    op.ucp_namespace = "default"
+    op.pod_selector_pattern = []
+    op.start_time = None
     return op
 
 @pytest.fixture
@@ -49,18 +54,22 @@ def setup_operator_with_params():
                                     shipyard_conf=CONF_FILE,
                                     task_id='t1')
     op.action_params = ACTION_PARAMS
+    op.dc = {'armada.get_releases_timeout': 30}
     return op
 
 @pytest.fixture
-def mock_releases():
-    """Fixture to mock releases"""
-    with mock.patch.object(ArmadaBaseOperator, 'get_releases', return_value=RELEASES):
+def mock_releases(setup_armada_operator):
+    with mock.patch.object(setup_armada_operator, 'get_releases', return_value=RELEASES):
         yield
 
 @pytest.fixture
-def mock_client():
-    """Fixture to mock Armada client"""
-    with mock.patch.object(ArmadaBaseOperator, 'armada_client', create=True) as mock_client:
+def mock_client(setup_armada_operator):
+    with mock.patch.object(setup_armada_operator, 'armada_client', create=True) as mock_client:
+        yield mock_client
+
+@pytest.fixture
+def mock_client_with_params(setup_operator_with_params):
+    with mock.patch.object(setup_operator_with_params, 'armada_client', create=True) as mock_client:
         yield mock_client
 
 @pytest.fixture
@@ -78,7 +87,8 @@ def mock_k8s_logs():
 def test_do_execute(setup_armada_operator, mock_releases, mock_client, mock_logs):
     """Test ArmadaTestReleasesOperator execute functionality"""
     op = setup_armada_operator
-    op.do_execute()
+    mock_context = {}
+    op.do_execute(mock_context)
 
     # Verify Armada client called to test every release
     calls = [mock.call(release=release, timeout=None) for release_list in RELEASES.values() for release in release_list]
@@ -88,17 +98,18 @@ def test_do_execute(setup_armada_operator, mock_releases, mock_client, mock_logs
     mock_logs.assert_called_with(mock_client.get_test_release.return_value)
 
 
-def test_do_execute_with_params(setup_operator_with_params, mock_client, mock_logs):
+def test_do_execute_with_params(setup_operator_with_params, mock_client_with_params, mock_logs):
     """Test ArmadaTestReleasesOperator execute functionality with action params"""
     op = setup_operator_with_params
-    op.do_execute()
+    mock_context = {}
+    op.do_execute(mock_context)
 
     # Verify Armada client called for single release with action params
     release = ACTION_PARAMS['release']
-    mock_client.get_test_release.assert_called_once_with(release=release, timeout=None)
+    mock_client_with_params.get_test_release.assert_called_once_with(release=release, timeout=None)
 
     # Verify test results logged
-    mock_logs.assert_called_with(mock_client.get_test_release.return_value)
+    mock_logs.assert_called_with(mock_client_with_params.get_test_release.return_value)
 
 
 def test_do_execute_fail(setup_armada_operator, mock_releases, mock_client, mock_k8s_logs):
@@ -109,5 +120,6 @@ def test_do_execute_fail(setup_armada_operator, mock_releases, mock_client, mock
 
     # Verify errors logged to pods
     with pytest.raises(AirflowException):
-        op.do_execute()
+        mock_context = {}
+        op.do_execute(mock_context)
         mock_k8s_logs.assert_called_once()

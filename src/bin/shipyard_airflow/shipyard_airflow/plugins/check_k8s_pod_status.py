@@ -64,8 +64,7 @@ def check_pods_status(required_pods):
             # Raise Execptions if the pod does not exits in the
             # Kubernetes cluster
             else:
-                raise AirflowException("Unable to locate pod(s) ",
-                                       pod_name)
+                raise AirflowException("Unable to locate pod(s) ", pod_name)
 
     # Return True when all required pods are in 'Succeeded' or
     # 'Running' state

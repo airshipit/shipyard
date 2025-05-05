@@ -133,6 +133,8 @@ spec:
                 key: AIRFLOW_DATABASE_URI
           args: ["webserver"]
           volumeMounts:
+            - name: pod-tmp
+              mountPath: /tmp
             - name: airflow-etc
               mountPath: {{ .Values.conf.airflow_config_file.path }}
               subPath: airflow.cfg
@@ -164,6 +166,8 @@ spec:
             name: airflow-bin
             defaultMode: 0555
         - name: airflow-logs
+          emptyDir: {}
+        - name: pod-tmp
           emptyDir: {}
 {{ if $mounts_shipyard.volumes }}{{ toYaml $mounts_shipyard.volumes | indent 8 }}{{ end }}
 {{- end }}

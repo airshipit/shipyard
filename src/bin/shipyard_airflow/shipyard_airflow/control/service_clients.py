@@ -34,8 +34,7 @@ def deckhand_client(addl_headers=None):
     if addl_headers:
         session.additional_headers.update(addl_headers)
 
-    return dh_client.Client(session=session,
-                            endpoint_type='internal')
+    return dh_client.Client(session=session, endpoint_type='internal')
 
 
 #

@@ -13,20 +13,14 @@
 # limitations under the License.
 from datetime import datetime
 import logging
-import os
 
 import falcon
-import requests
-from requests.exceptions import RequestException
-from dateutil.parser import parse
 from oslo_config import cfg
 import ulid
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.helpers.action_helper import (
-    determine_lifecycle,
-    format_action_steps
-)
+    determine_lifecycle, format_action_steps)
 from shipyard_airflow.control.action import action_validators
 from shipyard_airflow.control.base import BaseResource
 from shipyard_airflow.control.helpers import configdocs_helper
@@ -34,7 +28,8 @@ from shipyard_airflow.control.helpers.configdocs_helper import (
     ConfigdocsHelper)
 from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.control.json_schemas import ACTION
-from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
+from shipyard_airflow.api.api import AIRFLOW_API
+from shipyard_airflow.db.db import SHIPYARD_DB
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
@@ -45,8 +40,10 @@ def _action_mappings():
     # Return dictionary mapping actions to their dags and validators
     return {
         'deploy_site': {
-            'dag': 'deploy_site',
-            'rbac_policy': policy.ACTION_DEPLOY_SITE,
+            'dag':
+            'deploy_site',
+            'rbac_policy':
+            policy.ACTION_DEPLOY_SITE,
             'validators': [
                 action_validators.validate_committed_revision,
                 action_validators.validate_intermediate_commits,
@@ -54,8 +51,10 @@ def _action_mappings():
             ]
         },
         'update_site': {
-            'dag': 'update_site',
-            'rbac_policy': policy.ACTION_UPDATE_SITE,
+            'dag':
+            'update_site',
+            'rbac_policy':
+            policy.ACTION_UPDATE_SITE,
             'validators': [
                 action_validators.validate_committed_revision,
                 action_validators.validate_intermediate_commits,
@@ -63,8 +62,10 @@ def _action_mappings():
             ]
         },
         'update_software': {
-            'dag': 'update_software',
-            'rbac_policy': policy.ACTION_UPDATE_SOFTWARE,
+            'dag':
+            'update_software',
+            'rbac_policy':
+            policy.ACTION_UPDATE_SOFTWARE,
             'validators': [
                 action_validators.validate_committed_revision,
                 action_validators.validate_intermediate_commits,
@@ -72,8 +73,10 @@ def _action_mappings():
             ]
         },
         'redeploy_server': {
-            'dag': 'redeploy_server',
-            'rbac_policy': policy.ACTION_REDEPLOY_SERVER,
+            'dag':
+            'redeploy_server',
+            'rbac_policy':
+            policy.ACTION_REDEPLOY_SERVER,
             'validators': [
                 action_validators.validate_target_nodes,
                 action_validators.validate_committed_revision,
@@ -81,8 +84,10 @@ def _action_mappings():
             ]
         },
         'relabel_nodes': {
-            'dag': 'relabel_nodes',
-            'rbac_policy': policy.ACTION_RELABEL_NODES,
+            'dag':
+            'relabel_nodes',
+            'rbac_policy':
+            policy.ACTION_RELABEL_NODES,
             'validators': [
                 action_validators.validate_target_nodes,
                 action_validators.validate_committed_revision,
@@ -109,9 +114,8 @@ class ActionsResource(BaseResource):
         Return actions that have been invoked through shipyard.
         :returns: a json array of action entities
         """
-        resp.text = self.to_json(self.get_all_actions(
-            verbosity=req.context.verbosity)
-        )
+        resp.text = self.to_json(
+            self.get_all_actions(verbosity=req.context.verbosity))
         resp.status = falcon.HTTP_200
 
     @policy.ApiEnforcer(policy.CREATE_ACTION)
@@ -121,8 +125,8 @@ class ActionsResource(BaseResource):
         """
         # The 'allow-intermediate-commits' query parameter is set to False
         # unless explicitly set to True
-        allow_intermediate_commits = (
-            req.get_param_as_bool(name='allow-intermediate-commits'))
+        allow_intermediate_commits = (req.get_param_as_bool(
+            name='allow-intermediate-commits'))
 
         input_action = self.req_json(req, validate_json_schema=ACTION)
         action = self.create_action(
@@ -149,9 +153,9 @@ class ActionsResource(BaseResource):
         LOG.info("Attempting action: %s", action['name'])
         action_mappings = _action_mappings()
         if action['name'] not in action_mappings:
-            raise ApiError(
-                title='Unable to start action',
-                description='Unsupported Action: {}'.format(action['name']))
+            raise ApiError(title='Unable to start action',
+                           description='Unsupported Action: {}'.format(
+                               action['name']))
 
         action_cfg = action_mappings.get(action['name'])
 
@@ -181,8 +185,9 @@ class ActionsResource(BaseResource):
             validator(action=action, configdocs_helper=self.configdocs_helper)
 
         # invoke airflow, get the dag's date
-        dag_execution_date = self.invoke_airflow_dag(
-            dag_id=dag, action=action, context=context)
+        dag_execution_date = self.invoke_airflow_dag(dag_id=dag,
+                                                     action=action,
+                                                     context=context)
         # set values on the action
         action['dag_execution_date'] = dag_execution_date
         action['dag_status'] = 'SCHEDULED'
@@ -193,10 +198,9 @@ class ActionsResource(BaseResource):
         #    process with no tracking in the Shipyard database. This is not
         #    ideal.
         self.insert_action(action=action)
-        notes_helper.make_action_note(
-            action_id=action['id'],
-            note_val="Configdoc revision {}".format(action['committed_rev_id'])
-        )
+        notes_helper.make_action_note(action_id=action['id'],
+                                      note_val="Configdoc revision {}".format(
+                                          action['committed_rev_id']))
         self.audit_control_command_db({
             'id': ulid.ulid(),
             'action_id': action['id'],
@@ -217,35 +221,31 @@ class ActionsResource(BaseResource):
         """
         # fetch actions from the shipyard db
         all_actions = self.get_action_map()
-        # fetch the associated dags, steps from the airflow db
-        all_dag_runs = self.get_dag_run_map()
-        all_tasks = self.get_all_tasks_db()
-
         notes = notes_helper.get_all_action_notes(verbosity=verbosity)
         # correlate the actions and dags into a list of action entites
         actions = []
 
         for action_id, action in all_actions.items():
-            dag_key = action['dag_id'] + action['dag_execution_date']
-            dag_key_id = action['dag_id']
-            dag_key_date = action['dag_execution_date']
+            dag_id = action['dag_id']
+            # Only fetch dag_runs for the specific dag_id
+            dag_run_map = self.get_dag_run_map(dag_id)
+            dag_key = action['dag_id'] + action['id']
             # locate the dag run associated
-            dag_state = all_dag_runs.get(dag_key, {}).get('state', None)
+            dag_state = dag_run_map.get(dag_key, {}).get('state', None)
             # get the dag status from the dag run state
             action['dag_status'] = dag_state
             action['action_lifecycle'] = determine_lifecycle(dag_state)
             # get the steps summary
             action_tasks = [
-                step for step in all_tasks
-                if step['dag_id'].startswith(dag_key_id) and
-                step['execution_date'].strftime(
-                    '%Y-%m-%dT%H:%M:%S') == dag_key_date
+                step for step in self.get_tasks_by_id(dag_id=dag_id)
+                if (
+                    step['dag_id'] == action['dag_id'] and
+                    step['dag_run_id'] == action['id']
+                )
             ]
-            action['steps'] = format_action_steps(
-                action_id=action_id,
-                steps=action_tasks,
-                verbosity=0
-            )
+            action['steps'] = format_action_steps(action_id=action_id,
+                                                  steps=action_tasks,
+                                                  verbosity=0)
             action['notes'] = []
             for note in notes.get(action_id, []):
                 action['notes'].append(note.view())
@@ -267,31 +267,33 @@ class ActionsResource(BaseResource):
         """
         return SHIPYARD_DB.get_all_submitted_actions()
 
-    def get_dag_run_map(self):
+    def get_dag_run_map(self, dag_id):
         """
-        Maps an array of dag runs to a keyed dictionary
-        :returns: a dictionary of dictionaries keyed by dag_id and
-                  execution_date
+        Returns a dictionary of dag_runs for a specific dag_id,
+        keyed by dag_id + dag_run_id.
         """
         return {
-            run['dag_id'] +
-            run['execution_date'].strftime('%Y-%m-%dT%H:%M:%S'): run
-            for run in self.get_all_dag_runs_db()
+            run['dag_id'] + run['dag_run_id']: run
+            for run in self.get_all_dag_runs_by_id(dag_id=dag_id)
         }
 
-    def get_all_dag_runs_db(self):
+    def get_all_dag_runs_by_id(self, dag_id):
         """
-        Wrapper for call to the airflow db to get all dag runs
-        :returns: a list of dictionaries representing dag runs in airflow
+        Retrieves all dag runs with dag_id using the Airflow v2 REST API.
+        Returns a list of dictionaries representing dag runs,
+        with the same structure as get_all_dag_runs_db().
         """
-        return AIRFLOW_DB.get_all_dag_runs()
+        return AIRFLOW_API.get_dag_runs_by_id(dag_id=dag_id)
 
-    def get_all_tasks_db(self):
+    def get_tasks_by_id(self, dag_id):
         """
-        Wrapper for call to the airflow db to get all tasks
-        :returns: a list of task dictionaries
+        Retrieves all tasks with dag_id using the Airflow v2 REST API.
+        Returns a list of task dictionaries with
+        the same structure as get_all_tasks_db(), but with field names
+        matching the Airflow API response. Fields not present in the API
+        are grouped at the bottom.
         """
-        return AIRFLOW_DB.get_all_tasks()
+        return AIRFLOW_API.get_tasks_by_id(dag_id=dag_id)
 
     def insert_action(self, action):
         """
@@ -308,106 +310,15 @@ class ActionsResource(BaseResource):
 
     def invoke_airflow_dag(self, dag_id, action, context):
         """
-        Call airflow, and invoke a dag
-        :param dag_id: the name of the dag to invoke
-        :param action: the action structure to invoke the dag with
+        Call Airflow and invoke a DAG using the Airflow REST API v1 with JWT
+        authentication.
+        :param dag_id: the name of the DAG to invoke
+        :param action: the action structure to invoke the DAG with
         """
-        # TODO(bryan-strassner) refactor the mechanics of this method to an
-        #     airflow api client module
-
-        # Retrieve URL
-        web_server_url = CONF.base.web_server
-        api_path = 'api/experimental/dags/{}/dag_runs'
-        req_url = os.path.join(web_server_url, api_path.format(dag_id))
-        c_timeout = CONF.base.airflow_api_connect_timeout
-        r_timeout = CONF.base.airflow_api_read_timeout
-
-        if 'Error' in web_server_url:
-            raise ApiError(
-                title='Unable to invoke workflow',
-                description=('Airflow URL not found by Shipyard. '
-                             'Shipyard configuration is missing web_server '
-                             'value'),
-                status=falcon.HTTP_503,
-                retry=True, )
-        else:
-            # No cache please
-            headers = {'Cache-Control': 'no-cache'}
-            # "conf" - JSON string that gets pickled into the DagRun's
-            # conf attribute. The conf is passed as as a string of escaped
-            # json inside the json payload accepted by the API.
-            # conf_value = self.to_json({'action': action})
-            payload = {'run_id': action['id'], 'conf': {'action': action}}
-            LOG.info('Request payload: %s', payload)
-            try:
-                resp = requests.post(req_url, timeout=(c_timeout, r_timeout),
-                                     headers=headers, json=payload)
-                LOG.info('Response code from Airflow trigger_dag: %s',
-                         resp.status_code)
-                # any 4xx/5xx will be HTTPError, which are RequestException
-                resp.raise_for_status()
-                response = resp.json()
-                LOG.info('Response from Airflow trigger_dag: %s', response)
-            except RequestException as rex:
-                LOG.error("Request to airflow failed: %s", rex.args)
-                raise ApiError(
-                    title='Unable to complete request to Airflow',
-                    description=(
-                        'Airflow could not be contacted properly by Shipyard.'
-                    ),
-                    status=falcon.HTTP_503,
-                    error_list=[{
-                        'message': str(type(rex))
-                    }],
-                    retry=True, )
-
-            dag_time = self._exhume_date(dag_id,
-                                         response['message'])
-            dag_execution_date = dag_time.strftime('%Y-%m-%dT%H:%M:%S')
-            return dag_execution_date
-
-    def _exhume_date(self, dag_id, log_string):
-        # we are unable to use the response time because that
-        # does not match the time when the dag was recorded.
-        # We have to parse the returned message to find the
-        # Created <DagRun {dag_id} @ {timestamp}
-        # e.g.
-        # ...- Created <DagRun deploy_site @ 2017-09-22 22:16:14: man...
-        # split on "Created <DagRun deploy_site @ ", then ': "
-        # should get to the desired date string.
-        #
-        # returns the date found in a date object
-        log_split = log_string.split('Created <DagRun {} @ '.format(dag_id))
-        if len(log_split) < 2:
-            raise ApiError(
-                title='Unable to determine if workflow has started',
-                description=(
-                    'Airflow has not responded with parseable output. '
-                    'Shipyard is unable to determine run timestamp'),
-                status=falcon.HTTP_500,
-                error_list=[{
-                    'message': log_string
-                }],
-                retry=True
-            )
-        else:
-            # everything before the ': ' should be a date/time
-            date_split = log_split[1].split(': ')[0]
-            try:
-                return parse(date_split, ignoretz=True)
-            except ValueError as valerr:
-                raise ApiError(
-                    title='Unable to determine if workflow has started',
-                    description=('Airflow has not responded with parseable '
-                                 'output. Shipyard is unable to determine run '
-                                 'timestamp'),
-                    status=falcon.HTTP_500,
-                    error_list=[{
-                        'message': 'value {} has caused {}'.format(date_split,
-                                                                   valerr)
-                    }],
-                    retry=True,
-                )
+        return AIRFLOW_API.invoke_airflow_dag(
+            dag_id=dag_id,
+            action=action,
+            context=context)
 
     def get_committed_design_version(self):
         """Retrieves the committed design version from Deckhand.
@@ -415,8 +326,7 @@ class ActionsResource(BaseResource):
         Returns None if there is no committed version
         """
         committed_rev_id = self.configdocs_helper.get_revision_id(
-            configdocs_helper.COMMITTED
-        )
+            configdocs_helper.COMMITTED)
         if committed_rev_id:
             LOG.info("The committed revision in Deckhand is %d",
                      committed_rev_id)

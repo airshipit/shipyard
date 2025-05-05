@@ -18,15 +18,14 @@ import logging
 
 from shipyard_airflow.common.notes.notes import MIN_VERBOSITY
 from shipyard_airflow.control.helpers.design_reference_helper import (
-    DesignRefHelper
-)
+    DesignRefHelper)
 from shipyard_airflow.control.helpers.notes import NOTES as notes_helper
 from shipyard_airflow.dags.dag_names import CRITICAL_DAG_STEPS
-from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
+from shipyard_airflow.db.db import SHIPYARD_DB
+from shipyard_airflow.api.api import AIRFLOW_API
 from shipyard_airflow.errors import ApiError
 
 LOG = logging.getLogger(__name__)
-
 
 DAG_STATE_MAPPING = {
     'QUEUED': 'Pending',
@@ -66,20 +65,17 @@ def format_action_steps(action_id, steps, verbosity=MIN_VERBOSITY):
         return []
     steps_response = []
     step_notes_dict = notes_helper.get_all_step_notes_for_action(
-        action_id=action_id,
-        verbosity=verbosity
-    )
+        action_id=action_id, verbosity=verbosity)
     for idx, step in enumerate(steps):
         step_task_id = step.get('task_id')
         steps_response.append(
-            format_step(
-                action_id=action_id,
-                step=step,
-                index=idx + 1,
-                notes=[
-                    note.view()
-                    for note in step_notes_dict.get(step_task_id, [])
-                ]))
+            format_step(action_id=action_id,
+                        step=step,
+                        index=idx + 1,
+                        notes=[
+                            note.view()
+                            for note in step_notes_dict.get(step_task_id, [])
+                        ]))
     return steps_response
 
 
@@ -165,6 +161,7 @@ class ActionsHelper(object):
     """
     A helper class for Shipyard actions
     """
+
     def __init__(self, action_id):
         """Initialization of ActionsHelper object.
         :param action_id: Shipyard action ID
@@ -183,10 +180,10 @@ class ActionsHelper(object):
         action = self._get_action_db(self.action_id)
 
         if not action:
-            raise ApiError(
-                title='Action Not Found!',
-                description='Unknown Action {}'.format(self.action_id),
-                status=falcon.HTTP_404)
+            raise ApiError(title='Action Not Found!',
+                           description='Unknown Action {}'.format(
+                               self.action_id),
+                           status=falcon.HTTP_404)
         else:
             return action
 
@@ -199,15 +196,13 @@ class ActionsHelper(object):
         dag_execution_date = self.action.get('dag_execution_date')
 
         if not dag_id:
-            raise ApiError(
-                title='Dag ID Not Found!',
-                description='Unable to retrieve Dag ID',
-                status=falcon.HTTP_404)
+            raise ApiError(title='Dag ID Not Found!',
+                           description='Unable to retrieve Dag ID',
+                           status=falcon.HTTP_404)
         elif not dag_execution_date:
-            raise ApiError(
-                title='Execution Date Not Found!',
-                description='Unable to retrieve Execution Date',
-                status=falcon.HTTP_404)
+            raise ApiError(title='Execution Date Not Found!',
+                           description='Unable to retrieve Execution Date',
+                           status=falcon.HTTP_404)
         else:
             return dag_id, dag_execution_date
 
@@ -219,7 +214,7 @@ class ActionsHelper(object):
         dag_id, dag_execution_date = self._get_dag_info()
 
         # Retrieve the action steps
-        steps = self._get_tasks_db(dag_id, dag_execution_date)
+        steps = self._get_tasks_api(dag_id, dag_execution_date)
 
         if not steps:
             raise ApiError(
@@ -227,8 +222,8 @@ class ActionsHelper(object):
                 description='Unable to retrieve Information on Steps',
                 status=falcon.HTTP_404)
         else:
-            LOG.debug("%s steps found for action %s",
-                      len(steps), self.action_id)
+            LOG.debug("%s steps found for action %s", len(steps),
+                      self.action_id)
             LOG.debug("The steps for action %s are as follows:",
                       self.action_id)
             LOG.debug(steps)
@@ -276,12 +271,7 @@ class ActionsHelper(object):
         """
         result = 'unknown'
         running_states = [
-            None,
-            'None',
-            'scheduled',
-            'queued',
-            'running',
-            'up_for_retry',
+            None, 'None', 'scheduled', 'queued', 'running', 'up_for_retry',
             'up_for_reschedule'
         ]
         failed_states = ['shutdown', 'failed', 'upstream_failed']
@@ -300,8 +290,9 @@ class ActionsHelper(object):
                 elif state not in success_states:
                     # The state we are looking at doesn't fall under any of our
                     # known states
-                    LOG.warning('Found DAG step with unexpected state: {}'.
-                                format(state))
+                    LOG.warning(
+                        'Found DAG step with unexpected state: {}'.format(
+                            state))
                     result = 'unknown'
                     break
 
@@ -316,20 +307,18 @@ class ActionsHelper(object):
         """
         # Retrieve step. Note that we will get a list and it will
         # be the content of step[0]
-        step_list = [x for x in
-                     self._get_all_steps()
-                     if step_id == x['task_id'] and
-                     (try_number is None or try_number == x['try_number'])
-                     ]
+        step_list = [
+            x for x in self._get_all_steps() if step_id == x['task_id'] and
+            (try_number is None or try_number == x['try_number'])
+        ]
         # try_number is needed to get correct task from correct worker
         # the worker host for request URL
         # is referenced in correct task's 'hostname' field
 
         if not step_list:
-            raise ApiError(
-                title='Step Not Found!',
-                description='Unable to retrieve Step',
-                status=falcon.HTTP_404)
+            raise ApiError(title='Step Not Found!',
+                           description='Unable to retrieve Step',
+                           status=falcon.HTTP_404)
         else:
             step = step_list[0]
             LOG.debug("Step Located:")
@@ -342,8 +331,16 @@ class ActionsHelper(object):
         """
         :returns: dag_execution_date
         """
-        strftime = datetime.strftime
-        return step['execution_date'].strftime("%Y-%m-%dT%H:%M:%S")
+        exec_date = step['execution_date']
+        if isinstance(exec_date, str):
+            exec_date = exec_date.rstrip('Z')
+            try:
+                dt = datetime.strptime(exec_date, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                dt = datetime.strptime(exec_date, "%Y-%m-%dT%H:%M:%S")
+        else:
+            dt = exec_date
+        return dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     @staticmethod
     def parse_action_id(**kwargs):
@@ -353,10 +350,9 @@ class ActionsHelper(object):
         """
         action_id = kwargs.get('action_id')
         if action_id is None or not len(action_id) == 26:
-            raise ApiError(
-                title='Invalid Action ID!',
-                description='An invalid action ID was specified',
-                status=falcon.HTTP_400)
+            raise ApiError(title='Invalid Action ID!',
+                           description='An invalid action ID was specified',
+                           status=falcon.HTTP_400)
 
         LOG.debug("Action ID parsed: %s", action_id)
 
@@ -369,10 +365,9 @@ class ActionsHelper(object):
         """
         step_id = kwargs.get('step_id')
         if step_id is None:
-            raise ApiError(
-                title='Missing Step ID!',
-                description='Missing Step ID',
-                status=falcon.HTTP_400)
+            raise ApiError(title='Missing Step ID!',
+                           description='Missing Step ID',
+                           status=falcon.HTTP_400)
 
         LOG.debug("Step ID parsed: %s", step_id)
 
@@ -384,14 +379,13 @@ class ActionsHelper(object):
         Wrapper for call to the shipyard database to get an action
         :returns: a dictionary of action details.
         """
-        return SHIPYARD_DB.get_action_by_id(
-            action_id=action_id)
+        return SHIPYARD_DB.get_action_by_id(action_id=action_id)
 
     @staticmethod
-    def _get_tasks_db(dag_id, execution_date):
+    def _get_tasks_api(dag_id, execution_date):
         """
-        Wrapper for call to the airflow db to get all tasks for a dag run
+        Wrapper for call to the airflow api to get all tasks for a dag run
         :returns: a list of task dictionaries
         """
-        return AIRFLOW_DB.get_tasks_by_id(
-            dag_id=dag_id, execution_date=execution_date)
+        return AIRFLOW_API.get_tasks_by_id(dag_id=dag_id,
+                                           execution_date=execution_date)

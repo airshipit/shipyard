@@ -39,25 +39,21 @@ def get_machines_powerstate(drydock):
     # Calls Drydock client to fetch nodes power state
     try:
         machines = drydock.get_nodes()
-
         machines_ps = []
         for machine in machines:
-            machines_ps.append(
-                {
-                    'hostname': machine.get('hostname'),
-                    'power_state': machine.get('power_state')
-                })
+            machines_ps.append({
+                'hostname': machine.get('hostname'),
+                'power_state': machine.get('power_state')
+            })
     except dderrors.ClientError as ddex:
         raise AppError(
             title='Unable to retrieve nodes power-state',
             description=(
-                'Drydock has responded unexpectedly: {}'.format(
-                    ddex.response_message)),
+                'Drydock has responded unexpectedly: {}'.format(ddex)),
             status=falcon.HTTP_500,
-            retry=False, )
-
+            retry=False,
+        )
     machines_powerstate = {'machines_powerstate': machines_ps}
-
     return machines_powerstate
 
 
@@ -65,25 +61,21 @@ def get_nodes_provision_status(drydock):
     # Calls Drydock client to fetch node provision status
     try:
         nodes = drydock.get_nodes()
-
         nodes_status = []
         for node in nodes:
-            nodes_status.append(
-                {
-                    'hostname': node.get('hostname'),
-                    'status': node.get('status_name')
-                })
+            nodes_status.append({
+                'hostname': node.get('hostname'),
+                'status': node.get('status_name')
+            })
     except dderrors.ClientError as ddex:
         raise AppError(
             title='Unable to retrieve nodes status',
             description=(
-                'Drydock has responded unexpectedly: '
-                '{}'.format(ddex.response_message)),
+                'Drydock has responded unexpectedly: {}'.format(ddex)),
             status=falcon.HTTP_500,
-            retry=False, )
-
+            retry=False,
+        )
     machine_status = {'nodes_provision_status': nodes_status}
-
     return machine_status
 
 
@@ -121,18 +113,16 @@ class StatusHelper(object):
         # check for valid status filters
         for sts_filter in sts_filters:
             if sts_filter not in valid_filters:
-                raise ApiError(
-                    title='Not a valid status filter',
-                    description='filter {} is not supported'.format(
-                        sts_filter),
-                    status=falcon.HTTP_400,
-                    retry=False)
+                raise ApiError(title='Not a valid status filter',
+                               description='filter {} is not supported'.format(
+                                   sts_filter),
+                               status=falcon.HTTP_400,
+                               retry=False)
 
         # get Drydock client
         if not self.drydock:
             self.drydock = sc.drydock_client(
-                context_marker=self.ctx.request_id,
-                end_user=self.ctx.user)
+                context_marker=self.ctx.request_id, end_user=self.ctx.user)
 
         statuses = {}
         # iterate through filters to invoke required fun

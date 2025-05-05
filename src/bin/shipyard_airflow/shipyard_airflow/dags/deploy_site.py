@@ -13,14 +13,14 @@
 # limitations under the License.
 from datetime import timedelta
 
-import airflow
-from airflow import DAG
+import pendulum
+
+from airflow.sdk import DAG
 
 try:
     from common_step_factory import CommonStepFactory
 except ImportError:
     from shipyard_airflow.dags.common_step_factory import CommonStepFactory
-
 """deploy_site
 
 the top-level orchestration DAG for deploying a site using the Undercloud
@@ -32,7 +32,7 @@ PARENT_DAG_NAME = 'deploy_site'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': airflow.utils.dates.days_ago(1),
+    'start_date': pendulum.now('UTC').subtract(days=1),
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -41,7 +41,7 @@ default_args = {
     'retry_delay': timedelta(seconds=30),
 }
 
-dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
@@ -62,18 +62,11 @@ finalize_deployment_status = step_factory.get_final_deployment_status()
 
 # DAG Wiring
 preflight.set_upstream(action_xcom)
-get_rendered_doc.set_upstream(action_xcom)
 deployment_configuration.set_upstream(action_xcom)
-validate_site_design.set_upstream([
-    preflight,
-    get_rendered_doc,
-    concurrency_check,
-    deployment_configuration
-])
-deployment_status.set_upstream([
-    get_rendered_doc,
-    concurrency_check
-])
+get_rendered_doc.set_upstream(deployment_configuration)
+validate_site_design.set_upstream(
+    [preflight, get_rendered_doc, concurrency_check, deployment_configuration])
+deployment_status.set_upstream([get_rendered_doc, concurrency_check])
 drydock_build.set_upstream(validate_site_design)
 armada_build.set_upstream(drydock_build)
 create_action_tag.set_upstream(armada_build)

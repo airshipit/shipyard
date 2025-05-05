@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from airflow import DAG
+from airflow.sdk import DAG
 
 from shipyard_airflow.dags import deploy_site
 from shipyard_airflow.dags import update_site
 from shipyard_airflow.dags import update_software
 from shipyard_airflow.dags import redeploy_server
 
+import pendulum
 
 def test_dags_load():
     """assert that each dag is a DAG object after importing the modules
@@ -30,4 +31,4 @@ def test_dags_load():
     for d in [deploy_site.dag, update_site.dag,
               update_software.dag, redeploy_server.dag]:
         assert isinstance(d, DAG)
-        assert d.task_count > 0
+        assert  len(d.tasks) > 0

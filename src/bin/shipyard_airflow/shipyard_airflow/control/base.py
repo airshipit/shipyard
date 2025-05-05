@@ -31,6 +31,7 @@ class BaseResource(object):
     The base resource for Shipyard entities/api handlers. This class
     provides some reusable functionality.
     """
+
     def on_options(self, req, resp, **kwargs):
         """Handle options requests"""
         method_map = routing.map_http_methods(self)
@@ -48,8 +49,8 @@ class BaseResource(object):
                                      validation
         """
         has_input = False
-        if (req.content_length is not None and 'application/json' in
-                req.content_type):
+        if (req.content_length is not None and
+                'application/json' in req.content_type):
             raw_body = req.stream.read(req.content_length or 0)
             if raw_body is not None:
                 has_input = True
@@ -70,16 +71,13 @@ class BaseResource(object):
                 raise InvalidFormatError(
                     title='JSON could not be decoded',
                     description='%s: Invalid JSON in body: %s' %
-                    (req.path, jex)
-                )
+                    (req.path, jex))
         else:
             # No body passed as input. Fail validation if it was asked for
             if validate_json_schema is not None:
                 raise InvalidFormatError(
                     title='Json body is required',
-                    description='%s: Bad input, no body provided' %
-                    (req.path)
-                )
+                    description='%s: Bad input, no body provided' % (req.path))
             else:
                 return None
 

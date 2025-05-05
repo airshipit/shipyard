@@ -16,9 +16,7 @@ from oslo_config import cfg
 
 from shipyard_airflow import policy
 from shipyard_airflow.control.base import BaseResource
-from shipyard_airflow.control.helpers.workflow_helper import (
-    WorkflowHelper
-)
+from shipyard_airflow.control.helpers.workflow_helper import (WorkflowHelper)
 from shipyard_airflow.errors import ApiError
 
 CONF = cfg.CONF
@@ -39,8 +37,7 @@ class WorkflowResource(BaseResource):
         since_date = req.params.get('since')
         helper = WorkflowHelper(req.context.external_marker)
         resp.text = self.to_json(
-            self.get_all_workflows(helper=helper, since_date=since_date)
-        )
+            self.get_all_workflows(helper=helper, since_date=since_date))
         resp.status = falcon.HTTP_200
 
     def get_all_workflows(self, helper, since_date=None):
@@ -68,8 +65,7 @@ class WorkflowIdResource(BaseResource):
         """
         helper = WorkflowHelper(req.context.external_marker)
         resp.text = self.to_json(
-            self.get_workflow_detail(helper=helper, workflow_id=workflow_id)
-        )
+            self.get_workflow_detail(helper=helper, workflow_id=workflow_id))
         resp.status = falcon.HTTP_200
 
     def get_workflow_detail(self, helper, workflow_id):
@@ -93,9 +89,8 @@ class WorkflowIdResource(BaseResource):
         if workflow is None:
             raise ApiError(
                 title='Workflow not found',
-                description=(
-                    'A Workflow with id {} was not found'.format(workflow_id),
-                ),
+                description=('A Workflow with id {} was not found'.format(
+                    workflow_id), ),
                 status=falcon.HTTP_404,
                 retry=False,
             )

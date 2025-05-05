@@ -13,8 +13,9 @@
 # limitations under the License.
 from datetime import timedelta
 
-import airflow
-from airflow import DAG
+import pendulum
+
+from airflow.sdk import DAG
 
 try:
     from common_step_factory import CommonStepFactory
@@ -22,7 +23,6 @@ try:
 except ImportError:
     from shipyard_airflow.dags.common_step_factory import CommonStepFactory
     from shipyard_airflow.dags.validate_site_design import SOFTWARE
-
 """update_software
 
 The top-level orchestration DAG for updating only the software components
@@ -33,7 +33,7 @@ PARENT_DAG_NAME = 'update_software'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': airflow.utils.dates.days_ago(1),
+    'start_date': pendulum.now('UTC').subtract(days=1),
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -42,7 +42,7 @@ default_args = {
     'retry_delay': timedelta(seconds=30),
 }
 
-dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
@@ -53,8 +53,7 @@ action_xcom = step_factory.get_action_xcom()
 concurrency_check = step_factory.get_concurrency_check()
 deployment_configuration = step_factory.get_deployment_configuration()
 validate_site_design = step_factory.get_validate_site_design(
-    targets=[SOFTWARE]
-)
+    targets=[SOFTWARE])
 deployment_status = step_factory.get_deployment_status()
 armada_build = step_factory.get_armada_build()
 decide_airflow_upgrade = step_factory.get_decide_airflow_upgrade()
@@ -65,21 +64,13 @@ finalize_deployment_status = step_factory.get_final_deployment_status()
 
 # DAG Wiring
 deployment_configuration.set_upstream(action_xcom)
-validate_site_design.set_upstream([
-    concurrency_check,
-    deployment_configuration
-])
+validate_site_design.set_upstream(
+    [concurrency_check, deployment_configuration])
 deployment_status.set_upstream(concurrency_check)
 armada_build.set_upstream(validate_site_design)
 decide_airflow_upgrade.set_upstream(armada_build)
-decide_airflow_upgrade.set_downstream([
-    upgrade_airflow,
-    skip_upgrade_airflow
-])
-create_action_tag.set_upstream([
-    upgrade_airflow,
-    skip_upgrade_airflow
-])
+decide_airflow_upgrade.set_downstream([upgrade_airflow, skip_upgrade_airflow])
+create_action_tag.set_upstream([upgrade_airflow, skip_upgrade_airflow])
 
 # finalize_deployment_status needs to be downstream of everything
 finalize_deployment_status.set_upstream(create_action_tag)

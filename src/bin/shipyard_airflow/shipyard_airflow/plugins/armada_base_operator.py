@@ -16,7 +16,6 @@ from urllib.parse import urlparse
 
 from airflow.exceptions import AirflowException
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 import armada.common.client as client
 import armada.common.session as session
@@ -33,12 +32,10 @@ except ImportError:
     from shipyard_airflow.plugins.ucp_base_operator import UcpBaseOperator
     from shipyard_airflow.plugins.xcom_pusher import XcomPusher
 
-
 LOG = logging.getLogger(__name__)
 
 
 class ArmadaBaseOperator(UcpBaseOperator):
-
     """Armada Base Operator
 
     All armada related workflow operators will use the aramda
@@ -47,12 +44,12 @@ class ArmadaBaseOperator(UcpBaseOperator):
 
     """
 
-    @apply_defaults
     def __init__(self,
                  query={},
                  svc_session=None,
                  svc_token=None,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         """Initialization of ArmadaBaseOperator object.
 
         :param query: A dictionary containing explicit query string parameters
@@ -64,11 +61,14 @@ class ArmadaBaseOperator(UcpBaseOperator):
 
         """
 
-        super(ArmadaBaseOperator,
-              self).__init__(
-                  pod_selector_pattern=[{'pod_pattern': 'armada-api',
-                                         'container': 'armada-api'}],
-                  *args, **kwargs)
+        super(ArmadaBaseOperator, self).__init__(pod_selector_pattern=[{
+            'pod_pattern':
+            'armada-api',
+            'container':
+            'armada-api'
+        }],
+            *args,
+            **kwargs)
         self.query = query
         self.svc_session = svc_session
         self.svc_token = svc_token
@@ -84,14 +84,11 @@ class ArmadaBaseOperator(UcpBaseOperator):
         # Set up armada client
         self.armada_client = self._init_armada_client(
             self.endpoints.endpoint_by_name(service_endpoint.ARMADA),
-            self.svc_token,
-            self.context_marker,
-            self.user
-        )
+            self.svc_token, self.context_marker, self.user)
 
     @staticmethod
-    def _init_armada_client(armada_svc_endpoint, svc_token,
-                            ext_marker, end_user):
+    def _init_armada_client(armada_svc_endpoint, svc_token, ext_marker,
+                            end_user):
 
         LOG.info("Armada endpoint is %s", armada_svc_endpoint)
 
@@ -132,8 +129,7 @@ class ArmadaBaseOperator(UcpBaseOperator):
         try:
             get_releases_resp = self.armada_client.get_releases(
                 query=self.query,
-                timeout=self.dc['armada.get_releases_timeout']
-            )
+                timeout=self.dc['armada.get_releases_timeout'])
             return get_releases_resp['releases']
         except errors.ClientError as client_error:
             # Dump logs from Armada pods
@@ -142,7 +138,6 @@ class ArmadaBaseOperator(UcpBaseOperator):
 
 
 class ArmadaBaseOperatorPlugin(AirflowPlugin):
-
     """Creates ArmadaBaseOperator in Airflow."""
 
     name = 'armada_base_operator_plugin'

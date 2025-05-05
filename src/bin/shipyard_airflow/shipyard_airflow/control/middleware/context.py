@@ -22,6 +22,7 @@ class ContextMiddleware(object):
     Handle looking at the X-Context_Marker to see if it has value and that
     value is a UUID (or close enough). If not, generate one.
     """
+
     def process_request(self, req, resp):
         ctx = req.context
         ext_marker = req.get_header('X-Context-Marker')

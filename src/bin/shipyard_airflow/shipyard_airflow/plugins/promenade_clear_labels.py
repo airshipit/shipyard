@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeClearLabelsOperator(PromenadeBaseOperator):
-
     """Promenade Clear Labels Operator
 
     This operator will trigger promenade to clear the labels on
@@ -35,7 +34,7 @@ class PromenadeClearLabelsOperator(PromenadeBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
 
@@ -48,15 +47,13 @@ class PromenadeClearLabelsOperator(PromenadeBaseOperator):
         labels_removed = True
 
         if labels_removed:
-            LOG.info("Successfully removed labels on %s",
-                     self.redeploy_server)
+            LOG.info("Successfully removed labels on %s", self.redeploy_server)
         else:
             raise AirflowException('Failed to remove labels on %s!',
                                    self.redeploy_server)
 
 
 class PromenadeClearLabelsOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeClearLabelsOperator in Airflow."""
 
     name = 'promenade_clear_labels_operator'

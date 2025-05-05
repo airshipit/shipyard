@@ -16,8 +16,8 @@ import logging
 
 from shipyard_airflow.control.logging import request_logging
 from shipyard_airflow.control.logging.redaction_formatter import (
-    RedactionFormatter
-)
+    RedactionFormatter)
+
 LOG = logging.getLogger(__name__)
 
 

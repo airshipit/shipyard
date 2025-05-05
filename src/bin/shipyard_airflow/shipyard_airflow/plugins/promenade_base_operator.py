@@ -15,7 +15,6 @@ import configparser
 import logging
 
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 try:
     import service_endpoint
@@ -31,7 +30,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeBaseOperator(UcpBaseOperator):
-
     """Promenade Base Operator
 
     All promenade related workflow operators will use the promenade
@@ -39,11 +37,7 @@ class PromenadeBaseOperator(UcpBaseOperator):
     from this class
     """
 
-    @apply_defaults
-    def __init__(self,
-                 redeploy_server=None,
-                 svc_token=None,
-                 *args, **kwargs):
+    def __init__(self, redeploy_server=None, svc_token=None, *args, **kwargs):
         """Initialization of PromenadeBaseOperator object.
 
         :param redeploy_server: Server to be redeployed
@@ -52,11 +46,14 @@ class PromenadeBaseOperator(UcpBaseOperator):
         the action and the deployment configuration
         """
 
-        super(PromenadeBaseOperator,
-              self).__init__(
-                  pod_selector_pattern=[{'pod_pattern': 'promenade-api',
-                                         'container': 'promenade-api'}],
-                  *args, **kwargs)
+        super(PromenadeBaseOperator, self).__init__(pod_selector_pattern=[{
+            'pod_pattern':
+            'promenade-api',
+            'container':
+            'promenade-api'
+        }],
+            *args,
+            **kwargs)
         self.redeploy_server = redeploy_server
         self.svc_token = svc_token
         self.validation_connect_timeout = None
@@ -71,10 +68,10 @@ class PromenadeBaseOperator(UcpBaseOperator):
         # Retrieve config values from shipyard configuration.
         config = configparser.ConfigParser()
         config.read(self.shipyard_conf)
-        self.validation_connect_timeout = int(config.get(
-            'requests_config', 'validation_connect_timeout'))
-        self.validation_read_timeout = int(config.get(
-            'requests_config', 'validation_read_timeout'))
+        self.validation_connect_timeout = int(
+            config.get('requests_config', 'validation_connect_timeout'))
+        self.validation_read_timeout = int(
+            config.get('requests_config', 'validation_read_timeout'))
 
         # Create additional headers dict to pass context marker
         # and end user
@@ -85,15 +82,12 @@ class PromenadeBaseOperator(UcpBaseOperator):
 
         # Retrieve promenade endpoint
         self.promenade_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.PROMENADE,
-            addl_headers=addl_headers
-        )
+            service_endpoint.PROMENADE, addl_headers=addl_headers)
 
         LOG.info("Promenade endpoint is %s", self.promenade_svc_endpoint)
 
 
 class PromenadeBaseOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeBaseOperator in Airflow."""
 
     name = 'promenade_base_operator_plugin'

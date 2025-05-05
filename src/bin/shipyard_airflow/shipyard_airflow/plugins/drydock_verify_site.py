@@ -21,14 +21,13 @@ except ImportError:
 
 
 class DrydockVerifySiteOperator(DrydockBaseOperator):
-
     """Drydock Verify Site Operator
 
     This operator will trigger drydock to verify site
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Trigger DryDock to execute task
         self.create_task('verify_site')
@@ -42,7 +41,6 @@ class DrydockVerifySiteOperator(DrydockBaseOperator):
 
 
 class DrydockVerifySiteOperatorPlugin(AirflowPlugin):
-
     """Creates DrydockVerifySiteOperator in Airflow."""
 
     name = 'drydock_verify_site_operator'

@@ -29,7 +29,6 @@ LOG = logging.getLogger(__name__)
 
 
 class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
-
     """Deckhand Validate Site Design Operator
 
     This operator will trigger deckhand to validate the
@@ -37,15 +36,14 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Retrieve Keystone Token and assign to X-Auth-Token Header
         x_auth_token = {"X-Auth-Token": self.svc_token}
 
         # Form Validation Endpoint
         validation_endpoint = os.path.join(self.deckhand_svc_endpoint,
-                                           'revisions',
-                                           str(self.revision_id),
+                                           'revisions', str(self.revision_id),
                                            'validations')
         # Retrieve Validation list
         LOG.info("Retrieving validation list...")
@@ -60,8 +58,10 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
         except requests.exceptions.RequestException as e:
             raise AirflowException(e)
 
-        if (any([str(v.get('status', 'unspecified')).lower() == 'failure'
-                for v in retrieved_list.get('results', [])])):
+        if (any([
+                str(v.get('status', 'unspecified')).lower() == 'failure'
+                for v in retrieved_list.get('results', [])
+        ])):
             raise AirflowException("DeckHand Site Design Validation Failed!")
         else:
             LOG.info("Revision %d has been successfully validated",
@@ -69,7 +69,6 @@ class DeckhandValidateSiteDesignOperator(DeckhandBaseOperator):
 
 
 class DeckhandValidateSiteDesignOperatorPlugin(AirflowPlugin):
-
     """Creates DeckhandValidateSiteDesignOperator in Airflow."""
 
     name = 'deckhand_validate_site_design_operator'

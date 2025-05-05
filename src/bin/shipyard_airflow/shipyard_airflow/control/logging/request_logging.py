@@ -34,7 +34,6 @@ try:
 except ImportError:
     uwsgi = None
 
-
 # BASE_ADDL_FIELDS are fields that will be included in the request based
 # logging - these fields need not be set up independently as opposed to the
 # additional_fields parameter used below, which allows for more fields beyond
@@ -72,5 +71,6 @@ def assign_request_filter(handler, additional_fields=None):
     # if there are other handlers that would allow for request scoped logging
     # to be set up, we could include those options here.
     else:
-        LOG.info("No request based logging filter in the current environment. "
-                 "No log filter added to handler %s", handler_cls)
+        LOG.info(
+            "No request based logging filter in the current environment. "
+            "No log filter added to handler %s", handler_cls)

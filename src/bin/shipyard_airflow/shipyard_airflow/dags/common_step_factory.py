@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from airflow.operators.bash_operator import BashOperator
-from airflow.operators.python_operator import BranchPythonOperator
-from airflow.operators.python_operator import PythonOperator
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.python import BranchPythonOperator
+from airflow.providers.standard.operators.python import PythonOperator
 
 try:
     # Operators are loaded from being registered to airflow.operators
@@ -72,6 +72,7 @@ class CommonStepFactory(object):
 
     A factory to generate steps that are reused among multiple dags
     """
+
     def __init__(self, parent_dag_name, dag, default_args, action_type):
         """Creates a factory
 
@@ -95,6 +96,7 @@ class CommonStepFactory(object):
         Step responsible for getting the action information passed
         by the invocation of the dag, which includes any options.
         """
+
         def xcom_push(**kwargs):
             """xcom_push function
 
@@ -102,15 +104,22 @@ class CommonStepFactory(object):
             defined via 'dag_run' in XCOM so that it can be used by the
             Operators. Includes action-related information for later steps.
             """
+            # Push the action and action_type to XCOM so that it can be
+            # used by the other steps
+            # in the workflow. The action is passed via the dag_run
+            # configuration. The action_type is set in the constructor
+            # of this class. The logical_date is the date of the dag run
+            # and is used to identify the run in the logs.
+            kwargs['ti'].xcom_push(
+                key='action', value=kwargs['dag_run'].conf['action'])
+            kwargs['ti'].xcom_push(
+                key='action_type', value=self.action_type)
 
-            kwargs['ti'].xcom_push(key='action',
-                                   value=kwargs['dag_run'].conf['action'])
-            kwargs['ti'].xcom_push(key='action_type',
-                                   value=self.action_type)
-
-        return PythonOperator(task_id=task_id,
-                              dag=self.dag,
-                              python_callable=xcom_push)
+        return PythonOperator(
+            task_id=task_id,
+            dag=self.dag,
+            python_callable=xcom_push
+        )
 
     def get_concurrency_check(self, task_id=dn.CONCURRENCY_CHECK):
         """Generate the concurrency check step
@@ -128,9 +137,7 @@ class CommonStepFactory(object):
 
         Preflight checks preconditions for running a DAG
         """
-        return all_preflight_checks(
-            self.dag
-        )
+        return all_preflight_checks(self.dag)
 
     def get_get_rendered_doc(self, task_id=dn.GET_RENDERED_DOC):
         """Generate the get deckhand rendered doc step
@@ -151,10 +158,7 @@ class CommonStepFactory(object):
         Validation of the site design checks that the design to be used
         for a deployment passes checks before using it.
         """
-        return validate_site_design(
-            self.dag,
-            targets=targets
-        )
+        return validate_site_design(self.dag, targets=targets)
 
     def get_deployment_configuration(self,
                                      task_id=dn.DEPLOYMENT_CONFIGURATION):
@@ -175,10 +179,8 @@ class CommonStepFactory(object):
 
         Drydock build does the hardware provisioning.
         """
-        return deploy_site_drydock(
-            self.dag,
-            verify_nodes_exist=verify_nodes_exist
-        )
+        return deploy_site_drydock(self.dag,
+                                   verify_nodes_exist=verify_nodes_exist)
 
     def get_relabel_nodes(self, task_id=dn.RELABEL_NODES_TG_NAME):
         """Generate the relabel nodes step
@@ -197,9 +199,7 @@ class CommonStepFactory(object):
 
         Armada build does the deployment of helm charts
         """
-        return deploy_site_armada(
-            self.dag
-        )
+        return deploy_site_armada(self.dag)
 
     def get_armada_test_releases(self, task_id=dn.ARMADA_TEST_RELEASES):
         """Generate the armada_test_releases step
@@ -234,9 +234,7 @@ class CommonStepFactory(object):
 
         Destroy server tears down kubernetes and hardware
         """
-        return destroy_server(
-            self.dag
-        )
+        return destroy_server(self.dag)
 
     def get_decide_airflow_upgrade(self, task_id=dn.DECIDE_AIRFLOW_UPGRADE):
         """Generate the decide_airflow_upgrade step
@@ -244,6 +242,7 @@ class CommonStepFactory(object):
         Step responsible for deciding whether to branch to the path
         to upgrade airflow worker
         """
+
         def upgrade_airflow_check(**kwargs):
             """upgrade_airflow_check function
 
@@ -285,13 +284,13 @@ class CommonStepFactory(object):
         disruption to the workflow. Note that dag_id and execution
         date are required for proper execution of the script.
         """
-        return BashOperator(task_id=task_id,
-                            bash_command=(
-                                "nohup "
-                                "/usr/local/airflow/upgrade_airflow_worker.sh "
-                                "{{ ti.dag_id }} {{ ti.execution_date }} "
-                                ">/dev/null 2>&1 &"),
-                            dag=self.dag)
+        return BashOperator(
+            task_id=task_id,
+            bash_command=("nohup "
+                          "/usr/local/airflow/upgrade_airflow_worker.sh "
+                          "{{ ti.dag_id }} {{ ti.run_id }} "
+                          ">/dev/null 2>&1 &"),
+            dag=self.dag)
 
     def get_skip_upgrade_airflow(self, task_id=dn.SKIP_UPGRADE_AIRFLOW):
         """Generate the skip_upgrade_airflow step
@@ -299,10 +298,10 @@ class CommonStepFactory(object):
         Step will print a message stating that we do not need to
         upgrade the airflow worker
         """
-        return BashOperator(task_id=task_id,
-                            bash_command=(
-                                "echo 'Airflow Worker Upgrade Not Required'"),
-                            dag=self.dag)
+        return BashOperator(
+            task_id=task_id,
+            bash_command=("echo 'Airflow Worker Upgrade Not Required'"),
+            dag=self.dag)
 
     def get_create_action_tag(self, task_id=dn.CREATE_ACTION_TAG):
         """Generate the create action tag step

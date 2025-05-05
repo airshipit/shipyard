@@ -63,35 +63,30 @@ class DbAccess:
         try:
             connection_string = self.get_connection_string()
             if connection_string is not None and self.engine is None:
-                LOG.info('Initializing connection <%s> with pool size: %d, '
-                         'max overflow: %d, pool pre ping: %s, pool '
-                         'recycle: %d, and pool timeout: %d',
-                         connection_string, self.pool_size, self.max_overflow,
-                         self.pool_pre_ping, self.pool_recycle,
-                         self.pool_timeout)
+                LOG.info(
+                    'Initializing connection <%s> with pool size: %d, '
+                    'max overflow: %d, pool pre ping: %s, pool '
+                    'recycle: %d, and pool timeout: %d', connection_string,
+                    self.pool_size, self.max_overflow, self.pool_pre_ping,
+                    self.pool_recycle, self.pool_timeout)
                 self.engine = sqlalchemy.create_engine(
-                    connection_string, pool_size=self.pool_size,
+                    connection_string,
+                    pool_size=self.pool_size,
                     max_overflow=self.max_overflow,
                     pool_pre_ping=self.pool_pre_ping,
                     pool_recycle=self.pool_recycle,
-                    pool_timeout=self.pool_timeout
-                )
+                    pool_timeout=self.pool_timeout)
             if self.engine is None:
                 self._raise_invalid_db_config(
-                    connection_string=connection_string
-                )
+                    connection_string=connection_string)
             LOG.info('Connected with <%s>, returning engine',
                      connection_string)
             return self.engine
         except sqlalchemy.exc.ArgumentError as exc:
-            self._raise_invalid_db_config(
-                exception=exc,
-                connection_string=connection_string
-            )
+            self._raise_invalid_db_config(exception=exc,
+                                          connection_string=connection_string)
 
-    def _raise_invalid_db_config(self,
-                                 connection_string,
-                                 exception=None):
+    def _raise_invalid_db_config(self, connection_string, exception=None):
         """
         Common handler for an invalid DB connection
         """
@@ -99,10 +94,8 @@ class DbAccess:
                   connection_string)
         if exception is not None:
             LOG.error("Associated exception: %s", exception)
-        raise DatabaseError(
-            title='No database connection',
-            description='Invalid database configuration'
-        )
+        raise DatabaseError(title='No database connection',
+                            description='Invalid database configuration')
 
     def get_as_dict_array(self, query, **kwargs):
         """

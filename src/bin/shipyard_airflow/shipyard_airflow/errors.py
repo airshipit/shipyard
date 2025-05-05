@@ -72,8 +72,10 @@ def format_error_resp(req,
     # message list as well.  In both cases, if the error flag is not
     # set, set it appropriately.
     if error_list is None:
-        error_list = [{'message': 'An error occurred, but was not specified',
-                       'error': True}]
+        error_list = [{
+            'message': 'An error occurred, but was not specified',
+            'error': True
+        }]
     else:
         for error_item in error_list:
             if 'error' not in error_item:
@@ -113,16 +115,17 @@ def default_error_serializer(req, resp, exception):
     """
     Writes the default error message body, when we don't handle it otherwise
     """
-    format_error_resp(
-        req,
-        resp,
-        status_code=exception.status,
-        message=exception.description,
-        reason=exception.title,
-        error_type=exception.__class__.__name__,
-        error_list=[{'message': exception.description, 'error': True}],
-        info_list=None
-    )
+    format_error_resp(req,
+                      resp,
+                      status_code=exception.status,
+                      message=exception.description,
+                      reason=exception.title,
+                      error_type=exception.__class__.__name__,
+                      error_list=[{
+                          'message': exception.description,
+                          'error': True
+                      }],
+                      info_list=None)
 
 
 def default_exception_handler(req, resp, ex, params):
@@ -137,14 +140,12 @@ def default_exception_handler(req, resp, ex, params):
         # take care of the uncaught stuff
         exc_string = traceback.format_exc()
         logging.error('Unhandled Exception being handled: \n%s', exc_string)
-        format_error_resp(
-            req,
-            resp,
-            falcon.HTTP_500,
-            error_type=ex.__class__.__name__,
-            message="Unhandled Exception raised: %s" % str(ex),
-            retry=True
-        )
+        format_error_resp(req,
+                          resp,
+                          falcon.HTTP_500,
+                          error_type=ex.__class__.__name__,
+                          message="Unhandled Exception raised: %s" % str(ex),
+                          retry=True)
 
 
 class AppError(Exception):
@@ -155,13 +156,15 @@ class AppError(Exception):
     title = 'Internal Server Error'
     status = falcon.HTTP_500
 
-    def __init__(self,
-                 title=None,
-                 description=None,
-                 error_list=None,
-                 info_list=None,
-                 status=None,
-                 retry=False,):
+    def __init__(
+        self,
+        title=None,
+        description=None,
+        error_list=None,
+        info_list=None,
+        status=None,
+        retry=False,
+    ):
         """
         :param description: The internal error description
         :param error_list: The list of errors
@@ -201,16 +204,15 @@ class AppError(Exception):
         """
         The handler used for app errors and child classes
         """
-        format_error_resp(
-            req,
-            resp,
-            ex.status,
-            message=ex.title,
-            reason=ex.description,
-            error_list=ex.error_list,
-            info_list=ex.info_list,
-            error_type=ex.__class__.__name__,
-            retry=ex.retry)
+        format_error_resp(req,
+                          resp,
+                          ex.status,
+                          message=ex.title,
+                          reason=ex.description,
+                          error_list=ex.error_list,
+                          info_list=ex.info_list,
+                          error_type=ex.__class__.__name__,
+                          retry=ex.retry)
 
 
 class AirflowError(AppError):

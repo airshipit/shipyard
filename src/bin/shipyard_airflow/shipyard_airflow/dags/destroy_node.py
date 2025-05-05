@@ -50,38 +50,47 @@ def destroy_server(dag):
         # Drain Node
         promenade_drain_node = PromenadeDrainNodeOperator(
             task_id='promenade_drain_node',
-            shipyard_conf=config_path,
-            dag=dag)
+            main_dag_name=dag.dag_id.split('.')[0],
+            shipyard_conf=config_path, dag=dag
+        )
 
         # Clear Labels
         promenade_clear_labels = PromenadeClearLabelsOperator(
             task_id='promenade_clear_labels',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         # Shutdown Kubelet
         promenade_shutdown_kubelet = PromenadeShutdownKubeletOperator(
             task_id='promenade_shutdown_kubelet',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         # ETCD Sanity Check
         promenade_check_etcd = PromenadeCheckEtcdOperator(
             task_id='promenade_check_etcd',
-            shipyard_conf=config_path,
-            dag=dag)
+            main_dag_name=dag.dag_id.split('.')[0],
+            shipyard_conf=config_path, dag=dag
+        )
 
         # Power down and destroy node using DryDock
         drydock_destroy_node = DrydockDestroyNodeOperator(
             task_id='destroy_node',
-            shipyard_conf=config_path,
-            dag=dag)
+            main_dag_name=dag.dag_id.split('.')[0],
+            shipyard_conf=config_path, dag=dag
+        )
 
         # Decommission node from Kubernetes cluster using Promenade
         promenade_decommission_node = PromenadeDecommissionNodeOperator(
             task_id='promenade_decommission_node',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         # Define dependencies
         promenade_clear_labels.set_upstream(promenade_drain_node)

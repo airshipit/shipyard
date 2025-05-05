@@ -30,7 +30,7 @@ ENV LANG=C.UTF-8
 ENV PYTHONWARNINGS=ignore::DeprecationWarning,ignore::FutureWarning
 
 # Setting the version explicitly for PBR
-ENV PBR_VERSION=0.1a1
+ENV PBR_VERSION=2.0.2
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ctx_base=src/bin

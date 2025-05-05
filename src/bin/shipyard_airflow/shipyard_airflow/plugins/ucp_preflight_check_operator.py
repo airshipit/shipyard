@@ -16,9 +16,8 @@ import os
 import requests
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 
 try:
     import service_endpoint
@@ -37,7 +36,6 @@ class UcpHealthCheckOperator(BaseOperator):
     Airship Health Checks
     """
 
-    @apply_defaults
     def __init__(self,
                  shipyard_conf=None,
                  main_dag_name=None,
@@ -55,10 +53,8 @@ class UcpHealthCheckOperator(BaseOperator):
 
         # Initialize variable
         ucp_components = [
-            service_endpoint.ARMADA,
-            service_endpoint.DECKHAND,
-            service_endpoint.DRYDOCK,
-            service_endpoint.PROMENADE,
+            service_endpoint.ARMADA, service_endpoint.DECKHAND,
+            service_endpoint.DRYDOCK, service_endpoint.PROMENADE,
             service_endpoint.SHIPYARD
         ]
 
@@ -80,8 +76,7 @@ class UcpHealthCheckOperator(BaseOperator):
             LOG.info("%s endpoint is %s", component, endpoint)
 
             # Construct Health Check Endpoint
-            healthcheck_endpoint = os.path.join(endpoint,
-                                                'health')
+            healthcheck_endpoint = os.path.join(endpoint, 'health')
 
             try:
                 LOG.info("Performing Health Check on %s at %s", component,
@@ -115,10 +110,10 @@ class UcpHealthCheckOperator(BaseOperator):
 
         else:
             LOG.error(error_messages)
-            raise AirflowException("Health check failed for %s component on "
-                                   "dag_id=%s. Details: %s" %
-                                   (component, self.action_info.get('dag_id'),
-                                    error_messages))
+            raise AirflowException(
+                "Health check failed for %s component on "
+                "dag_id=%s. Details: %s" %
+                (component, self.action_info.get('dag_id'), error_messages))
 
 
 class UcpHealthCheckPlugin(AirflowPlugin):

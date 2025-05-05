@@ -25,15 +25,10 @@ from shipyard_airflow.control.action.actions_steps_id_logs_api import \
 from shipyard_airflow.control.action.actions_validations_id_api import \
     ActionsValidationsResource
 from shipyard_airflow.control.af_monitoring.workflows_api import (
-    WorkflowIdResource,
-    WorkflowResource
-)
+    WorkflowIdResource, WorkflowResource)
 from shipyard_airflow.control.base import BaseResource, ShipyardRequest
 from shipyard_airflow.control.configdocs.configdocs_api import (
-    CommitConfigDocsResource,
-    ConfigDocsResource,
-    ConfigDocsStatusResource
-)
+    CommitConfigDocsResource, ConfigDocsResource, ConfigDocsStatusResource)
 from shipyard_airflow.control.configdocs.rendered_configdocs_api import \
     RenderedConfigDocsResource
 from shipyard_airflow.control.health import HealthResource
@@ -57,8 +52,8 @@ def start_api():
         LoggingMiddleware(),
         CommonParametersMiddleware()
     ]
-    control_api = falcon.App(
-        request_type=ShipyardRequest, middleware=middlewares)
+    control_api = falcon.App(request_type=ShipyardRequest,
+                             middleware=middlewares)
 
     control_api.add_route('/versions', VersionsResource())
 
@@ -70,8 +65,7 @@ def start_api():
         ('/actions/{action_id}', ActionsIdResource()),
         ('/actions/{action_id}/control/{control_verb}',
          ActionsControlResource()),
-        ('/actions/{action_id}/steps/{step_id}',
-         ActionsStepsResource()),
+        ('/actions/{action_id}/steps/{step_id}', ActionsStepsResource()),
         ('/actions/{action_id}/steps/{step_id}/logs',
          ActionsStepsLogsResource()),
         ('/actions/{action_id}/validations/{validation_id}',
@@ -90,11 +84,8 @@ def start_api():
     route_v1_0_prefix = '/api/v1.0'
     for path, res in v1_0_routes:
         route = '{}{}'.format(route_v1_0_prefix, path)
-        LOG.info(
-            'Adding route: %s Handled by %s',
-            route,
-            res.__class__.__name__
-        )
+        LOG.info('Adding route: %s Handled by %s', route,
+                 res.__class__.__name__)
         control_api.add_route(route, res)
 
     # Error handlers (FILO handling)
@@ -113,8 +104,8 @@ class VersionsResource(BaseResource):
     """
 
     def on_get(self, req, resp):
-        resp.text = self.to_json({
-            'v1.0': {
+        resp.text = self.to_json(
+            {'v1.0': {
                 'path': '/api/v1.0',
                 'status': 'stable'
             }})

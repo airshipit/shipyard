@@ -34,7 +34,9 @@ def all_preflight_checks(dag):
         '''
         shipyard = UcpHealthCheckOperator(
             task_id='ucp_preflight_check',
+            main_dag_name=dag.dag_id.split('.')[0],
             shipyard_conf=config_path,
-            dag=dag)
+            dag=dag
+        )
 
         return preflight

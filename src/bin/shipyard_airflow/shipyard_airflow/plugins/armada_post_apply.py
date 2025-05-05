@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class ArmadaPostApplyOperator(ArmadaBaseOperator):
-
     """Armada Post Apply Operator
 
     This operator will trigger armada to apply the manifest and
@@ -35,7 +34,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Initialize Variables
         armada_manifest = None
@@ -80,8 +79,7 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
         if self.task_instance.try_number > 1:
             LOG.info(
                 "Airflow Worker will be upgraded because retry may obfuscate "
-                "an upgrade of shipyard/airflow."
-            )
+                "an upgrade of shipyard/airflow.")
             upgrade_airflow_worker = True
         else:
             # Search for Shipyard deployment in the list of chart upgrades
@@ -91,10 +89,8 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
             # part of the name of the Shipyard Helm Chart.
             for i in armada_post_apply['message']['upgrade']:
                 if 'shipyard' in i:
-                    LOG.info(
-                        "Shipyard was upgraded. Airflow worker must be "
-                        "restarted to reflect any workflow changes."
-                    )
+                    LOG.info("Shipyard was upgraded. Airflow worker must be "
+                             "restarted to reflect any workflow changes.")
                     upgrade_airflow_worker = True
                     break
 
@@ -122,7 +118,6 @@ class ArmadaPostApplyOperator(ArmadaBaseOperator):
 
 
 class ArmadaPostApplyOperatorPlugin(AirflowPlugin):
-
     """Creates ArmadaPostApplyOperator in Airflow."""
 
     name = 'armada_post_apply_operator'

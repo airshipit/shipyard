@@ -31,27 +31,24 @@ CONF = cfg.CONF
 class ValidateDeploymentAction:
     """The validator used by the validate_deployment_action_<x> functions
     """
+
     def __init__(self, dh_client, action, full_validation=True):
         self.action = action
         self.doc_revision = self.action.get('committed_rev_id')
-        self.cont_on_fail = str(self._action_param(
-            'continue-on-fail')).lower() == 'true'
+        self.cont_on_fail = str(
+            self._action_param('continue-on-fail')).lower() == 'true'
         if full_validation:
             # Perform a complete validation
             self.doc_val_mgr = DocumentValidationManager(
-                dh_client,
-                self.doc_revision,
+                dh_client, self.doc_revision,
                 [(ValidateDeploymentConfigurationFull,
-                  CONF.document_info.deployment_configuration_name)]
-            )
+                  CONF.document_info.deployment_configuration_name)])
         else:
             # Perform a basic validation only
             self.doc_val_mgr = DocumentValidationManager(
-                dh_client,
-                self.doc_revision,
+                dh_client, self.doc_revision,
                 [(ValidateDeploymentConfigurationBasic,
-                  CONF.document_info.deployment_configuration_name)]
-            )
+                  CONF.document_info.deployment_configuration_name)])
 
     def validate(self):
         results = self.doc_val_mgr.validate()

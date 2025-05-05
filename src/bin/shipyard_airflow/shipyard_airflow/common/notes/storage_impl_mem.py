@@ -22,6 +22,7 @@ class MemoryNotesStorage(NotesStorage):
 
     Primarily useful for testing
     """
+
     def __init__(self):
         self.storage = {}
 

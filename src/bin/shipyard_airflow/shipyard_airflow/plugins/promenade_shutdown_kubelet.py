@@ -27,7 +27,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PromenadeShutdownKubeletOperator(PromenadeBaseOperator):
-
     """Promenade Shutdown Kubelet Operator
 
     This operator will trigger promenade to shut down kubelet
@@ -35,7 +34,7 @@ class PromenadeShutdownKubeletOperator(PromenadeBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
         # Placeholder function. Updates will be made when the Promenade
         # API is ready for consumption.
         LOG.info("Shutting down kubelet on node...")
@@ -52,7 +51,6 @@ class PromenadeShutdownKubeletOperator(PromenadeBaseOperator):
 
 
 class PromenadeShutdownKubeletOperatorPlugin(AirflowPlugin):
-
     """Creates PromenadeShutdownKubeletOperator in Airflow."""
 
     name = 'promenade_shutdown_kubelet_operator'

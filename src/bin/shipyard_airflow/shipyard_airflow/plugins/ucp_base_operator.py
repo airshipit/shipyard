@@ -18,9 +18,8 @@ import os
 from datetime import datetime
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 import sqlalchemy
 
 try:
@@ -55,23 +54,21 @@ LOG = logging.getLogger(__name__)
 
 
 class UcpBaseOperator(BaseOperator):
-
     """Airship Base Operator
 
     All Airship related workflow operators will use the Airship base
     operator as the parent and inherit attributes and methods
     from this class
-
     """
 
-    @apply_defaults
     def __init__(self,
                  main_dag_name=None,
                  pod_selector_pattern=None,
                  shipyard_conf=None,
                  start_time=None,
                  xcom_push=True,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         """Initialization of UcpBaseOperator object.
 
         :param continue_processing: A boolean value on whether to continue
@@ -109,7 +106,7 @@ class UcpBaseOperator(BaseOperator):
         self.doc_utils = _get_document_util(self.shipyard_conf)
         self.endpoints = service_endpoint.ServiceEndpoints(self.shipyard_conf)
 
-        # Read and parse shiyard.conf
+        # Read and parse shipyard.conf
         self.config = configparser.ConfigParser()
         self.config.read(self.shipyard_conf)
 
@@ -122,7 +119,7 @@ class UcpBaseOperator(BaseOperator):
         if self.continue_processing:
             # Execute child function
             try:
-                self.do_execute()
+                self.do_execute(context)
             except Exception:
                 LOG.exception(
                     'Exception happened during %s execution, '
@@ -134,7 +131,6 @@ class UcpBaseOperator(BaseOperator):
                 raise
 
     def ucp_base(self, context):
-
         LOG.info("Running Airship Base Operator...")
 
         # Configure the notes helper for this run of an operator
@@ -153,6 +149,12 @@ class UcpBaseOperator(BaseOperator):
         self.action_info = self.xcom_puller.get_action_info()
         self.action_type = self.xcom_puller.get_action_type()
         self.dc = self.xcom_puller.get_deployment_configuration()
+
+        LOG.info("Deployment configuration (self.dc): %s", self.dc)
+
+        if not self.dc:
+            raise AirflowException(
+                "Deployment configuration (self.dc) is None!")
 
         # Set up other common-use values
         self.action_id = self.action_info['id']
@@ -183,10 +185,8 @@ class UcpBaseOperator(BaseOperator):
                 t_diff_int = int(math.ceil(t_diff))
 
                 try:
-                    get_pod_logs(selector['pod_pattern'],
-                                 self.ucp_namespace,
-                                 selector['container'],
-                                 t_diff_int)
+                    get_pod_logs(selector['pod_pattern'], self.ucp_namespace,
+                                 selector['container'], t_diff_int)
 
                 except K8sLoggingException as e:
                     LOG.error(e)
@@ -215,9 +215,7 @@ class UcpBaseOperator(BaseOperator):
                     '{} ({}) requires targeted nodes, but was unable to '
                     'resolve any targets in {}'.format(
                         self.main_dag_name, self.action_id,
-                        self.__class__.__name__
-                    )
-                )
+                        self.__class__.__name__))
             LOG.info("Target Nodes for action: [%s]",
                      ', '.join(self.target_nodes))
         else:
@@ -229,14 +227,11 @@ class UcpBaseOperator(BaseOperator):
         LOG.info("Assembling a design ref using revision: %s",
                  self.revision_id)
         deckhand_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.DECKHAND
-        )
+            service_endpoint.DECKHAND)
         # This URL will be used to retrieve the Site Design YAMLs
         deckhand_path = "deckhand+{}".format(deckhand_svc_endpoint)
-        design_ref = os.path.join(deckhand_path,
-                                  "revisions",
-                                  str(self.revision_id),
-                                  "rendered-documents")
+        design_ref = os.path.join(deckhand_path, "revisions",
+                                  str(self.revision_id), "rendered-documents")
         LOG.info("Design Reference is %s", design_ref)
         return design_ref
 
@@ -259,12 +254,12 @@ class UcpBaseOperator(BaseOperator):
                                                  name=name,
                                                  schema=schema)
         except Exception as ex:
-            LOG.error("A document was expected to be available: Name: %s, "
-                      "Schema: %s, Deckhand revision: %s, but there was an "
-                      "error attempting to retrieve it. Since this document's "
-                      "contents may be critical to the proper operation of "
-                      "the workflow, this is fatal.", schema, name,
-                      revision_id)
+            LOG.error(
+                "A document was expected to be available: Name: %s, "
+                "Schema: %s, Deckhand revision: %s, but there was an "
+                "error attempting to retrieve it. Since this document's "
+                "contents may be critical to the proper operation of "
+                "the workflow, this is fatal.", schema, name, revision_id)
             LOG.exception(ex)
             # if the document is not found for ANY reason, the workflow is
             # broken. Raise an Airflow Exception.
@@ -290,18 +285,17 @@ class UcpBaseOperator(BaseOperator):
             pool_recycle = self.config.getint(BASE, 'connection_recycle')
             pool_timeout = self.config.getint(BASE, 'pool_timeout')
             self._shipyard_db_engine = sqlalchemy.create_engine(
-                connection_string, pool_size=pool_size,
+                connection_string,
+                pool_size=pool_size,
                 max_overflow=max_overflow,
                 pool_pre_ping=pool_pre_ping,
                 pool_recycle=pool_recycle,
-                pool_timeout=pool_timeout
-            )
-            LOG.info("Initialized Shipyard database connection with pool "
-                     "size: %d, max overflow: %d, pool pre ping: %s, pool "
-                     "recycle: %d, and pool timeout: %d",
-                     pool_size, max_overflow,
-                     pool_pre_ping, pool_recycle,
-                     pool_timeout)
+                pool_timeout=pool_timeout)
+            LOG.info(
+                "Initialized Shipyard database connection with pool "
+                "size: %d, max overflow: %d, pool pre ping: %s, pool "
+                "recycle: %d, and pool timeout: %d", pool_size, max_overflow,
+                pool_pre_ping, pool_recycle, pool_timeout)
 
         return self._shipyard_db_engine
 
@@ -316,8 +310,8 @@ class UcpBaseOperator(BaseOperator):
                                           'notes_connect_timeout')
         read_timeout = self.config.get(REQUESTS_CONFIG, 'notes_read_timeout')
         self.notes_helper = NotesHelper(
-            NotesManager(
-                storage=ShipyardSQLNotesStorage(self._get_shipyard_db_engine),
+            NotesManager(storage=ShipyardSQLNotesStorage(
+                self._get_shipyard_db_engine),
                 get_token=self._token_getter,
                 connect_timeout=connect_timeout,
                 read_timeout=read_timeout))

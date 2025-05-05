@@ -50,6 +50,7 @@ class DeckhandClient(object):
     """
     A rudimentary client for deckhand in lieu of a provided client
     """
+
     def __init__(self, context_marker, end_user=None):
         """
         Sets up this Deckhand client with the supplied context marker
@@ -66,9 +67,7 @@ class DeckhandClient(object):
         string if passed a value from DeckhandPaths
         """
         if not DeckhandClient._deckhand_svc_url:
-            DeckhandClient._deckhand_svc_url = get_endpoint(
-                Endpoints.DECKHAND
-            )
+            DeckhandClient._deckhand_svc_url = get_endpoint(Endpoints.DECKHAND)
         return DeckhandClient._deckhand_svc_url + path.value
 
     def get_latest_revision(self):
@@ -87,8 +86,7 @@ class DeckhandClient(object):
         Returns the list of revision dictionary objects
         """
         response = self._get_request(
-            DeckhandClient.get_path(DeckhandPaths.REVISION_LIST)
-        )
+            DeckhandClient.get_path(DeckhandPaths.REVISION_LIST))
         self._handle_bad_response(response)
         revisions = yaml.safe_load(response.text)
         return revisions.get('results', [])
@@ -98,8 +96,7 @@ class DeckhandClient(object):
         Returns the count of revisions in deckhand
         """
         response = self._get_request(
-            DeckhandClient.get_path(DeckhandPaths.REVISION_LIST)
-        )
+            DeckhandClient.get_path(DeckhandPaths.REVISION_LIST))
         self._handle_bad_response(response)
         revisions = yaml.safe_load(response.text)
         return revisions['count']
@@ -118,8 +115,7 @@ class DeckhandClient(object):
         Issues a put against deckhand to store a bucket
         """
         url = DeckhandClient.get_path(
-            DeckhandPaths.BUCKET_DOCS
-        ).format(bucket_name)
+            DeckhandPaths.BUCKET_DOCS).format(bucket_name)
 
         response = self._put_request(url, document_data=documents)
         if response.status_code == 400:
@@ -129,25 +125,22 @@ class DeckhandClient(object):
                 # should probably be picked apart into a message here instead
                 # of being escaped json when it's done
                 response_message=response.text,
-                status_code=response.status_code
-            )
+                status_code=response.status_code)
         if response.status_code == 409:
             # conflicting bucket
             raise DocumentExistsElsewhereError(
                 # TODO (bryan-strassner) The response from DH is json and
                 # should probably be picked apart into a message here instead
                 # of being escaped json when it's done
-                response_message=response.text
-            )
+                response_message=response.text)
         self._handle_bad_response(response)
 
     def tag_revision(self, revision_id, tag):
         """
         Adds the supplied tag to the specified revision
         """
-        url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_TAG
-        ).format(revision_id, tag)
+        url = DeckhandClient.get_path(DeckhandPaths.REVISION_TAG).format(
+            revision_id, tag)
 
         response = self._post_request(url)
         self._handle_bad_response(response)
@@ -159,8 +152,7 @@ class DeckhandClient(object):
         the state of documents/buckets of a prior revision.
         """
         url = DeckhandClient.get_path(
-            DeckhandPaths.ROLLBACK
-        ).format(target_revision_id)
+            DeckhandPaths.ROLLBACK).format(target_revision_id)
 
         response = self._post_request(url)
         self._handle_bad_response(response)
@@ -177,16 +169,17 @@ class DeckhandClient(object):
         """
         Retrieves the bucket-based difference between revisions.
         """
-        url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_DIFF
-        ).format(old_revision_id, new_revision_id)
+        url = DeckhandClient.get_path(DeckhandPaths.REVISION_DIFF).format(
+            old_revision_id, new_revision_id)
 
         response = self._get_request(url)
         self._handle_bad_response(response)
         diff = yaml.safe_load(response.text)
         return diff
 
-    def get_docs_from_revision(self, revision_id, bucket_id=None,
+    def get_docs_from_revision(self,
+                               revision_id,
+                               bucket_id=None,
                                cleartext_secrets=False):
         """
         Retrieves the collection of docs from the revision specified
@@ -196,8 +189,7 @@ class DeckhandClient(object):
         """
 
         url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_DOCS
-        ).format(revision_id)
+            DeckhandPaths.REVISION_DOCS).format(revision_id)
 
         # if a bucket_id is specified, limit the response to a bucket
         query = {}
@@ -215,8 +207,7 @@ class DeckhandClient(object):
         Entries in the list returned are {error: ..., message: ...} format.
         """
         url = DeckhandClient.get_path(
-            DeckhandPaths.RENDERED_REVISION_DOCS
-        ).format(revision_id)
+            DeckhandPaths.RENDERED_REVISION_DOCS).format(revision_id)
 
         errors = []
 
@@ -228,20 +219,23 @@ class DeckhandClient(object):
             if not errors:
                 # default message if none were specified.
                 errors.append({
-                    "error": True,
-                    "message": ("Deckhand has reported an error but did not "
-                                "specify messages. Response: {}".format(
-                                    response.text))})
+                    "error":
+                    True,
+                    "message":
+                    ("Deckhand has reported an error but did not "
+                     "specify messages. Response: {}".format(response.text))
+                })
         return errors
 
-    def get_rendered_docs_from_revision(self, revision_id, bucket_id=None,
+    def get_rendered_docs_from_revision(self,
+                                        revision_id,
+                                        bucket_id=None,
                                         cleartext_secrets=False):
         """
         Returns the full set of rendered documents for a revision
         """
         url = DeckhandClient.get_path(
-            DeckhandPaths.RENDERED_REVISION_DOCS
-        ).format(revision_id)
+            DeckhandPaths.RENDERED_REVISION_DOCS).format(revision_id)
 
         query = {}
         if bucket_id is not None:
@@ -265,8 +259,7 @@ class DeckhandClient(object):
         # TODO(@drewwalters96): This method should be replaced with usage of
         #     the official Deckhand client.
         url = DeckhandClient.get_path(
-            DeckhandPaths.REVISION_VALIDATIONS_LIST
-        ).format(revision_id)
+            DeckhandPaths.REVISION_VALIDATIONS_LIST).format(revision_id)
 
         response = self._get_request(url)
         self._handle_bad_response(response)
@@ -279,17 +272,11 @@ class DeckhandClient(object):
         # rasises a DeckhandResponseError if the response status
         # is >= threshold
         if response.status_code >= threshold:
-            LOG.error(
-                ('An undesired response was returned by Deckhand. '
-                 'Status: %s above threshold %s. Response text: %s'),
-                response.status_code,
-                threshold,
-                response.text
-            )
-            raise DeckhandResponseError(
-                status_code=response.status_code,
-                response_message=response.text
-            )
+            LOG.error(('An undesired response was returned by Deckhand. '
+                       'Status: %s above threshold %s. Response text: %s'),
+                      response.status_code, threshold, response.text)
+            raise DeckhandResponseError(status_code=response.status_code,
+                                        response_message=response.text)
 
     # the _get, _put, _post functions below automatically supply
     # the following headers:
@@ -314,9 +301,8 @@ class DeckhandClient(object):
         LOG.info('Invoking %s %s', method, url)
         param_str = ''
         if params:
-            param_str = ', '.join(
-                "{}={}".format(key, val) for (key, val) in params.items()
-            )
+            param_str = ', '.join("{}={}".format(key, val)
+                                  for (key, val) in params.items())
             LOG.info('Including parameters: %s', param_str)
 
     def _put_request(self, url, document_data=None, params=None):
@@ -334,17 +320,13 @@ class DeckhandClient(object):
                 params=params,
                 headers=headers,
                 data=document_data,
-                timeout=(
-                    CONF.requests_config.deckhand_client_connect_timeout,
-                    CONF.requests_config.deckhand_client_read_timeout))
+                timeout=(CONF.requests_config.deckhand_client_connect_timeout,
+                         CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
-            raise DeckhandAccessError(
-                response_message=(
-                    'Unable to Invoke deckhand: {}'.format(str(rex)),
-                )
-            )
+            raise DeckhandAccessError(response_message=(
+                'Unable to Invoke deckhand: {}'.format(str(rex)), ))
 
     def _get_request(self, url, params=None):
         # invokes a GET against the specified URL
@@ -360,17 +342,13 @@ class DeckhandClient(object):
                 url,
                 params=params,
                 headers=headers,
-                timeout=(
-                    CONF.requests_config.deckhand_client_connect_timeout,
-                    CONF.requests_config.deckhand_client_read_timeout))
+                timeout=(CONF.requests_config.deckhand_client_connect_timeout,
+                         CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
-            raise DeckhandAccessError(
-                response_message=(
-                    'Unable to Invoke deckhand: {}'.format(str(rex)),
-                )
-            )
+            raise DeckhandAccessError(response_message=(
+                'Unable to Invoke deckhand: {}'.format(str(rex)), ))
 
     def _post_request(self, url, document_data=None, params=None):
         # invokes a POST against the specified URL with the
@@ -387,17 +365,13 @@ class DeckhandClient(object):
                 params=params,
                 headers=headers,
                 data=document_data,
-                timeout=(
-                    CONF.requests_config.deckhand_client_connect_timeout,
-                    CONF.requests_config.deckhand_client_read_timeout))
+                timeout=(CONF.requests_config.deckhand_client_connect_timeout,
+                         CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
-            raise DeckhandAccessError(
-                response_message=(
-                    'Unable to Invoke deckhand: {}'.format(str(rex)),
-                )
-            )
+            raise DeckhandAccessError(response_message=(
+                'Unable to Invoke deckhand: {}'.format(str(rex)), ))
 
     def _delete_request(self, url, params=None):
         # invokes a DELETE against the specified URL
@@ -409,17 +383,14 @@ class DeckhandClient(object):
                 url,
                 params=params,
                 headers=headers,
-                timeout=(
-                    CONF.requests_config.deckhand_client_connect_timeout,
-                    CONF.requests_config.deckhand_client_read_timeout))
+                timeout=(CONF.requests_config.deckhand_client_connect_timeout,
+                         CONF.requests_config.deckhand_client_read_timeout))
             return response
         except RequestException as rex:
             LOG.error(rex)
-            raise DeckhandAccessError(
-                response_message=(
-                    'Unable to Invoke deckhand: {}'.format(str(rex)),
-                )
-            )
+            raise DeckhandAccessError(response_message=(
+                'Unable to Invoke deckhand: {}'.format(str(rex)), ))
+
 
 #
 # Exceptions
@@ -428,9 +399,11 @@ class DeckhandClient(object):
 
 class DeckhandError(Exception):
     """Base exception for all exceptions raised by this client"""
+
     def __init__(self, response_message=None):
         super().__init__()
         self.response_message = response_message
+
 
 #
 # Deckhand stateful messages wrapped as exceptions
@@ -458,6 +431,7 @@ class DocumentExistsElsewhereError(DeckhandStatefulError):
     """
     pass
 
+
 #
 # Deckhand processing failures reported by Deckhand
 #
@@ -468,6 +442,7 @@ class DeckhandResponseError(DeckhandError):
     Indicates that a response was returned from
     Deckhand that was not expected
     """
+
     def __init__(self, status_code, response_message=None):
         super().__init__(response_message)
         self.status_code = status_code
@@ -479,6 +454,7 @@ class DeckhandRejectedInputError(DeckhandResponseError):
     This is usually accompanied by a 400 status code from Deckhand
     """
     pass
+
 
 #
 # Errors accessing Deckhand

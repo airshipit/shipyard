@@ -34,10 +34,8 @@ def start_shipyard(default_config_files=None):
     # Trigger configuration resolution.
     config.parse_args(args=[], default_config_files=default_config_files)
 
-    LoggingConfig(
-        level=CONF.logging.log_level,
-        named_levels=CONF.logging.named_log_levels
-    ).setup_logging()
+    LoggingConfig(level=CONF.logging.log_level,
+                  named_levels=CONF.logging.named_log_levels).setup_logging()
 
     # Setup the RBAC policy enforcer
     policy.policy_engine = policy.ShipyardPolicy()
@@ -47,8 +45,7 @@ def start_shipyard(default_config_files=None):
     if CONF.base.profiler:
         LOG.warning("Profiler ENABLED. Expect significant "
                     "performance overhead.")
-        return ProfilerMiddleware(
-            api.start_api(),
-            profile_dir="/tmp/profiles")  # nosec
+        return ProfilerMiddleware(api.start_api(),
+                                  profile_dir="/tmp/profiles")  # nosec
     else:
         return api.start_api()

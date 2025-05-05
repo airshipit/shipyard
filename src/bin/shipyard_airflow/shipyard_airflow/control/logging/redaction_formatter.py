@@ -37,7 +37,6 @@ import logging
 
 from shipyard_airflow.control.util.redactor import Redactor
 
-
 LOG = logging.getLogger(__name__)
 # Concepts from https://www.relaxdiego.com/2014/07/logging-in-python.html
 
@@ -45,6 +44,7 @@ LOG = logging.getLogger(__name__)
 class RedactionFormatter(object):
     """ A formatter to remove sensitive information from logs
     """
+
     def __init__(self, original_formatter):
         self.original_formatter = original_formatter
         self.redactor = Redactor()

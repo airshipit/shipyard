@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 
 
 class ArmadaValidateDesignOperator(ArmadaBaseOperator):
-
     """Armada Validate Design Operator
 
     This operator will trigger armada to validate the
@@ -36,10 +35,15 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
 
     """
 
-    def do_execute(self):
+    def do_execute(self, context):
 
         # Requests Armada to validate site design
         LOG.info("Waiting for Armada to validate site design...")
+
+        # Validate that deployment configuration is not None
+        if not self.dc:
+            raise AirflowException(
+                "Deployment configuration (self.dc) is None!")
 
         # Retrieve read timeout
         timeout = self.dc['armada.validate_design_timeout']
@@ -62,12 +66,12 @@ class ArmadaValidateDesignOperator(ArmadaBaseOperator):
         if status.lower() == 'success':
             LOG.info("Site Design has been successfully validated")
         else:
-            raise AirflowException("Site Design Validation Failed "
-                                   "with status: {}!".format(status))
+            raise AirflowException(
+                "Site Design Validation Failed with status: {}!"
+                .format(status))
 
 
 class ArmadaValidateDesignOperatorPlugin(AirflowPlugin):
-
     """Creates ArmadaValidateDesignOperator in Airflow."""
 
     name = 'armada_validate_design_operator'

@@ -15,9 +15,8 @@
 import logging
 
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator
+from airflow.sdk import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
-from airflow.utils.decorators import apply_defaults
 from kubernetes import client, config
 
 
@@ -25,9 +24,8 @@ class K8sHealthCheckOperator(BaseOperator):
     """
     Performs basic Kubernetes Health Check
     """
-    @apply_defaults
-    def __init__(self,
-                 *args, **kwargs):
+
+    def __init__(self, *args, **kwargs):
 
         super(K8sHealthCheckOperator, self).__init__(*args, **kwargs)
 
@@ -45,8 +43,7 @@ class K8sHealthCheckOperator(BaseOperator):
         # in 'Running' state. The k8s health checks can be
         # expanded in future if need be.
         for i in ret.items:
-            logging.info("%s is in %s state", i.metadata.name,
-                         i.status.phase)
+            logging.info("%s is in %s state", i.metadata.name, i.status.phase)
 
             if i.status.phase not in ['Succeeded', 'Running']:
                 # NOTE: Kubelet receives information about the pods

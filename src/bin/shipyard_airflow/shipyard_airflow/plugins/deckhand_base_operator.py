@@ -14,7 +14,6 @@
 import configparser
 import logging
 
-from airflow.utils.decorators import apply_defaults
 from airflow.plugins_manager import AirflowPlugin
 from airflow.exceptions import AirflowException
 
@@ -34,7 +33,6 @@ LOG = logging.getLogger(__name__)
 
 
 class DeckhandBaseOperator(UcpBaseOperator):
-
     """Deckhand Base Operator
 
     All deckhand related workflow operators will use the deckhand
@@ -43,7 +41,6 @@ class DeckhandBaseOperator(UcpBaseOperator):
 
     """
 
-    @apply_defaults
     def __init__(self,
                  committed_ver=None,
                  deckhandclient=None,
@@ -52,7 +49,8 @@ class DeckhandBaseOperator(UcpBaseOperator):
                  svc_session=None,
                  svc_token=None,
                  validation_read_timeout=None,
-                 *args, **kwargs):
+                 *args,
+                 **kwargs):
         """Initialization of DeckhandBaseOperator object.
 
         :param committed_ver: Last committed version
@@ -65,11 +63,14 @@ class DeckhandBaseOperator(UcpBaseOperator):
 
         """
 
-        super(DeckhandBaseOperator,
-              self).__init__(
-                  pod_selector_pattern=[{'pod_pattern': 'deckhand-api',
-                                         'container': 'deckhand-api'}],
-                  *args, **kwargs)
+        super(DeckhandBaseOperator, self).__init__(pod_selector_pattern=[{
+            'pod_pattern':
+            'deckhand-api',
+            'container':
+            'deckhand-api'
+        }],
+            *args,
+            **kwargs)
         self.committed_ver = committed_ver
         self.deckhandclient = deckhandclient
         self.deckhand_client_connect_timeout = None
@@ -88,18 +89,17 @@ class DeckhandBaseOperator(UcpBaseOperator):
         config.read(self.shipyard_conf)
 
         # Initialize variables
-        self.deckhand_client_connect_timeout = int(config.get(
-            'requests_config', 'deckhand_client_connect_timeout'))
-        self.deckhand_client_read_timeout = int(config.get(
-            'requests_config', 'deckhand_client_read_timeout'))
-        self.validation_connect_timeout = int(config.get(
-            'requests_config', 'validation_connect_timeout'))
-        self.validation_read_timeout = int(config.get(
-            'requests_config', 'validation_read_timeout'))
+        self.deckhand_client_connect_timeout = int(
+            config.get('requests_config', 'deckhand_client_connect_timeout'))
+        self.deckhand_client_read_timeout = int(
+            config.get('requests_config', 'deckhand_client_read_timeout'))
+        self.validation_connect_timeout = int(
+            config.get('requests_config', 'validation_connect_timeout'))
+        self.validation_read_timeout = int(
+            config.get('requests_config', 'validation_read_timeout'))
 
         # Logs uuid of Shipyard action
-        LOG.info("Executing Shipyard Action %s",
-                 self.action_id)
+        LOG.info("Executing Shipyard Action %s", self.action_id)
 
         # Create additional headers dict to pass context marker
         # and end user
@@ -110,30 +110,26 @@ class DeckhandBaseOperator(UcpBaseOperator):
 
         # Retrieve Endpoint Information
         self.deckhand_svc_endpoint = self.endpoints.endpoint_by_name(
-            service_endpoint.DECKHAND,
-            addl_headers=addl_headers
-        )
+            service_endpoint.DECKHAND, addl_headers=addl_headers)
 
         # update additional headers
         self.svc_session.additional_headers.update(addl_headers)
 
-        LOG.info("Deckhand endpoint is %s",
-                 self.deckhand_svc_endpoint)
+        LOG.info("Deckhand endpoint is %s", self.deckhand_svc_endpoint)
 
         # Set up DeckHand Client
         LOG.info("Setting up DeckHand Client...")
 
         # NOTE: The communication between the Airflow workers
         # and Deckhand happens via the 'internal' endpoint.
-        self.deckhandclient = deckhand_client.Client(
-            session=self.svc_session, endpoint_type='internal')
+        self.deckhandclient = deckhand_client.Client(session=self.svc_session,
+                                                     endpoint_type='internal')
 
         if not self.deckhandclient:
             raise AirflowException('Failed to set up deckhand client!')
 
 
 class DeckhandBaseOperatorPlugin(AirflowPlugin):
-
     """Creates DeckhandBaseOperator in Airflow."""
 
     name = 'deckhand_base_operator_plugin'

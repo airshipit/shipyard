@@ -64,8 +64,7 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
 
     # Retrieve names of pods
     try:
-        ret = v1.list_namespaced_pod(namespace=namespace,
-                                     watch=False)
+        ret = v1.list_namespaced_pod(namespace=namespace, watch=False)
 
     except ApiException as e:
         LOG.error(e)
@@ -78,17 +77,15 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
             if i.metadata.name.startswith(pod_name_pattern):
                 pods_list.append(i.metadata.name)
     else:
-        raise K8sLoggingException(_NOT_FOUND_MSG_FMT.format(namespace,
-                                                            pod_name_pattern,
-                                                            container))
+        raise K8sLoggingException(
+            _NOT_FOUND_MSG_FMT.format(namespace, pod_name_pattern, container))
 
     if pods_list:
         LOG.info("The following Pods matched the requested pattern %s: %s",
                  pod_name_pattern, ", ".join(pods_list))
     else:
-        raise K8sLoggingException(_NOT_FOUND_MSG_FMT.format(namespace,
-                                                            pod_name_pattern,
-                                                            container))
+        raise K8sLoggingException(
+            _NOT_FOUND_MSG_FMT.format(namespace, pod_name_pattern, container))
 
     # Retrieve logs from pod
     for pod in pods_list:
@@ -108,9 +105,9 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
                    "%s" % (e.__class__.__name__, pod, namespace, container, e))
             raise K8sLoggingException(msg)
 
-        LOG.info("\n\n================= Logs for container %s of pods %s in"
-                 " namespace %s =================\n\n",
-                 container, pod, namespace)
+        LOG.info(
+            "\n\n================= Logs for container %s of pods %s in"
+            " namespace %s =================\n\n", container, pod, namespace)
 
         LOG.info(pod_logs)
 

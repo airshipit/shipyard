@@ -25,9 +25,7 @@ LOG = logging.getLogger(__name__)
 class DeckhandClientFactory(object):
     """Factory for DeckhandClient to encapsulate commonly reused setup"""
 
-    def __init__(self,
-                 shipyard_conf,
-                 *args, **kwargs):
+    def __init__(self, shipyard_conf, *args, **kwargs):
         """Deckhand Client Factory
 
         Creates a client factory to retrieve clients
@@ -38,7 +36,6 @@ class DeckhandClientFactory(object):
 
     def get_client(self, addl_headers=None):
         """Retrieve a deckhand client"""
-
         """
         Notes:
         TODO(bryan-strassner): If/when the airflow plugin modules move to using

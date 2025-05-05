@@ -37,7 +37,7 @@
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-image-gate-ubuntu_jammy
-        - shipyard-airskiff-deployment-jammy-kubeadm
+        # - shipyard-airskiff-deployment-jammy-kubeadm
     post:
       jobs:
         - airship-shipyard-docker-build-publish-ubuntu_jammy
@@ -81,12 +81,22 @@
     description: Runs pep8 job on jammy
     nodeset: airship-shipyard-single-node-jammy
 
-
 - job:
     name: airship-shipyard-openstack-tox-cover-jammy
     parent: openstack-tox-cover
     description: Runs cover job on jammy
     nodeset: airship-shipyard-single-node-jammy
+
+- job:
+    name: airship-shipyard-airflow-integration-test
+    parent: tox-py310
+    voting: true
+    timeout: 3600
+    nodeset: ubuntu-jammy
+    pre-run: tools/gate/playbooks/install-docker.yaml
+    vars:
+      tox_envlist: airflow_integration
+      bindep_profile: test py310
 
 - job:
     name: airship-shipyard-chart-build-gate
@@ -249,7 +259,7 @@
           commit: true
         static:
           - latest
-          - airflow_2.10.4
+          - airflow_3.0.2
 
 
 

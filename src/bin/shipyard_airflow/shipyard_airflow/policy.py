@@ -62,251 +62,184 @@ class ShipyardPolicy(object):
 
     # Base Policy
     base_rules = [
-        policy.RuleDefault(
-            'admin_required',
-            'role:admin',
-            description='Actions requiring admin authority'
-        ),
+        policy.RuleDefault('admin_required',
+                           'role:admin',
+                           description='Actions requiring admin authority'),
         policy.RuleDefault(
             'deny_all',
             '!',
-            description='Rule to deny all access. Used for default denial'
-        ),
+            description='Rule to deny all access. Used for default denial'),
     ]
 
     # Orchestrator Policy
     task_rules = [
-        policy.DocumentedRuleDefault(
-            LIST_ACTIONS,
-            RULE_ADMIN_REQUIRED,
-            'List workflow actions invoked by users',
-            [{
-                'path': '/api/v1.0/actions',
-                'method': 'GET'
-            }]
-        ),
+        policy.DocumentedRuleDefault(LIST_ACTIONS, RULE_ADMIN_REQUIRED,
+                                     'List workflow actions invoked by users',
+                                     [{
+                                         'path': '/api/v1.0/actions',
+                                         'method': 'GET'
+                                     }]),
         # See below for finer grained action access. This controls access
         # to being able to create any actions.
+        policy.DocumentedRuleDefault(CREATE_ACTION, RULE_ADMIN_REQUIRED,
+                                     'Create a workflow action',
+                                     [{
+                                         'path': '/api/v1.0/actions',
+                                         'method': 'POST'
+                                     }]),
         policy.DocumentedRuleDefault(
-            CREATE_ACTION,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action',
-            [{
-                'path': '/api/v1.0/actions',
-                'method': 'POST'
-            }]
-        ),
-        policy.DocumentedRuleDefault(
-            GET_ACTION,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve an action by its id',
+            GET_ACTION, RULE_ADMIN_REQUIRED, 'Retrieve an action by its id',
             [{
                 'path': '/api/v1.0/actions/{action_id}',
                 'method': 'GET'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            GET_ACTION_STEP,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve an action step by its id',
-            [{
+            GET_ACTION_STEP, RULE_ADMIN_REQUIRED,
+            'Retrieve an action step by its id', [{
                 'path': '/api/v1.0/actions/{action_id}/steps/{step_id}',
                 'method': 'GET'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            GET_ACTION_STEP_LOGS,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve logs of an action step by its id',
-            [{
+            GET_ACTION_STEP_LOGS, RULE_ADMIN_REQUIRED,
+            'Retrieve logs of an action step by its id', [{
                 'path': '/api/v1.0/actions/{action_id}/steps/{step_id}/logs',
                 'method': 'GET'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            GET_ACTION_VALIDATION,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve an action validation by its id',
-            [{
+            GET_ACTION_VALIDATION, RULE_ADMIN_REQUIRED,
+            'Retrieve an action validation by its id', [{
                 'path':
                 '/api/v1.0/actions/{action_id}/validations/{validation_id}',
                 'method': 'GET'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            INVOKE_ACTION_CONTROL,
-            RULE_ADMIN_REQUIRED,
-            'Send a control to an action',
-            [{
+            INVOKE_ACTION_CONTROL, RULE_ADMIN_REQUIRED,
+            'Send a control to an action', [{
                 'path': '/api/v1.0/actions/{action_id}/control/{control_verb}',
                 'method': 'POST'
-            }]
-        ),
+            }]),
+        policy.DocumentedRuleDefault(GET_CONFIGDOCS_STATUS,
+                                     RULE_ADMIN_REQUIRED,
+                                     'Retrieve the status of the configdocs',
+                                     [{
+                                         'path': '/api/v1.0/configdocs',
+                                         'method': 'GET'
+                                     }]),
         policy.DocumentedRuleDefault(
-            GET_CONFIGDOCS_STATUS,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve the status of the configdocs',
-            [{
-                'path': '/api/v1.0/configdocs',
-                'method': 'GET'
-            }]
-        ),
-        policy.DocumentedRuleDefault(
-            CREATE_CONFIGDOCS,
-            RULE_ADMIN_REQUIRED,
+            CREATE_CONFIGDOCS, RULE_ADMIN_REQUIRED,
             'Ingest configuration documents for the site design',
             [{
                 'path': '/api/v1.0/configdocs/{collection_id}',
                 'method': 'POST'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            GET_CONFIGDOCS,
-            RULE_ADMIN_REQUIRED,
+            GET_CONFIGDOCS, RULE_ADMIN_REQUIRED,
             ('Retrieve a collection of configuration documents with redacted '
-             'secrets'),
-            [{
-                'path': '/api/v1.0/configdocs/{collection_id}',
-                'method': 'GET'
-            }]
-        ),
+             'secrets'), [{
+                 'path': '/api/v1.0/configdocs/{collection_id}',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_CONFIGDOCS_CLRTXT,
-            RULE_ADMIN_REQUIRED,
+            GET_CONFIGDOCS_CLRTXT, RULE_ADMIN_REQUIRED,
             ('Retrieve a collection of configuration documents with cleartext '
-             'secrets.'),
-            [{
-                'path': '/api/v1.0/configdocs/{collection_id}',
-                'method': 'GET'
-            }]
-        ),
+             'secrets.'), [{
+                 'path': '/api/v1.0/configdocs/{collection_id}',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            COMMIT_CONFIGDOCS,
-            RULE_ADMIN_REQUIRED,
+            COMMIT_CONFIGDOCS, RULE_ADMIN_REQUIRED,
             ('Move documents from the Shipyard buffer to the committed '
-             'documents'),
-            [{
-                'path': '/api/v1.0/commitconfigdocs',
-                'method': 'POST'
-            }]
-        ),
+             'documents'), [{
+                 'path': '/api/v1.0/commitconfigdocs',
+                 'method': 'POST'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_RENDEREDCONFIGDOCS,
-            RULE_ADMIN_REQUIRED,
+            GET_RENDEREDCONFIGDOCS, RULE_ADMIN_REQUIRED,
             ('Retrieve the configuration documents rendered by Deckhand into '
-             'a complete design'),
-            [{
-                'path': '/api/v1.0/renderedconfigdocs',
-                'method': 'GET'
-            }]
-        ),
+             'a complete design'), [{
+                 'path': '/api/v1.0/renderedconfigdocs',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_RENDEREDCONFIGDOCS_CLRTXT,
-            RULE_ADMIN_REQUIRED,
+            GET_RENDEREDCONFIGDOCS_CLRTXT, RULE_ADMIN_REQUIRED,
             ('Retrieve the configuration documents with cleartext secrets '
-             'rendered by Deckhand into a complete design'),
-            [{
-                'path': '/api/v1.0/renderedconfigdocs',
-                'method': 'GET'
-            }]
-        ),
+             'rendered by Deckhand into a complete design'), [{
+                 'path': '/api/v1.0/renderedconfigdocs',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            LIST_WORKFLOWS,
-            RULE_ADMIN_REQUIRED,
+            LIST_WORKFLOWS, RULE_ADMIN_REQUIRED,
             ('Retrieve the list of workflows (DAGs) that have been invoked '
-             'in Airflow, whether via Shipyard or scheduled'),
-            [{
-                'path': '/api/v1.0/workflows',
-                'method': 'GET'
-            }]
-        ),
+             'in Airflow, whether via Shipyard or scheduled'), [{
+                 'path': '/api/v1.0/workflows',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_WORKFLOW,
-            RULE_ADMIN_REQUIRED,
+            GET_WORKFLOW, RULE_ADMIN_REQUIRED,
             ('Retrieve the detailed information for a workflow (DAG) from '
-             'Airflow'),
-            [{
-                'path': '/api/v1.0/workflows/{id}',
-                'method': 'GET'
-            }]
-        ),
+             'Airflow'), [{
+                 'path': '/api/v1.0/workflows/{id}',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_NOTEDETAILS,
-            RULE_ADMIN_REQUIRED,
+            GET_NOTEDETAILS, RULE_ADMIN_REQUIRED,
             ('Retrieve the details for a note. Further authorization is '
-             'required depending on the topic of the note'),
-            [{
-                'path': '/api/v1.0/notedetails/{note_id}',
-                'method': 'GET'
-            }]
-        ),
+             'required depending on the topic of the note'), [{
+                 'path': '/api/v1.0/notedetails/{note_id}',
+                 'method': 'GET'
+             }]),
         policy.DocumentedRuleDefault(
-            GET_SITE_STATUSES,
-            RULE_ADMIN_REQUIRED,
-            'Retrieve the statuses for the site',
-            [{
+            GET_SITE_STATUSES, RULE_ADMIN_REQUIRED,
+            'Retrieve the statuses for the site', [{
                 'path': '/api/v1.0/site_statuses',
                 'method': 'GET'
-            }]
-        ),
+            }]),
         # Specific actions - can be controlled independently. See above for
         # overall access to creating an action. This controls the ability to
         # create specific actions (invoke specific workflows)
         policy.DocumentedRuleDefault(
-            ACTION_DEPLOY_SITE,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action to deploy the site',
-            [{
+            ACTION_DEPLOY_SITE, RULE_ADMIN_REQUIRED,
+            'Create a workflow action to deploy the site', [{
                 'path': '/api/v1.0/actions',
                 'method': 'POST'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            ACTION_UPDATE_SITE,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action to update the site',
-            [{
+            ACTION_UPDATE_SITE, RULE_ADMIN_REQUIRED,
+            'Create a workflow action to update the site', [{
                 'path': '/api/v1.0/actions',
                 'method': 'POST'
-            }]
-        ),
+            }]),
         policy.DocumentedRuleDefault(
-            ACTION_UPDATE_SOFTWARE,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action to update the site software',
-            [{
-                'path': '/api/v1.0/actions',
-                'method': 'POST'
-            }]
-        ),
+            ACTION_UPDATE_SOFTWARE, RULE_ADMIN_REQUIRED,
+            'Create a workflow action to update the site software', [{
+                'path':
+                '/api/v1.0/actions',
+                'method':
+                'POST'
+            }]),
         policy.DocumentedRuleDefault(
-            ACTION_REDEPLOY_SERVER,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action to redeploy target servers',
-            [{
-                'path': '/api/v1.0/actions',
-                'method': 'POST'
-            }]
-        ),
+            ACTION_REDEPLOY_SERVER, RULE_ADMIN_REQUIRED,
+            'Create a workflow action to redeploy target servers', [{
+                'path':
+                '/api/v1.0/actions',
+                'method':
+                'POST'
+            }]),
         policy.DocumentedRuleDefault(
-            ACTION_RELABEL_NODES,
-            RULE_ADMIN_REQUIRED,
-            'Create a workflow action to relabel target nodes',
-            [{
-                'path': '/api/v1.0/actions',
-                'method': 'POST'
-            }]
-        ),
+            ACTION_RELABEL_NODES, RULE_ADMIN_REQUIRED,
+            'Create a workflow action to relabel target nodes', [{
+                'path':
+                '/api/v1.0/actions',
+                'method':
+                'POST'
+            }]),
         policy.DocumentedRuleDefault(
-            ACTION_TEST_SITE,
-            RULE_ADMIN_REQUIRED,
+            ACTION_TEST_SITE, RULE_ADMIN_REQUIRED,
             'Create a workflow action to invoke Helm tests on all releases '
-            'or a targeted release',
-            [{
+            'or a targeted release', [{
                 'path': '/api/v1.0/actions',
                 'method': 'POST'
-            }]
-        ),
+            }]),
     ]
 
     # Regions Policy
@@ -333,10 +266,12 @@ class ApiEnforcer(object):
         self.logger = LOG
 
     def __call__(self, f):
+
         @functools.wraps(f)
         def secure_handler(slf, req, resp, *args, **kwargs):
             check_auth(ctx=req.context, rule=self.action)
             return f(slf, req, resp, *args, **kwargs)
+
         return secure_handler
 
 
@@ -356,13 +291,11 @@ def check_auth(ctx, rule):
         LOG.info("Enforcing policy %s on request %s", rule, ctx.request_id)
         # policy engine must be configured
         if policy_eng is None:
-            LOG.error(
-                "Error-Policy engine required-action: %s", rule)
+            LOG.error("Error-Policy engine required-action: %s", rule)
             raise AppError(
                 title="Auth is not being handled by any policy engine",
                 status=falcon.HTTP_500,
-                retry=False
-            )
+                retry=False)
         if policy_eng.authorize(rule, ctx):
             # authorized - log and return
             LOG.info("Request to %s is authorized", rule)
@@ -370,29 +303,23 @@ def check_auth(ctx, rule):
     except Exception as ex:
         # couldn't service the auth request
         LOG.exception("Error - Expectation Failed - action: %s", rule)
-        raise ApiError(
-            title="Expectation Failed",
-            status=falcon.HTTP_417,
-            retry=False
-        )
+        raise ApiError(title="Expectation Failed",
+                       status=falcon.HTTP_417,
+                       retry=False)
     # raise the appropriate response exeception
     if ctx.authenticated:
         # authenticated but not authorized
         LOG.error("Error: Forbidden access - action: %s", rule)
-        raise ApiError(
-            title="Forbidden",
-            status=falcon.HTTP_403,
-            description="Credentials do not permit access",
-            retry=False
-        )
+        raise ApiError(title="Forbidden",
+                       status=falcon.HTTP_403,
+                       description="Credentials do not permit access",
+                       retry=False)
     else:
         LOG.error("Error - Unauthenticated access")
-        raise ApiError(
-            title="Unauthenticated",
-            status=falcon.HTTP_401,
-            description="Credentials are not established",
-            retry=False
-        )
+        raise ApiError(title="Unauthenticated",
+                       status=falcon.HTTP_401,
+                       description="Credentials are not established",
+                       retry=False)
 
 
 def list_policies():

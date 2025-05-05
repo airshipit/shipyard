@@ -58,32 +58,40 @@ class NotesManager:
         a_note = nm.store(Note(...params...))
         notes = list(nm.retrieve(Query("some/id")))
     """
-    def __init__(self, storage, get_token, connect_timeout=None,
+
+    def __init__(self,
+                 storage,
+                 get_token,
+                 connect_timeout=None,
                  read_timeout=None):
         if not isinstance(storage, NotesStorage):
             raise NotesInitializationError(
-                "Storage object is not suitable for use with Notes"
-            )
+                "Storage object is not suitable for use with Notes")
         self.storage = storage
-        LOG.info(
-            "Initializing Notes with storage mechanism: %s",
-            storage.__class__.__name__
-        )
+        LOG.info("Initializing Notes with storage mechanism: %s",
+                 storage.__class__.__name__)
 
         if not callable(get_token):
             raise NotesInitializationError(
                 "Parameter get_token is not suitable for use with Notes. "
-                "Must be a callable."
-            )
+                "Must be a callable.")
         self.get_token = get_token
 
         # connect and read timeouts default to 3 and 10 seconds
         self.connect_timeout = connect_timeout or 3
         self.read_timeout = read_timeout or 10
 
-    def create(self, assoc_id, subject, sub_type, note_val,
-               verbosity=None, link_url=None, is_auth_link=None,
-               note_id=None, note_timestamp=None, store=True):
+    def create(self,
+               assoc_id,
+               subject,
+               sub_type,
+               note_val,
+               verbosity=None,
+               link_url=None,
+               is_auth_link=None,
+               note_id=None,
+               note_timestamp=None,
+               store=True):
         """Creates and stores a Note object from parameters
 
         Passthrough helper method to avoid additional imports for the Note
@@ -94,9 +102,14 @@ class NotesManager:
         :param store: optinal, default=True, invoke the store method
             immediately upon creation, if true
         """
-        n = Note(assoc_id, subject, sub_type, note_val,
-                 verbosity=verbosity, link_url=link_url,
-                 is_auth_link=is_auth_link, note_id=note_id,
+        n = Note(assoc_id,
+                 subject,
+                 sub_type,
+                 note_val,
+                 verbosity=verbosity,
+                 link_url=link_url,
+                 is_auth_link=is_auth_link,
+                 note_id=note_id,
                  note_timestamp=note_timestamp)
         if store:
             return self.store(n)
@@ -110,9 +123,9 @@ class NotesManager:
         :returns: The note, as it was after storage
         """
         if note.verbosity < MIN_VERBOSITY or note.verbosity > MAX_VERBOSITY:
-            raise NotesStorageError(
-                "Verbosity of notes must range from {} "
-                "to {} (most verbose)".format(MIN_VERBOSITY, MAX_VERBOSITY))
+            raise NotesStorageError("Verbosity of notes must range from {} "
+                                    "to {} (most verbose)".format(
+                                        MIN_VERBOSITY, MAX_VERBOSITY))
         try:
             return self.storage.store(note)
         except NotesStorageError:
@@ -135,12 +148,11 @@ class NotesManager:
         except Exception as ex:
             LOG.exception(ex)
             raise NotesRetrievalError(
-                "Unhandled error during retrieval of notes"
-            )
+                "Unhandled error during retrieval of notes")
         for note in notes:
             if note.link_url:
-                note.resolved_url_value = (
-                    "Details at notedetails/{}".format(note.note_id))
+                note.resolved_url_value = ("Details at notedetails/{}".format(
+                    note.note_id))
         return notes
 
     def retrieve_by_id(self, note_id):
@@ -180,10 +192,10 @@ class NotesManager:
             if note.is_auth_link:
                 headers['X-Auth-Token'] = auth_token
 
-            response = requests.get(
-                note.link_url,
-                headers=headers,
-                timeout=(self.connect_timeout, self.read_timeout))
+            response = requests.get(note.link_url,
+                                    headers=headers,
+                                    timeout=(self.connect_timeout,
+                                             self.read_timeout))
             response.raise_for_status()
 
             # Set the valid response text to the note
@@ -217,9 +229,17 @@ class Note:
         expected to pass a value for the ID of a note, it will be assigned
     :param note_timestamp: String representation of the timestamp for the note
     """
-    def __init__(self, assoc_id, subject, sub_type, note_val,
-                 verbosity=None, link_url=None, is_auth_link=None,
-                 note_id=None, note_timestamp=None):
+
+    def __init__(self,
+                 assoc_id,
+                 subject,
+                 sub_type,
+                 note_val,
+                 verbosity=None,
+                 link_url=None,
+                 is_auth_link=None,
+                 note_id=None,
+                 note_timestamp=None):
         self.assoc_id = assoc_id
         self.subject = subject
         self.sub_type = sub_type
@@ -262,6 +282,7 @@ class Query:
         assoc_id_pattern will be used precisely, otherwise assoc_id_pattern
         will be matched to the start of the assoc_id for notes.
     """
+
     def __init__(self, assoc_id_pattern, max_verbosity=None, exact_match=None):
         self.assoc_id_pattern = assoc_id_pattern
         self.max_verbosity = max_verbosity or MAX_VERBOSITY
@@ -274,6 +295,7 @@ class NotesStorage(metaclass=abc.ABCMeta):
     Defines the interface for NotesStorage implementations that provide the
     specific mappings of Note objects to the target data store.
     """
+
     @abc.abstractmethod
     def store(self, note):
         """Store a Note object, return the note object as stored

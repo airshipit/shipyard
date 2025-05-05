@@ -33,8 +33,9 @@ from shipyard_airflow.control.helpers.design_reference_helper import \
 from shipyard_airflow.control.helpers.deckhand_client import (
     DeckhandClient, DeckhandError, DeckhandRejectedInputError,
     DeckhandResponseError, DocumentExistsElsewhereError, NoRevisionsExistError)
-from shipyard_airflow.control.service_endpoints import (
-    Endpoints, get_endpoint, get_token)
+from shipyard_airflow.control.service_endpoints import (Endpoints,
+                                                        get_endpoint,
+                                                        get_token)
 from shipyard_airflow.control.validators.validate_deployment_configuration \
     import ValidateDeploymentConfigurationFull
 from shipyard_airflow.errors import ApiError, AppError
@@ -144,7 +145,8 @@ class ConfigdocsHelper(object):
                     'Deckhand has responded unexpectedly: {}:{}'.format(
                         drex.status_code, drex.response_message)),
                 status=falcon.HTTP_500,
-                retry=False, )
+                retry=False,
+            )
 
     def is_buffer_valid_for_bucket(self, collection_id, buffermode):
         """Indicates if the buffer as it currently is, may be written to
@@ -238,9 +240,8 @@ class ConfigdocsHelper(object):
             self._get_versions_name_id(ordered_versions))
 
         try:
-            diff = self.deckhand.get_diff(
-                old_revision_id=old_version_id,
-                new_revision_id=new_version_id)
+            diff = self.deckhand.get_diff(old_revision_id=old_version_id,
+                                          new_revision_id=new_version_id)
 
         except DeckhandResponseError as drex:
             raise AppError(
@@ -249,13 +250,15 @@ class ConfigdocsHelper(object):
                     'Deckhand has responded unexpectedly: {}:{}'.format(
                         drex.status_code, drex.response_message)),
                 status=falcon.HTTP_500,
-                retry=False, )
+                retry=False,
+            )
 
         for collection_id in diff:
             collection = {"collection_name": collection_id}
 
             if diff[collection_id] in [
-                    "unmodified", "modified", "created", "deleted"]:
+                    "unmodified", "modified", "created", "deleted"
+            ]:
 
                 collection['base_version'] = old_version_name
                 collection['base_revision'] = old_version_id
@@ -274,8 +277,7 @@ class ConfigdocsHelper(object):
                     description=(
                         'Collection_id, {} has an invalid collection status. '
                         'unmodified, modified, created, and deleted are the'
-                        ' only valid collection statuses.',
-                        collection_id),
+                        ' only valid collection statuses.', collection_id),
                     status=falcon.HTTP_500,
                     retry=False)
 
@@ -318,9 +320,8 @@ class ConfigdocsHelper(object):
                 for revision in reversed(revisions):
                     tags = revision.get('tags', [])
 
-                    if (committed_revision is None and (
-                            COMMITTED in tags or
-                            ROLLBACK_COMMIT in tags)):
+                    if (committed_revision is None and
+                            (COMMITTED in tags or ROLLBACK_COMMIT in tags)):
                         committed_revision = revision
                     else:
                         # there are buffer revisions, only grab it on
@@ -337,9 +338,9 @@ class ConfigdocsHelper(object):
                         successful_site_action = revision
 
                     # Get the revision of the last site action
-                    if (last_site_action is None and (
-                            SITE_ACTION_SUCCESS in tags or
-                            SITE_ACTION_FAILURE in tags)):
+                    if (last_site_action is None and
+                        (SITE_ACTION_SUCCESS in tags or
+                         SITE_ACTION_FAILURE in tags)):
                         last_site_action = revision
 
         except NoRevisionsExistError:
@@ -373,7 +374,9 @@ class ConfigdocsHelper(object):
         rev = self._get_revision_dict().get(target_revision)
         return rev['id'] if rev else None
 
-    def get_collection_docs(self, version, collection_id,
+    def get_collection_docs(self,
+                            version,
+                            collection_id,
                             cleartext_secrets=False):
         """Returns the requested collection of docs based on the version
         specifier. The default is set as buffer.
@@ -399,7 +402,8 @@ class ConfigdocsHelper(object):
             # revision exists
             buffer_id = self.get_revision_id(BUFFER)
             return self.deckhand.get_docs_from_revision(
-                revision_id=buffer_id, bucket_id=collection_id,
+                revision_id=buffer_id,
+                bucket_id=collection_id,
                 cleartext_secrets=cleartext_secrets)
         raise ApiError(
             title='No documents to retrieve',
@@ -408,7 +412,9 @@ class ConfigdocsHelper(object):
             status=falcon.HTTP_404,
             retry=False)
 
-    def _get_target_docs(self, collection_id, target_rev,
+    def _get_target_docs(self,
+                         collection_id,
+                         target_rev,
                          cleartext_secrets=False):
         """Returns the collection if it exists as committed, last_site_action
         or successful_site_action.
@@ -417,15 +423,15 @@ class ConfigdocsHelper(object):
 
         if revision_id:
             return self.deckhand.get_docs_from_revision(
-                revision_id=revision_id, bucket_id=collection_id,
+                revision_id=revision_id,
+                bucket_id=collection_id,
                 cleartext_secrets=cleartext_secrets)
 
-        raise ApiError(
-            title='No documents to retrieve',
-            description=('No collection {} for revision '
-                         '{}'.format(collection_id, target_rev)),
-            status=falcon.HTTP_404,
-            retry=False)
+        raise ApiError(title='No documents to retrieve',
+                       description=('No collection {} for revision '
+                                    '{}'.format(collection_id, target_rev)),
+                       status=falcon.HTTP_404,
+                       retry=False)
 
     def get_rendered_configdocs(self, version=BUFFER, cleartext_secrets=False):
         """Returns the rendered configuration documents for the specified
@@ -435,8 +441,9 @@ class ConfigdocsHelper(object):
         revision_dict = self._get_revision_dict()
 
         # Raise Exceptions if we received unexpected version
-        if version not in [BUFFER, COMMITTED, LAST_SITE_ACTION,
-                           SUCCESSFUL_SITE_ACTION]:
+        if version not in [
+                BUFFER, COMMITTED, LAST_SITE_ACTION, SUCCESSFUL_SITE_ACTION
+        ]:
             raise ApiError(
                 title='Invalid version',
                 description='{} is not a valid version'.format(version),
@@ -501,9 +508,9 @@ class ConfigdocsHelper(object):
                 if msg.get('error'):
                     error_count = error_count + 1
                     default_level = 'Error'
-                val_msg = _generate_validation_message(
-                    msg, level=default_level, source=th_name
-                )
+                val_msg = _generate_validation_message(msg,
+                                                       level=default_level,
+                                                       source=th_name)
                 resp_msgs.append(val_msg)
         return (error_count, resp_msgs)
 
@@ -544,8 +551,8 @@ class ConfigdocsHelper(object):
             resp_msgs.extend(results)
 
             # And then the other ucp components
-            (cpnt_ec, cpnt_msgs) = self._get_validations_from_ucp_components(
-                revision_id)
+            (cpnt_ec, cpnt_msgs
+             ) = self._get_validations_from_ucp_components(revision_id)
             resp_msgs.extend(cpnt_msgs)
             error_count += cpnt_ec
             LOG.debug("Airship component validations: %s", cpnt_ec)
@@ -557,22 +564,25 @@ class ConfigdocsHelper(object):
         """Run Shipyard's own validations."""
         try:
             sy_val_mgr = DocumentValidationManager(
-                service_clients.deckhand_client(),
-                revision_id,
+                service_clients.deckhand_client(), revision_id,
                 [(ValidateDeploymentConfigurationFull,
-                  CONF.document_info.deployment_configuration_name)]
-            )
+                  CONF.document_info.deployment_configuration_name)])
             return sy_val_mgr.validate()
         except Exception as ex:
             # Don't let any exceptions here prevent subsequent processing,
             # but make sure we register an error to prevent success.
-            return [_generate_validation_message({
-                "error": True,
-                "message": ("Shipyard has encountered an unexpected error "
-                            "while processing document validations"),
-                "name": "DocumentValidationProcessingError",
-                "diagnostic": str(ex),
-            })]
+            return [
+                _generate_validation_message({
+                    "error":
+                    True,
+                    "message": ("Shipyard has encountered an unexpected error "
+                                "while processing document validations"),
+                    "name":
+                    "DocumentValidationProcessingError",
+                    "diagnostic":
+                    str(ex),
+                })
+            ]
 
     def get_deckhand_validation_status(self, revision_id):
         """Retrieve Deckhand validation status
@@ -593,9 +603,7 @@ class ConfigdocsHelper(object):
                     for error in dh_result.get('errors'):
                         resp_msgs.append(
                             _generate_dh_val_msg(
-                                error, dh_result_name=dh_result.get('name')
-                            )
-                        )
+                                error, dh_result_name=dh_result.get('name')))
         return resp_msgs
 
     def tag_buffer(self, tag):
@@ -686,10 +694,9 @@ class ConfigdocsHelper(object):
         """Returns a list of ordered versions"""
 
         # Default ordering
-        def_order = [SUCCESSFUL_SITE_ACTION,
-                     LAST_SITE_ACTION,
-                     COMMITTED,
-                     BUFFER]
+        def_order = [
+            SUCCESSFUL_SITE_ACTION, LAST_SITE_ACTION, COMMITTED, BUFFER
+        ]
 
         # Defaults to COMMITTED and BUFFER
         if versions is None:
@@ -715,9 +722,8 @@ class ConfigdocsHelper(object):
             if version not in def_order:
                 raise AppError(
                     title='Invalid version detected',
-                    description=(
-                        '{} is not a valid version, which include: '
-                        '{}'.format(version, ', '.join(def_order))),
+                    description=('{} is not a valid version, which include: '
+                                 '{}'.format(version, ', '.join(def_order))),
                     status=falcon.HTTP_400,
                     retry=False)
 
@@ -759,20 +765,21 @@ class ConfigdocsHelper(object):
 
         # Set new_version_id if None
         if new_version_id is None:
-            new_version_id = (
-                self.get_revision_id(BUFFER) or old_version_id or 0)
+            new_version_id = (self.get_revision_id(BUFFER) or old_version_id or
+                              0)
 
-        return (
-            old_version_name, new_version_name, old_version_id, new_version_id)
+        return (old_version_name, new_version_name, old_version_id,
+                new_version_id)
+
 
 #
 # End of ConfigdocsHelper class
 #
 
-
 #
 # functions for module.
 #
+
 
 def add_messages_to_validation_status(status, msgs, level):
     """Given a status retrieved from _format_validations_to_status and a list
@@ -789,30 +796,28 @@ def add_messages_to_validation_status(status, msgs, level):
 
     formatted_messages = []
     for msg in msgs:
-        formatted_messages.append({'code': code,
-                                   'message': msg,
-                                   'status': str(level).capitalize(),
-                                   'level': str(level).lower()})
+        formatted_messages.append({
+            'code': code,
+            'message': msg,
+            'status': str(level).capitalize(),
+            'level': str(level).lower()
+        })
     status['details']['messageList'] += formatted_messages
 
 
 def _get_validation_endpoints():
     """Returns the list of validation endpoint supported"""
     val_ep = '{}/validatedesign'
-    return [
-        {
-            'name': 'Drydock',
-            'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))
-        },
-        {
-            'name': 'Armada',
-            'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
-        },
-        {
-            'name': 'Promenade',
-            'url': val_ep.format(get_endpoint(Endpoints.PROMENADE))
-        }
-    ]
+    return [{
+        'name': 'Drydock',
+        'url': val_ep.format(get_endpoint(Endpoints.DRYDOCK))
+    }, {
+        'name': 'Armada',
+        'url': val_ep.format(get_endpoint(Endpoints.ARMADA))
+    }, {
+        'name': 'Promenade',
+        'url': val_ep.format(get_endpoint(Endpoints.PROMENADE))
+    }]
 
 
 def _get_validation_threads(validation_endpoints, ctx, design_ref):
@@ -824,32 +829,34 @@ def _get_validation_threads(validation_endpoints, ctx, design_ref):
         exception = {'exception': None}
         validation_threads.append({
             'thread':
-            threading.Thread(
-                target=_get_validations_for_component,
-                kwargs={
-                    'url': endpoint['url'],
-                    'design_reference': design_ref,
-                    'response': response,
-                    'exception': exception,
-                    'context_marker': ctx.external_marker,
-                    'thread_name': endpoint['name'],
-                    'log_extra': {
-                        'req_id': ctx.request_id,
-                        'external_ctx': ctx.external_marker,
-                        'user': ctx.user
-                    }
-                }),
-            'name': endpoint['name'],
-            'url': endpoint['url'],
-            'response': response,
-            'exception': exception
+            threading.Thread(target=_get_validations_for_component,
+                             kwargs={
+                                 'url': endpoint['url'],
+                                 'design_reference': design_ref,
+                                 'response': response,
+                                 'exception': exception,
+                                 'context_marker': ctx.external_marker,
+                                 'thread_name': endpoint['name'],
+                                 'log_extra': {
+                                     'req_id': ctx.request_id,
+                                     'external_ctx': ctx.external_marker,
+                                     'user': ctx.user
+                                 }
+                             }),
+            'name':
+            endpoint['name'],
+            'url':
+            endpoint['url'],
+            'response':
+            response,
+            'exception':
+            exception
         })
     return validation_threads
 
 
-def _get_validations_for_component(url, design_reference, response,
-                                   exception, context_marker, thread_name,
-                                   **kwargs):
+def _get_validations_for_component(url, design_reference, response, exception,
+                                   context_marker, thread_name, **kwargs):
     """Invoke the POST for validation"""
     try:
         headers = {
@@ -862,9 +869,8 @@ def _get_validations_for_component(url, design_reference, response,
             url,
             headers=headers,
             data=design_reference,
-            timeout=(
-                CONF.requests_config.validation_connect_timeout,
-                CONF.requests_config.validation_read_timeout))
+            timeout=(CONF.requests_config.validation_connect_timeout,
+                     CONF.requests_config.validation_read_timeout))
         # 400 response is "valid" failure to validate. > 400 is a problem.
         LOG.debug("%s responded with status code %s", thread_name,
                   http_resp.status_code)
@@ -879,12 +885,16 @@ def _get_validations_for_component(url, design_reference, response,
         response['response'] = {
             'details': {
                 'messageList': [{
-                    'message': unable_str,
-                    'kind': 'ValidationMessage',
-                    'error': True,
-                    'level': "Error",
-                    'diagnostic': '{}: {}'.format(
-                        ex.__class__.__name__, str(ex))
+                    'message':
+                    unable_str,
+                    'kind':
+                    'ValidationMessage',
+                    'error':
+                    True,
+                    'level':
+                    "Error",
+                    'diagnostic':
+                    '{}: {}'.format(ex.__class__.__name__, str(ex))
                 }]
             }
         }
@@ -903,24 +913,20 @@ def _generate_dh_val_msg(msg, dh_result_name):
         # format path, error_section, validation_schema, and schema_path
         # into diagnostic
         msg['diagnostic'] = 'Section: {} at {} (schema {} at {})'.format(
-            msg.get('error_section', not_spec),
-            msg.get('path', not_spec),
+            msg.get('error_section', not_spec), msg.get('path', not_spec),
             msg.get('validation_schema', not_spec),
-            msg.get('schema_path', not_spec)
-        )
+            msg.get('schema_path', not_spec))
 
     if 'documents' not in msg:
         msg['documents'] = [{
             'name': msg.get('name', not_spec),
             'schema': msg.get('schema', not_spec)
         }]
-    return _generate_validation_message(
-        msg,
-        name=dh_result_name,
-        error=True,
-        level='Error',
-        source='Deckhand'
-    )
+    return _generate_validation_message(msg,
+                                        name=dh_result_name,
+                                        error=True,
+                                        level='Error',
+                                        source='Deckhand')
 
 
 def _generate_validation_message(msg, **kwargs):
@@ -932,18 +938,18 @@ def _generate_validation_message(msg, **kwargs):
     used from kwargs match the fields listed below.
     """
 
-    fields = ['message', 'error', 'name', 'documents', 'level', 'diagnostic',
-              'source']
+    fields = [
+        'message', 'error', 'name', 'documents', 'level', 'diagnostic',
+        'source'
+    ]
     if 'documents' not in kwargs:
         kwargs['documents'] = []
     valmsg = {}
     for key in fields:
         valmsg[key] = msg.get(key, kwargs.get(key, None))
     valmsg['kind'] = 'ValidationMessage'
-    valmsg['level'] = (
-        valmsg.get('level') or _error_to_level(
-            valmsg.get('error'))
-    )
+    valmsg['level'] = (valmsg.get('level') or
+                       _error_to_level(valmsg.get('error')))
     return valmsg
 
 

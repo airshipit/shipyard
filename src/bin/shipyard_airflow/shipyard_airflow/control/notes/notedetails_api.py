@@ -23,20 +23,23 @@ from shipyard_airflow.errors import ApiError
 from shipyard_airflow.errors import InvalidFormatError
 from shipyard_airflow import policy
 
-
 NOTE_TYPE_RBAC = {
-    NoteType.ACTION: policy.GET_ACTION,
-    NoteType.STEP: policy.GET_ACTION_STEP,
+    NoteType.ACTION:
+    policy.GET_ACTION,
+    NoteType.STEP:
+    policy.GET_ACTION_STEP,
     # Anything else uses only the already checked GET_NOTEDETAILS
     # new known note types should be added to the notes helper and also
     # represented here.
-    NoteType.OTHER: None
+    NoteType.OTHER:
+    None
 }
 
 
 # /api/v1.0/notedetails/{note_id}
 class NoteDetailsResource(BaseResource):
     """Resource to service requests for note details"""
+
     @policy.ApiEnforcer(policy.GET_NOTEDETAILS)
     def on_get(self, req, resp, **kwargs):
         """Retrieves additional information for a note.
@@ -54,8 +57,7 @@ class NoteDetailsResource(BaseResource):
         if not len(note_id) == 26:
             raise InvalidFormatError(
                 title="Notes ID values are 26 character ULID values",
-                description="Invalid note_id: {} in URL".format(note_id)
-            )
+                description="Invalid note_id: {} in URL".format(note_id))
 
     def get_note_with_access_check(self, context, note_id):
         """Retrieve the note and checks user access to the note

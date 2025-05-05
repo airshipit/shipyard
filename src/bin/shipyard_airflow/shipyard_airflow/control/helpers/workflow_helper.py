@@ -17,10 +17,13 @@ Helper class for workflows/inquiry API classes, encapsulating data access
 import logging
 
 import arrow
+
 from arrow.parser import ParserError
+from oslo_config import cfg
 
-from shipyard_airflow.db.db import AIRFLOW_DB
+from shipyard_airflow.api.api import AIRFLOW_API
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -49,10 +52,8 @@ class WorkflowHelper(object):
             dag_exec_tm = arrow.get(dag_run.get('execution_date'))
             time_string = (dag_exec_tm.format('YYYY-MM-DDTHH:mm:ss.SSSSSS'))
 
-        dag_run['workflow_id'] = '{}__{}'.format(
-            dag_run.get('dag_id'),
-            time_string
-        )
+        dag_run['workflow_id'] = '{}__{}'.format(dag_run.get('dag_id'),
+                                                 time_string)
         return dag_run
 
     @staticmethod
@@ -62,10 +63,7 @@ class WorkflowHelper(object):
         # {'dag_id': <dag_id>, 'execution_date':<execution_date> }
         if '__' in workflow_id:
             dag_id, execution_date = workflow_id.rsplit('__', 1)
-            return {
-                'dag_id': dag_id,
-                'execution_date': execution_date
-            }
+            return {'dag_id': dag_id, 'execution_date': execution_date}
         return {}
 
     @staticmethod
@@ -90,31 +88,26 @@ class WorkflowHelper(object):
             except ParserError as parser_err:
                 LOG.error(
                     'Unable to parse date from %s. Error: %s, defaulting to '
-                    'now minus 30 days',
-                    since_iso8601,
-                    str(parser_err)
-                )
+                    'now minus 30 days', since_iso8601, str(parser_err))
                 threshold_date = arrow.utcnow().shift(days=-30)
         return threshold_date.naive
 
     def get_workflow_list(self, since_iso8601=None):
         """
         Returns all top level workflows, filtering by the supplied
-        since_iso8601 value.
+        since_iso8601 value using Airflow batch dagRuns API.
         :param since_iso8601: An iso8601 format specifying a date
         boundary. Optional, defaults to 30 days prior
         :returns: a list of workflow dictionaries
         """
         threshold_date = WorkflowHelper._get_threshold_date(
-            since_iso8601=since_iso8601
-        )
-        dag_runs = self._get_all_dag_runs_db()
+            since_iso8601=since_iso8601)
+        dag_runs = self._get_all_dag_runs_api(threshold_date)
         # only dags meeting the date criteria and are not subdags
         # by convention subdags are parent.child named.
         return [
             WorkflowHelper._add_id_to_run(run) for run in dag_runs
-            if ('.' not in run.get('dag_id') and
-                arrow.get(run.get('execution_date')).naive >= threshold_date)
+            if '.' not in run.get('dag_id')
         ]
 
     def get_workflow(self, workflow_id):
@@ -129,7 +122,7 @@ class WorkflowHelper(object):
         if not dag_info:
             return {}
 
-        workflow_list = self._get_dag_run_like_id_db(**dag_info)
+        workflow_list = self._get_dag_run_like_id_api(**dag_info)
         if not workflow_list:
             return {}
         # workflow list contains parent and all child dags. Sort them
@@ -159,30 +152,36 @@ class WorkflowHelper(object):
         if not dag_info:
             return []
 
-        return self._get_tasks_by_id_db(**dag_info)
+        return self._get_tasks_by_id_api(**dag_info)
 
-    def _get_all_dag_runs_db(self):
+    def _get_all_dag_runs_api(self, threshold_date=None):
         """
-        Wrapper for call to the airflow database to get all actions
-        :returns: a list of dag_runs dictionaries
+        Retrieves all dag runs for all DAGs using the Airflow v2
+        batch REST API, filtering by logical_date_gte.
         """
-        return AIRFLOW_DB.get_all_dag_runs()
+        dag_list = AIRFLOW_API.get_dag_list()
+        all_dag_runs = []
+        for dag in dag_list:
+            dag_id = dag.get('dag_id')
+            if dag_id:
+                all_dag_runs.extend(
+                    AIRFLOW_API.get_dag_runs_by_id(
+                        dag_id, threshold_date=threshold_date)
+                )
+        return all_dag_runs
 
-    def _get_dag_run_like_id_db(self, dag_id, execution_date):
+    def _get_dag_run_like_id_api(self, dag_id, execution_date):
         """
         Wrapper for call to the airflow database to get a single action
         by id
         """
-        return AIRFLOW_DB.get_dag_runs_like_id(
-            dag_id=dag_id, execution_date=execution_date
-        )
+        return AIRFLOW_API.get_dag_runs_like_id(dag_id_prefix=dag_id,
+                                                execution_date=execution_date)
 
-    def _get_tasks_by_id_db(self, dag_id, execution_date):
+    def _get_tasks_by_id_api(self, dag_id, execution_date):
         """
-        Wrapper for call to the airflow db to get all tasks
+        Wrapper for call to the airflow api to get all tasks
         :returns: a list of task dictionaries
         """
-        return AIRFLOW_DB.get_tasks_by_id(
-            dag_id=dag_id,
-            execution_date=execution_date
-        )
+        return AIRFLOW_API.get_tasks_by_id(dag_id=dag_id,
+                                           execution_date=execution_date)

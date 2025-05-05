@@ -24,7 +24,8 @@ from shipyard_airflow.common.notes.storage_impl_mem import (
 from shipyard_airflow.control.action.actions_id_api import (ActionsIdResource)
 from shipyard_airflow.control.base import ShipyardRequestContext
 from shipyard_airflow.policy import ShipyardPolicy
-from shipyard_airflow.db.db import AIRFLOW_DB, SHIPYARD_DB
+from shipyard_airflow.db.db import SHIPYARD_DB
+from shipyard_airflow.api.api import AIRFLOW_API
 from shipyard_airflow.errors import ApiError
 from tests.unit.control.common import create_req, create_resp
 
@@ -59,13 +60,16 @@ def actions_db(action_id):
         'dag_execution_date': DATE_ONE_STR,
         'user': 'robot1',
         'timestamp': DATE_ONE,
-        'context_marker': '8-4-4-4-12a'
+        'context_marker': '8-4-4-4-12a',
+        'steps': [1, 2, 3],
+        'dag_status': 'FAILED',
+        'command_audit': [1, 2]
     }
 
 
-def dag_runs_db(dag_id, execution_date):
+def dag_runs_api(dag_id, execution_date):
     """
-    replaces the actual db call
+    replaces the actual api call
     """
     return [{
         'dag_id': 'did2',
@@ -78,7 +82,7 @@ def dag_runs_db(dag_id, execution_date):
     }]
 
 
-def tasks_db(dag_id, execution_date):
+def tasks_api(dag_id, execution_date):
     """
     replaces the actual db call
     """
@@ -168,6 +172,9 @@ def test_on_get(mock_authorize, mock_get_action):
     assert resp.text == '"action_returned"'
     assert resp.status == '200 OK'
 
+
+@mock.patch("requests.get")
+@mock.patch("requests.post")
 @mock.patch('shipyard_airflow.control.helpers.action_helper.notes_helper',
             new=nh)
 @mock.patch('shipyard_airflow.control.action.actions_id_api.notes_helper',
@@ -179,8 +186,8 @@ def test_get_action_success(*args):
     action_resource = ActionsIdResource()
     # stubs for db
     action_resource.get_action_db = actions_db
-    action_resource.get_dag_run_db = dag_runs_db
-    action_resource.get_tasks_db = tasks_db
+    action_resource.get_dag_run_api = dag_runs_api
+    action_resource.get_tasks_api = tasks_api
     action_resource.get_validations_db = get_validations
     action_resource.get_action_command_audit_db = get_ac_audit
 
@@ -206,28 +213,27 @@ def test_get_action_errors(mock_get_action):
     assert 'Action not found' in str(expected_exc)
 
 
-@mock.patch.object(ActionsIdResource, 'get_dag_run_db', return_value=None)
-def test_get_dag_run_by_id_empty(mock_get_dag_run_db):
+@mock.patch.object(ActionsIdResource, 'get_dag_run_api', return_value=None)
+def test_get_dag_runs_by_id_empty(mock_get_dag_run_api):
     '''test that an empty dag_run_list will return None'''
     action_resource = ActionsIdResource()
     context.policy_engine = ShipyardPolicy()
     dag_id = 'test_dag_id'
     execution_date = 'test_execution_date'
-    result = action_resource.get_dag_run_by_id(dag_id, execution_date)
-    mock_get_dag_run_db.assert_called_once_with(dag_id, execution_date)
+    result = action_resource.get_dag_runs_by_id(dag_id, execution_date)
+    mock_get_dag_run_api.assert_called_once_with(dag_id, execution_date)
     assert result is None
 
-
-def test_get_dag_run_by_id_notempty():
-    '''test that a nonempty dag_run_list will return the 1st dag in the list'''
+@mock.patch("requests.get")
+def test_get_dag_runs_by_id_notempty(mock_get):
     action_resource = ActionsIdResource()
-    action_resource.get_dag_run_db = dag_runs_db
+    action_resource.get_dag_run_api = dag_runs_api
     dag_id = 'test_dag_id'
     execution_date = 'test_execution_date'
-    result = action_resource.get_dag_run_by_id(dag_id, execution_date)
+    result = action_resource.get_dag_runs_by_id(dag_id, execution_date)
     assert result == {
         'dag_id': 'did2',
-        'execution_date': DATE_ONE,
+        'execution_date': DATE_ONE,  # или DATE_ONE_STR, если везде строки
         'state': 'FAILED',
         'run_id': RUN_ID_TWO,
         'external_trigger': 'something',
@@ -277,8 +283,8 @@ def test_get_validations_db(mock_get_validation_by_action_id):
     assert result == expected
 
 
-@mock.patch.object(AIRFLOW_DB, 'get_tasks_by_id')
-def test_get_tasks_db(mock_get_tasks_by_id):
+@mock.patch.object(AIRFLOW_API, 'get_tasks_by_id')
+def test_get_tasks_api(mock_get_tasks_by_id):
     expected = {
         'id': '43',
         'action_id': '12345678901234567890123456',
@@ -290,31 +296,51 @@ def test_get_tasks_db(mock_get_tasks_by_id):
     dag_id = 'test_dag_id'
     execution_date = 'test_execution_date'
 
-    result = action_resource.get_tasks_db(dag_id, execution_date)
+    result = action_resource.get_tasks_api(dag_id, execution_date)
     mock_get_tasks_by_id.assert_called_once_with(
         dag_id=dag_id, execution_date=execution_date)
     assert result == expected
 
-@mock.patch.object(AIRFLOW_DB, 'get_dag_runs_by_id')
-def test_get_dag_run_db(mock_get_dag_runs_by_id):
-    expected = {
-        'dag_id': 'did2',
-        'execution_date': DATE_ONE,
-        'state': 'FAILED',
-        'run_id': RUN_ID_TWO,
-        'external_trigger': 'something',
-        'start_date': DATE_ONE,
-        'end_date': DATE_ONE
-    }
-    mock_get_dag_runs_by_id.return_value = expected
-    action_resource = ActionsIdResource()
-    dag_id = 'test_dag_id'
-    execution_date = 'test_execution_date'
+@mock.patch("requests.post")
+def test_get_dag_run_api(mock_post):
+    # Мокаем ответ Airflow API на POST /dagRuns/list
+    mock_post.return_value = mock.Mock(
+        status_code=200,
+        json=mock.Mock(return_value={
+            'dag_runs': [
+                {
+                    "dag_run_id": "run_123",
+                    "dag_id": "test_dag_id",
+                    "state": "success",
+                    "logical_date": "2017-09-13T11:13:03",
+                    "execution_date": "2017-09-13T11:13:03",
+                    "run_type": "manual",
+                    "external_trigger": True,
+                    "conf": {"foo": "bar"},
+                    "end_date": "2024-01-01T01:00:00+00:00",
+                    "start_date": "2024-01-01T00:00:00+00:00"
+                }
+            ]
+        }),
+        raise_for_status=mock.Mock()
+    )
 
-    result = action_resource.get_dag_run_db(dag_id, execution_date)
-    mock_get_dag_runs_by_id.assert_called_once_with(
-        dag_id=dag_id, execution_date=execution_date)
-    assert result == expected
+    action_resource = ActionsIdResource()
+    dag_id = "test_dag_id"
+    execution_date = "2017-09-13T11:13:03"
+    result = action_resource.get_dag_run_api(dag_id, execution_date)
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    dag_run = result[0]
+    assert dag_run["dag_id"] == "test_dag_id"
+    assert dag_run["execution_date"] == "2017-09-13T11:13:03"
+    assert dag_run["state"] == "success"
+    assert dag_run["run_id"] == "run_123"
+    assert dag_run["external_trigger"] is True
+    assert dag_run["conf"] == {"foo": "bar"}
+    assert dag_run["start_date"] == "2024-01-01T00:00:00+00:00"
+    assert dag_run["end_date"] == "2024-01-01T01:00:00+00:00"
 
 @mock.patch.object(SHIPYARD_DB, 'get_command_audit_by_action_id')
 def test_get_action_command_audit_db(mock_get_command_audit_by_action_id):

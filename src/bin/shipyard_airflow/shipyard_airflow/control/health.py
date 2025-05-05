@@ -21,6 +21,7 @@ class HealthResource(BaseResource):
     Return empty response/body to show
     that shipyard is healthy
     """
+
     def on_get(self, req, resp):
         """
         It really does nothing right now. It may do more later

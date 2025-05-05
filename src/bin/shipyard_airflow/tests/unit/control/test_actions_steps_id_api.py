@@ -59,7 +59,7 @@ def actions_db(action_id):
     }
 
 
-def tasks_db(dag_id, execution_date):
+def tasks_api(dag_id, execution_date):
     """
     replaces the actual db call
     """
@@ -124,7 +124,7 @@ class TestActionsStepsResource():
         action_resource = ActionsStepsResource()
         # stubs for db
         action_resource.get_action_db = actions_db
-        action_resource.get_tasks_db = tasks_db
+        action_resource.get_tasks_api = tasks_api
 
         step = action_resource.get_action_step(
             '59bb330a-9e64-49be-a586-d253bb67d443', '1c')
@@ -152,7 +152,7 @@ class TestActionsStepsResource():
         action_resource = ActionsStepsResource()
         # stubs for db
         action_resource.get_action_db = actions_db
-        action_resource.get_tasks_db = tasks_db
+        action_resource.get_tasks_api = tasks_api
 
         with pytest.raises(ApiError) as api_error:
             step = action_resource.get_action_step(
@@ -166,12 +166,12 @@ class TestActionsStepsResource():
         action_resource.get_action_db(action_id)
         mock_get_action_by_id.assert_called_with(action_id=action_id)
 
-    @patch('shipyard_airflow.db.airflow_db.AirflowDbAccess.get_tasks_by_id')
-    def test_get_tasks_db(self, mock_get_tasks_by_id):
+    @patch('shipyard_airflow.api.airflow_api.AirflowApiAccess.get_tasks_by_id')
+    def test_get_tasks_api(self, mock_get_tasks_by_id):
         action_resource = ActionsStepsResource()
         dag_id = '123456'
         execution_date = DATE_ONE
-        action_resource.get_tasks_db(dag_id, execution_date)
+        action_resource.get_tasks_api(dag_id, execution_date)
         mock_get_tasks_by_id.assert_called_with(
             dag_id=dag_id, execution_date=execution_date)
 

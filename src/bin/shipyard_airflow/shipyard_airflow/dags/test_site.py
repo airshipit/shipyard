@@ -13,14 +13,14 @@
 # limitations under the License.
 from datetime import timedelta
 
-import airflow
-from airflow import DAG
+import pendulum
+
+from airflow.sdk import DAG
 
 try:
     from common_step_factory import CommonStepFactory
 except ImportError:
     from shipyard_airflow.dags.common_step_factory import CommonStepFactory
-
 """test site"""
 
 PARENT_DAG_NAME = 'test_site'
@@ -28,7 +28,7 @@ PARENT_DAG_NAME = 'test_site'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': airflow.utils.dates.days_ago(1),
+    'start_date': pendulum.now('UTC').subtract(days=1),
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -37,7 +37,7 @@ default_args = {
     'retry_delay': timedelta(seconds=30),
 }
 
-dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+dag = DAG(PARENT_DAG_NAME, default_args=default_args, schedule=None)
 
 step_factory = CommonStepFactory(parent_dag_name=PARENT_DAG_NAME,
                                  dag=dag,
@@ -52,7 +52,4 @@ test_releases = step_factory.get_armada_test_releases()
 # DAG Wiring
 preflight.set_upstream(action_xcom)
 deployment_configuration.set_upstream(action_xcom)
-test_releases.set_upstream([
-    deployment_configuration,
-    preflight
-])
+test_releases.set_upstream([deployment_configuration, preflight])

@@ -26,6 +26,7 @@ class ValidateTargetNodes:
     For actions that target nodes, this parameter must have at least one value
     in it, and each value should be a string
     """
+
     def __init__(self, action):
         self.action = action
 
@@ -56,11 +57,8 @@ class ValidateTargetNodes:
         # something was invalid
         raise ApiError(
             title='Invalid target_nodes parameter',
-            description=(
-                'The target_nodes parameter for this action '
-                'should be a list with one or more string values '
-                'representing node names'
-            ),
+            description=('The target_nodes parameter for this action '
+                         'should be a list with one or more string values '
+                         'representing node names'),
             status=falcon.HTTP_400,
-            retry=False
-        )
+            retry=False)
