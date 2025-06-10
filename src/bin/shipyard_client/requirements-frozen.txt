@@ -82,7 +82,7 @@ pytz==2024.2
 PyYAML==6.0.2
 referencing==0.35.1
 repoze.lru==0.7
-requests==2.32.3
+requests==2.32.4
 rfc3986==2.0.0
 Routes==2.5.1
 rpds-py==0.22.3
