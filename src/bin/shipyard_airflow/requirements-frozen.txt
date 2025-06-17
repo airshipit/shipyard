@@ -192,7 +192,7 @@ promenade @ git+https://opendev.org/airship/promenade.git@40fd108fd976c19bc142d1
 prometheus_client==0.21.1
 prompt_toolkit==3.0.48
 propcache==0.2.1
-protobuf==4.25.5
+protobuf==4.25.8
 psutil==6.1.0
 psycopg2-binary==2.9.10
 pure-sasl==0.6.2
