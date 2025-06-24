@@ -648,7 +648,7 @@ conf:
       workers: 4
 
     api_auth:
-      jwt_secret: Rtx8fOKxn3QtxLp5GCI0CFx2rfCd5NStUY+5GZIGGWo=
+      jwt_secret: ""
       jwt_algorithm: HS512
       jwt_issuer: airship
       jwt_audience: apache-airflow
@@ -660,7 +660,7 @@ conf:
       jwt_expiration_time: 600
 
     webserver:
-      secret_key: Rtx8fOKxn3QtxLp5GCI0CFx2rfCd5NStUY+5GZIGGWo=
+      secret_key: ""
 
     cli:
       api_client: airflow.api.client.local_client
@@ -674,9 +674,9 @@ conf:
       broker_connection_retry_on_startup: "True"
       broker_connection_timeout: 30
       operation_timeout: 30
-      ssl_cacert: /ect/rabbitmq/certs/ca.crt
-      ssl_cert: /ect/rabbitmq/certs/tls.crt
-      ssl_key: /ect/rabbitmq/certs/tls.key
+      ssl_cacert: /etc/rabbitmq/certs/ca.crt
+      ssl_cert: /etc/rabbitmq/certs/tls.crt
+      ssl_key: /etc/rabbitmq/certs/tls.key
       sync_parallelism: 1
       worker_concurrency: 4
       worker_log_server_port: 8793
@@ -692,7 +692,7 @@ conf:
       dags_are_paused_at_creation: "False"
       dags_folder: /usr/local/airflow/dags
       donot_pickle: "False"
-      fernet_key: fKp7omMJ4QlTxfZzVBSiyXVgeCK-6epRjGgMpEIsjvs=
+      fernet_key: ""
       load_examples: "False"
       max_active_runs_per_dag: 8
       executor: CeleryExecutor

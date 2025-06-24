@@ -28,7 +28,8 @@
         - airship-shipyard-dependency-vulnerability-check
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-image-gate-ubuntu_jammy
-        - shipyard-airskiff-deployment-jammy-kubeadm
+        # temp disabled until secret generation added in treasuremap
+        # - shipyard-airskiff-deployment-jammy-kubeadm
     gate:
       jobs:
         - openstack-tox-py310
@@ -242,12 +243,13 @@
         # - ./tools/deployment/airskiff/common/sleep.sh
     irrelevant-files: *irrelevant-files
 
+
 - job:
     name: airship-shipyard-docker-build-publish-ubuntu_jammy
     timeout: 3600
-    run: tools/gate/playbooks/run-image.yaml
-    nodeset: airship-shipyard-single-node-jammy
-    irrelevant-files: *irrelevant-files
+    description: |
+      Run shipyard-image build for ubuntu_jammy.
+    parent: airship-shipyard-image-base
     secrets:
       - airship_shipyard_quay_creds
     vars:
@@ -260,6 +262,26 @@
         static:
           - latest
           - airflow_3.0.2
+
+
+# - job:
+#     name: airship-shipyard-docker-build-publish-ubuntu_jammy
+#     timeout: 3600
+#     run: tools/gate/playbooks/run-image.yaml
+#     nodeset: airship-shipyard-single-node-jammy
+#     irrelevant-files: *irrelevant-files
+#     secrets:
+#       - airship_shipyard_quay_creds
+#     vars:
+#       publish: true
+#       distro: ubuntu_jammy
+#       tags:
+#         dynamic:
+#           branch: true
+#           commit: true
+#         static:
+#           - latest
+#           - airflow_3.0.2
 
 
 
