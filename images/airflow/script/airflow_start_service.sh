@@ -173,7 +173,7 @@ elif [[ $cmd == 'quicktest' ]]; then
     ${python3_path} ${airflow_path} db migrate
     ${python3_path} ${airflow_path} dag-processor >/dev/null 2>&1  &
     while true; do
-        is_paused=$(${python3_path} ${airflow_path} dags details example_branch_labels -o plain | grep is_paused | awk '{print $2}')
+        is_paused=$(${python3_path} ${airflow_path} dags details example_bash_operator -o plain | grep is_paused | awk '{print $2}')
         if [ "$is_paused" == "True" ]; then
             echo "DAG processor is running!"
             break
@@ -183,22 +183,22 @@ elif [[ $cmd == 'quicktest' ]]; then
     done
     ${python3_path} ${airflow_path} dags list
     ${python3_path} ${airflow_path} dags list-import-errors
-    ${python3_path} ${airflow_path} dags unpause example_branch_labels
+    ${python3_path} ${airflow_path} dags unpause example_bash_operator
     while true; do
-        is_paused=$(${python3_path} ${airflow_path} dags details example_branch_labels -o plain | grep is_paused | awk '{print $2}')
+        is_paused=$(${python3_path} ${airflow_path} dags details example_bash_operator -o plain | grep is_paused | awk '{print $2}')
         if [ "$is_paused" == "False" ]; then
-            echo "DAG example_branch_labels is active."
+            echo "DAG example_bash_operator is active."
             break
         fi
-        echo "Waiting for DAG example_branch_labels to become active..."
+        echo "Waiting for DAG example_bash_operator to become active..."
         sleep 10
     done
-    ${python3_path} ${airflow_path} dags test example_branch_labels
-    ${python3_path} ${airflow_path} dags list-runs example_branch_labels
-    RUN_ID=$(${python3_path} ${airflow_path} dags list-runs example_branch_labels -o plain | grep example_branch_labels | awk '{print $2}')
-    ${python3_path} ${airflow_path} tasks states-for-dag-run example_branch_labels ${RUN_ID}
-    RUN_ID=$(${python3_path} ${airflow_path} dags list-runs example_branch_labels -o plain | grep example_branch_labels | awk '{print $2}')
-    ${python3_path} ${airflow_path} dags state example_branch_labels ${RUN_ID}
+    ${python3_path} ${airflow_path} dags test example_bash_operator
+    ${python3_path} ${airflow_path} dags list-runs example_bash_operator
+    RUN_ID=$(${python3_path} ${airflow_path} dags list-runs example_bash_operator -o plain | grep example_bash_operator | awk '{print $2}')
+    ${python3_path} ${airflow_path} tasks states-for-dag-run example_bash_operator ${RUN_ID}
+    RUN_ID=$(${python3_path} ${airflow_path} dags list-runs example_bash_operator -o plain | grep example_bash_operator | awk '{print $2}')
+    ${python3_path} ${airflow_path} dags state example_bash_operator ${RUN_ID}
 else
      echo "Invalid Command!"
      exit 1
