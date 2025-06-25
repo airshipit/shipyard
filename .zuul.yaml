@@ -28,8 +28,7 @@
         - airship-shipyard-dependency-vulnerability-check
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-image-gate-ubuntu_jammy
-        # temp disabled until secret generation added in treasuremap
-        # - shipyard-airskiff-deployment-jammy-kubeadm
+        - shipyard-airskiff-deployment-jammy-kubeadm
     gate:
       jobs:
         - openstack-tox-py310
@@ -38,7 +37,7 @@
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
         - airship-shipyard-image-gate-ubuntu_jammy
-        # - shipyard-airskiff-deployment-jammy-kubeadm
+
     post:
       jobs:
         - airship-shipyard-docker-build-publish-ubuntu_jammy
