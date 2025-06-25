@@ -125,10 +125,11 @@
     run: tools/gate/playbooks/zuul-linter.yaml
     nodeset: airship-shipyard-single-node-jammy
 
+
 - job:
-    name: airship-shipyard-image-base
+    name: airship-shipyard-image-gate-ubuntu_jammy
     description: |
-      Base job for running airship-shipyard image related jobs.
+      Job for running airship-shipyard image related jobs.
     timeout: 3600
     run: tools/gate/playbooks/docker-image-build.yaml
     nodeset: airship-shipyard-single-node-jammy
@@ -136,13 +137,6 @@
       - ^.*\.rst$
       - ^doc/.*$
       - ^releasenotes/.*$
-
-
-- job:
-    name: airship-shipyard-image-gate-ubuntu_jammy
-    description: |
-      Run shipyard-image build for ubuntu_jammy.
-    parent: airship-shipyard-image-base
     vars:
       publish: false
       distro: ubuntu_jammy
@@ -246,10 +240,12 @@
 
 - job:
     name: airship-shipyard-docker-build-publish-ubuntu_jammy
-    timeout: 3600
     description: |
-      Run shipyard-image build for ubuntu_jammy.
-    parent: airship-shipyard-image-base
+      Job for publishing airship-shipyard images.
+    timeout: 3600
+    run: tools/gate/playbooks/docker-image-build.yaml
+    nodeset: airship-shipyard-single-node-jammy
+    irrelevant-files: *irrelevant-files
     secrets:
       - airship_shipyard_quay_creds
     vars:
@@ -262,27 +258,6 @@
         static:
           - latest
           - airflow_3.0.2
-
-
-# - job:
-#     name: airship-shipyard-docker-build-publish-ubuntu_jammy
-#     timeout: 3600
-#     run: tools/gate/playbooks/run-image.yaml
-#     nodeset: airship-shipyard-single-node-jammy
-#     irrelevant-files: *irrelevant-files
-#     secrets:
-#       - airship_shipyard_quay_creds
-#     vars:
-#       publish: true
-#       distro: ubuntu_jammy
-#       tags:
-#         dynamic:
-#           branch: true
-#           commit: true
-#         static:
-#           - latest
-#           - airflow_3.0.2
-
 
 
 - secret:
