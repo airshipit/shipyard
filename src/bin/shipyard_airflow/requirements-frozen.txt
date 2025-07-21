@@ -32,7 +32,7 @@ bcrypt==4.3.0
 Beaker==1.13.0
 billiard==4.2.1
 cachetools==5.5.2
-cadwyn==5.3.3
+cadwyn==5.4.3
 castellan==5.3.0
 celery==5.5.3
 certifi==2025.4.26
