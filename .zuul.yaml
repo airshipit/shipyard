@@ -157,6 +157,8 @@
       CLONE_SHIPYARD: false
       MAKE_SHIPYARD_IMAGES: true
       USE_ARMADA_GO: true
+      DISTRO: ubuntu_jammy
+      DOCKER_REGISTRY: localhost:5000
       gate_scripts_relative_path: ../../airship/treasuremap
 
 - job:

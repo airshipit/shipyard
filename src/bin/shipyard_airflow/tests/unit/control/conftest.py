@@ -15,8 +15,17 @@ import os
 
 from falcon import testing
 import pytest
+from shipyard_airflow.conf import config
 
 from shipyard_airflow.control.start_shipyard import start_shipyard
+
+
+@pytest.fixture(autouse=True, scope="session")
+def setup_config():
+    """
+    Initialize shipyard config for all tests so that CONF resolves.
+    """
+    config.parse_args(args=[])
 
 
 @pytest.fixture()
