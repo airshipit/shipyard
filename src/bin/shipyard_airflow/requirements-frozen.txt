@@ -231,7 +231,7 @@ SQLAlchemy==1.4.54
 SQLAlchemy-JSONField==1.0.2
 SQLAlchemy-Utils==0.41.2
 sqlparse==0.5.3
-starlette==0.46.2
+starlette==0.49.1
 statsd==4.0.1
 stevedore==5.5.0
 structlog==25.4.0
