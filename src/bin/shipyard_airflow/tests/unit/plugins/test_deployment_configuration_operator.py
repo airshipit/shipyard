@@ -102,26 +102,24 @@ def test_execute_no_client(get_revision_id, read_config):
     read_config.assert_called_once_with()
 
 
-@mock.patch.object(airflow.models.TaskInstance, 'xcom_pull',
-                   return_value=ACTION_INFO)
-def test_get_revision_id(ti):
+def test_get_revision_id():
     """Test that get revision id follows desired exits"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
-    ti = airflow.models.TaskInstance(task=mock.MagicMock())
+    ti = mock.MagicMock(spec=airflow.models.TaskInstance)
+    ti.xcom_pull.return_value = ACTION_INFO
     rid = dco.get_revision_id(ti)
     assert rid == 2
 
 
-@mock.patch.object(airflow.models.TaskInstance, 'xcom_pull',
-                   return_value=ACTION_INFO_NO_COMMIT)
-def test_get_revision_id_none(ti):
+def test_get_revision_id_none():
     """Test that get revision id follows desired exits"""
     dco = DeploymentConfigurationOperator(main_dag_name="main",
                                           shipyard_conf="shipyard.conf",
                                           task_id="t1")
-    ti = airflow.models.TaskInstance(task=mock.MagicMock())
+    ti = mock.MagicMock(spec=airflow.models.TaskInstance)
+    ti.xcom_pull.return_value = ACTION_INFO_NO_COMMIT
     with pytest.raises(AirflowException) as expected_exc:
         rid = dco.get_revision_id(ti)
     assert "Design_revision is not set." in str(expected_exc)

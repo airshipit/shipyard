@@ -62,7 +62,7 @@ class TestDeploymentStatusOperator(TestCase):
         self.operator = deployment_status_operator.DeploymentStatusOperator(
             shipyard_conf='conf', main_dag_name='name', dag=self.dag, task_id="task")
 
-        self.task_instance = TaskInstance(task=self.operator, run_id=self.dag_run.run_id)
+        self.task_instance = TaskInstance(task=self.operator, dag_version_id=1, run_id=self.dag_run.run_id)
         self.task_instance.dag_run = self.dag_run  # Associate TaskInstance with DagRun
         self.task_instance.state = State.RUNNING
 

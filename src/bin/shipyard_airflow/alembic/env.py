@@ -66,14 +66,15 @@ def run_migrations_online():
     #     prefix='sqlalchemy.',
     #     poolclass=pool.NullPool)
 
-    with connectable.connect() as connection:
+    # Updated for Alembic 1.17.0 compatibility with SQLAlchemy 2.0
+    # Use connectable.begin() instead of connect() + begin_transaction()
+    with connectable.begin() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata
         )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        context.run_migrations()
 
 if context.is_offline_mode():
     run_migrations_offline()

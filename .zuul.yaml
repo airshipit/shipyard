@@ -153,7 +153,6 @@
       - name: airship/treasuremap
         override-checkout: v1.9
     vars:
-      treasuremap_ref: v1.9
       CLONE_SHIPYARD: false
       MAKE_SHIPYARD_IMAGES: true
       USE_ARMADA_GO: true
@@ -180,7 +179,7 @@
           commit: true
         static:
           - latest
-          - airflow_3.0.2
+          - airflow_3.1.1
 
 
 - secret:

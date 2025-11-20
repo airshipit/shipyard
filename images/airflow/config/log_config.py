@@ -36,24 +36,20 @@ LOG_LEVEL: str = conf.get_mandatory_value("logging", "LOGGING_LEVEL").upper()
 # so it's set to 'WARN' by default.
 FAB_LOG_LEVEL: str = conf.get_mandatory_value("logging", "FAB_LOGGING_LEVEL").upper()
 
-DAG_LOG_LEVEL: str = conf.get_mandatory_value("logging", "DAG_LOGGING_LEVEL").upper()
+DAG_LOG_LEVEL: str = conf.get_mandatory_value("logging", "DAG_LOGGING_LEVEL", fallback="INFO").upper()
 
 LOG_FORMAT: str = conf.get_mandatory_value("logging", "LOG_FORMAT")
+DAG_PROCESSOR_LOG_FORMAT: str = conf.get_mandatory_value("logging", "DAG_PROCESSOR_LOG_FORMAT")
 
 LOG_FORMATTER_CLASS: str = conf.get_mandatory_value(
     "logging", "LOG_FORMATTER_CLASS", fallback="airflow.utils.log.timezone_aware.TimezoneAware"
 )
 
-COLORED_LOG_FORMAT: str = conf.get_mandatory_value("logging", "COLORED_LOG_FORMAT")
-
-COLORED_LOG: bool = conf.getboolean("logging", "COLORED_CONSOLE_LOG")
-
-COLORED_FORMATTER_CLASS: str = conf.get_mandatory_value("logging", "COLORED_FORMATTER_CLASS")
-
 DAG_PROCESSOR_LOG_TARGET: str = conf.get_mandatory_value("logging", "DAG_PROCESSOR_LOG_TARGET")
 
 BASE_LOG_FOLDER: str = os.path.expanduser(conf.get_mandatory_value("logging", "BASE_LOG_FOLDER"))
 
+# This isn't used anymore, but kept for compat of people who might have imported it
 DEFAULT_LOGGING_CONFIG: dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -62,40 +58,36 @@ DEFAULT_LOGGING_CONFIG: dict[str, Any] = {
             "format": LOG_FORMAT,
             "class": LOG_FORMATTER_CLASS,
         },
-        "airflow_coloured": {
-            "format": COLORED_LOG_FORMAT if COLORED_LOG else LOG_FORMAT,
-            "class": COLORED_FORMATTER_CLASS if COLORED_LOG else LOG_FORMATTER_CLASS,
-        },
         "source_processor": {
-            "format": LOG_FORMAT,
+            "format": DAG_PROCESSOR_LOG_FORMAT,
             "class": LOG_FORMATTER_CLASS,
         },
     },
     "filters": {
-        "mask_secrets": {
-            "()": "airflow.sdk.execution_time.secrets_masker.SecretsMasker",
+        "mask_secrets_core": {
+            "()": "airflow._shared.secrets_masker._secrets_masker",
         },
     },
     "handlers": {
         # NOTE: Add a "raw" python console logger. Using 'console' results
         #       in a state of recursion.
-        'py-console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'airflow',
-            'stream': 'ext://sys.stdout',
-            "filters": ["mask_secrets"],
+        "py-console": {
+            "class": "logging.StreamHandler",
+            "formatter": "airflow",
+            "stream": "sys.stdout",
+            "filters": ["mask_secrets_core"],
         },
         "console": {
-            "class": "airflow.utils.log.logging_mixin.RedirectStdHandler",
-            "formatter": "airflow_coloured",
+            "class": "logging.StreamHandler",
+            "formatter": "airflow",
             "stream": "sys.stdout",
-            "filters": ["mask_secrets"],
+            "filters": ["mask_secrets_core"],
         },
         "task": {
             "class": "airflow.utils.log.file_task_handler.FileTaskHandler",
             "formatter": "airflow",
             "base_log_folder": BASE_LOG_FOLDER,
-            "filters": ["mask_secrets"],
+            "filters": ["mask_secrets_core"],
         },
     },
     "loggers": {
@@ -104,23 +96,23 @@ DEFAULT_LOGGING_CONFIG: dict[str, Any] = {
             "level": LOG_LEVEL,
             # Set to true here (and reset via set_context) so that if no file is configured we still get logs!
             "propagate": True,
-            "filters": ["mask_secrets"],
+            "filters": ["mask_secrets_core"],
         },
         "flask_appbuilder": {
             "handlers": ["console"],
             "level": FAB_LOG_LEVEL,
-            "propagate": False,
+            "propagate": True,
         },
-        'airflow.processor': {
-            'handlers': ["console"],
-            'level': DAG_LOG_LEVEL,
-            'propagate': False,
+        "airflow.processor": {
+            "handlers": ["console"],
+            "level": DAG_LOG_LEVEL,
+            "propagate": False,
         },
     },
     "root": {
         "handlers": ["console"],
         "level": LOG_LEVEL,
-        "filters": ["mask_secrets"],
+        "filters": ["mask_secrets_core"],
     },
 }
 
@@ -142,6 +134,27 @@ if EXTRA_LOGGER_NAMES:
 
 REMOTE_LOGGING: bool = conf.getboolean("logging", "remote_logging")
 REMOTE_TASK_LOG: RemoteLogIO | None = None
+DEFAULT_REMOTE_CONN_ID: str | None = None
+
+
+def _default_conn_name_from(mod_path, hook_name):
+    # Try to set the default conn name from a hook, but don't error if something goes wrong at runtime
+    from importlib import import_module
+
+    global DEFAULT_REMOTE_CONN_ID
+
+    try:
+        mod = import_module(mod_path)
+
+        hook = getattr(mod, hook_name)
+
+        DEFAULT_REMOTE_CONN_ID = getattr(hook, "default_conn_name")
+    except Exception:
+        # Lets error in tests though!
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            raise
+        return None
+
 
 if REMOTE_LOGGING:
     ELASTICSEARCH_HOST: str | None = conf.get("elasticsearch", "HOST")
@@ -165,6 +178,7 @@ if REMOTE_LOGGING:
     if remote_base_log_folder.startswith("s3://"):
         from airflow.providers.amazon.aws.log.s3_task_handler import S3RemoteLogIO
 
+        _default_conn_name_from("airflow.providers.amazon.aws.hooks.s3", "S3Hook")
         REMOTE_TASK_LOG = S3RemoteLogIO(
             **(
                 {
@@ -180,6 +194,7 @@ if REMOTE_LOGGING:
     elif remote_base_log_folder.startswith("cloudwatch://"):
         from airflow.providers.amazon.aws.log.cloudwatch_task_handler import CloudWatchRemoteLogIO
 
+        _default_conn_name_from("airflow.providers.amazon.aws.hooks.logs", "AwsLogsHook")
         url_parts = urlsplit(remote_base_log_folder)
         REMOTE_TASK_LOG = CloudWatchRemoteLogIO(
             **(
@@ -194,8 +209,9 @@ if REMOTE_LOGGING:
         )
         remote_task_handler_kwargs = {}
     elif remote_base_log_folder.startswith("gs://"):
-        from airflow.providers.google.cloud.logs.gcs_task_handler import GCSRemoteLogIO
+        from airflow.providers.google.cloud.log.gcs_task_handler import GCSRemoteLogIO
 
+        _default_conn_name_from("airflow.providers.google.cloud.hooks.gcs", "GCSHook")
         key_path = conf.get_mandatory_value("logging", "google_key_path", fallback=None)
 
         REMOTE_TASK_LOG = GCSRemoteLogIO(
@@ -213,6 +229,7 @@ if REMOTE_LOGGING:
     elif remote_base_log_folder.startswith("wasb"):
         from airflow.providers.microsoft.azure.log.wasb_task_handler import WasbRemoteLogIO
 
+        _default_conn_name_from("airflow.providers.microsoft.azure.hooks.wasb", "WasbHook")
         wasb_log_container = conf.get_mandatory_value(
             "azure_remote_logging", "remote_wasb_log_container", fallback="airflow-logs"
         )
@@ -246,6 +263,8 @@ if REMOTE_LOGGING:
     elif remote_base_log_folder.startswith("oss://"):
         from airflow.providers.alibaba.cloud.log.oss_task_handler import OSSRemoteLogIO
 
+        _default_conn_name_from("airflow.providers.alibaba.cloud.hooks.oss", "OSSHook")
+
         REMOTE_TASK_LOG = OSSRemoteLogIO(
             **(
                 {
@@ -260,11 +279,13 @@ if REMOTE_LOGGING:
     elif remote_base_log_folder.startswith("hdfs://"):
         from airflow.providers.apache.hdfs.log.hdfs_task_handler import HdfsRemoteLogIO
 
+        _default_conn_name_from("airflow.providers.apache.hdfs.hooks.webhdfs", "WebHDFSHook")
+
         REMOTE_TASK_LOG = HdfsRemoteLogIO(
             **(
                 {
                     "base_log_folder": BASE_LOG_FOLDER,
-                    "remote_base": remote_base_log_folder,
+                    "remote_base": urlsplit(remote_base_log_folder).path,
                     "delete_local_copy": delete_local_copy,
                 }
                 | remote_task_handler_kwargs
