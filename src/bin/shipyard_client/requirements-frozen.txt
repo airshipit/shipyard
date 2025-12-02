@@ -104,7 +104,7 @@ urllib3==2.4.0
 vine==5.1.0
 wcwidth==0.2.13
 WebOb==1.8.9
-Werkzeug==2.2.3
+Werkzeug==3.1.4
 wheel==0.45.1
 wrapt==1.17.2
 yappi==1.6.10
