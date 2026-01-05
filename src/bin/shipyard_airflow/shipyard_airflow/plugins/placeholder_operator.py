@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 
-from airflow.sdk import BaseOperator
+from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 
 

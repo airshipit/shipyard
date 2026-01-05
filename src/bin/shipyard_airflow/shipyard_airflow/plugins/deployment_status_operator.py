@@ -17,7 +17,7 @@ import logging
 import yaml
 from airflow import AirflowException
 from airflow.plugins_manager import AirflowPlugin
-from airflow.sdk import BaseOperator
+from airflow.models import BaseOperator
 import kubernetes
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_config_map import V1ConfigMap

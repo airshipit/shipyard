@@ -20,7 +20,7 @@ import configparser
 import logging
 
 from airflow.exceptions import AirflowException
-from airflow.sdk import BaseOperator
+from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 
 try:

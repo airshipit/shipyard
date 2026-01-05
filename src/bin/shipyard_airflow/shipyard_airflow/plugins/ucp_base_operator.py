@@ -15,10 +15,11 @@ import configparser
 import logging
 import math
 import os
+import time
 from datetime import datetime
 
 from airflow.exceptions import AirflowException
-from airflow.sdk import BaseOperator
+from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 import sqlalchemy
 
@@ -184,12 +185,55 @@ class UcpBaseOperator(BaseOperator):
                 # integer
                 t_diff_int = int(math.ceil(t_diff))
 
-                try:
-                    get_pod_logs(selector['pod_pattern'], self.ucp_namespace,
-                                 selector['container'], t_diff_int)
+                # Retry logic for log retrieval (pods might not be ready)
+                max_retries = 3
+                retry_delay = 5  # seconds
 
-                except K8sLoggingException as e:
-                    LOG.error(e)
+                for attempt in range(max_retries):
+                    try:
+                        get_pod_logs(selector['pod_pattern'],
+                                     self.ucp_namespace,
+                                     selector['container'], t_diff_int)
+                        break  # Success, exit retry loop
+
+                    except K8sLoggingException as e:
+                        # Skip if this is a test pod error
+                        error_msg = str(e).lower()
+                        if '-test' in error_msg:
+                            LOG.debug(
+                                "Skipping test pod, ignoring error: %s", e)
+                            break  # Exit retry, continue to next selector
+
+                        if attempt < max_retries - 1:
+                            LOG.warning(
+                                "Failed to retrieve logs (attempt %d/%d): "
+                                "%s. Retrying in %d seconds...",
+                                attempt + 1, max_retries, e, retry_delay)
+                            time.sleep(retry_delay)
+                        else:
+                            LOG.error(
+                                "Failed to retrieve logs after %d "
+                                "attempts: %s",
+                                max_retries, e)
+                    except Exception as e:
+                        # Skip if this is a test pod error
+                        error_msg = str(e).lower()
+                        if '-test' in error_msg:
+                            LOG.debug(
+                                "Skipping test pod, ignoring error: %s", e)
+                            break  # Exit retry, continue to next selector
+
+                        if attempt < max_retries - 1:
+                            LOG.warning(
+                                "Failed to retrieve logs (attempt %d/%d): "
+                                "%s. Retrying in %d seconds...",
+                                attempt + 1, max_retries, e, retry_delay)
+                            time.sleep(retry_delay)
+                        else:
+                            LOG.error(
+                                "Failed to retrieve logs after %d "
+                                "attempts: %s",
+                                max_retries, e)
 
         else:
             LOG.debug("There are no pod logs specified to retrieve")

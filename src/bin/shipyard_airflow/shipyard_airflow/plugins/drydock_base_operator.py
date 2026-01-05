@@ -259,7 +259,7 @@ class DrydockBaseOperator(UcpBaseOperator):
                 time.sleep(int(interval))
 
         # Get final task result
-        if task_result == 'success':
+        if task_result in ['success', 'partial_success']:
             LOG.info('Task id %s has been successfully completed',
                      self.drydock_task_id)
         else:

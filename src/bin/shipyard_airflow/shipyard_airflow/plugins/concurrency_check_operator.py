@@ -16,7 +16,7 @@ import requests
 from urllib.parse import urljoin
 
 from airflow.exceptions import AirflowException
-from airflow.sdk import BaseOperator
+from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
 from oslo_config import cfg
 from shipyard_airflow.plugins.xcom_pusher import XcomPusher

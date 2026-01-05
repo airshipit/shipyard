@@ -75,7 +75,11 @@ def get_pod_logs(pod_name_pattern, namespace, container, since_seconds):
     if ret:
         for i in ret.items:
             if i.metadata.name.startswith(pod_name_pattern):
-                pods_list.append(i.metadata.name)
+                # Exclude test pods (pods with '-test' in the name)
+                if '-test' not in i.metadata.name:
+                    pods_list.append(i.metadata.name)
+                else:
+                    LOG.debug("Skipping test pod: %s", i.metadata.name)
     else:
         raise K8sLoggingException(
             _NOT_FOUND_MSG_FMT.format(namespace, pod_name_pattern, container))
