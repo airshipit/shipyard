@@ -13,6 +13,9 @@
 # Airflow worker port (integer value)
 #worker_port = 8793
 
+# Secret key for signing JWT tokens for Airflow worker logs (string value)
+#worker_log_jwt_secret = changeme
+
 
 [armada]
 
@@ -301,6 +304,16 @@
 # The name or type of the service as it appears in the service catalog. This is
 # used to validate tokens that have restricted access rules. (string value)
 #service_type = <None>
+
+# Enable the SASL(Simple Authentication and Security Layer) if the SASL_enable
+# is true, else disable. (boolean value)
+#memcache_sasl_enabled = false
+
+# the user name for the SASL (string value)
+#memcache_username =
+
+# the username password for SASL (string value)
+#memcache_password =
 
 # Authentication type to load (string value)
 # Deprecated group/name - [keystone_authtoken]/auth_plugin
