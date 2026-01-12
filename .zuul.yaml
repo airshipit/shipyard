@@ -169,7 +169,7 @@
     nodeset: airship-shipyard-single-node-jammy
     irrelevant-files: *irrelevant-files
     secrets:
-      - airship_shipyard_quay_creds
+      - airship_shipyard_quay_creds_2026
     vars:
       publish: true
       distro: ubuntu_jammy
@@ -207,6 +207,32 @@
           J99B44mwMsfGXG5Oy7QUzidgfZKWdb9kGUOXz1z1FR5EpOF7w8N0A8tNcyqa6R4MnbRD4
           oaIgbDOWnXUd1A3Z6F/YlHu0/1J48xPZoZDjbsSGO3CMehZm26JdVVlc+s6MIleNhitBW
           PR1iMwRomxTw9ckoXexQ5Oz8EO73DPDIQO3r3iHVx4z4A/0iy8+mHoMxWyXiEo=
+
+- secret:
+    name: airship_shipyard_quay_creds_2026
+    data:
+      username: !encrypted/pkcs1-oaep
+        - C5ZM5bCcxhTZy82O/PcEgpFb5Q2aebhdaYJmcyIvbh2JK1HrLhyvik0qBprxfb97+aGGL
+          z61j5CqEnXYh3ZxLk6w6NKcj32UZatdK2Vz7/2U/IxwAR9Iv+SiCVQzlGF+5RP0lFuYom
+          hd9OWJW72BZ7ifH/tLC3lIckAJQBWYkfwu27WGvJ+Q10TAL3D9c+8QpDrgJL6EFULlsSM
+          HKTgpu8E68KYGOl2mLRpEmkewmkf/d2XXC9tk1lqPWiwLJIatsxa+9ZCVYW/KzmHmMjt7
+          fSgHoS2KBJvMefFpGmNkKsocM4MralgTiKIMUN3y69DpNt2C5HHpYY+travvwU/SLX0OC
+          8E9seAIM+VHscUpJWihg0ecMf34gBXI4/eErN0i3UZZr/s2cKxstYgbye06kMuBRWI3y2
+          AccbJt0TgCpilPw2hWlVuInAnwj8RZe3OKLs2vECWAMjbDcuGnD6C36uiQiihyE9dc+8c
+          9KrR4PBXgyr15c6tSC/M3QwGeL05QtmmkzyjW3FpJiPTiKxWKEG7dQkNdQss9A83Kt9dN
+          CevmCFIOwODYz/0e1GVEo1ptneOKD3OvArzCZ0Dn+hCWEb0Uu4LMCycVeQrbMt89oliju
+          Q96ZbT/tWSKd4kDtPmAJR/rc8HYRvtxxJFdqW3w70NrRrcg7gzCnrBf1boHao4=
+      password: !encrypted/pkcs1-oaep
+        - AvoOA9AZ4oNm/5wjSqgFW0mO0cfTIt6AAMQQ2eEFT9BergG2+LHMEXRlmszZIxr3r5pQl
+          X3SLtdX8W2DrBYpNU3K5irHlFvBkUlivVRg+VG6IHlariZW6/XVQtadA1dGFPHLaPz4aJ
+          ep/VZ8GwsLI1QX9fZc0B9W4LxTAvYUcZbQtK7U67t3pDg8zvYiCHr42lHT3aGAjvS07wz
+          o8bLVXYSlDdV+3Lo0aziSmH9IZZfymzazJf3fM8Hj7fJxLEAKKRfEtI5I1g+3cA9JByOh
+          I7pJOFwIPUGIieMC1RrsZvKX0FPN2h2OF2A0nhaVRDOn0OHaTUT8kXm/9UuVr4RKbuC9o
+          reBvi5wLrq4T9rci/cF5b1NnIwUqPi6jRTrTcWWKl3S65LO6w4BIObk8ACsvnIo1juWJz
+          3TykrsoTtcoz0xCoZuRsxwnAYNzNK8WXIGjdvLd1a7B7WtZN0+8l8pC+L8XlchZT0UXxz
+          wfNZM7uELfGNwrb63I14hqjERW/1M+pg/3Z8tAZqqupwels3tVdt+fPUJtXptC/RHDCAt
+          R46U2EllKfRluIts3dSQucXlsrtwERM+vM66KQQ3bbvgsl24wQeg4zcmkUEcftepo8L2T
+          TTR06S0mgZ5Gi5TfAikZbY7UEJu53UBPRnPA+xakxrUfiDj17XHp5nqcJvB2XE=
 
 - job:
     name: shipyard-upload-git-mirror
