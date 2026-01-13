@@ -242,7 +242,7 @@
       git_mirror_repository: airshipit/shipyard
     secrets:
       - name: git_mirror_credentials
-        secret: shipyard-airshipit-github-secret-2023-03-23
+        secret: shipyard-airshipit-github-ed25519-secret-2026-01-13
         pass-to-parent: true
 
 - secret:
@@ -292,3 +292,21 @@
           lIYkjILwq8JX6+Tjcfos9c3rha1nr1P773tQ0O/v1WV4Sz2GpBnsQYe2AOEOerQmlGipl
           yoyhrcR7gvjBKHqmWbRuo5t94MVtB9uXhsQA/+ew8xNnO5KOnYBFtZPWK0M9Yjie89soa
           pF1oglcY6yfHWwOIvYSPiZxFXf7xFZXL+R+n5xbVnRtJ/eEu1UsIQJ0cYkFfJ8=
+
+- secret:
+    name: shipyard-airshipit-github-ed25519-secret-2026-01-13
+    data:
+      user: git
+      host: github.com
+      host_key: github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+      ssh_key: !encrypted/pkcs1-oaep
+        - FJB8S9Uj9c/Ong/Re7xM+e10225OWv/wjUOD10ROjmH898GfZkc7RPNNyGOV+dLs7/i02
+          AnXYuAhCmnmnAXDZjRfbuYY6Bk6P3EC5Xll/BgAHLIRRG1qe0/aYg7smMuVUNs3RlHah0
+          DsMn8ZUpqgUnwgVD1Fm4y4A3d70Q5n7PEjOWcBkG9BePALcStjcWkayjv1RetOyZuKl8d
+          WdraD6eTDaytq3TvnbxRyImBcWe7t8w6ni0fb1JMIwDqK6nqrUrQp5SugOAcv8SalHCkf
+          5hrQbGc5x0vLifsMMVjxxXiDdMM+C3HQZFRneIM6JAo0tcBKEmTVF51f/YEt5C9BCkxOs
+          HUm19eC0JWWSOwsJkDujliWGmVM2fdwBQwx3JlR0rNbs4rU4nq1A+74NbJnmJZeK6ijZi
+          aErg7goFdh+xT9weB3XRYSJaNhHl3S0O/A02UB02SC2kY9ohFJh17YMl958HzLFT4R8Gf
+          MybRU8ydta6nH1aGZBdKzHDbPXL0xglI+KQVTUbDNOIr0wUkCuyMEOax+RAqOUqM+0Y7H
+          Nyd7x3fKiFApZ5NBtiXphSAAUhkjblXTYr53okEhnyux2E3KikUtRhHUP2S1CiSfKe83D
+          dFSv4HYcA05mcV6PactnsMb4Nki2abCo0ft1NpzHe5+2pYNXWpuom0II8Zx0x0=
