@@ -724,7 +724,7 @@ def test_auth_alignment(auth, *args):
                     context=context,
                     allow_intermediate_commits=False)
             assert 'purposeful' in str(ex)
-            assert auth.called_with(action_cfg['rbac_policy'])
+            auth.assert_called_with(mock.ANY, action_cfg['rbac_policy'])
             assert (action_cfg['rbac_policy'] ==
                     'workflow_orchestrator:action_{}'.format(action_name))
 

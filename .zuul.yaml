@@ -19,28 +19,28 @@
       ensure_global_symlinks: true
     check:
       jobs:
-        - openstack-tox-py310
-        - airship-shipyard-openstack-tox-pep8-jammy
-        - airship-shipyard-openstack-tox-cover-jammy
+        - openstack-tox-py312
+        - airship-shipyard-openstack-tox-pep8-noble
+        - airship-shipyard-openstack-tox-cover-noble
         - airship-shipyard-chart-build-gate
         - airship-shipyard-chart-build-latest-htk
         - airship-airflow-dependency-vulnerability-check
         - airship-shipyard-dependency-vulnerability-check
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate-ubuntu_jammy
-        - shipyard-airskiff-deployment-jammy-kubeadm
+        - airship-shipyard-image-gate-ubuntu_noble
+        - shipyard-airskiff-deployment-noble-kubeadm
     gate:
       jobs:
-        - openstack-tox-py310
-        - airship-shipyard-openstack-tox-pep8-jammy
-        - airship-shipyard-openstack-tox-cover-jammy
+        - openstack-tox-py312
+        - airship-shipyard-openstack-tox-pep8-noble
+        - airship-shipyard-openstack-tox-cover-noble
         - airship-shipyard-chart-build-gate
         - airship-shipyard-whitespace-lint-gate
-        - airship-shipyard-image-gate-ubuntu_jammy
+        - airship-shipyard-image-gate-ubuntu_noble
 
     post:
       jobs:
-        - airship-shipyard-docker-build-publish-ubuntu_jammy
+        - airship-shipyard-docker-build-publish-ubuntu_noble
         - shipyard-upload-git-mirror
 
 - nodeset:
@@ -55,55 +55,61 @@
       - name: primary
         label: ubuntu-jammy
 
+- nodeset:
+    name: airship-shipyard-single-node-noble
+    nodes:
+      - name: primary
+        label: ubuntu-noble
+
 - job:
     name: airship-airflow-dependency-vulnerability-check
-    parent: tox-py310
+    parent: tox-py312
     voting: false
     timeout: 600
-    nodeset: ubuntu-jammy
+    nodeset: ubuntu-noble
     vars:
       tox_envlist:  airflow_safety
-      bindep_profile: test py310
+      bindep_profile: test py312
 
 - job:
     name: airship-shipyard-dependency-vulnerability-check
-    parent: tox-py310
+    parent: tox-py312
     voting: false
     timeout: 600
-    nodeset: ubuntu-jammy
+    nodeset: ubuntu-noble
     vars:
       tox_envlist: shipyard_safety
-      bindep_profile: test py310
+      bindep_profile: test py312
 
 - job:
-    name: airship-shipyard-openstack-tox-pep8-jammy
+    name: airship-shipyard-openstack-tox-pep8-noble
     parent: openstack-tox-pep8
-    description: Runs pep8 job on jammy
-    nodeset: airship-shipyard-single-node-jammy
+    description: Runs pep8 job on noble
+    nodeset: airship-shipyard-single-node-noble
 
 - job:
-    name: airship-shipyard-openstack-tox-cover-jammy
+    name: airship-shipyard-openstack-tox-cover-noble
     parent: openstack-tox-cover
-    description: Runs cover job on jammy
-    nodeset: airship-shipyard-single-node-jammy
+    description: Runs cover job on noble
+    nodeset: airship-shipyard-single-node-noble
 
 - job:
     name: airship-shipyard-airflow-integration-test
-    parent: tox-py310
+    parent: tox-py312
     voting: true
     timeout: 3600
-    nodeset: ubuntu-jammy
+    nodeset: ubuntu-noble
     pre-run: tools/gate/playbooks/install-docker.yaml
     vars:
       tox_envlist: airflow_integration
-      bindep_profile: test py310
+      bindep_profile: test py312
 
 - job:
     name: airship-shipyard-chart-build-gate
     description: Build charts using pinned Helm toolkit.
     timeout: 900
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node-jammy
+    nodeset: airship-shipyard-single-node-noble
     vars:
       HTK_COMMIT: 49c117443391cec75e0bd52bb4a9d033325927ad
 
@@ -113,7 +119,7 @@
     timeout: 900
     voting: false
     run: tools/gate/playbooks/build-charts.yaml
-    nodeset: airship-shipyard-single-node-jammy
+    nodeset: airship-shipyard-single-node-noble
     vars:
       HTK_COMMIT: master
 
@@ -122,33 +128,33 @@
     description: |
       Lints all files by checking them for whitespace.
     run: tools/gate/playbooks/zuul-linter.yaml
-    nodeset: airship-shipyard-single-node-jammy
+    nodeset: airship-shipyard-single-node-noble
 
 
 - job:
-    name: airship-shipyard-image-gate-ubuntu_jammy
+    name: airship-shipyard-image-gate-ubuntu_noble
     description: |
       Job for running airship-shipyard image related jobs.
     timeout: 3600
     run: tools/gate/playbooks/docker-image-build.yaml
-    nodeset: airship-shipyard-single-node-jammy
+    nodeset: airship-shipyard-single-node-noble
     irrelevant-files: &irrelevant-files
       - ^.*\.rst$
       - ^doc/.*$
       - ^releasenotes/.*$
     vars:
       publish: false
-      distro: ubuntu_jammy
+      distro: ubuntu_noble
       tags:
         dynamic:
           patch_set: true
 
 - job:
-    name: shipyard-airskiff-deployment-jammy-kubeadm
+    name: shipyard-airskiff-deployment-noble-kubeadm
     description: |
       Deploy Memcached using Airskiff and submitted Shipyard changes.
     parent: treasuremap-airskiff-infra-deploy-base
-    nodeset: treasuremap-airskiff-1node-ubuntu_jammy
+    nodeset: treasuremap-airskiff-1node-ubuntu_noble
     required-projects:
       - name: airship/treasuremap
         override-checkout: v1.9
@@ -156,23 +162,23 @@
       CLONE_SHIPYARD: false
       MAKE_SHIPYARD_IMAGES: true
       USE_ARMADA_GO: true
-      DISTRO: ubuntu_jammy
+      DISTRO: ubuntu_noble
       DOCKER_REGISTRY: localhost:5000
       gate_scripts_relative_path: ../../airship/treasuremap
 
 - job:
-    name: airship-shipyard-docker-build-publish-ubuntu_jammy
+    name: airship-shipyard-docker-build-publish-ubuntu_noble
     description: |
       Job for publishing airship-shipyard images.
     timeout: 3600
     run: tools/gate/playbooks/docker-image-build.yaml
-    nodeset: airship-shipyard-single-node-jammy
+    nodeset: airship-shipyard-single-node-noble
     irrelevant-files: *irrelevant-files
     secrets:
       - airship_shipyard_quay_creds_2026
     vars:
       publish: true
-      distro: ubuntu_jammy
+      distro: ubuntu_noble
       tags:
         dynamic:
           branch: true
@@ -180,33 +186,6 @@
         static:
           - latest
           - airflow_3.1.5
-
-
-- secret:
-    name: airship_shipyard_quay_creds
-    data:
-      username: !encrypted/pkcs1-oaep
-        - WD32oSzxpBLxbP0pm+JrO9/s08+anI7ntQyGcIFHXfdzR/aJy3N8n47CGi/L2VQgSNXcx
-          kM5FdaO0otGCmLfjQHM4vyamD7AIDEgS7hCgY2p+Ew0spslYCGlNFYtlKLHLED2s7WV2a
-          KA9AJPtXwNr2ogyRNsLx4Q1ALe5JdeOQBtn/tFHAj/t1azK8aiBLelbdFyzY+7omrdUd5
-          ZxUKFg9dx+LR06Zf6cALuyoyD+WJFEVFE3GlUs6WDIln64j6PLBP2eqtkCloQFaxq+bMW
-          EJnpdIUfrcQa2+S9qZ3T6KvS1xzEerw7FyIfWY3X12mv8xLkMEQMb8RW76NVVtfMHJAQr
-          eP+nyLKRjsCaQ4B6siNmNsxgezmpc83WqtZ8mtMcsYXECqSqu5lkXgyeEQMtMNlBXBBeS
-          OjB9ONx8dEV+f8V0olVCyA/K2BLm1I07jxhlTnKLkLpj5gb0xmtZyM/OfLK6i180n9ylN
-          BXeHSJY2wGADZChYKVl1/DFn2w5R8sjf+JMUhDkfNUXFFfLS12lWexNH7V2PAy3mQrnQ0
-          +IYNI959TAdyUwa9ZyQyu0lTkQpsuUwBSfnJ9+1orwlruzGeCeofIfHIzWitmB5yxtI/Z
-          XRw2Uif34GEkerIQGnoQazOTVf6jAw/gp9X49+WpghTC+ExKTqCelggcKBukZA=
-      password: !encrypted/pkcs1-oaep
-        - ts6uhbQxb9EKWfQ1RmZUZGKoGEkJ9RkyupmmFHZllo2iEqNG21jrqhBbHVEt9iXqOGAUL
-          AICzGos4p/RQXgISmmGVmBfR2MhH93txPLtKfIQCMw/838Mmy4z1gr1ALhepnEsgb3d9X
-          fuWzbe0vBqHoXtBFlDXt3mUJq0yrOe+yQO0Ksb35wMz6pFdVY/USWGaLeBlO+JkA3Vk5E
-          Wcse8OVZrPNYkY7mzObwqFx5F8vI/k6Cq334o3FlM+bRmV95TB/7fhmGgtpIQniJYA+dl
-          TEOzukElwTlya+7xRIVlDyDUrjZUVo3nCzNV3ETf/O34fRKJqmWGsLGoTn/wVm/xuFAHm
-          0m3DADRY1VI9hwNFXjErJm1cDV5kU8MVnSdTRWpjq72RZE8nGGtenlbdhyTvxdOdJ+IlX
-          UWzz2pdilJzNNbDAhfRQ5ZkBUUKbWq47kUDKNWrg/uT70rfJ12HhCXgUTR2omHS9/P3OY
-          J99B44mwMsfGXG5Oy7QUzidgfZKWdb9kGUOXz1z1FR5EpOF7w8N0A8tNcyqa6R4MnbRD4
-          oaIgbDOWnXUd1A3Z6F/YlHu0/1J48xPZoZDjbsSGO3CMehZm26JdVVlc+s6MIleNhitBW
-          PR1iMwRomxTw9ckoXexQ5Oz8EO73DPDIQO3r3iHVx4z4A/0iy8+mHoMxWyXiEo=
 
 - secret:
     name: airship_shipyard_quay_creds_2026
@@ -244,54 +223,6 @@
       - name: git_mirror_credentials
         secret: shipyard-airshipit-github-ed25519-secret-2026-01-13
         pass-to-parent: true
-
-- secret:
-    name: shipyard-airshipit-github-secret-2023-03-23
-    data:
-      user: git
-      host: github.com
-      host_key: github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
-      ssh_key: !encrypted/pkcs1-oaep
-        - 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
 
 - secret:
     name: shipyard-airshipit-github-ed25519-secret-2026-01-13

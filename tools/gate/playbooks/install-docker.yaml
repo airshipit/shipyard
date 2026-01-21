@@ -20,3 +20,12 @@
     - ensure-python
     - ensure-pip
     - ensure-tox
+
+  tasks:
+    - name: Install tox python module
+      shell: |
+        pip3 install tox --break-system-packages
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
+        executable: /bin/bash
+      become: True

@@ -61,7 +61,7 @@ oslo.versionedobjects==3.6.0
 
 
 # Airship dependencies
-git+https://opendev.org/airship/deckhand.git@83adc3a1f54f9c38099d67f95f11fd76b65dfee2#egg=deckhand
-git+https://opendev.org/airship/drydock.git@73e73d313b20d4160458d8aca0177220eca79d20#egg=drydock_provisioner&subdirectory=python
-git+https://opendev.org/airship/armada.git@3b799d9243aea41d64aee6d75d0cb4706cd5b5da#egg=armada
-git+https://opendev.org/airship/promenade.git@ca8f103c641a902f1ba2115326c90ef1b815158b#egg=promenade
+git+https://opendev.org/airship/deckhand.git@5924c5806670141606e78b8b156546d15825d6ef#egg=deckhand
+git+https://opendev.org/airship/drydock.git@508705e3775688ad06c77d20c7b2e71223bc7701#egg=drydock_provisioner&subdirectory=python
+git+https://opendev.org/airship/armada.git@04d0171b8c8afb0c3653919c2fbaaf5740728571#egg=armada
+git+https://opendev.org/airship/promenade.git@74443011a752616adab410846e9380db4a5ade59#egg=promenade
