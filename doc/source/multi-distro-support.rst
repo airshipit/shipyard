@@ -45,7 +45,7 @@ Following parameters need to be passed as environment/shell variable to make
 command:
 
 DISTRO
-  parameter to identify distro specific Dockerfile, ubuntu_jammy (Default)
+  parameter to identify distro specific Dockerfile, ubuntu_noble (Default)
 
 DISTRO_BASE_IMAGE
   parameter to use different base image other than what's used in DISTRO

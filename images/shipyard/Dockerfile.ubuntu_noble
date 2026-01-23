@@ -61,8 +61,10 @@ RUN set -ex \
         /var/tmp/*
 
 # Add shipyard user
-RUN groupmod -n shipyard ubuntu \
-    && usermod -l shipyard -d /home/shipyard  ubuntu \
+RUN (userdel -r ubuntu || true) 2>/dev/null \
+    && (groupdel ubuntu || true) 2>/dev/null \
+    && groupadd -g 1000 shipyard \
+    && useradd -u 1000 -g shipyard -d /home/shipyard -s /bin/bash -m shipyard \
     && mkdir -p /home/shipyard/shipyard \
     && mkdir -p /home/shipyard/shipyard_client
 

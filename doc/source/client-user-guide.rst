@@ -184,7 +184,7 @@ command. In this example we will execute the ``get actions`` command::
   -e 'OS_PASSWORD=password' -e 'OS_PROJECT_DOMAIN_NAME=default' \
   -e 'OS_PROJECT_NAME=service' -e 'OS_USERNAME=shipyard' \
   -e 'OS_USER_DOMAIN_NAME=default' -e 'OS_IDENTITY_API_VERSION=3' \
-  --rm --net=host airshipit/shipyard:latest-ubuntu_jammy get actions
+  --rm --net=host airshipit/shipyard:latest-ubuntu_noble get actions
 
 The output will resemble the following::
 

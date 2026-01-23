@@ -88,8 +88,10 @@ RUN set -ex \
     && rm -rf /tmp/* /usr/share/doc /usr/share/doc-base /usr/share/man /var/lib/apt/lists/* /var/log/* /var/tmp/* /etc/ssl/private/ssl-cert-snakeoil.key /etc/ssl/private/ssl-cert-snakeoil.pem
 
 # Add airflow user
-RUN groupmod -n airflow ubuntu \
-      && usermod -l airflow -d ${AIRFLOW_HOME}  ubuntu
+RUN (userdel -r ubuntu || true) 2>/dev/null \
+      && (groupdel ubuntu || true) 2>/dev/null \
+      && groupadd -g 1000 airflow \
+      && useradd -u 1000 -g airflow -d ${AIRFLOW_HOME} -s /bin/bash -m airflow
 
 
 RUN curl -L -o /usr/local/bin/kubectl \

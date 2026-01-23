@@ -19,7 +19,7 @@
 # before executing this script if they differ from the default values.
 #
 NAMESPACE="${NAMESPACE:-ucp}"
-DISTRO="${DISTRO:-ubuntu_jammy}"
+DISTRO="${DISTRO:-ubuntu_noble}"
 SHIPYARD_IMAGE="${SHIPYARD_IMAGE:-quay.io/airshipit/shipyard:master-${DISTRO}}"
 
 # Define Base Docker Command

@@ -33,19 +33,19 @@ labels:
 
 images:
   tags:
-    airflow: quay.io/airshipit/airflow:latest-ubuntu_jammy
+    airflow: quay.io/airshipit/airflow:latest-ubuntu_noble
     apache_proxy: docker.io/library/httpd:2.4
-    shipyard: quay.io/airshipit/shipyard:latest-ubuntu_jammy
-    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_jammy
-    shipyard_db_init: quay.io/airshipit/postgres:14.8
-    shipyard_db_auxiliary: quay.io/airshipit/postgres:14.8
-    shipyard_db_sync: quay.io/airshipit/shipyard:latest-ubuntu_jammy
-    airflow_db_init: quay.io/airshipit/postgres:14.8
+    shipyard: quay.io/airshipit/shipyard:latest-ubuntu_noble
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_noble
+    shipyard_db_init: quay.io/airshipit/postgres:17.4
+    shipyard_db_auxiliary: quay.io/airshipit/postgres:17.4
+    shipyard_db_sync: quay.io/airshipit/shipyard:latest-ubuntu_noble
+    airflow_db_init: quay.io/airshipit/postgres:17.4
     rabbit_init: quay.io/airshipit/rabbitmq:3.10.18-management
-    airflow_db_sync: quay.io/airshipit/airflow:latest-ubuntu_jammy
-    ks_user: quay.io/airshipit/heat:2024.1-ubuntu_jammy
-    ks_service: quay.io/airshipit/heat:2024.1-ubuntu_jammy
-    ks_endpoints: quay.io/airshipit/heat:2024.1-ubuntu_jammy
+    airflow_db_sync: quay.io/airshipit/airflow:latest-ubuntu_noble
+    ks_user: quay.io/airshipit/heat:2024.1-ubuntu_noble
+    ks_service: quay.io/airshipit/heat:2024.1-ubuntu_noble
+    ks_endpoints: quay.io/airshipit/heat:2024.1-ubuntu_noble
     image_repo_sync: quay.io/airshipit/docker:27.5.0
   pull_policy: "IfNotPresent"
   local_registry:
