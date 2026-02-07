@@ -111,7 +111,7 @@
     run: tools/gate/playbooks/build-charts.yaml
     nodeset: airship-shipyard-single-node-noble
     vars:
-      HTK_COMMIT: 49c117443391cec75e0bd52bb4a9d033325927ad
+      HTK_COMMIT: 3204636e87eaf2fff0e5016e030d755e4c16d0c3
 
 - job:
     name: airship-shipyard-chart-build-latest-htk
