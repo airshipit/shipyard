@@ -46,7 +46,7 @@ colorama==0.4.6
 colorlog==6.10.1
 cron_descriptor==2.0.6
 croniter==6.0.0
-cryptography==42.0.8
+cryptography==46.0.5
 debtcollector==3.0.0
 Deckhand @ git+https://opendev.org/airship/deckhand.git@5924c5806670141606e78b8b156546d15825d6ef
 decorator==5.2.1
