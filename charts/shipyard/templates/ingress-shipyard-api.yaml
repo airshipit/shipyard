@@ -16,6 +16,11 @@ limitations under the License.
 */}}
 
 {{- if and .Values.manifests.ingress_shipyard_api .Values.network.shipyard.ingress.public }}
+{{- if .Values.manifests.deployment_airflow_webserver_ui }}
 {{- $ingressOpts := dict "envAll" . "backendService" "shipyard" "backendServiceType" "shipyard" "backendPort" "api" "ingressPaths" "/api/v1.0" "pathType" "Prefix" "additionalBackends" (list (dict "backendServiceType" "airflow_webserver_ui" "backendPort" "api")) -}}
 {{- $ingressOpts | include "helm-toolkit.manifests.ingress" -}}
+{{- else }}
+{{- $ingressOpts := dict "envAll" . "backendService" "shipyard" "backendServiceType" "shipyard" "backendPort" "api" "ingressPaths" (list "/api/v1.0" "/") "pathType" "Prefix" -}}
+{{- $ingressOpts | include "helm-toolkit.manifests.ingress" -}}
+{{- end }}
 {{- end }}
