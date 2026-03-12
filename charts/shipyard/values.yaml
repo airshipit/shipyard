@@ -1009,6 +1009,9 @@ network_policy:
 tls:
   oslo_messaging: false
 
+# List of extra manifests to deploy
+extraObjects: []
+
 manifests:
   configmap_shipyard_bin: true
   configmap_shipyard_etc: true
