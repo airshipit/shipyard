@@ -207,7 +207,7 @@ redis==5.3.1
 referencing==0.37.0
 regex==2025.11.3
 repoze.lru==0.7
-requests==2.32.5
+requests==2.33.0
 requests-oauthlib==2.0.0
 resolver==0.2.1
 responses==0.25.8
