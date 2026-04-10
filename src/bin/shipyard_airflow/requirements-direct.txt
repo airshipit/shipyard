@@ -1,5 +1,5 @@
 alembic
-apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==3.1.5
+apache-airflow[crypto,celery,hive,hdfs,jdbc,postgres]==3.2.0
 apache-airflow-providers-standard
 arrow
 celery
