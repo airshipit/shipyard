@@ -194,7 +194,7 @@ pyperclip==1.11.0
 python-barbicanclient==7.1.0
 python-daemon==3.1.2
 python-dateutil==2.9.0.post0
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 python-keystoneclient==5.6.0
 python-memcached==1.62
 python-mimeparse==2.0.0
