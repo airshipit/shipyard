@@ -72,4 +72,4 @@ armada_build.set_upstream(drydock_build)
 create_action_tag.set_upstream(armada_build)
 
 # finalize_deployment_status needs to be downstream of everything
-finalize_deployment_status.set_upstream(create_action_tag)
+finalize_deployment_status.set_upstream([deployment_status, create_action_tag])

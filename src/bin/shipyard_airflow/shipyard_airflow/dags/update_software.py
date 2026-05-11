@@ -73,4 +73,4 @@ decide_airflow_upgrade.set_downstream([upgrade_airflow, skip_upgrade_airflow])
 create_action_tag.set_upstream([upgrade_airflow, skip_upgrade_airflow])
 
 # finalize_deployment_status needs to be downstream of everything
-finalize_deployment_status.set_upstream(create_action_tag)
+finalize_deployment_status.set_upstream([deployment_status, create_action_tag])
