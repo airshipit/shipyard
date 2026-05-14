@@ -81,7 +81,7 @@ COPY ${ctx_base}/shipyard_client /home/shipyard/shipyard_client/
 COPY ${ctx_base}/shipyard_airflow /home/shipyard/shipyard/
 
 # Build
- RUN set -ex \
+RUN set -ex \
         && buildDeps=' \
             build-essential \
             libssl-dev \

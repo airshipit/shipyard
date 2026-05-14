@@ -36,7 +36,6 @@ default_args = {
     'email': [''],
     'email_on_failure': False,
     'email_on_retry': False,
-    'provide_context': True,
     'retries': 0,
     'retry_delay': timedelta(seconds=30),
 }
