@@ -1,8 +1,8 @@
 # Testing
 pyflakes
-pytest==7.4.0
-pytest-cov==4.1.0
-coverage==5.3
+pytest
+pytest-cov
+coverage
 responses
 testfixtures
 
@@ -10,5 +10,5 @@ testfixtures
 flake8
 
 # Security scanning
-bandit==1.6.0 # Apache-2.0
+bandit
 

@@ -1,10 +1,9 @@
-bandit==1.6.0
+bandit
 flake8
-pytest==7.4.0
-pytest-cov==4.1.0
-coverage==5.3
+pytest
+pytest-cov
+coverage
 testfixtures
-tox<=4.0.0
 # typing-extensions==3.7.2
 pyflakes
 # Pin apache-airflow 1.10.5 to align with version in airflow images requirements.txt
@@ -13,5 +12,5 @@ pyflakes
 # psycopg2 instead of psycopg2-binary which requires additional apt packages
 # to be installed, i.e. postgres-devel. Otherwise the following error is seen:
 # Error: pg_config executable not found. Only seems to be an issue in xenial
-postgres>=3.0.0
+postgres
 ruff

@@ -106,8 +106,8 @@ class DbAccess:
         result_dict_list = []
         if query is not None:
             with self.get_engine().connect() as connection:
-                result_set = connection.execute(query, **kwargs)
-                result_dict_list = [dict(row) for row in result_set]
+                result_set = connection.execute(query, kwargs)
+                result_dict_list = [dict(row._mapping) for row in result_set]
         LOG.info('Result has %s rows', len(result_dict_list))
         for dict_row in result_dict_list:
             LOG.debug('Result: %s', dict_row)
@@ -137,8 +137,8 @@ class DbAccess:
         """
         LOG.debug('Query: %s', _query_single_line(query))
         if query is not None:
-            with self.get_engine().connect() as connection:
-                return connection.execute(query, **kwargs)
+            with self.get_engine().begin() as connection:
+                return connection.execute(query, kwargs)
 
 
 def _query_single_line(query):
