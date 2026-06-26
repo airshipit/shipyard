@@ -26,6 +26,7 @@ import logging
 from sqlalchemy import and_
 from sqlalchemy import Column
 from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy import Text
 from sqlalchemy import types
 
@@ -85,7 +86,7 @@ class ShipyardSQLNotesStorage(NotesStorage):
         use it to return a session
         """
         if not self._session:
-            self._session = sessionmaker(bind=self._engine_getter())
+            self._session = sessionmaker(self._engine_getter())
         return self._session()
 
     @contextmanager
@@ -123,24 +124,25 @@ class ShipyardSQLNotesStorage(NotesStorage):
         with self.session_scope() as session:
             notes_res = []
             if (query.exact_match):
-                n_qry = session.query(TNote).filter(
+                stmt = select(TNote).where(
                     and_(TNote.assoc_id == a_id_pat,
                          TNote.verbosity <= max_verb)).order_by(
                              TNote.note_timestamp)
             else:
-                n_qry = session.query(TNote).filter(
+                stmt = select(TNote).where(
                     and_(TNote.assoc_id.like(a_id_pat + '%'),
                          TNote.verbosity <= max_verb)).order_by(
                              TNote.note_timestamp)
-            db_notes = n_qry.all()
+            db_notes = session.execute(stmt).scalars().all()
             for tn in db_notes:
                 r_notes.append(self._map(tn, Note))
         return r_notes
 
     def retrieve_by_id(self, note_id):
         with self.session_scope() as session:
-            note = session.query(TNote).filter(
-                TNote.note_id == note_id).one_or_none()
+            note = session.execute(
+                select(TNote).where(
+                    TNote.note_id == note_id)).scalar_one_or_none()
             if not note:
                 raise NoteNotFoundError()
             return self._map(note, Note)
