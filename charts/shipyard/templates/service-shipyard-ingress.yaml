@@ -17,7 +17,6 @@ limitations under the License.
 
 {{- if .Values.manifests.service_shipyard_ingress }}
 {{- $envAll := . }}
-{{- if .Values.network.shipyard.ingress.public }}
 ---
 apiVersion: v1
 kind: Service
@@ -26,8 +25,8 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 80
+    port: {{ tuple "shipyard" "public" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
+    targetPort: {{ tuple "shipyard" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
   selector:
-    app: ingress-api
-{{- end }}
+{{ tuple $envAll "shipyard" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
 {{- end }}

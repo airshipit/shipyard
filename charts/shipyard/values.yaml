@@ -58,18 +58,6 @@ release_group: null
 
 network:
   shipyard:
-    ingress:
-      public: true
-      classes:
-        namespace: "nginx"
-        cluster: "nginx-cluster"
-      annotations:
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-        nginx.ingress.kubernetes.io/configuration-snippet: |
-          more_clear_headers "Server";
-          more_set_headers "X-Content-Type-Options: 'nosniff'";
-          more_set_headers "X-Frame-Options: 'deny'";
     node_port: 31901
     enable_node_port: false
   airflow:
@@ -78,18 +66,6 @@ network:
       port: 8793
       enable_node_port: false
   airflow_webserver_ui:
-    ingress:
-      public: true
-      classes:
-        namespace: "nginx"
-        cluster: "nginx-cluster"
-      annotations:
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-        nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-        nginx.ingress.kubernetes.io/configuration-snippet: |
-          more_clear_headers "Server";
-          more_set_headers "X-Content-Type-Options: 'nosniff'";
-          more_set_headers "X-Frame-Options: 'deny'";
     node_port: 31902
     enable_node_port: false
 
@@ -1025,7 +1001,6 @@ manifests:
   deployment_airflow_log_monitor: true
   deployment_shipyard: true
   statefulset_airflow_worker: true
-  ingress_shipyard_api: true
   job_shipyard_db_init: true
   job_shipyard_db_auxiliary: true
   job_shipyard_db_sync: true
@@ -1037,10 +1012,8 @@ manifests:
   job_ks_user: true
   secret_apache_etc: false
   secret_airflow_webserver_ui: false
-  secret_airflow_webserver_ui_ingress_tls: false
   secret_airflow_db: true
   secret_shipyard_db: true
-  secret_ingress_tls: true
   secret_keystone: true
   secret_rabbitmq: true
   service_shipyard: true
