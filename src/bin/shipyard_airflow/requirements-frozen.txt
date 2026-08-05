@@ -49,7 +49,7 @@ colorlog==6.10.1
 cotyledon==2.2.0
 cron_descriptor==2.0.8
 croniter==6.2.2
-cryptography==48.0.0
+cryptography==50.0.0
 debtcollector==3.1.0
 Deckhand @ git+https://opendev.org/airship/deckhand.git@e2fb04d9e719f4f4dfed0e65a420d027d90fce3b
 decorator==5.3.1
