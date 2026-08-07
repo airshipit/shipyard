@@ -475,6 +475,8 @@ conf:
   uwsgi:
     # for more info about these default overrides please read
     # https://uwsgi-docs.readthedocs.io/en/latest/ThingsToKnow.html
+    http_timeout: 600                   # Timeout for the HTTP router (idle keep-alive connections)
+    socket_timeout: 600                 # Timeout for reading/writing request sockets, incl. request body
     threads: 1                          # Number of threads per worker/process
     workers: 16                         # maximum number of workers/processes
     cheaper_algo: busyness              # Use cheaper busyness plugin for dynamic scaling of workers

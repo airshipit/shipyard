@@ -58,6 +58,10 @@ spec:
       containers:
         - name: shipyard-api
           env:
+            - name: 'HTTP_TIMEOUT'
+              value: {{ .Values.conf.uwsgi.http_timeout | quote }}
+            - name: 'SOCKET_TIMEOUT'
+              value: {{ .Values.conf.uwsgi.socket_timeout | quote }}
             - name: 'SHIPYARD_API_WORKERS'
               value: {{ .Values.conf.uwsgi.workers | quote }}
             - name: 'SHIPYARD_API_THREADS'

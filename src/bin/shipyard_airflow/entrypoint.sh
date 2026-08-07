@@ -19,6 +19,10 @@ if [ "$1" = 'server' ]; then
     set -x
     PORT=${PORT:-9000}
     HTTP_TIMEOUT=${HTTP_TIMEOUT:-600}
+    # uWSGI's internal timeout for reading request sockets (including the
+    # request body). Defaults to 4s in uWSGI, which is too short for large
+    # configdocs uploads under load; --http-timeout does not cover this.
+    SOCKET_TIMEOUT=${SOCKET_TIMEOUT:-600}
     # Number of uWSGI workers to handle API request
     SHIPYARD_API_WORKERS=${SHIPYARD_API_WORKERS:-"16"}
     #Threads per worker
@@ -55,6 +59,7 @@ if [ "$1" = 'server' ]; then
         --threads ${SHIPYARD_API_THREADS} \
         --workers ${SHIPYARD_API_WORKERS} \
         --http-timeout ${HTTP_TIMEOUT} \
+        --socket-timeout ${SOCKET_TIMEOUT} \
         --strict \
         --master \
         --vacuum \
