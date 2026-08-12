@@ -6,7 +6,7 @@ amqp==5.3.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
-apache-airflow==3.2.2
+apache-airflow==3.3.0
 apache-airflow-core==3.2.2
 apache-airflow-providers-celery==3.20.0
 apache-airflow-providers-common-compat==1.15.0
