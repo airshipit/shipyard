@@ -1,5 +1,5 @@
 a2wsgi==1.10.10
-aiosmtplib==5.1.0
+aiosmtplib==5.1.2
 aiosqlite==0.21.0
 alembic==1.18.4
 amqp==5.3.1
