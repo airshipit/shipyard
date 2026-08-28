@@ -1,5 +1,5 @@
 alembic
-apache-airflow[celery,postgres]==3.2.2
+apache-airflow[celery,postgres]==3.3.0
 apache-airflow-providers-standard
 arrow
 celery
