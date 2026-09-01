@@ -165,7 +165,7 @@ pathspec==1.1.1
 pbr==7.0.3
 pecan==1.8.0
 pendulum==3.2.0
-pip==24.0
+pip==26.2
 pluggy==1.6.0
 prettytable==3.17.0
 prison==0.2.1
