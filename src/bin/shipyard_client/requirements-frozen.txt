@@ -98,7 +98,7 @@ testresources==2.1.2
 testscenarios==0.6.2
 typing_extensions==4.15.0
 tzdata==2026.2
-urllib3==2.7.0
+urllib3==2.8.0
 vine==5.1.0
 wcwidth==0.7.0
 WebOb==1.8.10
